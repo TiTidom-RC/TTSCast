@@ -57,9 +57,9 @@ class jeedom_com():
 			changes = self.changes
 			self.changes = {}
 			logging.info('Send to jeedom: %s', changes)
-			i=0
+			i = 0
 			while i < self.retry:
-				try:
+			  	try:
 					r = requests.post(self.url + '?apikey=' + self.apikey, json=changes, timeout=(0.5, 120), verify=False)
 					if r.status_code == requests.codes.ok:
 						break
@@ -82,7 +82,8 @@ class jeedom_com():
 			resend_changes = threading.Timer(self.cycle, self.send_changes_async)
 			resend_changes.start()
 
-	def add_changes(self,key,value):
+
+	def add_changes(self, key, value):
 		if key.find('::') != -1:
 			tmp_changes = {}
 			changes = value

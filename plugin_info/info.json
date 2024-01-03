@@ -1,6 +1,6 @@
 {
-	"id" : "template",
-	"name" : "Template",
+	"id" : "ttscast",
+	"name" : "TTS Cast",
 	"pluginVersion": "0.1",
 	"specialAttributes" : {
 		"object" : {
@@ -12,14 +12,14 @@
 		}
 	},
 	"description" : {
-		"fr_FR": "Template servant de base à la création de plugins pour Jeedom"
+		"fr_FR": "TTS Cast : plugin permettant de générer des phrases TTS et de les faire jouer par un équipement Google (type ChromeCast)"
 	},
 	"licence" : "AGPL",
-	"author" : "Jeedom SAS",
+	"author" : "TiTidom",
 	"require" : "4.2.0",
-	"category" : "programming",
-	"hasDependency" : false,
-	"hasOwnDeamon" : false,
+	"category" : "multimedia",
+	"hasDependency" : true,
+	"hasOwnDeamon" : true,
 	"maxDependancyInstallTime" : 0,
 	"changelog" : "https://jeedom.github.io/plugin-template/#language#/changelog",
 	"documentation" : "https://jeedom.github.io/plugin-template/#language#/",
@@ -33,12 +33,7 @@
 		"fr_FR",
 		"en_US",
 		"es_ES",
-		"de_DE",
-		"ru_RU",
-		"id_ID",
-		"it_IT",
-		"ja_JP",
-		"pt_PT"
+		"de_DE"
 	],
 	"compatibility": [
 		"miniplus",
