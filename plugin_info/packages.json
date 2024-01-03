@@ -1,0 +1,18 @@
+{
+  "pre-install": {
+  },
+  "apt": {
+  },
+  "pip3": {
+    "pyserial" : {"reinstall" : true},
+    "requests" : {"reinstall" : true}
+  },
+  "npm": {
+  },
+  "yarn": {
+  },
+  "plugin": {
+  },
+  "post-install": {
+  }
+}

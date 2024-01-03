@@ -1,0 +1,6 @@
+core/config/*.json
+.project
+.DS_Store
+Thumbs.db
+*.php~
+.vscode
