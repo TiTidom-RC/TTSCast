@@ -1,14 +1,14 @@
 {
-    "plugins\/TTSCast\/desktop\/php\/TTSCast.php": {
+    "plugins\/ttscast\/desktop\/php\/ttscast.php": {
         
     },
-    "plugins\/TTSCast\/core\/class\/TTSCast.class.php": {
+    "plugins\/ttscast\/core\/class\/ttscast.class.php": {
         
     },
-    "plugins\/TTSCast\/desktop\/js\/TTSCast.js": {
+    "plugins\/ttscast\/desktop\/js\/ttscast.js": {
         
     },
-    "plugins\/TTSCast\/plugin_info\/configuration.php": {
+    "plugins\/ttscast\/plugin_info\/configuration.php": {
         
     }
 }
