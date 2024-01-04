@@ -64,7 +64,7 @@ if (!isConnect()) {
                         <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
                         <option value="picotts">{{PicoTTS (Local)}}</option>
                         <option value="gtranslatetts">{{Google Translate API (Internet)}}</option>
-                        <option value="gcloudtts">{{Google Cloud Text-To-Speech (Credentials JSON & Internet)}}</option>
+                        <option value="gcloudtts">{{Google Cloud Text-To-Speech (Clé & Internet)}}</option>
                     </select>
                 </div>
             </div>
@@ -113,7 +113,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté APRES la lecture (avant de restaurer le volume initial). Valeur de -1000 à 10000 (Défaut = 1000)}}"></i></sup>
                 </label>
                 <div class="col-xs-1">
-                    <input class="configKey form-control" type="number" data-l1key="ttsDelayPostRead" min="-1000" max="10000" placeholder="{{Durée en ms (-1000 <-> 10000)}}" />
+                    <input class="configKey form-control" type="number" data-l1key="ttsDelayPostRead" min="-1000" max="10000" placeholder="{{ms (-1000 <-> 10000)}}" />
                 </div>
                 <div class="col-xs-2">ms (Défaut: 1000)</div>
             </div>
@@ -122,7 +122,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté AVANT la lecture. Permet d'éviter de tronquer le début du fichier. Valeur de 0 à 10000 (Défaut = 300)}}"></i></sup>
                 </label>
                 <div class="col-xs-1">
-                    <input class="configKey form-control" type="number" data-l1key="ttsDelayPreRead" min="0" max="10000" placeholder="{{Durée en ms (0 <-> 10000)}}" />
+                    <input class="configKey form-control" type="number" data-l1key="ttsDelayPreRead" min="0" max="10000" placeholder="{{ms (0 <-> 10000)}}" />
                 </div>
                 <div class="col-xs-1">ms (Défaut: 300)</div>
             </div>
