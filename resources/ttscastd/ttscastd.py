@@ -134,7 +134,7 @@ signal.signal(signal.SIGTERM, handler)
 
 try:
 	jeedom_utils.write_pid(str(_pidfile))
-	jeedom_socket = jeedom_socket(port=socket_port, address=_socket_host)
+	jeedom_socket = jeedom_socket(port=_socket_port, address=_socket_host)
 	listen()
 except Exception as e:
 	logging.error('Fatal error: %s', e)
