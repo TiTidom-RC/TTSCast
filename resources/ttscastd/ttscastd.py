@@ -33,6 +33,7 @@ except ImportError:
 	print("Error: importing module jeedom.jeedom")
 	sys.exit(1)
 
+
 def read_socket():
 	global JEEDOM_SOCKET_MESSAGE
 	if not JEEDOM_SOCKET_MESSAGE.empty():
@@ -42,9 +43,11 @@ def read_socket():
 			logging.error("Invalid apikey from socket: %s", message)
 			return
 		try:
-			print ('read')
+			print('read')
+			# TODO code du démon à la réception d'un message venant de Jeedom
 		except Exception as e:
 			logging.error('Send command to demon error: %s' ,e)
+
 
 def listen():
 	jeedom_socket.open()
@@ -57,9 +60,11 @@ def listen():
 
 # ----------------------------------------------------------------------------
 
+
 def handler(signum=None, frame=None):
 	logging.debug("Signal %i caught, exiting...", int(signum))
 	shutdown()
+
 
 def shutdown():
 	logging.debug("Shutdown")
@@ -72,27 +77,23 @@ def shutdown():
 		jeedom_socket.close()
 	except:
 		pass
-	try:
-		jeedom_serial.close()
-	except:
-		pass
 	logging.debug("Exit 0")
 	sys.stdout.flush()
 	os._exit(0)
 
 # ----------------------------------------------------------------------------
 
+
 _log_level = "error"
 _socket_port = 55009
 _socket_host = 'localhost'
 _device = 'auto'
-_pidfile = '/tmp/demond.pid'
+_pidfile = '/tmp/ttscastd.pid'
 _apikey = ''
 _callback = ''
 _cycle = 0.3
 
-parser = argparse.ArgumentParser(
-    description='Desmond Daemon for Jeedom plugin')
+parser = argparse.ArgumentParser(description='Desmond Daemon for Jeedom plugin')
 parser.add_argument("--device", help="Device", type=str)
 parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
 parser.add_argument("--callback", help="Callback", type=str)
@@ -105,15 +106,15 @@ args = parser.parse_args()
 if args.device:
 	_device = args.device
 if args.loglevel:
-    _log_level = args.loglevel
+	_log_level = args.loglevel
 if args.callback:
-    _callback = args.callback
+	_callback = args.callback
 if args.apikey:
-    _apikey = args.apikey
+	_apikey = args.apikey
 if args.pid:
-    _pidfile = args.pid
+	_pidfile = args.pid
 if args.cycle:
-    _cycle = float(args.cycle)
+	_cycle = float(args.cycle)
 if args.socketport:
 	_socketport = args.socketport
 
@@ -121,7 +122,7 @@ _socket_port = int(_socket_port)
 
 jeedom_utils.set_log_level(_log_level)
 
-logging.info('Start demond')
+logging.info('Start ttscastd')
 logging.info('Log level: %s', _log_level)
 logging.info('Socket port: %s', _socket_port)
 logging.info('Socket host: %s', _socket_host)
@@ -134,7 +135,7 @@ signal.signal(signal.SIGTERM, handler)
 
 try:
 	jeedom_utils.write_pid(str(_pidfile))
-	jeedom_socket = jeedom_socket(port=_socket_port,address=_socket_host)
+	jeedom_socket = jeedom_socket(port=socket_port,address=_socket_host)
 	listen()
 except Exception as e:
 	logging.error('Fatal error: %s', e)
