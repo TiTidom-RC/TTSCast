@@ -205,7 +205,7 @@ if (!isConnect()) {
         });
     });
 
-    $('.form-address').on('change', function() {
+    $('.customform-address').on('change', function() {
         $.ajax({
             type: "POST",
             url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
