@@ -1,7 +1,7 @@
 {
 	"id" : "ttscast",
 	"name" : "TTS Cast",
-	"pluginVersion": "0.3",
+	"pluginVersion": "0.4",
 	"description" : {
 		"fr_FR": "TTS Cast : plugin permettant de générer des phrases TTS et de les faire jouer par un équipement Google (type ChromeCast)"
 	},
@@ -9,7 +9,7 @@
 	"author" : "TiTidom",
 	"require" : "4.2.0",
 	"category" : "multimedia",
-	"hasDependency" : true,
+	"hasDependency" : false,
 	"hasOwnDeamon" : true,
 	"maxDependancyInstallTime" : 0,
 	"changelog" : "https://jeedom.github.io/plugin-template/#language#/changelog",
