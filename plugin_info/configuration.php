@@ -50,7 +50,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-lang">
                 <label class="col-xs-3 control-label">{{Langue TTS}}</label>
-                <div class="col-xs-2">
+                <div class="col-xs-1">
                     <select class="configKey form-control" data-l1key="ttsLang">
                         <option value="fr-FR">{{Français (fr-FR)}}</option>
                         <option value="en-US">{{Anglais (en-US)}}</option>
@@ -59,7 +59,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-xs-3 control-label">{{Moteur TTS}}</label>
-                <div class="col-xs-3">
+                <div class="col-xs-2">
                     <select class="configKey form-control customform-ttsengine" data-l1key="ttsEngine">
                         <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
                         <option value="picotts">{{PicoTTS (Local)}}</option>
@@ -70,7 +70,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudttsvoice">
                 <label class="col-xs-3 control-label">{{Voix Google Cloud Text-to-Speech}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{TESTER}}</a>]</label>
-                <div class="col-xs-3">
+                <div class="col-xs-2">
                     <select class="configKey form-control" data-l1key="gCloudTTSVoice">
                         <option value="fr-FR-Standard-A">French (France) - Standard A Female (fr-FR-Standard-A)</option>
                         <option value="fr-FR-Standard-B">French (France) - Standard B Male (fr-FR-Standard-B)</option>
@@ -95,7 +95,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudttsspeed">
                 <label class="col-xs-3 control-label">{{Vitesse de parole}}</label>
-                <div class="col-xs-1">
+                <div class="col-xs-2">
                     <select class="configKey form-control" data-l1key="gCloudTTSSpeed">
                         <option value="0.8">{{Lent (0.8)}}</option>
                         <option value="1" selected>{{Normal (1.0 - Par défaut)}}</option>
@@ -112,7 +112,7 @@ if (!isConnect()) {
                 <label class="col-xs-3 control-label">{{Delai POST Lecture}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté APRES la lecture (avant de restaurer le volume initial). Valeur de -1000 à 10000 (Défaut = 1000)}}"></i></sup>
                 </label>
-                <div class="col-xs-2">
+                <div class="col-xs-1">
                     <input class="configKey form-control" type="number" data-l1key="ttsDelayPostRead" min="-1000" max="10000" placeholder="{{Durée en ms (-1000 <-> 10000)}}" />
                 </div>
                 <div class="col-xs-2">ms (Défaut: 1000)</div>
