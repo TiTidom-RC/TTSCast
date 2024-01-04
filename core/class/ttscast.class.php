@@ -148,7 +148,7 @@ class ttscast extends eqLogic
             log::add('ttscast', 'warning', '[VERSION] Impossible de décoder le fichier info.json');
         }
         try {
-            $pluginVersion = $data['version'];
+            $pluginVersion = $data['pluginVersion'];
         } catch (\Exception $e) {
             log::add('ttscast', 'warning', '[VERSION] Impossible de récupérer la version du plugin');
         }
