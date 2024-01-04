@@ -104,8 +104,8 @@ def purgeCache(nbDays='0'):
                     logging.debug("[DAEMON][PURG-CACHE] File Removed " + f +
                                   " due to expiration (" + nbDays + " days)")
             # generate_warmupnotif()
-        except Exception:
-            logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age')
+        except Exception as e:
+            logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
             pass
 
 # ----------------------------------------------------------------------------
