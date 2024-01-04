@@ -46,7 +46,7 @@ def read_socket():
 			print('read')
 			# TODO code du démon à la réception d'un message venant de Jeedom
 		except Exception as e:
-			logging.error('Send command to demon error: %s' ,e)
+			logging.error('Send command to daemon error: %s', e)
 
 
 def listen():
