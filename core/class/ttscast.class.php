@@ -122,7 +122,7 @@ class ttscast extends eqLogic
 
         $testAddress = '';
         log::add('ttscast', 'debug', '[testExternalAddress] useExternal :: ' . $useExternal);
-        if ($useExternal) {
+        if (boolval($useExternal)) {
             log::add('ttscast', 'debug', '[testExternalAddress] useExternal :: YES');
             $testAddress .= network::getNetworkAccess('external');
         } else {
