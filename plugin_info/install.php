@@ -1,4 +1,5 @@
 <?php
+
 /* This file is part of Jeedom.
 *
 * Jeedom is free software: you can redistribute it and/or modify
@@ -59,5 +60,5 @@ function ttscast_update() {
 
 // Fonction exécutée automatiquement après la suppression du plugin
 function ttscast_remove() {
+
 }
-?>
