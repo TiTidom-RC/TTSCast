@@ -20,7 +20,7 @@ require_once dirname(__FILE__) . '/../../../core/php/core.inc.php';
 
 // Fonction exécutée automatiquement après l'installation du plugin
 function ttscast_install() {
-    $pluginVersion = googlecast::getPluginVersion();
+    $pluginVersion = ttscast::getPluginVersion();
     config::save('pluginVersion', $pluginVersion, 'ttscast');
 
     // TODO initialiser les valeurs par défaut lors de l'install du plugin
@@ -43,7 +43,7 @@ function ttscast_update() {
         ttscast::deamon_stop();
     }
 
-    $pluginVersion = googlecast::getPluginVersion();
+    $pluginVersion = ttscast::getPluginVersion();
     config::save('pluginVersion', $pluginVersion, 'ttscast');
 
     // TODO intitaliser les valeurs par défaut lors de l'update du plugin
