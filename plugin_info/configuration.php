@@ -40,17 +40,17 @@ if (!isConnect()) {
                     <input class="configKey form-control" data-l1key="socketport" placeholder="55999" />
                 </div>
             </div>
-            <legend><i class="fa fa-volume-up"></i> {{TTS - Text To Speech}}</legend>
+            <legend><i class="fas fa-volume-down"></i> {{TTS - Text To Speech}}</legend>
             <div class="form-group">
-                <label class="col-lg-4 control-label">{{URL Jeedom Externe}}</label>
-                <div class="col-lg-2">
+                <label class="col-xs-3 control-label">{{URL Jeedom Externe}}</label>
+                <div class="col-xs-2">
                     <input type="checkbox" class="configKey customform-address" data-l1key="ttsUseExtAddr" />
                     <span class="addressTestURL"></span>
                 </div>
             </div>
             <div class="form-group customform-lang">
-                <label class="col-lg-4 control-label">{{Langue TTS}}</label>
-                <div class="col-lg-2">
+                <label class="col-xs-3 control-label">{{Langue TTS}}</label>
+                <div class="col-xs-2">
                     <select class="configKey form-control" data-l1key="ttsLang">
                         <option value="fr-FR">{{Français (fr-FR)}}</option>
                         <option value="en-US">{{Anglais (en-US)}}</option>
@@ -58,8 +58,8 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-4 control-label">{{Moteur TTS}}</label>
-                <div class="col-lg-4">
+                <label class="col-xs-3 control-label">{{Moteur TTS}}</label>
+                <div class="col-xs-2">
                     <select class="configKey form-control customform-ttsengine" data-l1key="ttsEngine">
                         <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
                         <option value="picotts">{{PicoTTS (Local)}}</option>
@@ -69,8 +69,8 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudttsvoice">
-                <label class="col-lg-4 control-label">{{Voix Google Cloud Text-to-Speech}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{TESTER}}</a>]</label>
-                <div class="col-lg-4">
+                <label class="col-xs-3 control-label">{{Voix Google Cloud Text-to-Speech}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{TESTER}}</a>]</label>
+                <div class="col-xs-2">
                     <select class="configKey form-control" data-l1key="gCloudTTSVoice">
                         <option value="fr-FR-Standard-A">French (France) - Standard A Female (fr-FR-Standard-A)</option>
                         <option value="fr-FR-Standard-B">French (France) - Standard B Male (fr-FR-Standard-B)</option>
@@ -94,8 +94,8 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudttsspeed">
-                <label class="col-lg-4 control-label">{{Vitesse de parole}}</label>
-                <div class="col-lg-2">
+                <label class="col-xs-3 control-label">{{Vitesse de parole}}</label>
+                <div class="col-xs-2">
                     <select class="configKey form-control" data-l1key="gCloudTTSSpeed">
                         <option value="0.8">{{Lent (0.8)}}</option>
                         <option value="1" selected>{{Normal (1.0 - Par défaut)}}</option>
@@ -109,46 +109,46 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-4 control-label">{{Delai POST Lecture}}
+                <label class="col-xs-3 control-label">{{Delai POST Lecture}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté APRES la lecture (avant de restaurer le volume initial). Valeur de -1000 à 10000 (Défaut = 1000)}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-xs-2">
                     <input class="configKey form-control" type="number" data-l1key="ttsDelayPostRead" min="-1000" max="10000" placeholder="{{Durée en ms (-1000 <-> 10000)}}" />
                 </div>
-                <div class="col-lg-2">ms (Défaut: 1000)</div>
+                <div class="col-xs-2">ms (Défaut: 1000)</div>
             </div>
             <div class="form-group">
-                <label class="col-lg-4 control-label">{{Délai PRE Lecture}}
+                <label class="col-xs-3 control-label">{{Délai PRE Lecture}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté AVANT la lecture. Permet d'éviter de tronquer le début du fichier. Valeur de 0 à 10000 (Défaut = 300)}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-xs-2">
                     <input class="configKey form-control" type="number" data-l1key="ttsDelayPreRead" min="0" max="10000" placeholder="{{Durée en ms (0 <-> 10000)}}" />
                 </div>
-                <div class="col-lg-2">ms (Défaut: 300)</div>
+                <div class="col-xs-2">ms (Défaut: 300)</div>
             </div>
             <div class="form-group">
-                <label class="col-lg-4 control-label">{{Ne PAS utiliser le cache (Déconseillé !)}}
+                <label class="col-xs-3 control-label">{{Ne PAS utiliser le cache (Déconseillé !)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Génère le fichier TTS à chaque demande. Il est vivement conseillé de ne PAS cocher cette case, sauf en cas de tests}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-xs-2">
                     <input type="checkbox" class="configKey" data-l1key="ttsDisableCache" />
                 </div>
-                <div class="col-lg-2">
+                <div class="col-xs-2">
                     <a class="btn btn-warning customclass-purgettscache">{{VIDER le cache}}</a>
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-4 control-label">{{Durée de conservation du cache (jours)}}
+                <label class="col-xs-3 control-label">{{Durée de conservation du cache (jours)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Le cache sera purgé automatiquement tous les X (0 à 90) jours via le cron daily}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-xs-2">
                     <input class="configKey form-control" type="number" data-l1key="ttsPurgeCacheDays" min="0" max="90" placeholder="{{Nombre de jours}}" />
                 </div>
             </div>
-            <legend><i class="fa fa-envelope-o"></i> {{Notifications}}</legend>
+            <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
             <div class="form-group">
-                <label class="col-lg-4 control-label">{{Désactiver les notifications pour les nouveaux GoogleCast}}</label>
-                <div class="col-lg-2">
+                <label class="col-xs-3 control-label">{{Désactiver les notifications pour les nouveaux GoogleCast}}</label>
+                <div class="col-xs-2">
                     <input type="checkbox" class="configKey" data-l1key="ttsDisableNotifNewCast" />
                 </div>
             </div>
