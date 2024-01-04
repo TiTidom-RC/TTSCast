@@ -112,12 +112,12 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-xs-3 control-label">{{Delai POST Lecture}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté APRES la lecture (avant de restaurer le volume initial). Valeur de -1000 à 10000 (Défaut = 1000)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté APRES la lecture (avant de restaurer le volume initial). Valeur de -1000 à 10000 (Défaut = 1300)}}"></i></sup>
                 </label>
                 <div class="col-xs-1">
                     <input class="configKey form-control" type="number" data-l1key="ttsDelayPostRead" min="-1000" max="10000" placeholder="{{ms (-1000 <-> 10000)}}" />
                 </div>
-                <div class="col-xs-2">ms (Défaut: 1000)</div>
+                <div class="col-xs-2">ms (Défaut: 1300)</div>
             </div>
             <div class="form-group">
                 <label class="col-xs-3 control-label">{{Délai PRE Lecture}}
