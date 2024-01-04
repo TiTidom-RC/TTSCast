@@ -211,7 +211,7 @@ if (!isConnect()) {
             url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
             data: {
                 action: "testExternalAddress",
-                value: $('.form-address').prop('checked')
+                value: $('.customform-address').prop('checked')
             },
             dataType: 'json',
             error: function(request, status, error) {
