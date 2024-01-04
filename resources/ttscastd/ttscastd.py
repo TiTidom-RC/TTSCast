@@ -149,7 +149,8 @@ parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="Apikey", type=str)
 parser.add_argument("--cycle", help="Cycle to send event", type=str)
 parser.add_argument("--pid", help="Pid file", type=str)
-parser.add_argument("--socketport", help="Port for Zigbee server", type=str)
+parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
+
 args = parser.parse_args()
 
 if args.device:
@@ -166,8 +167,7 @@ if args.cycle:
 	_cycle = float(args.cycle)
 if args.socketport:
 	_socket_port = args.socketport
-
-_socket_port = int(_socket_port)
+	_socket_port = int(_socket_port)
 
 jeedom_utils.set_log_level(_log_level)
 
