@@ -132,7 +132,7 @@ class ttscast extends eqLogic
         return $testAddress . "/plugins/ttscast/data/media/bigben1.mp3";
     }
 
-    public static function purgeTTSCache($days=0) {
+    public static function purgeTTSCache($days="0") {
         $value = array('cmd' => 'purgettscache', 'days' => $days);
         self::sendToDaemon($value);
     }
@@ -173,7 +173,7 @@ class ttscast extends eqLogic
         try {
             $nbdays = config::byKey('ttsPurgeCacheDays', 'ttscast', '10');
             if ($nbdays != '') {
-                ttscast::purgeTTSCache(intval($nbdays));
+                ttscast::purgeTTSCache($nbdays);
             }
         } catch (Exception $e) {
             log::add('ttscast', 'error', '[Cron Daily] Purge Cache ERROR :: ' . $e->getMessage());
