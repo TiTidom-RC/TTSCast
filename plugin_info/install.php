@@ -60,3 +60,4 @@ function ttscast_update() {
 // Fonction exécutée automatiquement après la suppression du plugin
 function ttscast_remove() {
 }
+?>
