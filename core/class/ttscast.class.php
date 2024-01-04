@@ -122,11 +122,11 @@ class ttscast extends eqLogic
 
         $testAddress = '';
         log::add('ttscast', 'debug', '[testExternalAddress] useExternal :: ' . $useExternal);
-        if (boolval($useExternal)) {
-            log::add('ttscast', 'debug', '[testExternalAddress] useExternal :: YES');
+        if ($useExternal === 1 || $useExternal === true || $useExternal === 'true') {
+            // log::add('ttscast', 'debug', '[testExternalAddress] useExternal :: YES');
             $testAddress .= network::getNetworkAccess('external');
         } else {
-            log::add('ttscast', 'debug', '[testExternalAddress] useExternal :: NO');
+            // log::add('ttscast', 'debug', '[testExternalAddress] useExternal :: NO');
             $testAddress .= network::getNetworkAccess('internal');
         }
         return $testAddress . "/plugins/ttscast/data/media/bigben1.mp3";
