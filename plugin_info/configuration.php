@@ -219,7 +219,7 @@ if (!isConnect()) {
                 handleAjaxError(request, status, error);
             },
             success: function(data) {
-                var spanContent = '&nbsp; &nbsp; &nbsp;<a href="' + data.result + '" target="_blank">[TEST]</a>';
+                var spanContent = ' <a href="' + data.result + '" target="_blank">[TEST]</a>';
                 $('.addressTestURL').html(spanContent);
             }
         });

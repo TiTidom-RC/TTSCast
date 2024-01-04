@@ -116,10 +116,12 @@ class ttscast extends eqLogic
     public static function testExternalAddress($useExternal=NULL)
     {
         if (is_null($useExternal)) {
+            log::add('ttscast', 'debug', '[testExternalAddress] useExternal is NULL :: ' . $useExternal);
             $useExternal = config::byKey('ttsUseExtAddr', 'ttscast');
         }
 
         $testAddress = '';
+        log::add('ttscast', 'debug', '[testExternalAddress] useExternal :: ' . $useExternal);
         if ($useExternal) {
             $testAddress .= network::getNetworkAccess('external');
         } else {
