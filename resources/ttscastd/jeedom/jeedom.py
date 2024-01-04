@@ -158,7 +158,7 @@ class jeedom_utils():
 
 	@staticmethod
 	def stripped(str):
-		return "".join([i for i in str if i in range(32, 127)])
+		return "".join([i for i in str if ord(i) in range(32, 127)])
 
 	@staticmethod
 	def ByteToHex(byteStr):

@@ -49,11 +49,12 @@ MEDIA_FULLPATH = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os
 
 # ***** END GLOBALS VAR *****
 
+
 def read_socket():
 	global JEEDOM_SOCKET_MESSAGE
 	if not JEEDOM_SOCKET_MESSAGE.empty():
 		logging.debug("[DAEMON][READ-SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
-		message = json.loads(jeedom_utils.stripped(JEEDOM_SOCKET_MESSAGE.get()))
+		message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
 		if message['apikey'] != _apikey:
 			logging.error("[DAEMON][READ-SOCKET] Invalid apikey from socket :: %s", message)
 			return
