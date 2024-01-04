@@ -94,11 +94,13 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudttsspeed">
-                <label class="col-xs-3 control-label">{{Vitesse de parole}}</label>
-                <div class="col-xs-2">
+                <label class="col-xs-3 control-label">{{Vitesse de parole}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Valeur par défaut = Normal (1.0)}}"></i></sup>
+                </label>
+                <div class="col-xs-1">
                     <select class="configKey form-control" data-l1key="gCloudTTSSpeed">
                         <option value="0.8">{{Lent (0.8)}}</option>
-                        <option value="1" selected>{{Normal (1.0 - Par défaut)}}</option>
+                        <option value="1" selected>{{Normal (1.0)}}</option>
                         <option value="1.2">{{Normal + (1.2)}}</option>
                         <option value="1.25">{{Normal ++ (1.25)}}</option>
                         <option value="1.3">{{Rapide (1.3)}}</option>
