@@ -81,8 +81,9 @@ def listen():
 # ----------------------------------------------------------------------------
 
 
-def purgeCache(nbDays=0):
-    if nbDays == 0:  # clean entire directory including containing folder
+def purgeCache(nbDays='0'):
+    if nbDays == '0':  # clean entire directory including containing folder
+        logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
         try:
             if os.path.exists(TTS_CACHEFOLDERTMP):
                 shutil.rmtree(TTS_CACHEFOLDERTMP)
@@ -97,10 +98,10 @@ def purgeCache(nbDays=0):
             for f in os.listdir(path):
                 logging.debug("[DAEMON][PURGE-CACHE] Age for " + f + " is " + str(
                     int((now - (os.stat(os.path.join(path, f)).st_mtime)) / 86400)) + " days")
-                if os.stat(os.path.join(path, f)).st_mtime < (now - (nbDays * 86400)):
+                if os.stat(os.path.join(path, f)).st_mtime < (now - (int(nbDays) * 86400)):
                     os.remove(os.path.join(path, f))
                     logging.debug("[DAEMON][PURG-CACHE] File Removed " + f +
-                                  " due to expiration (" + str(nbDays) + " days)")
+                                  " due to expiration (" + nbDays + " days)")
             # generate_warmupnotif()
         except Exception:
             logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age')
