@@ -137,6 +137,25 @@ class ttscast extends eqLogic
         self::sendToDaemon($value);
     }
 
+    public static function getPluginVersion()
+    {
+        $pluginVersion = 'N/A';
+        if (!file_exists(dirname(__FILE__) . '/../../plugin_info/info.json')) {
+            log::add('ttscast', 'warning', '[VERSION] fichier info.json manquant');
+        }
+        $data = json_decode(file_get_contents(dirname(__FILE__) . '/../../plugin_info/info.json'), true);
+        if (!is_array($data)) {
+            log::add('ttscast', 'warning', '[VERSION] Impossible de décoder le fichier info.json');
+        }
+        try {
+            $pluginVersion = $data['version'];
+        } catch (\Exception $e) {
+            log::add('ttscast', 'warning', '[VERSION] Impossible de récupérer la version du plugin');
+        }
+
+        return $pluginVersion;
+    }
+
     /*
      * Fonction exécutée automatiquement toutes les minutes par Jeedom
     public static function cron() {}

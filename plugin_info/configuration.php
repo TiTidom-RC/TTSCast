@@ -52,8 +52,8 @@ if (!isConnect()) {
                 <label class="col-lg-4 control-label">{{Langue TTS}}</label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsLang">
-                        <option value="fr-FR">{{Français}}</option>
-                        <option value="en-US">{{Anglais - US}}</option>
+                        <option value="fr-FR">{{Français (fr-FR)}}</option>
+                        <option value="en-US">{{Anglais (en-US)}}</option>
                     </select>
                 </div>
             </div>
