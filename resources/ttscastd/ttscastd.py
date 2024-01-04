@@ -85,9 +85,8 @@ def shutdown():
 
 
 _log_level = "error"
-_socket_port = 55009
+_socket_port = 55999
 _socket_host = 'localhost'
-_device = 'auto'
 _pidfile = '/tmp/ttscastd.pid'
 _apikey = ''
 _callback = ''
@@ -116,7 +115,7 @@ if args.pid:
 if args.cycle:
 	_cycle = float(args.cycle)
 if args.socketport:
-	_socketport = args.socketport
+	_socket_port = args.socketport
 
 _socket_port = int(_socket_port)
 
@@ -128,14 +127,14 @@ logging.info('Socket port: %s', _socket_port)
 logging.info('Socket host: %s', _socket_host)
 logging.info('PID file: %s', _pidfile)
 logging.info('Apikey: %s', _apikey)
-logging.info('Device: %s', _device)
+logging.info('CallBack: %s', _callback)
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 
 try:
 	jeedom_utils.write_pid(str(_pidfile))
-	jeedom_socket = jeedom_socket(port=socket_port,address=_socket_host)
+	jeedom_socket = jeedom_socket(port=socket_port, address=_socket_host)
 	listen()
 except Exception as e:
 	logging.error('Fatal error: %s', e)
