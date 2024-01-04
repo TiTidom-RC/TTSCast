@@ -29,6 +29,14 @@ try {
     */
     ajax::init();
 
+    if (init('action') == 'testExternalAddress') {
+        ajax::success(ttscast::testExternalAddress(init('value')));
+    }
+
+    if (init('action') == 'purgeTTSCache') {
+		ajax::success(ttscast::purgeTTSCache());
+	}
+
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
     /*     * *********Catch exeption*************** */
 } catch (Exception $e) {

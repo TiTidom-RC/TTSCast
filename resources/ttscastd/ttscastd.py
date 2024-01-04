@@ -14,6 +14,7 @@
 # along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import shutil
 import string
 import sys
 import os
@@ -33,20 +34,39 @@ except ImportError:
 	print("Error: importing module jeedom.jeedom")
 	sys.exit(1)
 
+# ***** GLOBALS VAR *****
+
+KNOWN_DEVICES = {}
+NOWPLAYING_DEVICES = {}
+GCAST_DEVICES = {}
+
+TTS_CACHEFOLDER = 'data/cache'
+TTS_CACHEFOLDERWEB = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), TTS_CACHEFOLDER))
+TTS_CACHEFOLDERTMP = os.path.join('/tmp/jeedom/', 'ttscast_cache')
+
+MEDIA_FOLDER = 'data/media'
+MEDIA_FULLPATH = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), MEDIA_FOLDER))
+
+# ***** END GLOBALS VAR *****
 
 def read_socket():
 	global JEEDOM_SOCKET_MESSAGE
 	if not JEEDOM_SOCKET_MESSAGE.empty():
-		logging.debug("Message received in socket JEEDOM_SOCKET_MESSAGE")
+		logging.debug("[DAEMON][READ-SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
 		message = json.loads(jeedom_utils.stripped(JEEDOM_SOCKET_MESSAGE.get()))
 		if message['apikey'] != _apikey:
-			logging.error("Invalid apikey from socket: %s", message)
+			logging.error("[DAEMON][READ-SOCKET] Invalid apikey from socket :: %s", message)
 			return
 		try:
-			print('read')
-			# TODO code du démon à la réception d'un message venant de Jeedom
+			# TODO ***** Gestion des messages reçus de Jeedom *****
+			if message['cmd'] == 'purgettscache':
+				logging.debug('[DAEMON][SOCKET-READ] Purge TTS Cache')
+				if 'days' in message:
+					purgeCache(int(message['days']))
+				else:
+					purgeCache()
 		except Exception as e:
-			logging.error('Send command to daemon error: %s', e)
+			logging.error('[DAEMON][READ-SOCKET] Send command to daemon error :: %s', e)
 
 
 def listen():
@@ -57,6 +77,34 @@ def listen():
 			read_socket()
 	except KeyboardInterrupt:
 		shutdown()
+
+# ----------------------------------------------------------------------------
+
+
+def purgeCache(nbDays=0):
+    if nbDays == 0:  # clean entire directory including containing folder
+        try:
+            if os.path.exists(TTS_CACHEFOLDERTMP):
+                shutil.rmtree(TTS_CACHEFOLDERTMP)
+            # generate_warmupnotif()
+        except Exception as e:
+            logging.warning('[DAEMON][PURGE-CACHE]Error while cleaning cache entirely (nbDays = 0) :: %s', e)
+            pass
+    else:  # clean only files older than X days
+        now = time.time()
+        path = TTS_CACHEFOLDERTMP
+        try:
+            for f in os.listdir(path):
+                logging.debug("[DAEMON][PURGE-CACHE] Age for " + f + " is " + str(
+                    int((now - (os.stat(os.path.join(path, f)).st_mtime)) / 86400)) + " days")
+                if os.stat(os.path.join(path, f)).st_mtime < (now - (nbDays * 86400)):
+                    os.remove(os.path.join(path, f))
+                    logging.debug("[DAEMON][PURG-CACHE] File Removed " + f +
+                                  " due to expiration (" + str(nbDays) + " days)")
+            # generate_warmupnotif()
+        except Exception:
+            logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age')
+            pass
 
 # ----------------------------------------------------------------------------
 
@@ -82,6 +130,8 @@ def shutdown():
 	os._exit(0)
 
 # ----------------------------------------------------------------------------
+
+# ***** PROGRAMME PRINCIPAL *****
 
 
 _log_level = "error"
@@ -121,13 +171,13 @@ _socket_port = int(_socket_port)
 
 jeedom_utils.set_log_level(_log_level)
 
-logging.info('Start ttscastd')
-logging.info('Log level: %s', _log_level)
-logging.info('Socket port: %s', _socket_port)
-logging.info('Socket host: %s', _socket_host)
-logging.info('PID file: %s', _pidfile)
-logging.info('Apikey: %s', _apikey)
-logging.info('CallBack: %s', _callback)
+logging.info('[DAEMON][MAIN] Start ttscastd')
+logging.info('[DAEMON][MAIN] Log level: %s', _log_level)
+logging.info('[DAEMON][MAIN] Socket port: %s', _socket_port)
+logging.info('[DAEMON][MAIN] Socket host: %s', _socket_host)
+logging.info('[DAEMON][MAIN] PID file: %s', _pidfile)
+# logging.info('[DAEMON][MAIN] Apikey: %s', _apikey)
+logging.info('[DAEMON][MAIN] CallBack: %s', _callback)
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
@@ -137,6 +187,6 @@ try:
 	jeedom_socket = jeedom_socket(port=_socket_port, address=_socket_host)
 	listen()
 except Exception as e:
-	logging.error('Fatal error: %s', e)
+	logging.error('[DAEMON][MAIN] Fatal error: %s', e)
 	logging.info(traceback.format_exc())
 	shutdown()

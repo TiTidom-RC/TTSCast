@@ -63,9 +63,9 @@ class ttscast extends eqLogic
         $cmd = 'python3 ' . $path . '/ttscastd.py';
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55999'); // TODO Modifier le numéro de port du démon
-        $cmd .= ' --callback ' . network::getNetworkAccess('internal', 'http:127.0.0.1:port:comp') . '/plugins/ttscast/core/php/jeettscast.php'; // chemin de la callback url à modifier (voir ci-dessous)
-        $cmd .= ' --apikey ' . jeedom::getApiKey(__CLASS__); // l'apikey pour authentifier les échanges suivants
-        $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // Et on précise le chemin vers le pid file (ne PAS modifier)
+        $cmd .= ' --callback ' . network::getNetworkAccess('internal', 'http:127.0.0.1:port:comp') . '/plugins/ttscast/core/php/jeettscast.php'; // chemin du callback
+        $cmd .= ' --apikey ' . jeedom::getApiKey(__CLASS__);
+        $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         log::add(__CLASS__, 'info', 'Lancement du démon');
         $result = exec($cmd . ' >> ' . log::getPathToLog('ttscast_daemon') . ' 2>&1 &');
         $i = 0;
@@ -96,16 +96,41 @@ class ttscast extends eqLogic
     }
 
     public static function sendToDaemon($params) {
-        $deamon_info = self::deamon_info();
-        if ($deamon_info['state'] != 'ok') {
-            throw new Exception("Le démon n'est pas démarré");
+        try {
+            $deamon_info = self::deamon_info();
+            if ($deamon_info['state'] != 'ok') {
+                throw new Exception("Le démon n'est pas démarré");
+            }
+            $params['apikey'] = jeedom::getApiKey(__CLASS__);
+            $payLoad = json_encode($params);
+            $socket = socket_create(AF_INET, SOCK_STREAM, 0);
+            socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55999')); // TODO Port du plugin à modifier
+            socket_write($socket, $payLoad, strlen($payLoad));
+            socket_close($socket);
+        } catch (Exception $e) {
+            log::add('ttscast', 'debug', '[sendToDaemon] ERROR :: ' . $e->getMessage());
+            return false;
         }
-        $params['apikey'] = jeedom::getApiKey(__CLASS__);
-        $payLoad = json_encode($params);
-        $socket = socket_create(AF_INET, SOCK_STREAM, 0);
-        socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55999')); // TODO Port du plugin à modifier
-        socket_write($socket, $payLoad, strlen($payLoad));
-        socket_close($socket);
+    }
+
+    public static function testExternalAddress($useExternal=NULL)
+    {
+        if (is_null($useExternal)) {
+            $useExternal = config::byKey('ttsUseExtAddr', 'ttscast');
+        }
+
+        $testAddress = '';
+        if ($useExternal) {
+            $testAddress .= network::getNetworkAccess('external');
+        } else {
+            $testAddress .= network::getNetworkAccess('internal');
+        }
+        return $testAddress . "/plugins/ttscast/data/media/bigben1.mp3";
+    }
+
+    public static function purgeTTSCache($days=0) {
+        $value = array('cmd' => 'purgettscache', 'days' => $days);
+        self::sendToDaemon($value);
     }
 
     /*
@@ -138,10 +163,19 @@ class ttscast extends eqLogic
     public static function cronHourly() {}
     */
 
-    /*
-     * Fonction exécutée automatiquement tous les jours par Jeedom
-    public static function cronDaily() {}
-    */
+    
+    // Fonction exécutée automatiquement tous les jours par Jeedom
+    public static function cronDaily() {
+        try {
+            $nbdays = config::byKey('ttsPurgeCacheDays', 'ttscast', '10');
+            if ($nbdays != '') {
+                ttscast::purgeTTSCache(intval($nbdays));
+            }
+        } catch (Exception $e) {
+            log::add('ttscast', 'error', '[Cron Daily] Purge Cache ERROR :: ' . $e->getMessage());
+        }
+    }
+    
 
     /*
      * Permet de déclencher une action avant modification d'une variable de configuration du plugin
