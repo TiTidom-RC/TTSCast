@@ -209,7 +209,7 @@ if (!isConnect()) {
     $('.customform-ttsengine').on('change', ttsEngineSelect);
 
     $('.customclass-resetapikey').on('click', function () {
-        const fileName = $('.custominput-apikey').value;
+        const fileName = $('.custominput-apikey').val();
         $.ajax({
             type: "POST",
             url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
