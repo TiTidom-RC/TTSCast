@@ -220,7 +220,7 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: data.result.result, // '{{Upload Clé API :: OK}}',
+                    message: '{{Upload Clé API OK :: }}' + data.result.result,
                     level: 'success'
                 });
                 $('#gCloudAPIKey').value = data.result.result;
