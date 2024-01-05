@@ -135,6 +135,32 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
             logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
     else:
         logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+        
+    res = castGoogleHome(filepath, ttsGoogleName)
+    logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+
+
+def castGoogleHome(urltoplay, googleName):
+    if googleName != '':
+        logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
+        chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[googleName])
+        if not chromecasts:
+            logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
+            return False        
+        cast = list(chromecasts)[0]
+        cast.wait()
+        logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+        app_name = "default_media_receiver"
+        app_data = {"media_id": urltoplay}
+        
+        pychromecast.quick_play.quick_play(cast, app_name, app_data)
+        logging.debug('[DAEMON][Cast] Etat Google Home (IDLE ?) :: %s', cast.is_idle)
+        time.sleep(10)
+        cast.quit_app()
+        browser.stop_discovery()
+    else:
+        logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome absent)')
+        return False
 
 
 def purgeCache(nbDays='0'):
