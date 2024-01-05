@@ -50,6 +50,7 @@ GCAST_DEVICES = {}
 TTS_CACHEFOLDER = 'data/cache'
 TTS_CACHEFOLDERWEB = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), TTS_CACHEFOLDER))
 TTS_CACHEFOLDERTMP = os.path.join('/tmp/jeedom/', 'ttscast_cache')
+TTS_WEBSRV = ''
 
 MEDIA_FOLDER = 'data/media'
 MEDIA_FULLPATH = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), MEDIA_FOLDER))
@@ -136,8 +137,9 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
             logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
     else:
         logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
-        
-    res = castGoogleHome(filepath, ttsGoogleName)
+    
+    urlFileToPlay = os.path.join(TTS_WEBSRV, '/plugins/ttscast/media/cache', filename)
+    res = castGoogleHome(urlFileToPlay, ttsGoogleName)
     logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
 
@@ -233,6 +235,7 @@ parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
 parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="Apikey", type=str)
 parser.add_argument("--cycle", help="Cycle to send event", type=str)
+parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
 parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 
@@ -252,6 +255,8 @@ if args.cycle:
     _cycle = float(args.cycle)
 if args.socketport:
     _socket_port = int(args.socketport)
+if args.ttsweb:
+    TTS_WEBSRV = args.ttsweb
 
 jeedom_utils.set_log_level(_log_level)
 
@@ -263,6 +268,7 @@ logging.info('[DAEMON][MAIN] Cycle: %s', _cycle)
 logging.info('[DAEMON][MAIN] PID file: %s', _pidfile)
 logging.info('[DAEMON][MAIN] Apikey: %s', "***************")
 logging.info('[DAEMON][MAIN] CallBack: %s', _callback)
+logging.info('[DAEMON][MAIN] Jeedom WebSrv: %s', TTS_WEBSRV)
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)

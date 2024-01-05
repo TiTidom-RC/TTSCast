@@ -94,6 +94,11 @@ class ttscast extends eqLogic
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55999'); // TODO Modifier le numéro de port du démon
         $cmd .= ' --cycle ' . config::byKey('cycle', __CLASS__, '1');
         $cmd .= ' --callback ' . network::getNetworkAccess('internal', 'http:127.0.0.1:port:comp') . '/plugins/ttscast/core/php/jeettscast.php'; // chemin du callback
+        if (config::byKey('ttsUseExtAddr', 'ttscast')==1) {
+            $cmd .= ' --ttsweb ' . network::getNetworkAccess('external');
+        } else {
+            $cmd .= ' --ttsweb ' . network::getNetworkAccess('internal');
+        }
         $cmd .= ' --apikey ' . jeedom::getApiKey(__CLASS__);
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         log::add(__CLASS__, 'info', 'Lancement du démon');
