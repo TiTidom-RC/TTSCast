@@ -88,8 +88,8 @@ class ttscast extends eqLogic
             throw new Exception(__('Veuillez vérifier la configuration', __FILE__));
         }
 
-        $path = realpath(dirname(__FILE__) . '/../../resources/ttscastd');
-        $cmd = self::PYTHON3_PATH . ' ' . $path . '/ttscastd.py';
+        $path = realpath(__DIR__ . '/../../resources/ttscastd');
+        $cmd = self::PYTHON3_PATH . " {$path}/ttscastd.py";
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55999'); // TODO Modifier le numéro de port du démon
         $cmd .= ' --cycle ' . config::byKey('cycle', __CLASS__, '1');

@@ -46,10 +46,10 @@ function ttscast_install() {
 
 // Fonction exécutée automatiquement après la mise à jour du plugin
 function ttscast_update() {
-    $daemonInfo = ttscast::deamon_info();
+    /* $daemonInfo = ttscast::deamon_info();
     if ($daemonInfo['state'] == 'ok') {
         ttscast::deamon_stop();
-    }
+    } */
 
     $pluginVersion = ttscast::getPluginVersion();
     config::save('pluginVersion', $pluginVersion, 'ttscast');
@@ -85,7 +85,8 @@ function ttscast_update() {
             message::add('ttscast', __('Cette mise à jour nécessite la réinstallation des dépendances même si elles sont marquées comme OK', __FILE__));
         }
     }
-    ttscast::deamon_start();
+
+    // ttscast::deamon_start();
 }
 
 // Fonction exécutée automatiquement après la suppression du plugin
