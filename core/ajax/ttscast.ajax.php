@@ -56,7 +56,7 @@ try {
       
         $filepath = __DIR__ . "/../../core/config/{$_FILES['fileAPIKey']['name']}";
         log::add('ttscast', 'debug', "[UPLOAD][APIKEY] filepath: {$filepath}");
-        file_put_contents($filepath, file_get_contents($_FILES['file']['tmp_name']));
+        file_put_contents($filepath, file_get_contents($_FILES['fileAPIKey']['tmp_name']));
         if (!file_exists($filepath)) {
             throw new \Exception(__('Impossible de sauvegarder l\'image', __FILE__));
         }
