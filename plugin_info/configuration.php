@@ -70,7 +70,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudttsvoice">
                 <label class="col-lg-3 control-label">{{Voix Google Cloud Text-to-Speech}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{TESTER}}</a>]</label>
-                <div class="col-lg-3">
+                <div class="col-lg-4">
                     <select class="configKey form-control" data-l1key="gCloudTTSVoice">
                         <option value="fr-FR-Standard-A">French (France) - Standard A Female (fr-FR-Standard-A)</option>
                         <option value="fr-FR-Standard-B">French (France) - Standard B Male (fr-FR-Standard-B)</option>
@@ -163,7 +163,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
             <div class="form-group">
-                <label class="col-lg-4 control-label">{{Désactiver les notifications pour les nouveaux GoogleCast}}</label>
+                <label class="col-lg-3 control-label">{{Désactiver les notifications pour les nouveaux GoogleCast}}</label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsDisableNotifNewCast" />
                 </div>
