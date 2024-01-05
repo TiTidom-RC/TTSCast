@@ -231,7 +231,7 @@ if (!isConnect()) {
                 jeedom.config.save({ 
                     plugin: 'ttscast', 
                     configuration: { 
-                        gCloudAPIKey: $('.custominput-apikey').val()
+                        gCloudAPIKey: ''
                     },
                     error: function (error) {
                         jeedomUtils.showAlert({ message: error.message, level: 'danger' });
