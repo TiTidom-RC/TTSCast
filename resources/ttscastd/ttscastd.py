@@ -139,8 +139,6 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
     else:
         logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
     
-    logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-    
     urlFileToPlay = os.path.join(ttsSrvWeb, '/plugins/ttscast/media/cache', filename)
     logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
     res = castGoogleHome(urlFileToPlay, ttsGoogleName)
