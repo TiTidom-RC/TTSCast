@@ -223,14 +223,24 @@ if (!isConnect()) {
             },
             success: function (data) {
                 if (data.state != 'ok') {
-                    $('#modal_alert').showAlert({ message: data.result, level: 'danger' });
+                    $('#div_alert').showAlert({ message: data.result, level: 'danger' });
                     return;
                 }
-                $('#div_alert').showAlert({
-                    message: '{{Reset Clé API (OK) :: }}' + data.result,
-                    level: 'success'
+                $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
+                // $('.custominput-apikey').val('');
+                jeedom.config.save({ 
+                    plugin: eqType, 
+                    configuration: { 
+                        gCloudAPIKey: $('.custominput-apikey').val()
+                    },
+                    error: function (error) {
+                        jeedomUtils.showAlert({ message: error.message, level: 'danger' });
+                        return;
+                    },
+                    success: function () {
+                        $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: Sauvegarde OK}}', level: 'success' });
+                    }
                 });
-                $('.custominput-apikey').val('');
             }
         });
     });
