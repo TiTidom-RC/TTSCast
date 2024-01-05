@@ -104,6 +104,7 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
     logging.debug('[DAEMON][TestTTS] Check des répertoires')
     cachePath = TTS_CACHEFOLDERWEB
     symLinkPath = TTS_CACHEFOLDERTMP
+    ttsSrvWeb = TTS_WEBSRV
     try:
         os.stat(symLinkPath)
     except Exception:
@@ -138,7 +139,9 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
     else:
         logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
     
-    urlFileToPlay = os.path.join(TTS_WEBSRV, '/plugins/ttscast/media/cache', filename)
+    logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+    
+    urlFileToPlay = os.path.join(ttsSrvWeb, '/plugins/ttscast/media/cache', filename)
     logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
     res = castGoogleHome(urlFileToPlay, ttsGoogleName)
     logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
@@ -231,7 +234,6 @@ _callback = ''
 _cycle = 0.3
 
 parser = argparse.ArgumentParser(description='Desmond Daemon for Jeedom plugin')
-parser.add_argument("--device", help="Device", type=str)
 parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
 parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="Apikey", type=str)
