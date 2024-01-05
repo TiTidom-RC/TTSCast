@@ -220,7 +220,7 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: 'Upload Clé API OK ::' . data.result,
+                    message: 'Upload Clé API OK ::' . data.result.value,
                     level: 'success'
                 });
             // $('#img_device').value(data.result.result);
