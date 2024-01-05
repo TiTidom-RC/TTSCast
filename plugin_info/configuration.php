@@ -168,7 +168,7 @@ if (!isConnect()) {
                 <div class="col-lg-3">
                     <div class="input-group">
                         <input class="configKey form-control roundedLeft custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
-                        <span class="configKey input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default" data-action="resetAPIKey" title="{{Réinitialiser la clé API}}"><i class="fas fa-undo"></i></a></span>
+                        <span class="input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default" data-action="resetAPIKey" title="{{Réinitialiser la clé API}}"><i class="fas fa-undo"></i></a></span>
                     </div>
                 </div>
                 <div class="col-lg-2">      
