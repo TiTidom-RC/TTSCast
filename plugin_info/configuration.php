@@ -166,7 +166,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton UPLOAD}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
-                    <input class="configKey form-control custominput-apikey" type="text" data-l1key="gCloudAPIKey" />
+                    <input class="configKey form-control custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
                 </div>
                 <div class="col-lg-2">
                     <a class="btn btn-primary btn-file">
