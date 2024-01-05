@@ -54,6 +54,8 @@ TTS_CACHEFOLDERTMP = os.path.join('/tmp/jeedom/', 'ttscast_cache')
 TTS_WEBSRVCACHE = ''
 TTS_WEBSRVMEDIA = ''
 
+GCLOUDAPIKEY = ''
+
 MEDIA_FOLDER = 'data/media'
 MEDIA_FULLPATH = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), MEDIA_FOLDER))
 
@@ -118,7 +120,7 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
         os.symlink(symLinkPath, cachePath)
     
     logging.debug('[DAEMON][TestTTS] Import de la clé API')
-    credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FULLPATH, 'jeedom-speech-207616-1374b0abe951.json'))
+    credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FULLPATH, GCLOUDAPIKEY))
 
     logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
     raw_filename = ttsText + "|" + ttsVoiceName
@@ -243,7 +245,8 @@ _cycle = 0.3
 parser = argparse.ArgumentParser(description='Desmond Daemon for Jeedom plugin')
 parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
 parser.add_argument("--callback", help="Callback", type=str)
-parser.add_argument("--apikey", help="Apikey", type=str)
+parser.add_argument("--apikey", help="ApiKey", type=str)
+parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
 parser.add_argument("--cycle", help="Cycle to send event", type=str)
 parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
 parser.add_argument("--pid", help="Pid file", type=str)
@@ -256,6 +259,8 @@ if args.callback:
     _callback = args.callback
 if args.apikey:
     _apikey = args.apikey
+if args.gcloudapikey:
+    GCLOUDAPIKEY = args.apikey
 if args.pid:
     _pidfile = args.pid
 if args.cycle:
