@@ -119,7 +119,7 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
     except Exception:
         os.symlink(symLinkPath, cachePath)
     
-    logging.debug('[DAEMON][TestTTS] Import de la clé API')
+    logging.debug('[DAEMON][TestTTS] Import de la clé API :: ' + GCLOUDAPIKEY)
     credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FULLPATH, GCLOUDAPIKEY))
 
     logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
@@ -279,7 +279,8 @@ logging.info('[DAEMON][MAIN] Socket port: %s', _socket_port)
 logging.info('[DAEMON][MAIN] Socket host: %s', _socket_host)
 logging.info('[DAEMON][MAIN] Cycle: %s', _cycle)
 logging.info('[DAEMON][MAIN] PID file: %s', _pidfile)
-logging.info('[DAEMON][MAIN] Apikey: %s', "***************")
+logging.info('[DAEMON][MAIN] ApiKey: %s', "***************")
+logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', GCLOUDAPIKEY)
 logging.info('[DAEMON][MAIN] CallBack: %s', _callback)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', TTS_WEBSRVCACHE)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvMedia: %s', TTS_WEBSRVMEDIA)
