@@ -168,8 +168,7 @@ if args.pid:
 if args.cycle:
 	_cycle = float(args.cycle)
 if args.socketport:
-	_socket_port = args.socketport
-	_socket_port = int(_socket_port)
+	_socket_port = int(args.socketport)
 
 jeedom_utils.set_log_level(_log_level)
 
@@ -177,8 +176,9 @@ logging.info('[DAEMON][MAIN] Start ttscastd')
 logging.info('[DAEMON][MAIN] Log level: %s', _log_level)
 logging.info('[DAEMON][MAIN] Socket port: %s', _socket_port)
 logging.info('[DAEMON][MAIN] Socket host: %s', _socket_host)
+logging.info('[DAEMON][MAIN] Cycle: %s', _cycle)
 logging.info('[DAEMON][MAIN] PID file: %s', _pidfile)
-# logging.info('[DAEMON][MAIN] Apikey: %s', _apikey)
+logging.info('[DAEMON][MAIN] Apikey: %s', "***************")
 logging.info('[DAEMON][MAIN] CallBack: %s', _callback)
 
 signal.signal(signal.SIGINT, handler)

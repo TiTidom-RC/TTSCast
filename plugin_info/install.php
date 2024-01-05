@@ -24,7 +24,7 @@ function ttscast_install() {
     config::save('pluginVersion', $pluginVersion, 'ttscast');
 
     message::removeAll('ttscast');
-    message::add('ttscast', 'Installation du plugin TTS Cast (version ' . $pluginVersion . ').', null, null);
+    message::add('ttscast', 'Installation du plugin TTS Cast (Version : ' . $pluginVersion . ')', null, null);
 
     // TODO initialiser les valeurs par défaut lors de l'install du plugin
     if (config::byKey('socketport', 'ttscast') == '') {
@@ -55,7 +55,7 @@ function ttscast_update() {
     config::save('pluginVersion', $pluginVersion, 'ttscast');
 
     message::removeAll('ttscast');
-    message::add('ttscast', 'Mise à jour du plugin TTS Cast (version ' . $pluginVersion . ').', null, null);
+    message::add('ttscast', 'Mise à jour du plugin TTS Cast (Version : ' . $pluginVersion . ')', null, null);
 
     // TODO intitaliser les valeurs par défaut lors de l'update du plugin
     if (config::byKey('socketport', 'ttscast') == '') {

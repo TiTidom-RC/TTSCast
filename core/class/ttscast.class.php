@@ -89,9 +89,10 @@ class ttscast extends eqLogic
         }
 
         $path = realpath(dirname(__FILE__) . '/../../resources/ttscastd');
-        $cmd = 'python3 ' . $path . '/ttscastd.py';
+        $cmd = self::PYTHON3_PATH . ' ' . $path . '/ttscastd.py';
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55999'); // TODO Modifier le numéro de port du démon
+        $cmd .= ' --cycle ' . config::byKey('cycle', __CLASS__, '1');
         $cmd .= ' --callback ' . network::getNetworkAccess('internal', 'http:127.0.0.1:port:comp') . '/plugins/ttscast/core/php/jeettscast.php'; // chemin du callback
         $cmd .= ' --apikey ' . jeedom::getApiKey(__CLASS__);
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
