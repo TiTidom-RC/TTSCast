@@ -211,7 +211,6 @@ if (!isConnect()) {
     $('.pluginAction[data-action=uploadAPIKey]').on('click', function () {
         // const fileAPIKey = $(this).closest('div').find('.eqLogicAttr[data-l2key="model"]').value();
         $(this).fileupload({
-            type: "POST",
             replaceFileInput: false,
             url: 'plugins/ttscast/core/ajax/ttscast.ajax.php?action=uploadAPIKey',
             dataType: 'json',
@@ -221,7 +220,7 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: '{{Upload Clé API :: OK}}',
+                    message: 'Upload Clé API OK ::' . data.result,
                     level: 'success'
                 });
             // $('#img_device').value(data.result.result);
