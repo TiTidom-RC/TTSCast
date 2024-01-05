@@ -243,9 +243,6 @@ parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 
 args = parser.parse_args()
-
-if args.device:
-    _device = args.device
 if args.loglevel:
     _log_level = args.loglevel
 if args.callback:
