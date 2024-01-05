@@ -227,7 +227,7 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: '{{Reset Clé API (OK) :: }}' + data.result.result,
+                    message: '{{Reset Clé API (OK) :: }}' + data.result,
                     level: 'success'
                 });
                 $('.custominput-apikey').val('');
