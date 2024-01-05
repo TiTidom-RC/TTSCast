@@ -202,6 +202,8 @@ class ttscast extends eqLogic
     }
 
     public static function sanitizeFileName($_file) {
+        log::add('ttscast', 'debug', '[UPLOAD][Sanitize] FileName ::' . $_file);
+        
         $_file = trim(strtolower($_file));
         if ($_file == '') return $_file;
 
