@@ -167,13 +167,12 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-3">
                     <div class="input-group">
-                        <input class="configKey form-control roundedLeft" type="text" data-l1key="gCloudAPIKey" readonly" />
+                        <input class="configKey form-control roundedLeft" type="text" data-l1key="gCloudAPIKey" readonly />
                         <span class="configKey input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default" data-action="resetAPIKey" title="{{Réinitialiser}}"><i class="fas fa-undo"></i></a></span>
                     </div>
                     <span class="btn btn-primary btn-file">
                         <i class="fas fa-cloud-upload-alt"></i> {{Envoyer une image}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json">
                     </span>
-                    <a class="btn btn-danger pluginAction" data-action="deleteAPIKey"><i class="fas fa-undo"></i> {{Réinitialiser}}</a>
                 </div>
                 <div class="col-lg-1">
                     <a class="btn btn-success customclass-ttstestplay">{{GENERER + DIFFUSER}}</a>
@@ -211,6 +210,22 @@ if (!isConnect()) {
         ttsEngineSelect();
     });
     $('.customform-ttsengine').on('change', ttsEngineSelect);
+
+    $('.pluginAction[data-action=uploadAPIKey]').on('click', function () {
+        // const fileAPIKey = $(this).closest('div').find('.eqLogicAttr[data-l2key="model"]').value();
+        $(this).fileupload({
+            replaceFileInput: false,
+            url: 'plugins/ttscast/core/ajax/ttscast.ajax.php?action=uploadAPIKey',
+            dataType: 'json',
+            done: function (e, data) {
+                if (data.result.state != 'ok') {
+                    $('#div_alert').showAlert({ message: data.result.result, level: 'danger' });
+                    return;
+                }
+            // $('#img_device').value(data.result.result);
+            }
+        });
+    });
 
     $('.customclass-purgettscache').on('click', function() {
         $.ajax({
