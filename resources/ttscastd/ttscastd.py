@@ -36,6 +36,7 @@ try:
     from google.oauth2 import service_account
     import google.cloud.texttospeech as tts
     import pychromecast
+    from pychromecast import quick_play
 except ImportError:
     print("[DAEMON][IMPORT] Error: importing module TTS")
     sys.exit(1)
@@ -153,11 +154,12 @@ def castGoogleHome(urltoplay, googleName):
         app_name = "default_media_receiver"
         app_data = {"media_id": urltoplay}
         
-        pychromecast.quick_play.quick_play(cast, app_name, app_data)
+        quick_play.quick_play(cast, app_name, app_data)
         logging.debug('[DAEMON][Cast] Etat Google Home (IDLE ?) :: %s', cast.is_idle)
         time.sleep(10)
         cast.quit_app()
         browser.stop_discovery()
+        return True
     else:
         logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome absent)')
         return False
