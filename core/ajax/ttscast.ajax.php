@@ -53,16 +53,15 @@ try {
         if (filesize($_FILES['fileAPIKey']['tmp_name']) > 10000) {
             throw new Exception(__('Le fichier est trop gros (max. 10Ko)', __FILE__));
         }
-        $apiKey = ttscast::sanitizeFileName(init('apiKey'));
       
-        $filepath = __DIR__ . "/../../core/config/{$apikey}{$extension}";
+        $filepath = __DIR__ . "/../../core/config/{$_FILES['fileAPIKey']['name']}";
         log::add('ttscast', 'debug', "[UPLOAD][APIKEY] filepath: {$filepath}");
         file_put_contents($filepath, file_get_contents($_FILES['file']['tmp_name']));
         if (!file_exists($filepath)) {
             throw new \Exception(__('Impossible de sauvegarder l\'image', __FILE__));
         }
 
-        ajax::success("plugins/ttscast/core/config/{$model}{$extension}");
+        ajax::success("{$_FILES['fileAPIKey']['name']}");
 	}
 
 
