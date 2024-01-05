@@ -50,7 +50,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-lang">
                 <label class="col-lg-3 control-label">{{Langue TTS}}</label>
-                <div class="col-lg-1">
+                <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsLang">
                         <option value="fr-FR">{{Français (fr-FR)}}</option>
                         <option value="en-US">{{Anglais (en-US)}}</option>
@@ -59,7 +59,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Moteur TTS}}</label>
-                <div class="col-lg-2">
+                <div class="col-lg-3">
                     <select class="configKey form-control customform-ttsengine" data-l1key="ttsEngine">
                         <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
                         <option value="picotts">{{PicoTTS (Local)}}</option>
@@ -70,7 +70,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudttsvoice">
                 <label class="col-lg-3 control-label">{{Voix Google Cloud Text-to-Speech}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{TESTER}}</a>]</label>
-                <div class="col-lg-2">
+                <div class="col-lg-3">
                     <select class="configKey form-control" data-l1key="gCloudTTSVoice">
                         <option value="fr-FR-Standard-A">French (France) - Standard A Female (fr-FR-Standard-A)</option>
                         <option value="fr-FR-Standard-B">French (France) - Standard B Male (fr-FR-Standard-B)</option>
@@ -97,7 +97,7 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{Vitesse de parole}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Valeur par défaut = Normal (1.0)}}"></i></sup>
                 </label>
-                <div class="col-lg-1">
+                <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="gCloudTTSSpeed">
                         <option value="0.8">{{Lent (0.8)}}</option>
                         <option value="1.0" selected>{{Normal (1.0)}}</option>
@@ -114,7 +114,7 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{Delai POST Lecture}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté APRES la lecture (avant de restaurer le volume initial). Valeur de -1000 à 10000 (Défaut = 1300)}}"></i></sup>
                 </label>
-                <div class="col-lg-1">
+                <div class="col-lg-2">
                     <input class="configKey form-control" type="number" data-l1key="ttsDelayPostRead" min="-1000" max="10000" placeholder="{{ms (-1000 <-> 10000)}}" />
                 </div>
                 <div class="col-lg-2">ms (Défaut: 1300)</div>
@@ -123,16 +123,16 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{Délai PRE Lecture}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté AVANT la lecture. Permet d'éviter de tronquer le début du fichier. Valeur de 0 à 10000 (Défaut = 300)}}"></i></sup>
                 </label>
-                <div class="col-lg-1">
+                <div class="col-lg-2">
                     <input class="configKey form-control" type="number" data-l1key="ttsDelayPreRead" min="0" max="10000" placeholder="{{ms (0 <-> 10000)}}" />
                 </div>
-                <div class="col-lg-1">ms (Défaut: 300)</div>
+                <div class="col-lg-2">ms (Défaut: 300)</div>
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Ne PAS utiliser le cache (Déconseillé !)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Génère le fichier TTS à chaque demande. Il est vivement conseillé de ne PAS cocher cette case, sauf en cas de tests}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsDisableCache" />
                 </div>
             </div>
@@ -151,10 +151,10 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{TEST (génération d'un fichier TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Génération d'un fichier TTS à partir des paramètres séléctionnés dans la configuration}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-lg-3">
                     <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Bonjour TiTidom, Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
                 </div>
-                <div class="col-lg-1">
+                <div class="col-lg-2">
                     <input class="configKey form-control" type="text" data-l1key="ttsTestGoogleName" placeholder="{{Nest Hub Bureau}}" />
                 </div>
                 <div class="col-lg-1">
@@ -163,8 +163,8 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Désactiver les notifications pour les nouveaux GoogleCast}}</label>
-                <div class="col-lg-2">
+                <label class="col-lg-4 control-label">{{Désactiver les notifications pour les nouveaux GoogleCast}}</label>
+                <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsDisableNotifNewCast" />
                 </div>
             </div>
