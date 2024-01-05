@@ -45,7 +45,7 @@ try {
         if (!isset($_FILES['fileAPIKey'])) {
             throw new Exception(__('Aucun fichier trouvé. Vérifiez le paramètre PHP (post size limit)', __FILE__));
         }
-        log::add('ttscast', 'debug', "[UPLOAD][APIKEY] filepath: {$_FILES['fileAPIKey']['name']}");
+        log::add('ttscast', 'debug', "[UPLOAD][APIKEY] filename: {$_FILES['fileAPIKey']['name']}");
         $extension = strtolower(strrchr($_FILES['fileAPIKey']['name'], '.'));
         if (!in_array($extension, array('.json'))) {
             throw new Exception('Extension de fichier non valide (autorisé .json) : ' . $extension);
