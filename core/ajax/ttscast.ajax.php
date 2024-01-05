@@ -27,7 +27,7 @@ try {
      En V3 : indiquer l'argument 'true' pour contrôler le token d'accès Jeedom
      En V4 : autoriser l'exécution d'une méthode 'action' en GET en indiquant le(s) nom(s) de(s) action(s) dans un tableau en argument
     */
-    ajax::init();
+    ajax::init(array('uploadAPIKey'));
 
     if (init('action') == 'testExternalAddress') {
         ajax::success(ttscast::testExternalAddress(init('value')));
