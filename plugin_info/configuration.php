@@ -168,7 +168,7 @@ if (!isConnect()) {
                 <div class="col-lg-3">
                     <div class="input-group">
                         <input class="configKey form-control roundedLeft custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
-                        <span class="input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default" data-action="resetAPIKey" title="{{Réinitialiser la clé API}}"><i class="fas fa-undo"></i></a></span>
+                        <span class="input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default custombutton-resetapikey" title="{{Réinitialiser la clé API}}"><i class="fas fa-undo"></i></a></span>
                     </div>
                 </div>
                 <div class="col-lg-2">      
@@ -211,7 +211,7 @@ if (!isConnect()) {
     });
     $('.customform-ttsengine').on('change', ttsEngineSelect);
 
-    $('.pluginAction[data-action=resetAPIKey]').on('click', function () {
+    $('.custombutton-resetapikey').on('click', function () {
         const fileName = $('.custominput-apikey').value;
         $.ajax({
             type: "POST",
