@@ -15,24 +15,28 @@
 
 import logging
 import shutil
-import string
 import sys
 import os
 import time
-import datetime
 import traceback
-import re
 import signal
-from optparse import OptionParser
-from os.path import join
 import json
 import argparse
 
 try:
-	from jeedom.jeedom import *
+    from jeedom.jeedom import *
 except ImportError:
-	print("Error: importing module jeedom.jeedom")
-	sys.exit(1)
+    print("[DAEMON][IMPORT] Error: importing module jeedom.jeedom")
+    sys.exit(1)
+
+# Import pour PyChromeCast
+
+import hashlib
+from google.oauth2 import service_account
+import google.cloud.texttospeech as tts
+
+import pychromecast
+from pychromecast import quick_play
 
 # ***** GLOBALS VAR *****
 
@@ -47,45 +51,86 @@ TTS_CACHEFOLDERTMP = os.path.join('/tmp/jeedom/', 'ttscast_cache')
 MEDIA_FOLDER = 'data/media'
 MEDIA_FULLPATH = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), MEDIA_FOLDER))
 
+CONFIG_FOLDER = 'core/config'
+CONFIG_FULLPATH = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), CONFIG_FOLDER))
+
 # ***** END GLOBALS VAR *****
 
 
 def read_socket():
-	global JEEDOM_SOCKET_MESSAGE
-	if not JEEDOM_SOCKET_MESSAGE.empty():
-		logging.debug("[DAEMON][READ-SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
-		message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
-		if message['apikey'] != _apikey:
-			logging.error("[DAEMON][READ-SOCKET] Invalid apikey from socket :: %s", message)
-			return
-		try:
-			# TODO ***** Gestion des messages reçus de Jeedom *****
-			if message['cmd'] == 'purgettscache':
-				logging.debug('[DAEMON][SOCKET-READ] Purge TTS Cache')
-				if 'days' in message:
-					purgeCache(int(message['days']))
-				else:
-					purgeCache()
-			elif message['cmd'] == 'playtesttts':
-				logging.debug('[DAEMON][SOCKET-READ] Generate And Play Test TTS')
-				if all(keys in message for keys in ('ttsText', 'ttsGoogleName')):
-					logging.debug('[DAEMON][SOCKET-READ] Test TTS :: %s', message['ttsText']  + ' | ' + message['ttsGoogleName'])
-				else:
-					logging.debug('[DAEMON][SOCKET-READ] Test TTS :: Il manque des données pour traiter la commande.')
-		except Exception as e:
-			logging.error('[DAEMON][READ-SOCKET] Send command to daemon error :: %s', e)
+    global JEEDOM_SOCKET_MESSAGE
+    if not JEEDOM_SOCKET_MESSAGE.empty():
+        logging.debug("[DAEMON][READ-SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
+        message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
+        if message['apikey'] != _apikey:
+            logging.error("[DAEMON][READ-SOCKET] Invalid apikey from socket :: %s", message)
+            return
+        try:
+            # TODO ***** Gestion des messages reçus de Jeedom *****
+            if message['cmd'] == 'purgettscache':
+                logging.debug('[DAEMON][SOCKET-READ] Purge TTS Cache')
+                if 'days' in message:
+                    purgeCache(int(message['days']))
+                else:
+                    purgeCache()
+            elif message['cmd'] == 'playtesttts':
+                logging.debug('[DAEMON][SOCKET-READ] Generate And Play Test TTS')
+                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName')):
+                    logging.debug('[DAEMON][SOCKET-READ] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
+                    generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'])
+                else:
+                    logging.debug('[DAEMON][SOCKET-READ] Test TTS :: Il manque des données pour traiter la commande.')
+        except Exception as e:
+            logging.error('[DAEMON][READ-SOCKET] Send command to daemon error :: %s', e)
 
 
 def listen(cycle=0.3):
-	jeedom_socket.open()
-	try:
-		while 1:
-			time.sleep(cycle)
-			read_socket()
-	except KeyboardInterrupt:
-		shutdown()
+    jeedom_socket.open()
+    try:
+        while 1:
+            time.sleep(cycle)
+            read_socket()
+    except KeyboardInterrupt:
+        shutdown()
 
 # ----------------------------------------------------------------------------
+
+
+def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
+    logging.debug('[DAEMON][TestTTS] Check des répertoires')
+    cachePath = TTS_CACHEFOLDERWEB
+    symLinkPath = TTS_CACHEFOLDERTMP
+    try:
+        os.stat(symLinkPath)
+    except Exception:
+        os.mkdir(symLinkPath)
+    try:
+        os.stat(cachePath)
+    except Exception:
+        os.symlink(symLinkPath, cachePath)
+    
+    logging.debug('[DAEMON][TestTTS] Import de la clé API')
+    credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FOLDER, 'jeedom-speech-207616-1374b0abe951.json'))
+
+    logging.debug('[DAEMON][TestTTS] Génération du fichier TTS (mp3)')
+    raw_filename = ttsText + "|" + ttsVoiceName
+    filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+    filepath = os.path.join(symLinkPath, filename)
+    
+    if not os.path.isfile(filepath):
+        language_code = "-".join(ttsVoiceName.split("-")[:2])
+        text_input = tts.SynthesisInput(text=ttsText)
+        voice_params = tts.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
+        audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
+
+        client = tts.TextToSpeechClient(credentials=credentials)
+        response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+
+        with open(filepath, "wb") as out:
+            out.write(response.audio_content)
+            logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
+    else:
+        logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
 
 
 def purgeCache(nbDays='0'):
@@ -118,24 +163,24 @@ def purgeCache(nbDays='0'):
 
 
 def handler(signum=None, frame=None):
-	logging.debug("Signal %i caught, exiting...", int(signum))
-	shutdown()
+    logging.debug("Signal %i caught, exiting...", int(signum))
+    shutdown()
 
 
 def shutdown():
-	logging.debug("Shutdown")
-	logging.debug("Removing PID file %s", _pidfile)
-	try:
-		os.remove(_pidfile)
-	except:
-		pass
-	try:
-		jeedom_socket.close()
-	except:
-		pass
-	logging.debug("Exit 0")
-	sys.stdout.flush()
-	os._exit(0)
+    logging.debug("Shutdown")
+    logging.debug("Removing PID file %s", _pidfile)
+    try:
+        os.remove(_pidfile)
+    except:
+        pass
+    try:
+        jeedom_socket.close()
+    except:
+        pass
+    logging.debug("Exit 0")
+    sys.stdout.flush()
+    os._exit(0)
 
 # ----------------------------------------------------------------------------
 
@@ -162,19 +207,19 @@ parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 args = parser.parse_args()
 
 if args.device:
-	_device = args.device
+    _device = args.device
 if args.loglevel:
-	_log_level = args.loglevel
+    _log_level = args.loglevel
 if args.callback:
-	_callback = args.callback
+    _callback = args.callback
 if args.apikey:
-	_apikey = args.apikey
+    _apikey = args.apikey
 if args.pid:
-	_pidfile = args.pid
+    _pidfile = args.pid
 if args.cycle:
-	_cycle = float(args.cycle)
+    _cycle = float(args.cycle)
 if args.socketport:
-	_socket_port = int(args.socketport)
+    _socket_port = int(args.socketport)
 
 jeedom_utils.set_log_level(_log_level)
 
@@ -191,10 +236,10 @@ signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 
 try:
-	jeedom_utils.write_pid(str(_pidfile))
-	jeedom_socket = jeedom_socket(port=_socket_port, address=_socket_host)
-	listen(_cycle)
+    jeedom_utils.write_pid(str(_pidfile))
+    jeedom_socket = jeedom_socket(port=_socket_port, address=_socket_host)
+    listen(_cycle)
 except Exception as e:
-	logging.error('[DAEMON][MAIN] Fatal error: %s', e)
-	logging.info(traceback.format_exc())
-	shutdown()
+    logging.error('[DAEMON][MAIN] Fatal error: %s', e)
+    logging.info(traceback.format_exc())
+    shutdown()

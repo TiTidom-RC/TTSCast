@@ -172,7 +172,8 @@ class ttscast extends eqLogic
     public static function playTestTTS() {
         $ttsText = config::byKey('ttsTestFileGen', 'ttscast', 'Bonjour, Ceci est un test de synthèse vocale via le plugin TTS Cast.');
         $ttsGoogleName = config::byKey('ttsTestGoogleName', 'ttscast', '');
-        $value = array('cmd' => 'playtesttts', 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName );
+        $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
+        $value = array('cmd' => 'playtesttts', 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName);
         self::sendToDaemon($value);
     }
 
