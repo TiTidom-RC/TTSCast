@@ -22,6 +22,7 @@ import traceback
 import signal
 import json
 import argparse
+from urllib.parse import urljoin
 
 try:
     from jeedom.jeedom import *
@@ -139,7 +140,7 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
     else:
         logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
     
-    urlFileToPlay = os.path.join(ttsSrvWeb, 'plugins/ttscast/media/cache', filename)
+    urlFileToPlay = urljoin(ttsSrvWeb, 'plugins/ttscast/media/cache/' + filename)
     logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
     res = castGoogleHome(urlFileToPlay, ttsGoogleName)
     logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
