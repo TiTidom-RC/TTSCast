@@ -257,8 +257,8 @@ if args.cycle:
 if args.socketport:
     _socket_port = int(args.socketport)
 if args.ttsweb:
-    TTS_WEBSRVCACHE = urljoin(args.ttsweb, 'plugins/ttscast/data/cache')
-    TTS_WEBSRVMEDIA = urljoin(args.ttsweb, 'plugins/ttscast/data/media')
+    TTS_WEBSRVCACHE = urljoin(args.ttsweb, 'plugins/ttscast/data/cache/')
+    TTS_WEBSRVMEDIA = urljoin(args.ttsweb, 'plugins/ttscast/data/media/')
 
 jeedom_utils.set_log_level(_log_level)
 
