@@ -171,9 +171,14 @@ if (!isConnect()) {
                         <span class="input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default custombutton-resetapikey" title="{{Réinitialiser la clé API}}"><i class="fas fa-undo"></i></a></span>
                     </div>
                 </div>
-                <div class="col-lg-2">      
+                <div class="col-lg-2">
                     <a class="btn btn-primary btn-file">
-                        <i class="fas fa-cloud-upload-alt"></i> {{Envoyer une clé API (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json">
+                        <i class="fas fa-cloud-upload-alt"></i> {{Ajouter une clé API (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json" />
+                    </a>
+                </div>
+                <div class="col-lg-2">
+                    <a class="btn btn-danger customclass-resetapikey">
+                        <i class="fas fa-undo"></i> {{Effacer la clé API}}<input class="pluginAction" data-action="resetAPIKey" />
                     </a>
                 </div>
                 
@@ -211,7 +216,7 @@ if (!isConnect()) {
     });
     $('.customform-ttsengine').on('change', ttsEngineSelect);
 
-    $('.custombutton-resetapikey').on('click', function () {
+    $('.pluginAction[data-action=resetAPIKey]').on('click', function () {
         const fileName = $('.custominput-apikey').value;
         $.ajax({
             type: "POST",
