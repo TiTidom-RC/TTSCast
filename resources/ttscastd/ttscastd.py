@@ -32,11 +32,13 @@ except ImportError:
 # Import pour PyChromeCast
 
 import hashlib
-from google.oauth2 import service_account
-import google.cloud.texttospeech as tts
-
-import pychromecast
-from pychromecast import quick_play
+try:    
+    from google.oauth2 import service_account
+    import google.cloud.texttospeech as tts
+    import pychromecast
+except ImportError:
+    print("[DAEMON][IMPORT] Error: importing module TTS")
+    sys.exit(1)
 
 # ***** GLOBALS VAR *****
 
