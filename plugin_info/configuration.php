@@ -210,7 +210,7 @@ if (!isConnect()) {
 
     $('.pluginAction[data-action=uploadAPIKey]').on('click', function () {
         // const fileAPIKey = $(this).closest('div').find('.eqLogicAttr[data-l2key="model"]').value();
-        $.fileupload({
+        $(this).fileupload({
             type: "POST",
             replaceFileInput: false,
             url: 'plugins/ttscast/core/ajax/ttscast.ajax.php?action=uploadAPIKey',
