@@ -168,6 +168,7 @@ def castToGoogleHome(urltoplay, googleName):
         """
         
         cast.media_controller.play_media(urltoplay, "audio/mp3")
+        cast.wait()
         logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
         
         while cast.media_controller.status.player_state == 'PLAYING':
