@@ -56,7 +56,7 @@ class ttscast extends eqLogic
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip list | grep -Ewc "PyChromecast|pydub|gTTS|google-cloud-speech|google-auth|click|protobuf|requests|zeroconf"') < 9) {
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip list | grep -Ewc "PyChromecast|pydub|gTTS|google-cloud-texttospeech|google-auth|click|protobuf|requests|zeroconf"') < 9) {
                 $return['state'] = 'nok';
             } else {
                 $return['state'] = 'ok';
