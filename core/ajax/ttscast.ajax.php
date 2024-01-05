@@ -41,6 +41,31 @@ try {
 		ajax::success(ttscast::playTestTTS());
 	}
 
+    if (init('action') == 'uploadAPIKey') {
+		if (!isset($_FILES['file'])) {
+            throw new Exception(__('Aucun fichier trouvé. Vérifiez le paramètre PHP (post size limit)', __FILE__));
+        }
+        $extension = strtolower(strrchr($_FILES['fileAPIKey']['name'], '.'));
+        if (!in_array($extension, array('.json'))) {
+            throw new Exception('Extension de fichier non valide (autorisé .json) : ' . $extension);
+        }
+        if (filesize($_FILES['file']['tmp_name']) > 10000) {
+            throw new Exception(__('Le fichier est trop gros (max. 10Ko)', __FILE__));
+        }
+        $apiKey = ttscast::sanitizeFileName(init('apiKey'));
+      
+        $filepath = __DIR__ . "/../../core/config/{$apikey}{$extension}";
+        log::add('ttscast', 'debug', "[UPLOAD][APIKEY] filepath: {$filepath}");
+        file_put_contents($filepath, file_get_contents($_FILES['file']['tmp_name']));
+        if (!file_exists($filepath)) {
+            throw new \Exception(__('Impossible de sauvegarder l\'image', __FILE__));
+        }
+
+        ajax::success("plugins/ttscast/core/config/{$model}{$extension}");
+	}
+
+
+    
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
     /*     * *********Catch exeption*************** */
 } catch (Exception $e) {

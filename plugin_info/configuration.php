@@ -161,6 +161,24 @@ if (!isConnect()) {
                     <a class="btn btn-success customclass-ttstestplay">{{GENERER + DIFFUSER}}</a>
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Clé API (Google Cloud TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton UPLOAD}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <div class="input-group">
+                        <input class="configKey form-control roundedLeft" type="text" data-l1key="gCloudAPIKey" readonly" />
+                        <span class="configKey input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default" data-action="resetAPIKey" title="{{Réinitialiser}}"><i class="fas fa-undo"></i></a></span>
+                    </div>
+                    <span class="btn btn-primary btn-file">
+                        <i class="fas fa-cloud-upload-alt"></i> {{Envoyer une image}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json">
+                    </span>
+                    <a class="btn btn-danger pluginAction" data-action="deleteAPIKey"><i class="fas fa-undo"></i> {{Réinitialiser}}</a>
+                </div>
+                <div class="col-lg-1">
+                    <a class="btn btn-success customclass-ttstestplay">{{GENERER + DIFFUSER}}</a>
+                </div>
+            </div>
             <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Désactiver les notifications pour les nouveaux GoogleCast}}</label>

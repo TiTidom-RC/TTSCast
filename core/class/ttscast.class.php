@@ -201,6 +201,15 @@ class ttscast extends eqLogic
         return $pluginVersion;
     }
 
+    public static function sanitizeFileName($_file) {
+        $_file = trim(strtolower($_file));
+        if ($_file == '') return $_file;
+
+        $_file = sanitizeAccent($_file);
+        $_file = preg_replace('/[^a-z0-9_]/i', '', $_file);
+        return $_file;
+    }
+
     /* ************************ Methodes static : JEEDOM *************************** */
 
     /*

@@ -217,11 +217,11 @@ def shutdown():
     logging.debug("Removing PID file %s", _pidfile)
     try:
         os.remove(_pidfile)
-    except:
+    except Exception:
         pass
     try:
         jeedom_socket.close()
-    except:
+    except Exception:
         pass
     logging.debug("Exit 0")
     sys.stdout.flush()
