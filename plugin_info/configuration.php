@@ -170,10 +170,13 @@ if (!isConnect()) {
                         <input class="configKey form-control roundedLeft custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
                         <span class="configKey input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default" data-action="resetAPIKey" title="{{Réinitialiser}}"><i class="fas fa-undo"></i></a></span>
                     </div>
-                    <div class="btn btn-primary btn-file">
-                        <i class="fas fa-cloud-upload-alt"></i> {{Envoyer une clé API (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json">
-                    </div>
                 </div>
+                <div class="col-lg-2">      
+                    <a class="btn btn-primary btn-file">
+                        <i class="fas fa-cloud-upload-alt"></i> {{Envoyer une clé API (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json">
+                    </a>
+                </div>
+                
             </div>
             <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
             <div class="form-group">
