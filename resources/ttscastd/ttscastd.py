@@ -144,11 +144,11 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
     
     urlFileToPlay = urljoin(ttsSrvWeb, filename)
     logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-    res = castGoogleHome(urlFileToPlay, ttsGoogleName)
+    res = castToGoogleHome(urlFileToPlay, ttsGoogleName)
     logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
 
-def castGoogleHome(urltoplay, googleName):
+def castToGoogleHome(urltoplay, googleName):
     if googleName != '':
         logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
         chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[googleName])
@@ -157,15 +157,21 @@ def castGoogleHome(urltoplay, googleName):
             return False        
         cast = list(chromecasts)[0]
         cast.wait()
+        
+        
         logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+        """
         app_name = "default_media_receiver"
         app_data = {"media_id": urltoplay}
         
         quick_play.quick_play(cast, app_name, app_data)
         logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
+        """
+        cast.media_controller.play_media (urltoplay, "audio/mp3")
+        
         while cast.media_controller.status.player_state == 'PLAYING':
             time.sleep(1)
-            logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
+            logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', cast.media_controller.status)
         cast.quit_app()
         browser.stop_discovery()
         return True
