@@ -169,6 +169,11 @@ class ttscast extends eqLogic
         self::sendToDaemon($value);
     }
 
+    public static function playTestTTS() {
+        $value = array('cmd' => 'playtesttts');
+        self::sendToDaemon($value);
+    }
+
     public static function getPluginVersion()
     {
         $pluginVersion = 'N/A';

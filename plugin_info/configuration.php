@@ -148,14 +148,17 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Test de génération Durée de conservation du cache (jours)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Le cache sera purgé automatiquement tous les X (0 à 90) jours via le cron daily}}"></i></sup>
+                <label class="col-lg-3 control-label">{{TEST (génération d'un fichier TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Génération d'un fichier TTS à partir des paramètres séléctionnés dans la configuration}}"></i></sup>
                 </label>
-                <div class="col-lg-1">
-                    <input class="configKey form-control" type="number" data-l1key="ttsPurgeCacheDays" min="0" max="90" placeholder="{{Nombre de jours}}" />
+                <div class="col-lg-2">
+                    <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Bonjour TiTidom, Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
                 </div>
                 <div class="col-lg-1">
-                    <a class="btn btn-warning customclass-purgettscache">{{VIDER le cache}}</a>
+                    <input class="configKey form-control" type="text" data-l1key="ttsTestGoogleName" placeholder="{{Nest Hub Bureau}}" />
+                </div>
+                <div class="col-lg-1">
+                    <a class="btn btn-success customclass-ttstestplay">{{GENERER + DIFFUSER}}</a>
                 </div>
             </div>
             <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
@@ -211,7 +214,34 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: '{{Réussie}}',
+                    message: '{{Demande de purge du cache envoyée (voir les logs du démon pour le résultat)}}',
+                    level: 'success'
+                });
+            }
+        });
+    });
+
+    $('.customclass-ttstestplay').on('click', function() {
+        $.ajax({
+            type: "POST",
+            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
+            data: {
+                action: "playTestTTS"
+            },
+            dataType: 'json',
+            error: function(request, status, error) {
+                handleAjaxError(request, status, error);
+            },
+            success: function(data) {
+                if (data.state != 'ok') {
+                    $('#div_alert').showAlert({
+                        message: data.result,
+                        level: 'danger'
+                    });
+                    return;
+                }
+                $('#div_alert').showAlert({
+                    message: '{{Demande de génération du TTS de test evoyée (voir les logs du démon pour le résultat)}}',
                     level: 'success'
                 });
             }

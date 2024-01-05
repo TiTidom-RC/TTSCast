@@ -66,6 +66,9 @@ def read_socket():
 					purgeCache(int(message['days']))
 				else:
 					purgeCache()
+			elif message['cmd'] == 'playtesttts':
+				logging.debug('[DAEMON][SOCKET-READ] Generate And Play Test TTS')
+    
 		except Exception as e:
 			logging.error('[DAEMON][READ-SOCKET] Send command to daemon error :: %s', e)
 
