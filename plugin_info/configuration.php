@@ -167,7 +167,7 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-3">
                     <div class="input-group">
-                        <input class="configKey form-control roundedLeft" type="text" data-l1key="gCloudAPIKey" readonly />
+                        <input class="configKey form-control roundedLeft" type="text" id="gCloudAPIKey" data-l1key="gCloudAPIKey" readonly />
                         <span class="configKey input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default" data-action="resetAPIKey" title="{{Réinitialiser}}"><i class="fas fa-undo"></i></a></span>
                     </div>
                     <span class="btn btn-primary btn-file">
@@ -220,9 +220,10 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: 'Upload Clé API OK ::' . data.result.value,
+                    message: '{{Upload Clé API :: OK}}',
                     level: 'success'
                 });
+                $('.gCloudAPIKey').value = data.result.result;
             // $('#img_device').value(data.result.result);
             }
         });
