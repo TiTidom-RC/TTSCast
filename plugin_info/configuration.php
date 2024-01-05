@@ -229,7 +229,7 @@ if (!isConnect()) {
                 $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
                 // $('.custominput-apikey').val('');
                 jeedom.config.save({ 
-                    plugin: eqType, 
+                    plugin: 'ttscast', 
                     configuration: { 
                         gCloudAPIKey: $('.custominput-apikey').val()
                     },
