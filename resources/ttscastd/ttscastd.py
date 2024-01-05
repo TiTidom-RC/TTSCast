@@ -114,10 +114,12 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
     logging.debug('[DAEMON][TestTTS] Import de la clé API')
     credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FULLPATH, 'jeedom-speech-207616-1374b0abe951.json'))
 
-    logging.debug('[DAEMON][TestTTS] Génération du fichier TTS (mp3)')
+    logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
     raw_filename = ttsText + "|" + ttsVoiceName
     filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
     filepath = os.path.join(symLinkPath, filename)
+    
+    logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
     
     if not os.path.isfile(filepath):
         language_code = "-".join(ttsVoiceName.split("-")[:2])
