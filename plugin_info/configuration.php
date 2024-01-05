@@ -227,7 +227,7 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
-                // $('.custominput-apikey').val('');
+                $('.custominput-apikey').val('');
                 jeedom.config.save({ 
                     plugin: 'ttscast', 
                     configuration: { 
@@ -238,7 +238,7 @@ if (!isConnect()) {
                         return;
                     },
                     success: function () {
-                        $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: Sauvegarde OK}}', level: 'success' });
+                        $('#div_alert').showAlert({ message: '{{Reset Clé API :: Sauvegarde OK}}', level: 'success' });
                     }
                 });
             }
@@ -260,6 +260,19 @@ if (!isConnect()) {
                     level: 'success'
                 });
                 $('.custominput-apikey').val(data.result.result);
+                jeedom.config.save({ 
+                    plugin: 'ttscast', 
+                    configuration: { 
+                        gCloudAPIKey: $('.custominput-apikey').val()
+                    },
+                    error: function (error) {
+                        jeedomUtils.showAlert({ message: error.message, level: 'danger' });
+                        return;
+                    },
+                    success: function () {
+                        $('#div_alert').showAlert({ message: '{{Upload Clé API :: Sauvegarde OK}}', level: 'success' });
+                    }
+                });
             }
         });
     });
