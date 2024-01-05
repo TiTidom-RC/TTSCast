@@ -68,7 +68,10 @@ def read_socket():
 					purgeCache()
 			elif message['cmd'] == 'playtesttts':
 				logging.debug('[DAEMON][SOCKET-READ] Generate And Play Test TTS')
-    
+				if all(keys in message for keys in ('ttsText', 'ttsGoogleName')):
+					logging.debug('[DAEMON][SOCKET-READ] Test TTS :: %s', message['ttsText']  + ' | ' + message['ttsGoogleName'])
+				else:
+					logging.debug('[DAEMON][SOCKET-READ] Test TTS :: Il manque des données pour traiter la commande.')
 		except Exception as e:
 			logging.error('[DAEMON][READ-SOCKET] Send command to daemon error :: %s', e)
 

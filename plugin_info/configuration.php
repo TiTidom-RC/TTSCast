@@ -149,7 +149,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{TEST (génération d'un fichier TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Génération d'un fichier TTS à partir des paramètres séléctionnés dans la configuration}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Bonjour TiTidom, Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
