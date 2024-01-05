@@ -166,10 +166,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton UPLOAD}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
-                    <div class="input-group">
-                        <input class="configKey form-control roundedLeft custominput-apikey" type="text" data-l1key="gCloudAPIKey" />
-                        <span class="input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default custombutton-resetapikey" title="{{Réinitialiser la clé API}}"><i class="fas fa-undo"></i></a></span>
-                    </div>
+                    <input class="configKey form-control custominput-apikey" type="text" data-l1key="gCloudAPIKey" />
                 </div>
                 <div class="col-lg-2">
                     <a class="btn btn-primary btn-file">
