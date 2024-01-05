@@ -260,7 +260,7 @@ if args.callback:
 if args.apikey:
     _apikey = args.apikey
 if args.gcloudapikey:
-    GCLOUDAPIKEY = args.apikey
+    GCLOUDAPIKEY = args.gcloudapikey
 if args.pid:
     _pidfile = args.pid
 if args.cycle:
