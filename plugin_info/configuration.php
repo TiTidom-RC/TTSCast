@@ -168,7 +168,7 @@ if (!isConnect()) {
                 <div class="col-lg-3">
                     <div class="input-group">
                         <input class="configKey form-control roundedLeft custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
-                        <span class="configKey input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default" data-action="resetAPIKey" title="{{Réinitialiser}}"><i class="fas fa-undo"></i></a></span>
+                        <span class="configKey input-group-addon roundedRight"><a class="pluginAction btn btn-sm btn-default" data-action="resetAPIKey" title="{{Réinitialiser la clé API}}"><i class="fas fa-undo"></i></a></span>
                     </div>
                 </div>
                 <div class="col-lg-2">      
@@ -211,8 +211,34 @@ if (!isConnect()) {
     });
     $('.customform-ttsengine').on('change', ttsEngineSelect);
 
+    $('.pluginAction[data-action=resetAPIKey]').on('click', function () {
+        const fileName = $('.custominput-apikey').value;
+        $.ajax({
+            type: "POST",
+            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
+            data: {
+                action: "resetAPIKey",
+                filename: fileName
+            },
+            dataType: 'json',
+            error: function (request, status, error) {
+                handleAjaxError(request, status, error);
+            },
+            success: function (data) {
+                if (data.state != 'ok') {
+                    $('#modal_alert').showAlert({ message: data.result, level: 'danger' });
+                    return;
+                }
+                $('#div_alert').showAlert({
+                    message: '{{Reset Clé API (OK) :: }}' + data.result.result,
+                    level: 'success'
+                });
+                $('.custominput-apikey').val('');
+            }
+        });
+    });
+
     $('.pluginAction[data-action=uploadAPIKey]').on('click', function () {
-        // const fileAPIKey = $(this).closest('div').find('.eqLogicAttr[data-l2key="model"]').value();
         $(this).fileupload({
             replaceFileInput: false,
             url: 'plugins/ttscast/core/ajax/ttscast.ajax.php?action=uploadAPIKey',
@@ -227,7 +253,6 @@ if (!isConnect()) {
                     level: 'success'
                 });
                 $('.custominput-apikey').val(data.result.result);
-            // $('#img_device').val(data.result.result);
             }
         });
     });

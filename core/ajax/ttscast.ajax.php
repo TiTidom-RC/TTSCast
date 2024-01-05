@@ -64,6 +64,17 @@ try {
         ajax::success("{$_FILES['fileAPIKey']['name']}");
 	}
 
+    if (init('action') == 'resetAPIKey') {
+        $filepath = __DIR__ . "/../../core/config/{init('filename')}";
+        if (!file_exists($filepath)) {
+            throw new Exception('[RESET][APIKEY] Fichier introuvable : ' . $filepath);
+        }
+        log::add('ttscast', 'debug', "[RESET][APIKEY] filepath: {$filepath}");
+        unlink($filepath);
+        
+        ajax::success("{$filepath}");
+    }
+
 
     
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
