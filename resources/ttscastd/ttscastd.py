@@ -51,7 +51,8 @@ GCAST_DEVICES = {}
 TTS_CACHEFOLDER = 'data/cache'
 TTS_CACHEFOLDERWEB = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), TTS_CACHEFOLDER))
 TTS_CACHEFOLDERTMP = os.path.join('/tmp/jeedom/', 'ttscast_cache')
-TTS_WEBSRV = ''
+TTS_WEBSRVCACHE = ''
+TTS_WEBSRVMEDIA = ''
 
 MEDIA_FOLDER = 'data/media'
 MEDIA_FULLPATH = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), MEDIA_FOLDER))
@@ -105,7 +106,8 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
     logging.debug('[DAEMON][TestTTS] Check des répertoires')
     cachePath = TTS_CACHEFOLDERWEB
     symLinkPath = TTS_CACHEFOLDERTMP
-    ttsSrvWeb = TTS_WEBSRV
+    ttsSrvWeb = TTS_WEBSRVCACHE
+    
     try:
         os.stat(symLinkPath)
     except Exception:
@@ -140,7 +142,7 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
     else:
         logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
     
-    urlFileToPlay = urljoin(ttsSrvWeb, 'plugins/ttscast/media/cache/' + filename)
+    urlFileToPlay = urljoin(ttsSrvWeb, filename)
     logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
     res = castGoogleHome(urlFileToPlay, ttsGoogleName)
     logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
@@ -255,7 +257,8 @@ if args.cycle:
 if args.socketport:
     _socket_port = int(args.socketport)
 if args.ttsweb:
-    TTS_WEBSRV = args.ttsweb
+    TTS_WEBSRVCACHE = urljoin(args.ttsweb, 'plugins/ttscast/data/cache')
+    TTS_WEBSRVMEDIA = urljoin(args.ttsweb, 'plugins/ttscast/data/media')
 
 jeedom_utils.set_log_level(_log_level)
 
