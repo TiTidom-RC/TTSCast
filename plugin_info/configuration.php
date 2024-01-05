@@ -100,7 +100,7 @@ if (!isConnect()) {
                 <div class="col-xs-1">
                     <select class="configKey form-control" data-l1key="gCloudTTSSpeed">
                         <option value="0.8">{{Lent (0.8)}}</option>
-                        <option value="1" selected>{{Normal (1.0)}}</option>
+                        <option value="1.0" selected>{{Normal (1.0)}}</option>
                         <option value="1.2">{{Normal + (1.2)}}</option>
                         <option value="1.25">{{Normal ++ (1.25)}}</option>
                         <option value="1.3">{{Rapide (1.3)}}</option>

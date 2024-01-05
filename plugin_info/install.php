@@ -23,17 +23,25 @@ function ttscast_install() {
     $pluginVersion = ttscast::getPluginVersion();
     config::save('pluginVersion', $pluginVersion, 'ttscast');
 
+    message::removeAll('ttscast');
+    message::add('ttscast', 'Installation du plugin TTS Cast (version ' . $pluginVersion . ').', null, null);
+
     // TODO initialiser les valeurs par défaut lors de l'install du plugin
     if (config::byKey('socketport', 'ttscast') == '') {
         config::save('socketport', '55999', 'ttscast');
     }
+    if (config::byKey('cycle', 'ttscast') == '') {
+        config::save('cycle', '1', 'ttscast');
+    }
+    if (config::byKey('gCloudTTSSpeed', 'ttscast') == '') {
+        config::save('gCloudTTSSpeed', '1.0', 'ttscast');
+    }
+    if (config::byKey('gCloudTTSVoice', 'ttscast') == '') {
+        config::save('gCloudTTSVoice', 'fr-FR-Standard-A', 'ttscast');
+    }
     if (config::byKey('ttsPurgeCacheDays', 'ttscast') == '') {
         config::save('ttsPurgeCacheDays', '10', 'ttscast');
     }
-
-    message::removeAll('ttscast');
-    message::add('ttscast', 'Installation du plugin TTS Cast terminée (version ' . $pluginVersion . ').', null, null);
-
 }
 
 // Fonction exécutée automatiquement après la mise à jour du plugin
@@ -46,15 +54,37 @@ function ttscast_update() {
     $pluginVersion = ttscast::getPluginVersion();
     config::save('pluginVersion', $pluginVersion, 'ttscast');
 
+    message::removeAll('ttscast');
+    message::add('ttscast', 'Mise à jour du plugin TTS Cast (version ' . $pluginVersion . ').', null, null);
+
     // TODO intitaliser les valeurs par défaut lors de l'update du plugin
     if (config::byKey('socketport', 'ttscast') == '') {
         config::save('socketport', '55999', 'ttscast');
+    }
+    if (config::byKey('cycle', 'ttscast') == '') {
+        config::save('cycle', '1', 'ttscast');
+    }
+    if (config::byKey('gCloudTTSSpeed', 'ttscast') == '') {
+        config::save('gCloudTTSSpeed', '1.0', 'ttscast');
+    }
+    if (config::byKey('gCloudTTSVoice', 'ttscast') == '') {
+        config::save('gCloudTTSVoice', 'fr-FR-Standard-A', 'ttscast');
     }
     if (config::byKey('ttsPurgeCacheDays', 'ttscast') == '') {
         config::save('ttsPurgeCacheDays', '10', 'ttscast');
     }
 
-    message::add('ttscast', 'Mise à jour du plugin TTS Cast terminée (version ' . $pluginVersion . ').', null, null);
+    $dependencyInfo = ttscast::dependancy_info();
+    if (!isset($dependencyInfo['state'])) {
+        message::add('ttscast', __('Veuilez vérifier les dépendances', __FILE__));
+    } elseif ($dependencyInfo['state'] == 'nok') {
+        try {
+            $plugin = plugin::byId('ttscast');
+            $plugin->dependancy_install();
+        } catch (\Throwable $th) {
+            message::add('ttscast', __('Cette mise à jour nécessite la réinstallation des dépendances même si elles sont marquées comme OK', __FILE__));
+        }
+    }
     ttscast::deamon_start();
 }
 

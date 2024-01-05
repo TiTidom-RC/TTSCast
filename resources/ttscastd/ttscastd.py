@@ -70,11 +70,11 @@ def read_socket():
 			logging.error('[DAEMON][READ-SOCKET] Send command to daemon error :: %s', e)
 
 
-def listen():
+def listen(cycle=0.3):
 	jeedom_socket.open()
 	try:
 		while 1:
-			time.sleep(0.5)
+			time.sleep(cycle)
 			read_socket()
 	except KeyboardInterrupt:
 		shutdown()
@@ -187,7 +187,7 @@ signal.signal(signal.SIGTERM, handler)
 try:
 	jeedom_utils.write_pid(str(_pidfile))
 	jeedom_socket = jeedom_socket(port=_socket_port, address=_socket_host)
-	listen()
+	listen(_cycle)
 except Exception as e:
 	logging.error('[DAEMON][MAIN] Fatal error: %s', e)
 	logging.info(traceback.format_exc())

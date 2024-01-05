@@ -20,6 +20,10 @@ require_once __DIR__  . '/../../../../core/php/core.inc.php';
 
 class ttscast extends eqLogic
 {
+    /* ************************** Variables Globales ****************************** */
+
+    const PYTHON3_PATH = __DIR__ . '/../../resources/venv/bin/python3';
+
     /* ************************** Attributs ****************************** */
 
     /*
@@ -34,7 +38,32 @@ class ttscast extends eqLogic
     public static $_encryptConfigKey = array('param1', 'param2');
     */
 
-    /* ************************Methode static*************************** */
+    /* ************************ Methodes statiques : Démon & Dépendances *************************** */
+
+    public static function dependancy_install() {
+        log::remove(__CLASS__ . '_update');
+        return array('script' => __DIR__ . '/../../resources/install_#stype#.sh ' . jeedom::getTmpFolder(__CLASS__) . '/dependency', 'log' => log::getPathToLog(__CLASS__ . '_update'));
+    }
+
+    public static function dependancy_info() {
+        $return = array();
+        $return['log'] = log::getPathToLog(__CLASS__ . '_update');
+        $return['progress_file'] = jeedom::getTmpFolder(__CLASS__) . '/dependency';
+        if (file_exists(jeedom::getTmpFolder(__CLASS__) . '/dependency')) {
+            $return['state'] = 'in_progress';
+        } else {
+            if (exec(system::getCmdSudo() . system::get('cmd_check') . '-Ec "python3\-requests|python3\-setuptools|python3\-dev|python3\-venv"') < 4) {
+                $return['state'] = 'nok';
+            } elseif (!file_exists(self::PYTHON3_PATH)) {
+                $return['state'] = 'nok';
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip list | grep -Ewc "PyChromecast|pydub|gTTS|google-cloud-speech|google-auth|click|protobuf|requests|zeroconf"') < 9) {
+                $return['state'] = 'nok';
+            } else {
+                $return['state'] = 'ok';
+            }
+        }
+        return $return;
+    }
 
     public static function deamon_info() {
         $return = array();
@@ -113,6 +142,8 @@ class ttscast extends eqLogic
         }
     }
 
+    /* ************************ Methodes static : PLUGIN *************************** */
+
     public static function testExternalAddress($useExternal=NULL)
     {
         if (is_null($useExternal)) {
@@ -156,6 +187,8 @@ class ttscast extends eqLogic
         return $pluginVersion;
     }
 
+    /* ************************ Methodes static : JEEDOM *************************** */
+
     /*
      * Fonction exécutée automatiquement toutes les minutes par Jeedom
     public static function cron() {}
@@ -186,7 +219,6 @@ class ttscast extends eqLogic
     public static function cronHourly() {}
     */
 
-    
     // Fonction exécutée automatiquement tous les jours par Jeedom
     public static function cronDaily() {
         try {
@@ -198,7 +230,6 @@ class ttscast extends eqLogic
             log::add('ttscast', 'error', '[Cron Daily] Purge Cache ERROR :: ' . $e->getMessage());
         }
     }
-    
 
     /*
      * Permet de déclencher une action avant modification d'une variable de configuration du plugin
