@@ -162,8 +162,10 @@ def castGoogleHome(urltoplay, googleName):
         app_data = {"media_id": urltoplay}
         
         quick_play.quick_play(cast, app_name, app_data)
-        logging.debug('[DAEMON][Cast] Etat Google Home (IDLE ?) :: %s', cast.is_idle)
-        time.sleep(10)
+        logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
+        while cast.media_controller.status.player_state == 'PLAYING':
+            time.sleep(1)
+            logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
         cast.quit_app()
         browser.stop_discovery()
         return True
