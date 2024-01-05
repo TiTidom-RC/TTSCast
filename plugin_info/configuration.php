@@ -223,7 +223,7 @@ if (!isConnect()) {
                     message: '{{Upload Clé API :: OK}}',
                     level: 'success'
                 });
-                $('.gCloudAPIKey').value = data.result.result;
+                $('#gCloudAPIKey').value = data.result.result;
             // $('#img_device').value(data.result.result);
             }
         });
