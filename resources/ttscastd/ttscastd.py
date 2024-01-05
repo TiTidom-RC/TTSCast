@@ -110,7 +110,7 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
         os.symlink(symLinkPath, cachePath)
     
     logging.debug('[DAEMON][TestTTS] Import de la clé API')
-    credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FOLDER, 'jeedom-speech-207616-1374b0abe951.json'))
+    credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FULLPATH, 'jeedom-speech-207616-1374b0abe951.json'))
 
     logging.debug('[DAEMON][TestTTS] Génération du fichier TTS (mp3)')
     raw_filename = ttsText + "|" + ttsVoiceName
