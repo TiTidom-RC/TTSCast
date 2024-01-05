@@ -65,7 +65,7 @@ try {
 	}
 
     if (init('action') == 'resetAPIKey') {
-        $filepath = __DIR__ . "/../../core/config/{init('filename')}";
+        $filepath = __DIR__ . "/../../core/config/" . init('filename');
         if (!file_exists($filepath)) {
             throw new Exception('[RESET][APIKEY] Fichier introuvable : ' . $filepath);
         }
