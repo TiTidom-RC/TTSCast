@@ -164,11 +164,11 @@ def castToGoogleHome(urltoplay, googleName):
         app_data = {"media_id": urltoplay, "media_type": "audio/mp3"}
         quick_play.quick_play(cast, app_name, app_data)
         
-        logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', json.dumps(cast.media_controller.status, separators=(',', ':')))
+        logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
         
         while cast.media_controller.status.player_state == 'PLAYING':
             time.sleep(1)
-            logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', json.dumps(cast.media_controller.status, separators=(',', ':')))
+            logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', cast.media_controller.status)
         
         cast.quit_app()
         browser.stop_discovery()
