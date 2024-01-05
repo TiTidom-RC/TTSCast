@@ -161,7 +161,7 @@ def castToGoogleHome(urltoplay, googleName):
         logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
         
         app_name = "default_media_receiver"
-        app_data = {"media_id": urltoplay,"media_type": "audio/mp3",}
+        app_data = {"media_id": urltoplay, "media_type": "audio/mp3"}
         quick_play.quick_play(cast, app_name, app_data)
         
         logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
