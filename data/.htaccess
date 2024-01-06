@@ -1,1 +1,6 @@
 Options +FollowSymLinks
+Order allow,deny
+<Files ~ "\.(mp3)$">
+   allow from all
+</Files>
+Deny from all
