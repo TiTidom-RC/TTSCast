@@ -150,7 +150,7 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
         res = castToGoogleHome(urlFileToPlay, ttsGoogleName)
         logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
     else:
-        logging.error('[DAEMON][TestTTS] Clé API invalide :: ' + GCLOUDAPIKEY)
+        logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + GCLOUDAPIKEY)
 
 def castToGoogleHome(urltoplay, googleName):
     if googleName != '':
