@@ -78,7 +78,7 @@ def read_socket():
             if message['cmd'] == 'purgettscache':
                 logging.debug('[DAEMON][SOCKET-READ] Purge TTS Cache')
                 if 'days' in message:
-                    purgeCache(int(message['days']))
+                    purgeCache(message['days'])
                 else:
                     purgeCache()
             elif message['cmd'] == 'playtesttts':
@@ -186,9 +186,8 @@ def purgeCache(nbDays='0'):
         try:
             if os.path.exists(TTS_CACHEFOLDERTMP):
                 shutil.rmtree(TTS_CACHEFOLDERTMP)
-            # generate_warmupnotif()
         except Exception as e:
-            logging.warning('[DAEMON][PURGE-CACHE]Error while cleaning cache entirely (nbDays = 0) :: %s', e)
+            logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache entirely (nbDays = 0) :: %s', e)
             pass
     else:  # clean only files older than X days
         now = time.time()
@@ -201,7 +200,6 @@ def purgeCache(nbDays='0'):
                     os.remove(os.path.join(path, f))
                     logging.debug("[DAEMON][PURG-CACHE] File Removed " + f +
                                   " due to expiration (" + nbDays + " days)")
-            # generate_warmupnotif()
         except Exception as e:
             logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
             pass
