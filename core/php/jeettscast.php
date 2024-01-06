@@ -36,7 +36,7 @@ try {
     } elseif (isset($result['key2'])) {
         // do something else
     } else {
-        log::add('ttscast', 'error', 'unknown message received from daemon'); 
+        log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 
     }
 } catch (Exception $e) {
     log::add('ttscast', 'error', displayException($e));

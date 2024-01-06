@@ -64,33 +64,31 @@ CONFIG_FULLPATH = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(o
 
 # ***** END GLOBALS VAR *****
 
-
 def read_socket():
     global JEEDOM_SOCKET_MESSAGE
     if not JEEDOM_SOCKET_MESSAGE.empty():
-        logging.debug("[DAEMON][READ-SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
+        logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
         message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
         if message['apikey'] != _apikey:
-            logging.error("[DAEMON][READ-SOCKET] Invalid apikey from socket :: %s", message)
+            logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
             return
         try:
             # TODO ***** Gestion des messages reçus de Jeedom *****
             if message['cmd'] == 'purgettscache':
-                logging.debug('[DAEMON][SOCKET-READ] Purge TTS Cache')
+                logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
                 if 'days' in message:
                     purgeCache(message['days'])
                 else:
                     purgeCache()
             elif message['cmd'] == 'playtesttts':
-                logging.debug('[DAEMON][SOCKET-READ] Generate And Play Test TTS')
+                logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
                 if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName')):
-                    logging.debug('[DAEMON][SOCKET-READ] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
+                    logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
                     generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'])
                 else:
-                    logging.debug('[DAEMON][SOCKET-READ] Test TTS :: Il manque des données pour traiter la commande.')
+                    logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
         except Exception as e:
-            logging.error('[DAEMON][READ-SOCKET] Send command to daemon error :: %s', e)
-
+            logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
 
 def listen(cycle=0.3):
     jeedom_socket.open()
@@ -102,7 +100,6 @@ def listen(cycle=0.3):
         shutdown()
 
 # ----------------------------------------------------------------------------
-
 
 def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
     logging.debug('[DAEMON][TestTTS] Check des répertoires')
@@ -181,7 +178,6 @@ def castToGoogleHome(urltoplay, googleName):
         logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome absent)')
         return False
 
-
 def purgeCache(nbDays='0'):
     if nbDays == '0':  # clean entire directory including containing folder
         logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
@@ -208,15 +204,13 @@ def purgeCache(nbDays='0'):
 
 # ----------------------------------------------------------------------------
 
-
 def handler(signum=None, frame=None):
-    logging.debug("Signal %i caught, exiting...", int(signum))
+    logging.debug("[DAEMON] Signal %i caught, exiting...", int(signum))
     shutdown()
 
-
 def shutdown():
-    logging.debug("Shutdown")
-    logging.debug("Removing PID file %s", _pidfile)
+    logging.debug("[DAEMON] Shutdown")
+    logging.debug("[DAEMON] Removing PID file %s", _pidfile)
     try:
         os.remove(_pidfile)
     except Exception:
@@ -225,14 +219,13 @@ def shutdown():
         jeedom_socket.close()
     except Exception:
         pass
-    logging.debug("Exit 0")
+    logging.debug("[DAEMON] Exit 0")
     sys.stdout.flush()
     os._exit(0)
 
 # ----------------------------------------------------------------------------
 
 # ***** PROGRAMME PRINCIPAL *****
-
 
 _log_level = "error"
 _socket_port = 55999

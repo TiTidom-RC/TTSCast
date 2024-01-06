@@ -14,7 +14,6 @@
 # along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 #
 
-import time
 import logging
 import threading
 import requests
@@ -24,16 +23,12 @@ try:
 except ImportError:
     from collections import Mapping
 import os
-from os.path import join
-import socket
 from queue import Queue
 import socketserver
 from socketserver import (TCPServer, StreamRequestHandler)
-import signal
 import unicodedata
 
 # ------------------------------------------------------------------------------
-
 
 class jeedom_com():
 	def __init__(self, apikey='', url='', cycle=0.5, retry=3):
@@ -94,19 +89,19 @@ class jeedom_com():
 			if self.cycle <= 0:
 				self.send_change_immediate(changes)
 			else:
-				self.merge_dict(self.changes,changes)
+				self.merge_dict(self.changes, changes)
 		else:
 			if self.cycle <= 0:
-				self.send_change_immediate({key:value})
+				self.send_change_immediate({key: value})
 			else:
 				self.changes[key] = value
 
 	def send_change_immediate(self, change):
-		threading.Thread( target=self.thread_change, args=(change,)).start()
+		threading.Thread(target=self.thread_change, args=(change,)).start()
 
 	def thread_change(self, change):
 		logging.info('Send to jeedom : %s', change)
-		i=0
+		i = 0
 		while i < self.retry:
 			try:
 				r = requests.post(self.url + '?apikey=' + self.apikey, json=change, timeout=(0.5, 120), verify=False)
@@ -123,7 +118,7 @@ class jeedom_com():
 		return self.changes
 
 	def merge_dict(self, d1, d2):
-		for k,v2 in d2.items():
+		for k, v2 in d2.items():
 			v1 = d1.get(k)  # returns None if v1 has no value for this key
 			if isinstance(v1, Mapping) and isinstance(v2, Mapping):
 				self.merge_dict(v1, v2)
@@ -142,7 +137,6 @@ class jeedom_com():
 		return True
 
 # ------------------------------------------------------------------------------
-
 
 class jeedom_utils():
 	
@@ -186,7 +180,7 @@ class jeedom_utils():
 
 	@staticmethod
 	def split_len(seq, length):
-		return [seq[i:i+length] for i in range(0, len(seq), length)]
+		return [seq[i:i + length] for i in range(0, len(seq), length)]
 
 	@staticmethod
 	def write_pid(path):
@@ -203,12 +197,9 @@ class jeedom_utils():
 	def printHex(hex):
 		return ' '.join([hex[i:i + 2] for i in range(0, len(hex), 2)])
 
-
 # ------------------------------------------------------------------------------
 
-
 JEEDOM_SOCKET_MESSAGE = Queue()
-
 
 class jeedom_socket_handler(StreamRequestHandler):
 	def handle(self):
@@ -219,7 +210,6 @@ class jeedom_socket_handler(StreamRequestHandler):
 		logging.info("Message read from socket: %s", str(lg.strip()))
 		self.netAdapterClientConnected = False
 		logging.info("Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
-
 
 class jeedom_socket():
 
