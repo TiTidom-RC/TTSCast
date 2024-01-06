@@ -239,11 +239,13 @@ _socket_port = 55999
 _socket_host = 'localhost'
 _pidfile = '/tmp/ttscastd.pid'
 _apikey = ''
+_pluginVersion = ''
 _callback = ''
 _cycle = 0.3
 
 parser = argparse.ArgumentParser(description='TTSCast Daemon for Jeedom plugin')
 parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
+parser.add_argument("--pluginversion", help="Plugin Version", type=str)
 parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="ApiKey", type=str)
 parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
@@ -255,6 +257,8 @@ parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 args = parser.parse_args()
 if args.loglevel:
     _log_level = args.loglevel
+if args.pluginversion:
+    _pluginVersion = args.pluginversion
 if args.callback:
     _callback = args.callback
 if args.apikey:
@@ -274,6 +278,7 @@ if args.ttsweb:
 jeedom_utils.set_log_level(_log_level)
 
 logging.info('[DAEMON][MAIN] Start ttscastd')
+logging.info('[DAEMON][MAIN] Plugin Version: %s', _pluginVersion)
 logging.info('[DAEMON][MAIN] Log level: %s', _log_level)
 logging.info('[DAEMON][MAIN] Socket port: %s', _socket_port)
 logging.info('[DAEMON][MAIN] Socket host: %s', _socket_host)
