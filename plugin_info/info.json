@@ -1,7 +1,7 @@
 {
 	"id" : "ttscast",
 	"name" : "TTS Cast",
-	"pluginVersion": "0.6",
+	"pluginVersion": "0.7",
 	"description" : {
 		"fr_FR": "TTS Cast : plugin permettant de générer des phrases TTS et de les faire jouer par un équipement Google (type ChromeCast)"
 	},
