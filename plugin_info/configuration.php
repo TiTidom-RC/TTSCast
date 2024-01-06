@@ -179,9 +179,9 @@ if (!isConnect()) {
                 </div>
                 <div class="col-lg-2">
                     <a class="btn btn-primary btn-file">
-                        <i class="fas fa-cloud-upload-alt"></i> {{Ajouter une clé API (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json" />
+                        <i class="fas fa-cloud-upload-alt"></i> {{Ajouter Clé API (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json" />
                     </a>
-                    <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-undo"></i> {{Effacer la clé API}}</a>
+                    <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-undo"></i> {{Effacer Clé API}}</a>
                 </div>
             </div>
             <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
