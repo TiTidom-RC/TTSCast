@@ -25,6 +25,15 @@ if (!isConnect()) {
 <form class="form-horizontal">
     <fieldset>
         <div>
+            <legend><i class="fas fa-info"></i> {{Plugin}}</legend>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Version}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Version du plugin à indiquer sur Community}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" data-l1key="versionPlugin" readonly />
+                </div>
+            </div>
             <legend><i class="fas fa-university"></i> {{Démon}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Durée de Cycle}}
