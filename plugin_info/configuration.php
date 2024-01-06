@@ -153,7 +153,7 @@ if (!isConnect()) {
                     <input class="configKey form-control" type="number" data-l1key="ttsPurgeCacheDays" min="0" max="90" placeholder="{{Nombre de jours}}" />
                 </div>
                 <div class="col-lg-1">
-                    <a class="btn btn-warning customclass-purgettscache"><i class="fas fa-file-audio"></i> {{VIDER le cache}}</a>
+                    <a class="btn btn-warning customclass-purgettscache"><i class="fas fa-file-audio"></i> {{Vider le Cache}}</a>
                 </div>
             </div>
             <div class="form-group">
@@ -167,7 +167,7 @@ if (!isConnect()) {
                     <input class="configKey form-control" type="text" data-l1key="ttsTestGoogleName" placeholder="{{Nest Hub Bureau}}" />
                 </div>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-ttstestplay"><i class="fas fa-play-circle"></i> {{GENERER + DIFFUSER}}</a>
+                    <a class="btn btn-success customclass-ttstestplay"><i class="fas fa-play-circle"></i> {{Générer + Diffuser}}</a>
                 </div>
             </div>
             <div class="form-group">
