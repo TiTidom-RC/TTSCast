@@ -120,35 +120,37 @@ def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
         os.symlink(symLinkPath, cachePath)
     
     logging.debug('[DAEMON][TestTTS] Import de la clé API :: ' + GCLOUDAPIKEY)
-    credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FULLPATH, GCLOUDAPIKEY))
+    if GCLOUDAPIKEY != 'noKey':
+        credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FULLPATH, GCLOUDAPIKEY))
 
-    logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
-    raw_filename = ttsText + "|" + ttsVoiceName
-    filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
-    filepath = os.path.join(symLinkPath, filename)
-    
-    logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
-    
-    if not os.path.isfile(filepath):
-        language_code = "-".join(ttsVoiceName.split("-")[:2])
-        text_input = tts.SynthesisInput(text=ttsText)
-        voice_params = tts.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-        audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
+        logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
+        raw_filename = ttsText + "|" + ttsVoiceName
+        filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+        filepath = os.path.join(symLinkPath, filename)
+        
+        logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
+        
+        if not os.path.isfile(filepath):
+            language_code = "-".join(ttsVoiceName.split("-")[:2])
+            text_input = tts.SynthesisInput(text=ttsText)
+            voice_params = tts.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
+            audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
 
-        client = tts.TextToSpeechClient(credentials=credentials)
-        response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+            client = tts.TextToSpeechClient(credentials=credentials)
+            response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
-        with open(filepath, "wb") as out:
-            out.write(response.audio_content)
-            logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
+            with open(filepath, "wb") as out:
+                out.write(response.audio_content)
+                logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
+        else:
+            logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+        
+        urlFileToPlay = urljoin(ttsSrvWeb, filename)
+        logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+        res = castToGoogleHome(urlFileToPlay, ttsGoogleName)
+        logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
     else:
-        logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
-    
-    urlFileToPlay = urljoin(ttsSrvWeb, filename)
-    logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-    res = castToGoogleHome(urlFileToPlay, ttsGoogleName)
-    logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
-
+        logging.error('[DAEMON][TestTTS] Clé API invalide :: ' + GCLOUDAPIKEY)
 
 def castToGoogleHome(urltoplay, googleName):
     if googleName != '':
@@ -240,7 +242,7 @@ _apikey = ''
 _callback = ''
 _cycle = 0.3
 
-parser = argparse.ArgumentParser(description='Desmond Daemon for Jeedom plugin')
+parser = argparse.ArgumentParser(description='TTSCast Daemon for Jeedom plugin')
 parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
 parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="ApiKey", type=str)
