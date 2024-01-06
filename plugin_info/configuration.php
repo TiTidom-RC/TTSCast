@@ -31,7 +31,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Version du plugin à indiquer sur Community}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <input class="configKey form-control" data-l1key="versionPlugin" readonly />
+                    <input class="configKey form-control" data-l1key="pluginVersion" readonly />
                 </div>
             </div>
             <legend><i class="fas fa-university"></i> {{Démon}}</legend>
