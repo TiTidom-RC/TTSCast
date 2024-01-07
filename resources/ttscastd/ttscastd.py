@@ -78,7 +78,7 @@ def read_socket():
                 logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
                 if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName')):
                     logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
-                    gCloudTTS.generateTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'])
+                    gCloudTTS.getTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'])
                 else:
                     logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
         except Exception as e:
