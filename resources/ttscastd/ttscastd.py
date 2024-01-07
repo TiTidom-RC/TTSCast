@@ -194,13 +194,13 @@ class gCloudTTS:
         else:
             logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
 
-
     def castToGoogleHome(urltoplay, googleName):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
             chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[googleName])
             if not chromecasts:
                 logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
+                browser.stop_discovery()
                 return False        
             cast = list(chromecasts)[0]
             cast.wait()
