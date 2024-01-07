@@ -26,7 +26,7 @@ from urllib.parse import urljoin
 
 try:
     # from jeedom.jeedom import *
-    from jeedom.jeedom import jeedom_socket, jeedom_utils, jeedom_com
+    from jeedom.jeedom import jeedom_socket, jeedom_utils, jeedom_com, JEEDOM_SOCKET_MESSAGE
 except ImportError:
     print("[DAEMON][IMPORT] Error: importing module jeedom.jeedom")
     sys.exit(1)
