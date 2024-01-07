@@ -322,7 +322,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'friendlyname');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Name', __FILE__));
+            $cmd->setName(__('Friendly Name', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('friendlyname');
             $cmd->setType('info');
@@ -416,9 +416,15 @@ class ttscastCmd extends cmd
 
         if ( $this->GetType = "action" ) {
 			if ($logicalId == "tts") {
-                $googleName = $this->getConfiguration('gHomeName');
+                $googleName = $this->getConfiguration('friendlyname', null);
                 log::add('ttscast', 'debug', '[CMD] Message / Volume / GoogleName :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleName);
-                ttscast::playTTS($googleName, $_options['message'], intval($_options['title']));
+                if ($logicalId == "tts" && isset($googleName) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
+                    ttscast::playTTS($googleName, $_options['message'], intval($_options['title']));
+                }
+                else {
+                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour diffuser un message TTS');
+                }
+                
             } 
             
 		} else {
