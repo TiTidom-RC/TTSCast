@@ -398,6 +398,19 @@ class ttscastCmd extends cmd
 
     // Exécution d'une commande
     public function execute($_options = array()) {
+        $eqLogic = $this->getEqLogic();
+        $logicalId = $this->getLogicalId();
+        
+        log::add('ttscast', 'debug', '[CMD] eqLogic :: ' . $eqLogic);
+        log::add('ttscast', 'debug', '[CMD] LogicalId :: ' . $logicalId);
+
+        if ( $this->GetType = "action" ) {
+			// $eqLogic->getCmd();
+            
+		} else {
+			throw new Exception(__('Commande non implémentée actuellement', __FILE__));
+		}
+		return true;
     }
 
     /* ***********************Getteur Setteur*************************** */
