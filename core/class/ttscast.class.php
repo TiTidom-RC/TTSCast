@@ -416,8 +416,9 @@ class ttscastCmd extends cmd
 
         if ( $this->GetType = "action" ) {
 			if ($logicalId == "tts") {
-                log::add('ttscast', 'debug', '[CMD] Message / Volume :: ' . $_options['message'] . " / " . $_options['title']);
-                ttscast::playTTS('Nest Hub Bureau', $_options['message'], intval($_options['title']));
+                $googleName = $this->getInfoValue('friendlyname');
+                log::add('ttscast', 'debug', '[CMD] Message / Volume / GoogleName :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleName);
+                ttscast::playTTS($googleName, $_options['message'], intval($_options['title']));
             } 
             
 		} else {
