@@ -180,7 +180,9 @@ class ttscast extends eqLogic
         $ttsText = config::byKey('ttsTestFileGen', 'ttscast', 'Bonjour, Ceci est un test de synthèse vocale via le plugin TTS Cast.');
         $ttsGoogleName = config::byKey('ttsTestGoogleName', 'ttscast', '');
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
-        $value = array('cmd' => 'playtesttts', 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName);
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | picotts | gtranslatetts | gcloudtts
+        $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
+        $value = array('cmd' => 'playtesttts', 'ttsengine' => $ttsEngine, 'ttsspeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName);
         self::sendToDaemon($value);
     }
 
