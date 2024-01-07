@@ -405,7 +405,9 @@ class ttscastCmd extends cmd
         log::add('ttscast', 'debug', '[CMD] LogicalId :: ');
 
         if ( $this->GetType = "action" ) {
-			// $eqLogic->getCmd();
+			if ($logicalId == "tts") {
+                log::add('ttscast', 'debug', '[CMD] Message / Volume :: ' . $_options['message'] . " / " . $_options['title']);
+            } 
             
 		} else {
 			throw new Exception(__('Commande non implémentée actuellement', __FILE__));
