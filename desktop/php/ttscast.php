@@ -152,11 +152,11 @@ $eqLogics = eqLogic::byType($plugin->getId());
 
                             <legend><i class="fas fa-cogs"></i> {{Paramètres spécifiques}}</legend>
                             <div class="form-group">
-                                <label class="col-sm-4 control-label">{{Frienly Name Google}}
+                                <label class="col-sm-4 control-label">{{Friendly Name Google}}
                                     <sup><i class="fas fa-question-circle tooltips" title="{{Renseignez le FriendlyName Google}}"></i></sup>
                                 </label>
                                 <div class="col-sm-6">
-                                    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="friendlyname" placeholder="{{Nest Hub Bureau}}">
+                                    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="gHomeName" placeholder="{{Nest Hub Bureau}}">
                                 </div>
                             </div>
                             <!-- Exemple de champ de saisie du cron d'auto-actualisation avec assistant -->
