@@ -309,6 +309,19 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
+        $cmd = $this->getCmd(null, 'friendlyname');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Name', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('friendlyname');
+            $cmd->setType('info');
+            $cmd->setSubType('string');    
+	        $cmd->setIsVisible(1);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
         $cmd = $this->getCmd(null, 'tts');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
@@ -322,6 +335,7 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
+        $cmd = $this->getCmd(null, 'customcmd');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Custom Cmd', __FILE__));
