@@ -210,7 +210,7 @@ class jeedom_socket_handler(StreamRequestHandler):
 		JEEDOM_SOCKET_MESSAGE.put(lg)
   
 		try:
-			lgdecode = json.loads(lg)
+			lgdecode = json.loads(lg.strip())
 			if lgdecode and lgdecode['apikey']:
 				lgdecode['apikey'] = '***'
 			logging.info("[DAEMON][HANDLER] Message read from socket :: %s", str(json.dumps(lgdecode).encode('utf-8')))
