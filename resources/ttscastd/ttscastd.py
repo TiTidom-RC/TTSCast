@@ -194,7 +194,7 @@ class gCloudTTS:
         else:
             logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
 
-    def castToGoogleHome(urltoplay, googleName, volume=30):
+    def castToGoogleHome(urltoplay, googleName, volumeForPlay=30):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
             chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[googleName])
@@ -204,11 +204,11 @@ class gCloudTTS:
                 return False        
             cast = list(chromecasts)[0]
             cast.wait()
-            
-            volume_before = cast.status.volume_level
-            logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', volume_before)
-            cast.set_volume(volume=0.4)
             logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+            
+            volumeBeforePlay = cast.status.volume_level
+            logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', volumeBeforePlay)
+            cast.set_volume(volume=volumeForPlay / 100)
             
             app_name = "default_media_receiver"
             app_data = {"media_id": urltoplay, "media_type": "audio/mp3"}
@@ -221,7 +221,7 @@ class gCloudTTS:
                 logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', cast.media_controller.status)
             
             cast.quit_app()
-            cast.set_volume(volume=volume_before)
+            cast.set_volume(volume=volumeBeforePlay)
             browser.stop_discovery()
             return True
         else:
