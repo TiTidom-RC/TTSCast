@@ -78,7 +78,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudttsvoice">
-                <label class="col-lg-3 control-label">{{Voix Google Cloud Text-to-Speech}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{TESTER}}</a>]</label>
+                <label class="col-lg-3 control-label">{{Voix Google Cloud Text-to-Speech}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>]</label>
                 <div class="col-lg-4">
                     <select class="configKey form-control" data-l1key="gCloudTTSVoice">
                         <option value="fr-FR-Standard-A">French (France) - Standard A Female (fr-FR-Standard-A)</option>
@@ -99,6 +99,7 @@ if (!isConnect()) {
                         <option value="fr-FR-Studio-A">French (France) - Studio A Female (fr-FR-Studio-A)</option>
                         <option value="fr-FR-Studio-D">French (France) - Studio D Male (fr-FR-Studio-D)</option>
                         <option value="fr-FR-Polyglot-1">French (France) - Polyglot 1 Male (fr-FR-Polyglot-1)</option>
+                        <option value="sr-RS-Standard-A">Serbian (Serbie) - Standard A Female (sr-RS-Standard-A)</option>
                     </select>
                 </div>
             </div>
