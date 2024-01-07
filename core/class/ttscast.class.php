@@ -186,6 +186,16 @@ class ttscast extends eqLogic
         self::sendToDaemon($value);
     }
 
+    public static function playTTS($gHome=null, $message=null, $volume=30) {
+        $ttsText = $message;
+        $ttsGoogleName = $gHome;
+        $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | picotts | gtranslatetts | gcloudtts
+        $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
+        $value = array('cmd' => 'playtts', 'ttsengine' => $ttsEngine, 'ttsspeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName);
+        self::sendToDaemon($value);
+    }
+
     public static function getPluginVersion()
     {
         $pluginVersion = 'N/A';
@@ -407,6 +417,7 @@ class ttscastCmd extends cmd
         if ( $this->GetType = "action" ) {
 			if ($logicalId == "tts") {
                 log::add('ttscast', 'debug', '[CMD] Message / Volume :: ' . $_options['message'] . " / " . $_options['title']);
+                ttscast::playTTS('Nest Hub Bureau', $_options['message'], intval($_options['title']));
             } 
             
 		} else {
