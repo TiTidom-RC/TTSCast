@@ -189,12 +189,12 @@ class gCloudTTS:
             
             urlFileToPlay = urljoin(ttsSrvWeb, filename)
             logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-            res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+            res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName, ttsVolume)
             logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
         else:
             logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
 
-    def castToGoogleHome(urltoplay, googleName, volume):
+    def castToGoogleHome(urltoplay, googleName, volume=30):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
             chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[googleName])
