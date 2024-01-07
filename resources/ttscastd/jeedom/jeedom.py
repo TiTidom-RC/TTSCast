@@ -132,8 +132,8 @@ class jeedom_com():
 			if response.status_code != requests.codes.ok:
 				logging.error('[DAEMON][COM][TEST] Callback error: %s %s. Please check your network configuration page', response.status.code, response.status.message)
 				return False
-		except Exception as e:
-			logging.error('[DAEMON][COM][TEST] Callback result as a unknown error: %s. Please check your network configuration page', e.message)
+		except Exception as error:
+			logging.error('[DAEMON][COM][TEST] Callback result as a unknown error: %s. Please check your network configuration page', error)
 			return False
 		return True
 
@@ -211,11 +211,12 @@ class jeedom_socket_handler(StreamRequestHandler):
   
 		try:
 			lgdecode = json.loads(lg)
-			if (lgdecode and lgdecode['apikey']):
+			if lgdecode and lgdecode['apikey']:
 				lgdecode['apikey'] = '***'
-			logging.info("[DAEMON][HANDLER] Message read from socket: %s", str(lgdecode.strip()))
-		except Exception:
-			logging.info("[DAEMON][HANDLER] Message read from socket: %s", str(lg.strip()))
+			logging.info("[DAEMON][HANDLER] Message read from socket :: %s", str(lgdecode.strip()))
+		except Exception as error:
+			logging.debug("[DAEMON][HANDLER] JSON Exception :: %s", error)
+			logging.info("[DAEMON][HANDLER] Message read from socket :: %s", str(lg.strip()))
 		# logging.info("Message read from socket: %s", str(lg.strip()))
   
 		self.netAdapterClientConnected = False
