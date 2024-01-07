@@ -232,16 +232,16 @@ class jeedom_socket():
 	def open(self):
 		self.netAdapter = TCPServer((self.address, self.port), jeedom_socket_handler)
 		if self.netAdapter:
-			logging.info("[DAEMON][SOCKER] Socket interface started")
+			logging.info("[DAEMON][SOCKET] Socket interface started")
 			threading.Thread(target=self.loopNetServer, args=()).start()
 		else:
-			logging.info("[DAEMON][SOCKER] Cannot start socket interface")
+			logging.info("[DAEMON][SOCKET] Cannot start socket interface")
 
 	def loopNetServer(self):
-		logging.info("[DAEMON][SOCKER] LoopNetServer Thread started")
-		logging.info("[DAEMON][SOCKER] Listening on: [%s:%d]", self.address, self.port)
+		logging.info("[DAEMON][SOCKET] LoopNetServer Thread started")
+		logging.info("[DAEMON][SOCKET] Listening on: [%s:%d]", self.address, self.port)
 		self.netAdapter.serve_forever()
-		logging.info("[DAEMON][SOCKER] LoopNetServer Thread stopped")
+		logging.info("[DAEMON][SOCKET] LoopNetServer Thread stopped")
 
 	def close(self):
 		self.netAdapter.shutdown()
