@@ -18,10 +18,12 @@ import shutil
 import sys
 import os
 import time
+import hashlib
 import traceback
 import signal
 import json
 import argparse
+
 from urllib.parse import urljoin
 
 try:
@@ -33,7 +35,6 @@ except ImportError:
 
 # Import pour PyChromeCast
 
-import hashlib
 try:    
     from google.oauth2 import service_account
     import google.cloud.texttospeech as tts
@@ -43,34 +44,19 @@ except ImportError:
     print("[DAEMON][IMPORT] Error: importing module TTS")
     sys.exit(1)
 
-# ***** GLOBALS VAR *****
-
-KNOWN_DEVICES = {}
-NOWPLAYING_DEVICES = {}
-GCAST_DEVICES = {}
-
-TTS_CACHEFOLDER = 'data/cache'
-TTS_CACHEFOLDERWEB = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), TTS_CACHEFOLDER))
-TTS_CACHEFOLDERTMP = os.path.join('/tmp/jeedom/', 'ttscast_cache')
-TTS_WEBSRVCACHE = ''
-TTS_WEBSRVMEDIA = ''
-
-GCLOUDAPIKEY = ''
-
-MEDIA_FOLDER = 'data/media'
-MEDIA_FULLPATH = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), MEDIA_FOLDER))
-
-CONFIG_FOLDER = 'core/config'
-CONFIG_FULLPATH = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), CONFIG_FOLDER))
-
-# ***** END GLOBALS VAR *****
+# Import Config
+try:
+    from config import Config
+except ImportError:
+    print("[DAEMON][IMPORT] Error: importing config")
+    sys.exit(1)
 
 def read_socket():
     global JEEDOM_SOCKET_MESSAGE
     if not JEEDOM_SOCKET_MESSAGE.empty():
         logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
         message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
-        if message['apikey'] != _apikey:
+        if message['apikey'] != Config.apiKey:
             logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
             return
         try:
@@ -107,9 +93,9 @@ class gCloudTTS:
     
     def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
         logging.debug('[DAEMON][TestTTS] Check des répertoires')
-        cachePath = TTS_CACHEFOLDERWEB
-        symLinkPath = TTS_CACHEFOLDERTMP
-        ttsSrvWeb = TTS_WEBSRVCACHE
+        cachePath = Config.ttsCacheFolderWeb
+        symLinkPath = Config.ttsCacheFolderTmp
+        ttsSrvWeb = Config.ttsWebSrvCache
         
         try:
             os.stat(symLinkPath)
@@ -120,9 +106,9 @@ class gCloudTTS:
         except Exception:
             os.symlink(symLinkPath, cachePath)
         
-        logging.debug('[DAEMON][TestTTS] Import de la clé API :: ' + GCLOUDAPIKEY)
-        if GCLOUDAPIKEY != 'noKey':
-            credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FULLPATH, GCLOUDAPIKEY))
+        logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
+        if Config.gCloudApiKey != 'noKey':
+            credentials = service_account.Credentials.from_service_account_file(os.path.join(Config.configFullPath, Config.gCloudApiKey))
 
             logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
             raw_filename = ttsText + "|" + ttsVoiceName
@@ -151,7 +137,7 @@ class gCloudTTS:
             res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName)
             logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
         else:
-            logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + GCLOUDAPIKEY)
+            logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
 
     def castToGoogleHome(urltoplay, googleName):
         if googleName != '':
@@ -188,14 +174,14 @@ class Utils:
         if nbDays == '0':  # clean entire directory including containing folder
             logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
             try:
-                if os.path.exists(TTS_CACHEFOLDERTMP):
-                    shutil.rmtree(TTS_CACHEFOLDERTMP)
+                if os.path.exists(Config.ttsCacheFolderTmp):
+                    shutil.rmtree(Config.ttsCacheFolderTmp)
             except Exception as e:
                 logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache entirely (nbDays = 0) :: %s', e)
                 pass
         else:  # clean only files older than X days
             now = time.time()
-            path = TTS_CACHEFOLDERTMP
+            path = Config.ttsCacheFolderTmp
             try:
                 for f in os.listdir(path):
                     logging.debug("[DAEMON][PURGE-CACHE] Age for " + f + " is " + str(
@@ -215,9 +201,9 @@ def handler(signum=None, frame=None):
 
 def shutdown():
     logging.debug("[DAEMON] Shutdown")
-    logging.debug("[DAEMON] Removing PID file %s", _pidfile)
+    logging.debug("[DAEMON] Removing PID file %s", Config.pidFile)
     try:
-        os.remove(_pidfile)
+        os.remove(Config.pidFile)
     except Exception:
         pass
     try:
@@ -232,15 +218,6 @@ def shutdown():
 
 # ***** PROGRAMME PRINCIPAL *****
 
-_log_level = "error"
-_socket_port = 55999
-_socket_host = 'localhost'
-_pidfile = '/tmp/ttscastd.pid'
-_apikey = ''
-_pluginVersion = ''
-_callback = ''
-_cycle = 0.3
-
 parser = argparse.ArgumentParser(description='TTSCast Daemon for Jeedom plugin')
 parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
 parser.add_argument("--pluginversion", help="Plugin Version", type=str)
@@ -254,47 +231,47 @@ parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 
 args = parser.parse_args()
 if args.loglevel:
-    _log_level = args.loglevel
+    Config.logLevel = args.loglevel
 if args.pluginversion:
-    _pluginVersion = args.pluginversion
+    Config.pluginVersion = args.pluginversion
 if args.callback:
-    _callback = args.callback
+    Config.callBack = args.callback
 if args.apikey:
-    _apikey = args.apikey
+    Config.apiKey = args.apikey
 if args.gcloudapikey:
-    GCLOUDAPIKEY = args.gcloudapikey
+    Config.gCloudApiKey = args.gcloudapikey
 if args.pid:
-    _pidfile = args.pid
+    Config.pidFile = args.pid
 if args.cycle:
-    _cycle = float(args.cycle)
+    Config.cycle = float(args.cycle)
 if args.socketport:
-    _socket_port = int(args.socketport)
+    Config.socketPort = int(args.socketport)
 if args.ttsweb:
-    TTS_WEBSRVCACHE = urljoin(args.ttsweb, 'plugins/ttscast/data/cache/')
-    TTS_WEBSRVMEDIA = urljoin(args.ttsweb, 'plugins/ttscast/data/media/')
+    Config.ttsWebSrvCache = urljoin(args.ttsweb, 'plugins/ttscast/data/cache/')
+    Config.ttsWebSrvMedia = urljoin(args.ttsweb, 'plugins/ttscast/data/media/')
 
-jeedom_utils.set_log_level(_log_level)
+jeedom_utils.set_log_level(Config.logLevel)
 
 logging.info('[DAEMON][MAIN] Start ttscastd')
-logging.info('[DAEMON][MAIN] Plugin Version: %s', _pluginVersion)
-logging.info('[DAEMON][MAIN] Log level: %s', _log_level)
-logging.info('[DAEMON][MAIN] Socket port: %s', _socket_port)
-logging.info('[DAEMON][MAIN] Socket host: %s', _socket_host)
-logging.info('[DAEMON][MAIN] Cycle: %s', _cycle)
-logging.info('[DAEMON][MAIN] PID file: %s', _pidfile)
+logging.info('[DAEMON][MAIN] Plugin Version: %s', Config.pluginVersion)
+logging.info('[DAEMON][MAIN] Log level: %s', Config.logLevel)
+logging.info('[DAEMON][MAIN] Socket port: %s', Config.socketPort)
+logging.info('[DAEMON][MAIN] Socket host: %s', Config.socketHost)
+logging.info('[DAEMON][MAIN] Cycle: %s', Config.cycle)
+logging.info('[DAEMON][MAIN] PID file: %s', Config.pidFile)
 logging.info('[DAEMON][MAIN] ApiKey: %s', "***")
-logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', GCLOUDAPIKEY)
-logging.info('[DAEMON][MAIN] CallBack: %s', _callback)
-logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', TTS_WEBSRVCACHE)
-logging.info('[DAEMON][MAIN] Jeedom WebSrvMedia: %s', TTS_WEBSRVMEDIA)
+logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', Config.gCloudApiKey)
+logging.info('[DAEMON][MAIN] CallBack: %s', Config.callBack)
+logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', Config.ttsWebSrvCache)
+logging.info('[DAEMON][MAIN] Jeedom WebSrvMedia: %s', Config.ttsWebSrvMedia)
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
 
 try:
-    jeedom_utils.write_pid(str(_pidfile))
-    jeedom_socket = jeedom_socket(port=_socket_port, address=_socket_host)
-    listen(_cycle)
+    jeedom_utils.write_pid(str(Config.pidFile))
+    jeedom_socket = jeedom_socket(port=Config.socketPort, address=Config.socketHost)
+    listen(Config.cycle)
 except Exception as e:
     logging.error('[DAEMON][MAIN] Fatal error: %s', e)
     logging.info(traceback.format_exc())
