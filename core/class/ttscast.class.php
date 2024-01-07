@@ -309,6 +309,30 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
+        $cmd = $this->getCmd(null, 'tts');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('TTS', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('tts');
+            $cmd->setType('action');
+            $cmd->setSubType('message');    
+	        $cmd->setIsVisible(1);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Custom Cmd', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('customcmd');
+            $cmd->setType('action');
+            $cmd->setSubType('message');    
+	        $cmd->setIsVisible(0);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
     }
 
     // Fonction exécutée automatiquement avant la suppression de l'équipement
