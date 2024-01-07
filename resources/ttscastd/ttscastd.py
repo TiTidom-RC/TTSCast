@@ -204,7 +204,7 @@ class gCloudTTS:
                 return False        
             cast = list(chromecasts)[0]
             cast.wait()
-            cast.set_volume(0.4)
+            cast.set_volume(volume=0.4)
             logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
             
             app_name = "default_media_receiver"
