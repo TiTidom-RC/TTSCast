@@ -14,6 +14,7 @@
 # along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 #
 
+import json
 import logging
 import threading
 import requests
@@ -39,7 +40,7 @@ class jeedom_com():
 		self.changes = {}
 		if cycle > 0 :
 			self.send_changes_async()
-		logging.info('Init request module v%s', requests.__version__)
+		logging.info('[DAEMON][COM] Init request module v%s', requests.__version__)
 
 	def send_changes_async(self):
 		try:
@@ -50,7 +51,7 @@ class jeedom_com():
 			start_time = datetime.datetime.now()
 			changes = self.changes
 			self.changes = {}
-			logging.info('Send to jeedom: %s', changes)
+			logging.info('[DAEMON][COM] Send to jeedom: %s', changes)
 			i = 0
 			while i < self.retry:
 				try:
@@ -58,10 +59,10 @@ class jeedom_com():
 					if r.status_code == requests.codes.ok:
 						break
 				except Exception as error:
-					logging.error('Error on send request to jeedom %s retry : %i/%i', error, i, self.retry)
+					logging.error('[DAEMON][COM] Error on send request to jeedom %s retry : %i/%i', error, i, self.retry)
 				i = i + 1
 			if r.status_code != requests.codes.ok:
-				logging.error('Error on send request to jeedom, return code %i', r.status_code)
+				logging.error('[DAEMON][COM] Error on send request to jeedom, return code %i', r.status_code)
 			dt = datetime.datetime.now() - start_time
 			ms = (dt.days * 24 * 60 * 60 + dt.seconds) * 1000 + dt.microseconds / 1000.0
 			timer_duration = self.cycle - ms
@@ -72,7 +73,7 @@ class jeedom_com():
 			resend_changes = threading.Timer(timer_duration, self.send_changes_async)
 			resend_changes.start()
 		except Exception as error:
-			logging.error('Critical error on  send_changes_async %s', error)
+			logging.error('[DAEMON][COM] Critical error on  send_changes_async %s', error)
 			resend_changes = threading.Timer(self.cycle, self.send_changes_async)
 			resend_changes.start()
 
@@ -100,7 +101,7 @@ class jeedom_com():
 		threading.Thread(target=self.thread_change, args=(change,)).start()
 
 	def thread_change(self, change):
-		logging.info('Send to jeedom : %s', change)
+		logging.info('[DAEMON][COM] Send to jeedom : %s', change)
 		i = 0
 		while i < self.retry:
 			try:
@@ -108,7 +109,7 @@ class jeedom_com():
 				if r.status_code == requests.codes.ok:
 					break
 			except Exception as error:
-				logging.error('Error on send request to jeedom %s retry : %i/%i', error, i, self.retry)
+				logging.error('[DAEMON][COM] Error on send request to jeedom %s retry : %i/%i', error, i, self.retry)
 			i = i + 1
 
 	def set_change(self, changes):
@@ -129,10 +130,10 @@ class jeedom_com():
 		try:
 			response = requests.get(self.url + '?apikey=' + self.apikey, verify=False)
 			if response.status_code != requests.codes.ok:
-				logging.error('Callback error: %s %s. Please check your network configuration page', response.status.code, response.status.message)
+				logging.error('[DAEMON][COM][TEST] Callback error: %s %s. Please check your network configuration page', response.status.code, response.status.message)
 				return False
 		except Exception as e:
-			logging.error('Callback result as a unknown error: %s. Please check your network configuration page', e.message)
+			logging.error('[DAEMON][COM][TEST] Callback result as a unknown error: %s. Please check your network configuration page', e.message)
 			return False
 		return True
 
@@ -185,7 +186,7 @@ class jeedom_utils():
 	@staticmethod
 	def write_pid(path):
 		pid = str(os.getpid())
-		logging.info("Writing PID %s to %s", pid, path)
+		logging.info("[DAEMON][UTILS] Writing PID %s to %s", pid, path)
 		open(path, 'w').write("%s\n" % pid)
 
 	@staticmethod
@@ -204,12 +205,21 @@ JEEDOM_SOCKET_MESSAGE = Queue()
 class jeedom_socket_handler(StreamRequestHandler):
 	def handle(self):
 		global JEEDOM_SOCKET_MESSAGE
-		logging.info("Client connected to [%s:%d]", self.client_address[0], self.client_address[1])
+		logging.info("[DAEMON][HANDLER] Client connected to [%s:%d]", self.client_address[0], self.client_address[1])
 		lg = self.rfile.readline()
 		JEEDOM_SOCKET_MESSAGE.put(lg)
-		logging.info("Message read from socket: %s", str(lg.strip()))
+  
+		try:
+			lgdecode = json.loads(lg)
+			if (lgdecode and lgdecode['apikey']):
+				lgdecode['apikey'] = '***'
+			logging.info("[DAEMON][HANDLER] Message read from socket: %s", str(lgdecode.strip()))
+		except Exception:
+			logging.info("[DAEMON][HANDLER] Message read from socket: %s", str(lg.strip()))
+		# logging.info("Message read from socket: %s", str(lg.strip()))
+  
 		self.netAdapterClientConnected = False
-		logging.info("Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
+		logging.info("[DAEMON][HANDLER] Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
 
 class jeedom_socket():
 
@@ -221,16 +231,16 @@ class jeedom_socket():
 	def open(self):
 		self.netAdapter = TCPServer((self.address, self.port), jeedom_socket_handler)
 		if self.netAdapter:
-			logging.info("Socket interface started")
+			logging.info("[DAEMON][SOCKER] Socket interface started")
 			threading.Thread(target=self.loopNetServer, args=()).start()
 		else:
-			logging.info("Cannot start socket interface")
+			logging.info("[DAEMON][SOCKER] Cannot start socket interface")
 
 	def loopNetServer(self):
-		logging.info("LoopNetServer Thread started")
-		logging.info("Listening on: [%s:%d]", self.address, self.port)
+		logging.info("[DAEMON][SOCKER] LoopNetServer Thread started")
+		logging.info("[DAEMON][SOCKER] Listening on: [%s:%d]", self.address, self.port)
 		self.netAdapter.serve_forever()
-		logging.info("LoopNetServer Thread stopped")
+		logging.info("[DAEMON][SOCKER] LoopNetServer Thread stopped")
 
 	def close(self):
 		self.netAdapter.shutdown()
