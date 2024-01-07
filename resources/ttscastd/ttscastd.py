@@ -76,9 +76,9 @@ def read_socket():
                     logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
             elif message['cmd'] == 'playtts':
                 logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
-                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName')):
+                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsEngine', 'ttsSpeed', 'ttsVolume')):
                     logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
-                    gCloudTTS.getTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'])
+                    gCloudTTS.getTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsEngine'], message['ttsSpeed'], message['ttsVolume'])
                 else:
                     logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
         except Exception as e:
@@ -146,7 +146,7 @@ class gCloudTTS:
         else:
             logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
 
-    def getTTS(ttsText, ttsGoogleName, ttsVoiceName):
+    def getTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsEngine, ttsSpeed, ttsVolume):
         logging.debug('[DAEMON][TTS] Check des répertoires')
         cachePath = Config.ttsCacheFolderWeb
         symLinkPath = Config.ttsCacheFolderTmp
@@ -194,7 +194,7 @@ class gCloudTTS:
         else:
             logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
 
-    def castToGoogleHome(urltoplay, googleName):
+    def castToGoogleHome(urltoplay, googleName, volume):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
             chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[googleName])
@@ -204,7 +204,7 @@ class gCloudTTS:
                 return False        
             cast = list(chromecasts)[0]
             cast.wait()
-            
+            cast.set_volume(0.4)
             logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
             
             app_name = "default_media_receiver"

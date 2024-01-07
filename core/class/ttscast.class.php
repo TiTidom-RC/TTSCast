@@ -189,10 +189,11 @@ class ttscast extends eqLogic
     public static function playTTS($gHome=null, $message=null, $volume=30) {
         $ttsText = $message;
         $ttsGoogleName = $gHome;
+        $ttsVolume = $volume;
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | picotts | gtranslatetts | gcloudtts
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
-        $value = array('cmd' => 'playtts', 'ttsengine' => $ttsEngine, 'ttsspeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName);
+        $value = array('cmd' => 'playtts', 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsVolume' => $ttsVolume, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName);
         self::sendToDaemon($value);
     }
 
