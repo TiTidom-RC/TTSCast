@@ -78,14 +78,14 @@ def read_socket():
             if message['cmd'] == 'purgettscache':
                 logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
                 if 'days' in message:
-                    purgeCache(message['days'])
+                    Utils.purgeCache(message['days'])
                 else:
-                    purgeCache()
+                    Utils.purgeCache()
             elif message['cmd'] == 'playtesttts':
                 logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
                 if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName')):
                     logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
-                    generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'])
+                    gCloudTTS.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'])
                 else:
                     logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
         except Exception as e:
@@ -102,106 +102,110 @@ def listen(cycle=0.3):
 
 # ----------------------------------------------------------------------------
 
-def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
-    logging.debug('[DAEMON][TestTTS] Check des répertoires')
-    cachePath = TTS_CACHEFOLDERWEB
-    symLinkPath = TTS_CACHEFOLDERTMP
-    ttsSrvWeb = TTS_WEBSRVCACHE
+class gCloudTTS:
+    """ Class TTS """
     
-    try:
-        os.stat(symLinkPath)
-    except Exception:
-        os.mkdir(symLinkPath)
-    try:
-        os.stat(cachePath)
-    except Exception:
-        os.symlink(symLinkPath, cachePath)
-    
-    logging.debug('[DAEMON][TestTTS] Import de la clé API :: ' + GCLOUDAPIKEY)
-    if GCLOUDAPIKEY != 'noKey':
-        credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FULLPATH, GCLOUDAPIKEY))
-
-        logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
-        raw_filename = ttsText + "|" + ttsVoiceName
-        filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
-        filepath = os.path.join(symLinkPath, filename)
+    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
+        logging.debug('[DAEMON][TestTTS] Check des répertoires')
+        cachePath = TTS_CACHEFOLDERWEB
+        symLinkPath = TTS_CACHEFOLDERTMP
+        ttsSrvWeb = TTS_WEBSRVCACHE
         
-        logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
+        try:
+            os.stat(symLinkPath)
+        except Exception:
+            os.mkdir(symLinkPath)
+        try:
+            os.stat(cachePath)
+        except Exception:
+            os.symlink(symLinkPath, cachePath)
         
-        if not os.path.isfile(filepath):
-            language_code = "-".join(ttsVoiceName.split("-")[:2])
-            text_input = tts.SynthesisInput(text=ttsText)
-            voice_params = tts.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-            audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
+        logging.debug('[DAEMON][TestTTS] Import de la clé API :: ' + GCLOUDAPIKEY)
+        if GCLOUDAPIKEY != 'noKey':
+            credentials = service_account.Credentials.from_service_account_file(os.path.join(CONFIG_FULLPATH, GCLOUDAPIKEY))
 
-            client = tts.TextToSpeechClient(credentials=credentials)
-            response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+            logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
+            raw_filename = ttsText + "|" + ttsVoiceName
+            filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+            filepath = os.path.join(symLinkPath, filename)
+            
+            logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
+            
+            if not os.path.isfile(filepath):
+                language_code = "-".join(ttsVoiceName.split("-")[:2])
+                text_input = tts.SynthesisInput(text=ttsText)
+                voice_params = tts.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
+                audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
 
-            with open(filepath, "wb") as out:
-                out.write(response.audio_content)
-                logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
+                client = tts.TextToSpeechClient(credentials=credentials)
+                response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+
+                with open(filepath, "wb") as out:
+                    out.write(response.audio_content)
+                    logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
+            else:
+                logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+            
+            urlFileToPlay = urljoin(ttsSrvWeb, filename)
+            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+            res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
         else:
-            logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
-        
-        urlFileToPlay = urljoin(ttsSrvWeb, filename)
-        logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-        res = castToGoogleHome(urlFileToPlay, ttsGoogleName)
-        logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
-    else:
-        logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + GCLOUDAPIKEY)
+            logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + GCLOUDAPIKEY)
 
-def castToGoogleHome(urltoplay, googleName):
-    if googleName != '':
-        logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
-        chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[googleName])
-        if not chromecasts:
-            logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
-            return False        
-        cast = list(chromecasts)[0]
-        cast.wait()
-          
-        logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
-        
-        app_name = "default_media_receiver"
-        app_data = {"media_id": urltoplay, "media_type": "audio/mp3"}
-        quick_play.quick_play(cast, app_name, app_data)
-        
-        logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
-        
-        while cast.media_controller.status.player_state == 'PLAYING':
-            time.sleep(1)
-            logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', cast.media_controller.status)
-        
-        cast.quit_app()
-        browser.stop_discovery()
-        return True
-    else:
-        logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome absent)')
-        return False
+    def castToGoogleHome(urltoplay, googleName):
+        if googleName != '':
+            logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
+            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[googleName])
+            if not chromecasts:
+                logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
+                return False        
+            cast = list(chromecasts)[0]
+            cast.wait()
+            
+            logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+            
+            app_name = "default_media_receiver"
+            app_data = {"media_id": urltoplay, "media_type": "audio/mp3"}
+            quick_play.quick_play(cast, app_name, app_data)
+            
+            logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
+            
+            while cast.media_controller.status.player_state == 'PLAYING':
+                time.sleep(1)
+                logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', cast.media_controller.status)
+            
+            cast.quit_app()
+            browser.stop_discovery()
+            return True
+        else:
+            logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome absent)')
+            return False
 
-def purgeCache(nbDays='0'):
-    if nbDays == '0':  # clean entire directory including containing folder
-        logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
-        try:
-            if os.path.exists(TTS_CACHEFOLDERTMP):
-                shutil.rmtree(TTS_CACHEFOLDERTMP)
-        except Exception as e:
-            logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache entirely (nbDays = 0) :: %s', e)
-            pass
-    else:  # clean only files older than X days
-        now = time.time()
-        path = TTS_CACHEFOLDERTMP
-        try:
-            for f in os.listdir(path):
-                logging.debug("[DAEMON][PURGE-CACHE] Age for " + f + " is " + str(
-                    int((now - (os.stat(os.path.join(path, f)).st_mtime)) / 86400)) + " days")
-                if os.stat(os.path.join(path, f)).st_mtime < (now - (int(nbDays) * 86400)):
-                    os.remove(os.path.join(path, f))
-                    logging.debug("[DAEMON][PURG-CACHE] File Removed " + f +
-                                  " due to expiration (" + nbDays + " days)")
-        except Exception as e:
-            logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
-            pass
+class Utils:
+    """ Class Utils TTS """
+    def purgeCache(nbDays='0'):
+        if nbDays == '0':  # clean entire directory including containing folder
+            logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
+            try:
+                if os.path.exists(TTS_CACHEFOLDERTMP):
+                    shutil.rmtree(TTS_CACHEFOLDERTMP)
+            except Exception as e:
+                logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache entirely (nbDays = 0) :: %s', e)
+                pass
+        else:  # clean only files older than X days
+            now = time.time()
+            path = TTS_CACHEFOLDERTMP
+            try:
+                for f in os.listdir(path):
+                    logging.debug("[DAEMON][PURGE-CACHE] Age for " + f + " is " + str(
+                        int((now - (os.stat(os.path.join(path, f)).st_mtime)) / 86400)) + " days")
+                    if os.stat(os.path.join(path, f)).st_mtime < (now - (int(nbDays) * 86400)):
+                        os.remove(os.path.join(path, f))
+                        logging.debug("[DAEMON][PURG-CACHE] File Removed " + f + " due to expiration (" + nbDays + " days)")
+            except Exception as e:
+                logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
+                pass
 
 # ----------------------------------------------------------------------------
 
