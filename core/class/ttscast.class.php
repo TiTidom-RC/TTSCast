@@ -401,8 +401,8 @@ class ttscastCmd extends cmd
         $eqLogic = $this->getEqLogic();
         $logicalId = $this->getLogicalId();
         
-        log::add('ttscast', 'debug', '[CMD] eqLogic :: ' . $eqLogic);
-        log::add('ttscast', 'debug', '[CMD] LogicalId :: ' . $logicalId);
+        log::add('ttscast', 'debug', '[CMD] eqLogic :: ' . str($eqLogic));
+        log::add('ttscast', 'debug', '[CMD] LogicalId :: ' . str($logicalId));
 
         if ( $this->GetType = "action" ) {
 			// $eqLogic->getCmd();
