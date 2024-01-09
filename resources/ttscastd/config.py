@@ -20,6 +20,8 @@ class Config:
     KNOWN_DEVICES = {}
     GCAST_DEVICES = {}
 
+    sendToJeedom = ''
+
     ttsCacheFolder = 'data/cache'
     ttsCacheFolderWeb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ttsCacheFolder))
     ttsCacheFolderTmp = os.path.join('/tmp/jeedom/', 'ttscast_cache')
@@ -42,3 +44,4 @@ class Config:
     pluginVersion = ''
     callBack = ''
     cycle = 0.3
+    cycleEvent = 0.5

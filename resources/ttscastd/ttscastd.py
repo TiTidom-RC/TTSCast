@@ -83,10 +83,10 @@ def read_socket():
                     logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
             elif message['cmd'] == "scanOn":
                 logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
-                jeedom_com.send_change_immediate(change={'scanState': 'scanOn'})
+                Config.sendToJeedom({'scanState': 'scanOn'})
             elif message['cmd'] == "scanOff":
                 logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
-                jeedom_com.send_change_immediate(change={'scanState': 'scanOff'})
+                Config.sendToJeedom({'scanState': 'scanOff'})
                 
         except Exception as e:
             logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
@@ -338,6 +338,12 @@ signal.signal(signal.SIGTERM, handler)
 
 try:
     jeedom_utils.write_pid(str(Config.pidFile))
+    Config.sendToJeedom = jeedom_com(apikey=Config.apiKey, url=Config.callBack, cycle=Config.cycleEvent)
+    if not Config.sendToJeedom.test():
+        logging.error('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication ERROR (Daemon to Jeedom)')
+        shutdown()
+    else:
+        logging.info('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication OK (Daemon to Jeedom)')
     jeedom_socket = jeedom_socket(port=Config.socketPort, address=Config.socketHost)
     listen(Config.cycle)
 except Exception as e:
