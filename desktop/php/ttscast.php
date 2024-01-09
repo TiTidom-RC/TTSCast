@@ -82,7 +82,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
             foreach ($eqLogics as $eqLogic) {
                 $opacity = ($eqLogic->getIsEnable()) ? '' : 'disableCard';
                 echo '<div class="eqLogicDisplayCard cursor ' . $opacity . '" data-eqLogic_id="' . $eqLogic->getId() . '">';
-                echo '<img src="' . $eqLogic->getImage() . '"/>';
+                echo '<img src="' . $eqLogic->getConfiguration('imgCast', $eqLogic->getImage()) . '"/>';
                 echo '<br>';
                 echo '<span class="name">' . $eqLogic->getHumanName(true, true) . '</span>';
                 echo '<span class="hiddenAsCard displayTableRight hidden">';
