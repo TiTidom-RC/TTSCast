@@ -33,11 +33,13 @@ try {
 
     if (isset($result['scanState'])) {
         if ($result['scanState'] == "scanOn") {
+            log::add('ttscast', 'debug', '[CALLBACK] scanState = scanOn'); 
             config::save('scanState', 'scanOn', 'ttscast');
             event::add('ttscast::scanState', array(
                 'scanState' => 'scanOn')
             );
         } else {
+            log::add('ttscast', 'debug', '[CALLBACK] scanState = scanOff'); 
             config::save('scanState', 'scanOff', 'ttscast');
             event::add('ttscast::scanState', array(
                 'scanState' => 'scanOff')

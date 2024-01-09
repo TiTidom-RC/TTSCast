@@ -121,6 +121,7 @@ function changeScanState(_scanState) {
 }
 
 $('body').on('ttscast::scanState', function (_event, _options) {
+  $('#div_alert').showAlert({message: 'Le mode Scan est ACTIF !', level: 'warning'});
   if (_options['scanState'] == "scanOff") {
     if ($('.custom-scanState').attr('data-scanState') == "scanOff") {
       $.hideAlert();
@@ -128,7 +129,7 @@ $('body').on('ttscast::scanState', function (_event, _options) {
       $('.customclass-scanState').removeClass('logoSecondary').addClass('logoPrimary');
       $('.customicon-scanState').removeClass('icon_red');
       $('.customtext-scanState').text('{{Scan}}');
-      $('#div_inclusionAlert').showAlert({message: '{{Mode Scan activé pour 1 minute. (Cliquez sur \'Stop Scan\' pour l\'arrêter avant)}}', level: 'warning'});
+      $('#div_alert').showAlert({message: '{{Mode Scan activé pour 1 minute. (Cliquez sur \'Stop Scan\' pour l\'arrêter avant)}}', level: 'warning'});
     }
   } else {
     if ($('.custom-scanState').attr('data-scanState') == "scanOn") {
