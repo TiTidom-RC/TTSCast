@@ -122,7 +122,7 @@ function changeScanState(_scanState) {
 
 $('body').on('ttscast::scanState', function (_event, _options) {
   $('#div_alert').showAlert({message: 'Le mode Scan est ACTIF !', level: 'warning'});
-  if (_options['scanState'] == "scanOff") {
+  if (_options['scanState'] == "scanOn") {
     if ($('.custom-scanState').attr('data-scanState') == "scanOff") {
       $.hideAlert();
       $('.custom-scanState').attr('data-scanState', 'scanOn');
