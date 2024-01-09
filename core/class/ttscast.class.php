@@ -199,7 +199,7 @@ class ttscast extends eqLogic
 
     public static function getPluginVersion()
     {
-        $pluginVersion = 'N/A';
+        $pluginVersion = '0.0.0';
         if (!file_exists(dirname(__FILE__) . '/../../plugin_info/info.json')) {
             log::add('ttscast', 'warning', '[VERSION] fichier info.json manquant');
         }
