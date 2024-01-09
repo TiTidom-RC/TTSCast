@@ -96,7 +96,7 @@ $('.pluginAction[data-action=openLocation]').on('click', function () {
 
 $('.customclass-scanState').on('click', function () {
 	var scanState = $(this).attr('data-scanState');
-  $('#div_alert').showAlert({message: 'scanState Click :: ' + scanState, level: 'warning'});
+  // $('#div_alert').showAlert({message: 'scanState Click :: ' + scanState, level: 'warning'});
 	changeScanState(scanState);
 });
 
