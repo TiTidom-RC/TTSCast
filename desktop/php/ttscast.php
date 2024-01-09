@@ -19,13 +19,23 @@ $eqLogics = eqLogic::byType($plugin->getId());
                     <div class="cursor eqLogicAction logoPrimary" data-action="add">
                         <i class="fas fa-plus-circle"></i>
                         <br>
-                        <span>{{Ajouter}}</span>
+                        <span style="color:var(--txt-color)">{{Ajouter}}</span>
                     </div>
                     <div class="cursor eqLogicAction logoSecondary" data-action="gotoPluginConf">
                         <i class="fas fa-wrench"></i>
                         <br>
-                        <span>{{Configuration}}</span>
+                        <span style="color:var(--txt-color)">{{Configuration}}</span>
                     </div>
+                    <div class="cursor pluginAction logoSecondary" data-action="openLocation" data-location="<?= $plugin->getDocumentation() ?>">
+				        <i class="fas fa-book icon_blue"></i>
+				        <br>
+				        <span style="color:var(--txt-color)">{{Documentation}}</span>
+			        </div>
+        			<div class="cursor pluginAction logoSecondary" data-action="openLocation" data-location="https://community.jeedom.com/tag/plugin-<?= $plugin->getId() ?>">
+				        <i class="fas fa-thumbs-up icon_green"></i>
+				        <br>
+				        <span style="color:var(--txt-color)">{{Community}}</span>
+			        </div>
                 </div>
             </div>
             <?php
@@ -35,19 +45,19 @@ $eqLogics = eqLogic::byType($plugin->getId());
             $displayInfoValue = version_compare($jeedomVersion, '4.4.0', '>=');
             if ($displayInfoValue) {
             ?>
-                <div class="col-sm-2">
-                    <legend><i class=" fas fa-comments"></i> {{Community}}</legend>
-                    <div class="eqLogicThumbnailContainer">
-                        <div class="cursor eqLogicAction logoSecondary" data-action="createCommunityPost">
-                            <i class="fas fa-ambulance"></i>
-                            <br>
-                            <span style="color:var(--txt-color)">{{Créer un post Community}}</span>
-                        </div>
-                    </div>
-                </div>
-            <?php
-            }
-            ?>
+			    <div class="col-sm-2">
+    				<legend><i class=" fas fa-comments"></i> {{Aide sur Community}}</legend>
+	    			<div class="eqLogicThumbnailContainer">
+		    			<div class="cursor eqLogicAction logoSecondary" data-action="createCommunityPost">
+			    			<i class="fas fa-ambulance icon_red"></i>
+				    		<br>
+					    	<span style="color:var(--txt-color)">{{Créer un Post}}</span>
+					    </div>
+				    </div>
+			    </div>
+			<?php
+			}
+			?>
         </div>
         <legend><i class="fas fa-table"></i> {{Mes ttscasts}}</legend>
         <?php
