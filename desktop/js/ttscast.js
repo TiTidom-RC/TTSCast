@@ -122,12 +122,12 @@ function changeScanState(_scanState) {
 }
 
 $('body').on('ttscast::scanState', function (_event, _options) {
-  $('#div_alert').showAlert({message: 'Fonction JS ScanState', level: 'warning'});
+  // $('#div_alert').showAlert({message: 'Fonction JS ScanState', level: 'warning'});
   if (_options['scanState'] == "scanOn") {
-    $('#div_alert').showAlert({message: 'Le Scan est ACTIF !', level: 'warning'});
+    // $('#div_alert').showAlert({message: 'Le Scan est ACTIF !', level: 'warning'});
     if ($('.customclass-scanState').attr('data-scanState') == "scanOn") {
       $.hideAlert();
-      $('#div_alert').showAlert({message: 'data-scanState :: scanOn', level: 'warning'});
+      // $('#div_alert').showAlert({message: 'data-scanState :: scanOn', level: 'warning'});
       $('.customclass-scanState').attr('data-scanState', 'scanOff');
       $('.customclass-scanState').removeClass('logoPrimary').addClass('logoSecondary');
       $('.customicon-scanState').addClass('icon_red');
@@ -137,7 +137,7 @@ $('body').on('ttscast::scanState', function (_event, _options) {
       $('#div_alert').showAlert({message: 'data-scanState (BAD CHOICE) :: ' + $('.customclass-scanState').attr('data-scanState'), level: 'warning'});
     }
   } else {
-    $('#div_alert').showAlert({message: 'Le Scan est INACTIF !', level: 'warning'});
+    // $('#div_alert').showAlert({message: 'Le Scan est INACTIF !', level: 'warning'});
     if ($('.customclass-scanState').attr('data-scanState') == "scanOff") {
       $.hideAlert();
       $('.customclass-scanState').attr('data-scanState', 'scanOn');
