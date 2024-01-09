@@ -122,30 +122,25 @@ function changeScanState(_scanState) {
 }
 
 $('body').on('ttscast::scanState', function (_event, _options) {
-  // $('#div_alert').showAlert({message: 'Fonction JS ScanState', level: 'warning'});
   if (_options['scanState'] == "scanOn") {
     // $('#div_alert').showAlert({message: 'Le Scan est ACTIF !', level: 'warning'});
     if ($('.customclass-scanState').attr('data-scanState') == "scanOn") {
-      // $.hideAlert();
-      // $('#div_alert').showAlert({message: 'data-scanState :: scanOn', level: 'warning'});
+      $.hideAlert();
       $('.customclass-scanState').attr('data-scanState', 'scanOff');
       $('.customclass-scanState').removeClass('logoPrimary').addClass('logoSecondary');
       $('.customicon-scanState').addClass('icon_red');
       $('.customtext-scanState').text('{{Stop Scan}}');
-      $('#div_alert').showAlert({message: '{{Mode Scan activé pour 60 secondes. (Cliquez sur \'Stop Scan\' pour l\'arrêter avant)}}', level: 'warning'});
-    } else {
-      $('#div_alert').showAlert({message: 'data-scanState (BAD CHOICE) :: ' + $('.customclass-scanState').attr('data-scanState'), level: 'warning'});
+      $('#div_alert').showAlert({message: '{{Mode Scan ACTIF pour 60 secondes. (Cliquez sur \'Stop Scan\' pour l\'arrêter avant)}}', level: 'warning'});
     }
-  } else {
-    // $('#div_alert').showAlert({message: 'Le Scan est INACTIF !', level: 'warning'});
+  } else {    
     if ($('.customclass-scanState').attr('data-scanState') == "scanOff") {
-      // $.hideAlert();
-      $('#div_alert').showAlert({message: 'Le Scan est INACTIF !', level: 'warning'});
+      $.hideAlert();
       $('.customclass-scanState').attr('data-scanState', 'scanOn');
       $('.customclass-scanState').removeClass('logoSecondary').addClass('logoPrimary');
       $('.customicon-scanState').removeClass('icon_red');
       $('.customtext-scanState').text('{{Scan}}');
-      // window.location.reload();
+      window.location.reload();
+      $('#div_alert').showAlert({message: '{{Mode Scan TERMINE.}}', level: 'success'});
     }
   }
 });
