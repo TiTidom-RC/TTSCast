@@ -202,7 +202,7 @@ class gCloudTTS:
                 logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
                 browser.stop_discovery()
                 return False        
-            cast = list(chromecasts)[0]
+            cast = chromecasts[0]
             cast.wait()
             logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
             
@@ -223,6 +223,7 @@ class gCloudTTS:
             cast.quit_app()
             cast.set_volume(volume=volumeBeforePlay)
             browser.stop_discovery()
+            
             return True
         else:
             logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome absent)')
