@@ -125,22 +125,22 @@ $('body').on('ttscast::scanState', function (_event, _options) {
   $('#div_alert').showAlert({message: 'Fonction JS ScanState', level: 'warning'});
   if (_options['scanState'] == "scanOn") {
     $('#div_alert').showAlert({message: 'Le Scan est ACTIF !', level: 'warning'});
-    if ($('.custom-scanState').attr('data-scanState') == "scanOff") {
+    if ($('.customclass-scanState').attr('data-scanState') == "scanOff") {
       $.hideAlert();
       $('#div_alert').showAlert({message: 'data-scanState :: scanOff', level: 'warning'});
-      $('.custom-scanState').attr('data-scanState', 'scanOn');
+      $('.customclass-scanState').attr('data-scanState', 'scanOn');
       $('.customclass-scanState').removeClass('logoSecondary').addClass('logoPrimary');
       $('.customicon-scanState').removeClass('icon_red');
       $('.customtext-scanState').text('{{Scan}}');
       $('#div_alert').showAlert({message: '{{Mode Scan activé pour 1 minute. (Cliquez sur \'Stop Scan\' pour l\'arrêter avant)}}', level: 'warning'});
     } else {
-      $('#div_alert').showAlert({message: 'data-scanState (BAD CHOICE) :: ' + $('.custom-scanState').attr('data-scanState'), level: 'warning'});
+      $('#div_alert').showAlert({message: 'data-scanState (BAD CHOICE) :: ' + $('.customclass-scanState').attr('data-scanState'), level: 'warning'});
     }
   } else {
     $('#div_alert').showAlert({message: 'Le Scan est INACTIF !', level: 'warning'});
-    if ($('.custom-scanState').attr('data-scanState') == "scanOn") {
+    if ($('.customclass-scanState').attr('data-scanState') == "scanOn") {
       $.hideAlert();
-      $('.custom-scanState').attr('data-scanState', 'scanOff');
+      $('.customclass-scanState').attr('data-scanState', 'scanOff');
       $('.customclass-scanState').removeClass('logoPrimary').addClass('logoSecondary');
       $('.customicon-scanState').addClass('icon_red');
       $('.customtext-scanState').text('{{Stop Scan}}');
