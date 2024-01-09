@@ -203,7 +203,7 @@ class gCloudTTS:
                 browser.stop_discovery()
                 return False        
             cast = chromecasts[0]
-            cast.wait()
+            cast.wait(timeout=10)
             logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
             
             volumeBeforePlay = cast.status.volume_level
@@ -222,7 +222,7 @@ class gCloudTTS:
             
             cast.quit_app()
             cast.set_volume(volume=volumeBeforePlay)
-            cast.disconnect()
+            cast.disconnect(timeout=10, blocking=False)
             browser.stop_discovery()
             return True
         else:
