@@ -139,12 +139,12 @@ $('body').on('ttscast::scanState', function (_event, _options) {
   } else {
     // $('#div_alert').showAlert({message: 'Le Scan est INACTIF !', level: 'warning'});
     if ($('.customclass-scanState').attr('data-scanState') == "scanOff") {
-      $.hideAlert();
+      // $.hideAlert();
       $('.customclass-scanState').attr('data-scanState', 'scanOn');
       $('.customclass-scanState').removeClass('logoSecondary').addClass('logoPrimary');
       $('.customicon-scanState').removeClass('icon_red');
       $('.customtext-scanState').text('{{Scan}}');
-      window.location.reload();
+      // window.location.reload();
     }
   }
 });
