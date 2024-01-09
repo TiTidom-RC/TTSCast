@@ -126,7 +126,7 @@ $('body').on('ttscast::scanState', function (_event, _options) {
   if (_options['scanState'] == "scanOn") {
     // $('#div_alert').showAlert({message: 'Le Scan est ACTIF !', level: 'warning'});
     if ($('.customclass-scanState').attr('data-scanState') == "scanOn") {
-      $.hideAlert();
+      // $.hideAlert();
       // $('#div_alert').showAlert({message: 'data-scanState :: scanOn', level: 'warning'});
       $('.customclass-scanState').attr('data-scanState', 'scanOff');
       $('.customclass-scanState').removeClass('logoPrimary').addClass('logoSecondary');
