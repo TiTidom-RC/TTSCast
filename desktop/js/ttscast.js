@@ -89,3 +89,7 @@ function addCmdToTable(_cmd) {
     }
   })
 }
+
+$('.pluginAction[data-action=openLocation]').on('click', function () {
+	window.open($(this).attr("data-location"), "_blank", null);
+});
