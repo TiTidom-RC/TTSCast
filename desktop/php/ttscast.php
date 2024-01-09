@@ -36,8 +36,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
 				        <br>
 				        <span style="color:var(--txt-color)">{{Documentation}}</span>
 			        </div>
-        			<div class="cursor pluginAction logoSecondary" data-action="openLocation" data-location="https://community.jeedom.com/tag/plugin-<?= $plugin->getId() ?>">
-				        <i class="fas fa-thumbs-up icon_green"></i>
+        			<div class="cursor pluginAction logoPrimary" data-action="openLocation" data-location="https://community.jeedom.com/tag/plugin-<?= $plugin->getId() ?>">
+				        <i class="fas fa-thumbs-up"></i>
 				        <br>
 				        <span style="color:var(--txt-color)">{{Community}}</span>
 			        </div>
