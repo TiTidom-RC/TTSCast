@@ -16,6 +16,11 @@ $eqLogics = eqLogic::byType($plugin->getId());
                 <legend><i class="fas fa-cog"></i> {{Gestion}}</legend>
                 <!-- Boutons de gestion du plugin -->
                 <div class="eqLogicThumbnailContainer">
+                    <div class="cursor eqLogicAction logoPrimary customclass-scanState" data-action="scan">
+                        <i class="fas fa-search-plus"></i>
+                        <br>
+                        <span class="customclass-scanText" style="color:var(--txt-color)">{{Scan}}</span>
+                    </div>                
                     <div class="cursor eqLogicAction logoPrimary" data-action="add">
                         <i class="fas fa-plus-circle"></i>
                         <br>
