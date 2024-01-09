@@ -222,9 +222,8 @@ class gCloudTTS:
             
             cast.quit_app()
             cast.set_volume(volume=volumeBeforePlay)
-            browser.stop_discovery()
             cast.disconnect()
-            
+            browser.stop_discovery()
             return True
         else:
             logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome absent)')
