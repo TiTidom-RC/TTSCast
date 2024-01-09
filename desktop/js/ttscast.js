@@ -140,6 +140,7 @@ $('body').on('ttscast::scanState', function (_event, _options) {
     // $('#div_alert').showAlert({message: 'Le Scan est INACTIF !', level: 'warning'});
     if ($('.customclass-scanState').attr('data-scanState') == "scanOff") {
       // $.hideAlert();
+      $('#div_alert').showAlert({message: 'Le Scan est INACTIF !', level: 'warning'});
       $('.customclass-scanState').attr('data-scanState', 'scanOn');
       $('.customclass-scanState').removeClass('logoSecondary').addClass('logoPrimary');
       $('.customicon-scanState').removeClass('icon_red');
