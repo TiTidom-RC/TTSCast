@@ -343,7 +343,7 @@ logging.info('[DAEMON][MAIN] Plugin Version: %s', Config.pluginVersion)
 logging.info('[DAEMON][MAIN] Log level: %s', Config.logLevel)
 logging.info('[DAEMON][MAIN] Socket port: %s', Config.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', Config.socketHost)
-logging.info('[DAEMON][MAIN] CycleFactor: %s', Config.cycle)
+logging.info('[DAEMON][MAIN] CycleFactor: %s', Config.cycleFactor)
 # TODO ***** Ajouter le cycle pour les events cycleEvent ***** 
 logging.info('[DAEMON][MAIN] PID file: %s', Config.pidFile)  
 
