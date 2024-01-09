@@ -59,7 +59,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
 			}
 			?>
         </div>
-        <legend><i class="fas fa-table"></i> {{Mes ttscasts}}</legend>
+        <legend><i class="fas fa-volume-down"></i> {{Mes TTSCasts}}</legend>
         <?php
         if (count($eqLogics) == 0) {
             echo '<br><div class="text-center" style="font-size:1.2em;font-weight:bold;">{{Aucun équipement ttscast trouvé, cliquer sur "Ajouter" pour commencer}}</div>';
