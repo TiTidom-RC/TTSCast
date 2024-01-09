@@ -223,6 +223,7 @@ class gCloudTTS:
             cast.quit_app()
             cast.set_volume(volume=volumeBeforePlay)
             browser.stop_discovery()
+            cast.disconnect()
             
             return True
         else:
