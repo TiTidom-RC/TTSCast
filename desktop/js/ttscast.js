@@ -135,12 +135,12 @@ $('body').on('ttscast::scanState', function (_event, _options) {
   } else {    
     if ($('.customclass-scanState').attr('data-scanState') == "scanOff") {
       $.hideAlert();
+      // $('#div_alert').showAlert({message: '{{Mode Scan TERMINE.}}', level: 'success'});
       $('.customclass-scanState').attr('data-scanState', 'scanOn');
       $('.customclass-scanState').removeClass('logoSecondary').addClass('logoPrimary');
       $('.customicon-scanState').removeClass('icon_red');
       $('.customtext-scanState').text('{{Scan}}');
       window.location.reload();
-      $('#div_alert').showAlert({message: '{{Mode Scan TERMINE.}}', level: 'success'});
     }
   }
 });
