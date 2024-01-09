@@ -16,11 +16,25 @@ $eqLogics = eqLogic::byType($plugin->getId());
                 <legend><i class="fas fa-cog"></i> {{Gestion}}</legend>
                 <!-- Boutons de gestion du plugin -->
                 <div class="eqLogicThumbnailContainer">
-                    <div class="cursor eqLogicAction logoPrimary customclass-scanState" data-action="scan">
-                        <i class="fas fa-search-plus"></i>
-                        <br>
-                        <span class="customclass-scanText" style="color:var(--txt-color)">{{Scan}}</span>
-                    </div>                
+                    <?php
+                    if (config::byKey('scanState', 'ttscast', '0') == "scanOn") {
+                    ?>
+                        <div class="cursor eqLogicAction logoSecondary customclass-scanState" data-scanState="scanOff" data-action="scan">
+                            <i class="fas fa-search-plus icon_red customicon-scanState"></i>
+                            <br>
+                            <span class="customtext-scanState" style="color:var(--txt-color)">{{Stop Scan}}</span>
+                        </div>                
+                    <?php
+                    } else {
+                    ?>
+                        <div class="cursor eqLogicAction logoPrimary customclass-scanState" data-scanState="scanOn" data-action="scan">
+                            <i class="fas fa-search-plus customicon-scanState"></i>
+                            <br>
+                            <span class="customtext-scanState" style="color:var(--txt-color)">{{Scan}}</span>
+                        </div>
+                    <?php
+                    }
+                    ?>
                     <div class="cursor eqLogicAction logoPrimary" data-action="add">
                         <i class="fas fa-plus-circle"></i>
                         <br>

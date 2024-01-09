@@ -75,7 +75,10 @@ try {
         ajax::success("{$filepath}");
     }
 
-
+    if (init('action') == 'changeScanState') {
+        ttscast::changeScanState(init('scanState'));
+        ajax::success();
+    }
     
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
     /*     * *********Catch exeption*************** */

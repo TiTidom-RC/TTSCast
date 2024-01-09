@@ -119,6 +119,7 @@ class ttscast extends eqLogic
             return false;
         }
         message::removeAll(__CLASS__, 'unableStartDeamon');
+        config::save('scanState', '0', 'ttscast');
         return true;
     }
 
@@ -197,8 +198,7 @@ class ttscast extends eqLogic
         self::sendToDaemon($value);
     }
 
-    public static function getPluginVersion()
-    {
+    public static function getPluginVersion() {
         $pluginVersion = '0.0.0';
         try {
             if (!file_exists(dirname(__FILE__) . '/../../plugin_info/info.json')) {
@@ -221,16 +221,16 @@ class ttscast extends eqLogic
         return $pluginVersion;
     }
 
-    /* public static function sanitizeFileName($_file) {
-        log::add('ttscast', 'debug', '[UPLOAD][Sanitize] FileName ::' . $_file);
-        
-        $_file = trim(strtolower($_file));
-        if ($_file == '') return $_file;
-
-        $_file = sanitizeAccent($_file);
-        $_file = preg_replace('/[^a-z0-9_]/i', '', $_file);
-        return $_file;
-    } */
+    public static function changeScanState($_scanState)
+    {
+        if ($_scanState == "scanOn") {
+            $value = array('cmd' => 'scanOn');
+            self::sendToDaemon($value);
+        } else {
+            $value = array('cmd' => 'scanOff');
+            self::sendToDaemon($value);
+        }
+    }
 
     /* ************************ Methodes static : JEEDOM *************************** */
 

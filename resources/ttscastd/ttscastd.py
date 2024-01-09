@@ -81,6 +81,13 @@ def read_socket():
                     gCloudTTS.getTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsEngine'], message['ttsSpeed'], message['ttsVolume'])
                 else:
                     logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
+            elif message['cmd'] == "scanOn":
+                logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
+                jeedom_com.send_change_immediate({'scanState': 'scanOn'})
+            elif message['cmd'] == "scanOff":
+                logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
+                jeedom_com.send_change_immediate({'scanState': 'scanOff'})
+                
         except Exception as e:
             logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
 

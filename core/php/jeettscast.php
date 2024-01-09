@@ -31,8 +31,18 @@ try {
         die();
     }
 
-    if (isset($result['key1'])) {
-        // do something
+    if (isset($result['scanState'])) {
+        if ($result['scanState'] == "scanOn") {
+            config::save('scanState', 'scanOn', 'ttscast');
+            event::add('ttscast::scanState', array(
+                'scanState' => 'scanOn')
+            );
+        } else {
+            config::save('scanState', 'scanOff', 'ttscast');
+            event::add('ttscast::scanState', array(
+                'scanState' => 'scanOff')
+            );
+        }
     } elseif (isset($result['key2'])) {
         // do something else
     } else {
