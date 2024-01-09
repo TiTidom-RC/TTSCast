@@ -83,19 +83,31 @@ def read_socket():
                     logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
             elif message['cmd'] == "scanOn":
                 logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
+                Config.ScanMode = True
+                Config.ScanModeStart = int(time.time())
                 Config.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})
             elif message['cmd'] == "scanOff":
                 logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
+                Config.ScanMode = False
                 Config.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
                 
         except Exception as e:
             logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
 
-def listen(cycle=0.3):
+# *** Boucle principale infinie (daemon) ***
+def mainLoop(cycle=0.3):
     jeedom_socket.open()
+    logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
     try:
-        while 1:
+        while not Config.IS_ENDING:
             time.sleep(cycle)
+            
+            currentTime = int(time.time())
+            if (Config.ScanMode and (Config.ScanModeStart + Config.ScanModeTimeOut) < currentTime):
+                Config.ScanMode = False
+                logging.info('[DAEMON][MAINLOOP] ScanMode END')
+                Config.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
+                
             read_socket()
     except KeyboardInterrupt:
         shutdown()
@@ -269,6 +281,7 @@ def handler(signum=None, frame=None):
 
 def shutdown():
     logging.debug("[DAEMON] Shutdown")
+    Config.IS_ENDING = True
     logging.debug("[DAEMON] Removing PID file %s", Config.pidFile)
     try:
         os.remove(Config.pidFile)
@@ -311,7 +324,7 @@ if args.gcloudapikey:
 if args.pid:
     Config.pidFile = args.pid
 if args.cycle:
-    Config.cycle = float(args.cycle)
+    Config.cycleFactor = float(args.cycle)
 if args.socketport:
     Config.socketPort = int(args.socketport)
 if args.ttsweb:
@@ -320,13 +333,20 @@ if args.ttsweb:
 
 jeedom_utils.set_log_level(Config.logLevel)
 
+if (Config.cycleFactor == 0):
+    Config.cycleFactor = 1
+Config.cycleEvent = float(Config.cycleEvent * Config.cycleFactor)
+Config.cycleMain = float(Config.cycleMain * Config.cycleFactor)
+
 logging.info('[DAEMON][MAIN] Start ttscastd')
 logging.info('[DAEMON][MAIN] Plugin Version: %s', Config.pluginVersion)
 logging.info('[DAEMON][MAIN] Log level: %s', Config.logLevel)
 logging.info('[DAEMON][MAIN] Socket port: %s', Config.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', Config.socketHost)
-logging.info('[DAEMON][MAIN] Cycle: %s', Config.cycle)
-logging.info('[DAEMON][MAIN] PID file: %s', Config.pidFile)
+logging.info('[DAEMON][MAIN] CycleFactor: %s', Config.cycle)
+# TODO ***** Ajouter le cycle pour les events cycleEvent ***** 
+logging.info('[DAEMON][MAIN] PID file: %s', Config.pidFile)  
+
 logging.info('[DAEMON][MAIN] ApiKey: %s', "***")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', Config.gCloudApiKey)
 logging.info('[DAEMON][MAIN] CallBack: %s', Config.callBack)
@@ -345,7 +365,7 @@ try:
     else:
         logging.info('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication OK (Daemon to Jeedom)')
     jeedom_socket = jeedom_socket(port=Config.socketPort, address=Config.socketHost)
-    listen(Config.cycle)
+    mainLoop(Config.cycleMain)
 except Exception as e:
     logging.error('[DAEMON][MAIN] Fatal error: %s', e)
     logging.info(traceback.format_exc())
