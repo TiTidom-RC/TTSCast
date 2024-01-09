@@ -83,10 +83,10 @@ def read_socket():
                     logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
             elif message['cmd'] == "scanOn":
                 logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
-                jeedom_com.send_change_immediate({'scanState': 'scanOn'})
+                jeedom_com.send_change_immediate(change={'scanState': 'scanOn'})
             elif message['cmd'] == "scanOff":
                 logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
-                jeedom_com.send_change_immediate({'scanState': 'scanOff'})
+                jeedom_com.send_change_immediate(change={'scanState': 'scanOff'})
                 
         except Exception as e:
             logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
