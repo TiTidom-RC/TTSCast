@@ -450,7 +450,7 @@ class ttscastCmd extends cmd
 			if ($logicalId == "tts") {
                 $googleUUID = $eqLogic->getLogicalId();
                 log::add('ttscast', 'debug', '[CMD] Message / Volume / GoogleUUID :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleUUID);
-                if ($logicalId == "tts" && isset($googleName) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
+                if ($logicalId == "tts" && isset($googleUUID) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
                     ttscast::playTTS($googleUUID, $_options['message'], intval($_options['title']));
                 }
                 else {
