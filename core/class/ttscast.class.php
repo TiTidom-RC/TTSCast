@@ -247,7 +247,7 @@ class ttscast extends eqLogic
         $newttscast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
         if (!is_object($newttscast)) {
             $eqLogic = new ttscast();
-            $eqLogic->setLogicalId($_def['uuid']);
+            $eqLogic->setLogicalId($_data['uuid']);
             $eqLogic->setName($_data['friendly_name']);
             $eqLogic->setEqType_name('ttscast');
             $eqLogic->setIsEnable(1);
