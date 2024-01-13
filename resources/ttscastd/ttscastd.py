@@ -123,7 +123,7 @@ def mainLoop(cycle=2):
                 # Scan New Chromecast
                 if not Config.ScanPending:
                     if Config.ScanMode:
-                        threading.Thread(target=scanChromeCast, args=('ScanMode',)).start()
+                        threading.Thread(target=discoverChromeCast, args=('ScanMode',)).start()
                 # Pause Cycle
                 time.sleep(cycle)
             except Exception as e:
@@ -136,7 +136,7 @@ def mainLoop(cycle=2):
 
 # ----------------------------------------------------------------------------
 
-def scanChromeCast(source='UNKOWN'):
+def discoverChromeCast(source='UNKOWN'):
     try:
         logging.debug('[DAEMON][SCANNER] Start Scanner :: %s', source)
         Config.ScanPending = True
@@ -147,7 +147,8 @@ def scanChromeCast(source='UNKOWN'):
             
             logging.debug('[DAMEON][SCANNER] Devices découverts :: %s', len(devices))
             for device in devices: 
-                logging.debug('[DAMEON][SCANNER] Device Name :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
+                logging.debug('[DAMEON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
+                logging.debug('[DAMEON][SCANNER] Device Services :: %s', device)
     except Exception as e:
         logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
         logging.debug(traceback.format_exc())
