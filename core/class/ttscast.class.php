@@ -261,7 +261,7 @@ class ttscast extends eqLogic
             $eqLogic->setConfiguration('lastscan', $_data['lastscan']);
             $eqLogic->save();
 
-            $cmd = $eqLogic->getCmd(null, 'tts');
+            /* $cmd = $eqLogic->getCmd(null, 'tts');
             if (!is_object($cmd)) {
                 $cmd = new ttscastCmd();
                 $cmd->setName(__('TTS', __FILE__));
@@ -283,7 +283,7 @@ class ttscast extends eqLogic
                 $cmd->setSubType('message');    
                 $cmd->setIsVisible(1);
                 $cmd->save();
-            }
+            } */
 
             event::add('jeedom::alert', array(
                 'level' => 'warning',
@@ -389,19 +389,6 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
-        $cmd = $this->getCmd(null, 'friendly_name');
-        if (!is_object($cmd)) {
-	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Friendly Name', __FILE__));
-            $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('friendly_name');
-            $cmd->setType('info');
-            $cmd->setSubType('string');    
-	        $cmd->setIsVisible(1);
-	        // $cmd->setConfiguration('ttscastCmd', true);
-            $cmd->save();
-        }
-
         $cmd = $this->getCmd(null, 'tts');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
