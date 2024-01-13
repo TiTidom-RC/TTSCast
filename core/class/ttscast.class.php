@@ -232,6 +232,70 @@ class ttscast extends eqLogic
         }
     }
 
+    public static function createCastFromScan($_data)
+    {
+        if (!isset($_data['uuid'])) {
+            log::add('ttscast', 'error', '[ADDCC] Informations manquantes pour créer l\'équipement');
+            event::add('jeedom::alert', array(
+                'level' => 'danger',
+                'page' => 'ttscast',
+                'message' => __('[KO] Informations manquantes pour créer l\'équipement', __FILE__),
+            ));
+            return false;
+        }
+        
+        $newttscast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
+        if (!is_object($newttscast)) {
+            $eqLogic = new ttscast();
+            $eqLogic->setLogicalId($_def['uuid']);
+            $eqLogic->setName($_data['friendly_name']);
+            $eqLogic->setEqType_name('ttscast');
+            $eqLogic->setIsEnable(1);
+            $eqLogic->setIsVisible(1);
+            $eqLogic->setConfiguration('friendly_name', $_data['friendly_name']);
+            $eqLogic->setConfiguration('model_name', $_data['model_name']);
+            $eqLogic->setConfiguration('manufacturer', $_data['manufacturer']);
+            $eqLogic->setConfiguration('cast_type', $_data['cast_type']);
+            $eqLogic->setConfiguration('host', $_data['host']);
+            $eqLogic->setConfiguration('port', $_data['port']);
+            $eqLogic->setConfiguration('lastscan', $_data['lastscan']);
+            $eqLogic->save();
+
+            $cmd = $eqLogic->getCmd(null, 'tts');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('TTS', __FILE__));
+                $cmd->setEqLogic_id($eqLogic->getId());
+                $cmd->setLogicalId('tts');
+                $cmd->setType('action');
+                $cmd->setSubType('message');    
+                $cmd->setIsVisible(1);
+                $cmd->save();
+            }
+    
+            $cmd = $eqLogic->getCmd(null, 'customcmd');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Custom Cmd', __FILE__));
+                $cmd->setEqLogic_id($eqLogic->getId());
+                $cmd->setLogicalId('customcmd');
+                $cmd->setType('action');
+                $cmd->setSubType('message');    
+                $cmd->setIsVisible(1);
+                $cmd->save();
+            }
+
+            event::add('jeedom::alert', array(
+                'level' => 'warning',
+                'page' => 'ttscast',
+                'message' => __('[OK] ChromeCast inclus :: ' .$_data['friendly_name'], __FILE__),
+            ));
+
+            return $eqLogic;
+        }
+        return false;
+    }
+
     /* ************************ Methodes static : JEEDOM *************************** */
 
     /*
@@ -325,12 +389,12 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
-        $cmd = $this->getCmd(null, 'friendlyname');
+        $cmd = $this->getCmd(null, 'friendly_name');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Friendly Name', __FILE__));
             $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('friendlyname');
+	        $cmd->setLogicalId('friendly_name');
             $cmd->setType('info');
             $cmd->setSubType('string');    
 	        $cmd->setIsVisible(1);

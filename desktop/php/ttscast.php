@@ -183,7 +183,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">{{UUID}}</label>
                                 <div class="col-sm-6">
-                                    <input type="text" class="eqLogicAttr form-control" data-l1key="logicalId" placeholder="LogicalId" readonly>
+                                    <input type="text" class="eqLogicAttr form-control" data-l1key="logicalId" readonly>
                                 </div>
                             </div>
                             <div class="form-group">
@@ -202,6 +202,12 @@ $eqLogics = eqLogic::byType($plugin->getId());
                                 <label class="col-sm-4 control-label">{{Type}}</label>
                                 <div class="col-sm-6">
                                     <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="cast_type" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">{{Fabricant}}</label>
+                                <div class="col-sm-6">
+                                    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="manufacturer" readonly>
                                 </div>
                             </div>
                             <div class="form-group">

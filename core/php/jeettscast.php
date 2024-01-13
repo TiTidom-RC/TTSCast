@@ -63,9 +63,12 @@ try {
                     continue;
                 }
                 log::add('ttscast','debug','[CALLBACK] Devices :: NEW Chromecast détecté :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
+                event::add('ttscast::newdevice', array(
+                    'friendly_name' => $data['friendly_name']
+                ));
+                $newttscast = ttscast::createCastFromScan($data);
             }
         }
-
     } else {
         log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 
     }

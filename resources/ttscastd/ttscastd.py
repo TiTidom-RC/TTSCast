@@ -156,6 +156,8 @@ def discoverChromeCast(source='UNKOWN'):
                     'uuid': str(device.uuid),
                     'lastscan': currentTime,
                     'model_name': device.model_name,
+                    'cast_type': device.cast_type,
+                    'manufacturer': device.manufacturer,
                     'host': device.host,
                     'port': device.port,
                     'scanmode': 1
