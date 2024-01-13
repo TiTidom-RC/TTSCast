@@ -78,9 +78,9 @@ def eventsFromJeedom(cycle=0.5):
                         logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                 elif message['cmd'] == 'playtts':
                     logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
-                    if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsEngine', 'ttsSpeed', 'ttsVolume')):
+                    if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsEngine', 'ttsSpeed', 'ttsVolume')):
                         logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
-                        gCloudTTS.getTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsEngine'], message['ttsSpeed'], message['ttsVolume'])
+                        gCloudTTS.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsEngine'], message['ttsSpeed'], message['ttsVolume'])
                     else:
                         logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
                 elif message['cmd'] == "scanOn":
@@ -225,7 +225,7 @@ class gCloudTTS:
         else:
             logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
 
-    def getTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsEngine, ttsSpeed, ttsVolume):
+    def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsEngine, ttsSpeed, ttsVolume):
         logging.debug('[DAEMON][TTS] Check des répertoires')
         cachePath = Config.ttsCacheFolderWeb
         symLinkPath = Config.ttsCacheFolderTmp
@@ -268,12 +268,12 @@ class gCloudTTS:
             
             urlFileToPlay = urljoin(ttsSrvWeb, filename)
             logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-            res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName, ttsVolume)
+            res = gCloudTTS.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=ttsVolume)
             logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
         else:
             logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
 
-    def castToGoogleHome(urltoplay, googleName, volumeForPlay=30):
+    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=30):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
             chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[googleName])
@@ -304,8 +304,38 @@ class gCloudTTS:
             cast.disconnect(timeout=10, blocking=False)
             browser.stop_discovery()
             return True
+        elif googleUUID != '':
+            logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
+            chromecasts, browser = pychromecast.get_listed_chromecasts(uuid=[googleUUID])
+            if not chromecasts:
+                logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID :: %s', googleUUID)
+                browser.stop_discovery()
+                return False        
+            cast = chromecasts[0]
+            cast.wait(timeout=10)
+            logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+            
+            volumeBeforePlay = cast.status.volume_level
+            logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', volumeBeforePlay)
+            cast.set_volume(volume=volumeForPlay / 100)
+            
+            app_name = "default_media_receiver"
+            app_data = {"media_id": urltoplay, "media_type": "audio/mp3"}
+            quick_play.quick_play(cast, app_name, app_data)
+            
+            logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
+            
+            while cast.media_controller.status.player_state == 'PLAYING':
+                time.sleep(1)
+                logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', cast.media_controller.status)
+            
+            cast.quit_app()
+            cast.set_volume(volume=volumeBeforePlay)
+            cast.disconnect(timeout=10, blocking=False)
+            browser.stop_discovery()
+            return True
         else:
-            logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome absent)')
+            logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome + GoogleUUID manquants)')
             return False
 
 class Functions:

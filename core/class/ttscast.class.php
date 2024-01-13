@@ -189,12 +189,12 @@ class ttscast extends eqLogic
 
     public static function playTTS($gHome=null, $message=null, $volume=30) {
         $ttsText = $message;
-        $ttsGoogleName = $gHome;
+        $ttsGoogleUUID = $gHome;
         $ttsVolume = $volume;
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | picotts | gtranslatetts | gcloudtts
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
-        $value = array('cmd' => 'playtts', 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsVolume' => $ttsVolume, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName);
+        $value = array('cmd' => 'playtts', 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsVolume' => $ttsVolume, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName);
         self::sendToDaemon($value);
     }
 
@@ -260,30 +260,6 @@ class ttscast extends eqLogic
             $eqLogic->setConfiguration('port', $_data['port']);
             $eqLogic->setConfiguration('lastscan', $_data['lastscan']);
             $eqLogic->save();
-
-            /* $cmd = $eqLogic->getCmd(null, 'tts');
-            if (!is_object($cmd)) {
-                $cmd = new ttscastCmd();
-                $cmd->setName(__('TTS', __FILE__));
-                $cmd->setEqLogic_id($eqLogic->getId());
-                $cmd->setLogicalId('tts');
-                $cmd->setType('action');
-                $cmd->setSubType('message');    
-                $cmd->setIsVisible(1);
-                $cmd->save();
-            }
-    
-            $cmd = $eqLogic->getCmd(null, 'customcmd');
-            if (!is_object($cmd)) {
-                $cmd = new ttscastCmd();
-                $cmd->setName(__('Custom Cmd', __FILE__));
-                $cmd->setEqLogic_id($eqLogic->getId());
-                $cmd->setLogicalId('customcmd');
-                $cmd->setType('action');
-                $cmd->setSubType('message');    
-                $cmd->setIsVisible(1);
-                $cmd->save();
-            } */
 
             event::add('jeedom::alert', array(
                 'level' => 'warning',
@@ -468,15 +444,14 @@ class ttscastCmd extends cmd
         $eqLogic = $this->getEqLogic();
         $logicalId = $this->getLogicalId();
         
-        log::add('ttscast', 'debug', '[CMD] eqLogic :: ');
-        log::add('ttscast', 'debug', '[CMD] LogicalId :: ');
+        log::add('ttscast', 'debug', '[CMD] LogicalId :: ' . $logicalId);
 
         if ( $this->GetType = "action" ) {
 			if ($logicalId == "tts") {
-                $googleName = $eqLogic->getConfiguration('friendlyname', null);
-                log::add('ttscast', 'debug', '[CMD] Message / Volume / GoogleName :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleName);
+                $googleUUID = $eqLogic->getConfiguration('logicalId', null);
+                log::add('ttscast', 'debug', '[CMD] Message / Volume / GoogleUUID :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleUUID);
                 if ($logicalId == "tts" && isset($googleName) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
-                    ttscast::playTTS($googleName, $_options['message'], intval($_options['title']));
+                    ttscast::playTTS($googleUUID, $_options['message'], intval($_options['title']));
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour diffuser un message TTS');
