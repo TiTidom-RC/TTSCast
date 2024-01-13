@@ -50,6 +50,7 @@ try {
             log::add('ttscast','info','[CALLBACK] TTSCast Daemon Heartbeat (60s)');
         }
     } elseif (isset($result['devices'])) {
+        log::add('ttscast','debug','[CALLBACK] TTSCast Devices Discovery');
         foreach ($result['devices'] as $key => $data) {
             if (!isset($data['uuid'])) {
                 log::add('ttscast','debug','[CALLBACK] Devices :: UUID non défini !');

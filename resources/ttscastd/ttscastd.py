@@ -163,8 +163,7 @@ def discoverChromeCast(source='UNKOWN'):
                 # data['def'] = device.getDefinition()
                 
                 Utils.sendToJeedom.add_changes('devices::' + data['uuid'], data)
-                
-                
+                             
     except Exception as e:
         logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
         logging.debug(traceback.format_exc())
