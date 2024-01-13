@@ -157,7 +157,8 @@ def discoverChromeCast(source='UNKOWN'):
                     'lastscan': currentTime,
                     'model_name': device.model_name,
                     'host': device.host,
-                    'port': device.port
+                    'port': device.port,
+                    'scanmode': 1
                 }
                 # data['status'] = device.getStatus()
                 # data['def'] = device.getDefinition()
