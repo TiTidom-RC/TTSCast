@@ -79,7 +79,7 @@ def eventsFromJeedom(cycle=0.5):
                 elif message['cmd'] == 'playtts':
                     logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
                     if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsEngine', 'ttsSpeed', 'ttsVolume')):
-                        logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
+                        logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleUUID'] + ' | ' + message['ttsVoiceName'])
                         gCloudTTS.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsEngine'], message['ttsSpeed'], message['ttsVolume'])
                     else:
                         logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
