@@ -116,7 +116,8 @@ def mainLoop(cycle=2):
                     logging.info('[DAEMON][MAINLOOP] ScanMode END')
                     Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
                 # Heartbeat du démon
-                if ((Config.HeartbeatLastTime + Config.HeartbeatFrequency) < currentTime):
+                if ((Config.HeartbeatLastTime + Config.HeartbeatFrequency) <= currentTime):
+                    logging.debug('[DAEMON][MAINLOOP] Heartbeat = 1')
                     Utils.sendToJeedom.send_change_immediate({'heartbeat': '1'})
                     Config.HeartbeatLastTime = currentTime
                 
