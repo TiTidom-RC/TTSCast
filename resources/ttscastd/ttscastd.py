@@ -144,13 +144,27 @@ def discoverChromeCast(source='UNKOWN'):
         Config.ScanPending = True
         
         if (source == "ScanMode"):
+            currentTime = int(time.time())
             devices, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_DEVICES)
             browser.stop_discovery()
             
             logging.debug('[DAMEON][SCANNER] Devices découverts :: %s', len(devices))
             for device in devices: 
                 logging.debug('[DAMEON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
-                logging.debug('[DAMEON][SCANNER] Device Services :: %s', device)
+                data = {
+                    'friendly_name': device.friendly_name,
+                    'uuid': device.uuid,
+                    'lastscan': currentTime,
+                    'model_name': device.model_name,
+                    'host': device.host,
+                    'port': device.port
+                }
+                data['status'] = device.getStatus()
+                data['def'] = device.getDefinition()
+                
+                Utils.sendToJeedom.add_changes('devices::' + data['uuid'], data)
+                
+                
     except Exception as e:
         logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
         logging.debug(traceback.format_exc())

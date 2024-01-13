@@ -49,6 +49,21 @@ try {
         if ($result['heartbeat'] == 1) {
             log::add('ttscast','info','[CALLBACK] TTSCast Daemon Heartbeat (60s)');
         }
+    } elseif (isset($result['devices'])) {
+        foreach ($result['devices'] as $key => $data) {
+            if (!isset($data['uuid'])) {
+                log::add('ttscast','debug','[CALLBACK] Devices :: UUID non défini !');
+                continue;
+            }
+            $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
+            if (!is_object($googlecast)) {
+                if ($data['scanmode'] != 1) {
+                    continue;
+                }
+                log::add('ttscast','debug','[CALLBACK] Devices :: NEW Chromecast détecté :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
+            }
+        }
+
     } else {
         log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 
     }
