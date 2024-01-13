@@ -147,7 +147,7 @@ def scanChromeCast(source='UNKOWN'):
             
             logging.debug('[DAMEON][SCANNER] Devices découverts :: %s', len(devices))
             for device in devices: 
-                logging.debug('[DAMEON][SCANNER] Device Name :: %s @ %s:%s uuid: %s ', device.model_name, device.host, device.port, device.uuid)
+                logging.debug('[DAMEON][SCANNER] Device Name :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
     except Exception as e:
         logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
         logging.debug(traceback.format_exc())
