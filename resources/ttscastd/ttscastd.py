@@ -103,7 +103,7 @@ def eventsFromJeedom(cycle=0.5):
 def mainLoop(cycle=2):
     jeedom_socket.open()
     logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
-    threading.Thread(eventsFromJeedom, (Config.cycleEvent,)).start()
+    threading.Thread(target=eventsFromJeedom, args=(Config.cycleEvent,)).start()
     try:
         while not Config.IS_ENDING:
             try:    
