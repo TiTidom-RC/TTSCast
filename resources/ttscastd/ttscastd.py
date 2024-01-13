@@ -306,7 +306,7 @@ class gCloudTTS:
             return True
         elif googleUUID != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
-            chromecasts, browser = pychromecast.get_listed_chromecasts(uuid=[googleUUID])
+            chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=[googleUUID])
             if not chromecasts:
                 logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID :: %s', googleUUID)
                 browser.stop_discovery()
