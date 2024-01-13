@@ -26,6 +26,7 @@ import argparse
 import threading
 
 from urllib.parse import urljoin
+from uuid import UUID
 
 try:
     from jeedom.jeedom import *
@@ -306,7 +307,8 @@ class gCloudTTS:
             return True
         elif googleUUID != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
-            chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=[googleUUID])
+            uuid = UUID(googleUUID)
+            chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=[uuid])
             if not chromecasts:
                 logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID :: %s', googleUUID)
                 browser.stop_discovery()
