@@ -118,6 +118,7 @@ def mainLoop(cycle=2):
                 # Heartbeat du démon
                 if ((Config.HeartbeatLastTime + Config.HeartbeatFrequency) < currentTime):
                     Utils.sendToJeedom.send_change_immediate({'heartbeat': '1'})
+                    Config.HeartbeatLastTime = currentTime
                 
                 # Pause Cycle
                 time.sleep(cycle)
