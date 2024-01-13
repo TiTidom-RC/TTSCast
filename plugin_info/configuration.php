@@ -36,19 +36,48 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-university"></i> {{Démon}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Durée de Cycle}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Fréquence d'envoi des informations vers Jeedom; valeur entre 0.5 et 10 (Défaut = 1)}}"></i></sup>
-                </label>
-                <div class="col-lg-1">
-                    <input class="configKey form-control" data-l1key="cycle" placeholder="1" />
-                </div>
-            </div>
-            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Port Socket Interne}}</label>
                 <div class="col-lg-1">
                     <input class="configKey form-control" data-l1key="socketport" placeholder="55999" />
                 </div>
             </div>
+            <div class="form-group">
+	            <label class="col-lg-3 control-label">{{Fréquence des cycles}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Fréquence (multiplicateur) des cycles du démon (Défaut = 1)}}"></i></sup>
+                </label>
+	            <div class="col-lg-2">
+			        <select class="configKey form-control" data-l1key="cyclefactor">
+				        <option value="0.5">{{Plus Rapide}}</option>
+			            <option value="1" selected>{{Normal (Recommandé)}}</option>
+			            <option value="2">{{Plus Lent}}</option>
+			            <option value="3">{{Très Lent}}</option>
+			        </select>
+	            </div>
+            </div>
+            <!-- <div class="form-group">
+                <label class="col-lg-3 control-label">{{Durée du cyle (Main)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Durée du cycle de la boucle 'Main'; Valeur entre 0.5 et 10 (Défaut = 1)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" data-l1key="cyclemain" placeholder="1" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Durée du cyle (FromJeedom)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Durée du cycle de la boucle 'FromJeedom'; Valeur entre 0.5 et 10 (Défaut = 1)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" data-l1key="cyclefromjeedom" placeholder="1" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Durée du cyle (ToJeedom)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Durée du cycle de la boucle 'ToJeedom'; Valeur entre 0.5 et 10 (Défaut = 1)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" data-l1key="cycletojeedom" placeholder="1" />
+                </div>
+            </div> -->
             <legend><i class="fas fa-volume-down"></i> {{TTS - Text To Speech}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{URL Jeedom Externe}}</label>

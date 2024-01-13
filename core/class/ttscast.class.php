@@ -93,7 +93,7 @@ class ttscast extends eqLogic
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
         $cmd .= ' --pluginversion ' . config::byKey('pluginVersion', __CLASS__, '0.0.0');
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55999'); // TODO Modifier le numéro de port du démon
-        $cmd .= ' --cycle ' . config::byKey('cycle', __CLASS__, '1');
+        $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1');
         $cmd .= ' --callback ' . network::getNetworkAccess('internal', 'http:127.0.0.1:port:comp') . '/plugins/ttscast/core/php/jeettscast.php'; // chemin du callback
         if (config::byKey('ttsUseExtAddr', 'ttscast')==1) {
             $cmd .= ' --ttsweb ' . network::getNetworkAccess('external');

@@ -30,8 +30,8 @@ function ttscast_install() {
     if (config::byKey('socketport', 'ttscast') == '') {
         config::save('socketport', '55999', 'ttscast');
     }
-    if (config::byKey('cycle', 'ttscast') == '') {
-        config::save('cycle', '1', 'ttscast');
+    if (config::byKey('cyclefactor', 'ttscast') == '') {
+        config::save('cyclefactor', '1', 'ttscast');
     }
     if (config::byKey('gCloudTTSSpeed', 'ttscast') == '') {
         config::save('gCloudTTSSpeed', '1.0', 'ttscast');
@@ -61,8 +61,8 @@ function ttscast_update() {
     if (config::byKey('socketport', 'ttscast') == '') {
         config::save('socketport', '55999', 'ttscast');
     }
-    if (config::byKey('cycle', 'ttscast') == '') {
-        config::save('cycle', '1', 'ttscast');
+    if (config::byKey('cyclefactor', 'ttscast') == '') {
+        config::save('cyclefactor', '1', 'ttscast');
     }
     if (config::byKey('gCloudTTSSpeed', 'ttscast') == '') {
         config::save('gCloudTTSSpeed', '1.0', 'ttscast');

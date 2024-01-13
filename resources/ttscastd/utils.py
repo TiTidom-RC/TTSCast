@@ -23,8 +23,6 @@ class Config:
 
     IS_ENDING = False
 
-    sendToJeedom = ''
-
     ScanMode = False
     ScanModeStart = int(time.time())
     ScanModeTimeOut = 60
@@ -52,5 +50,8 @@ class Config:
     callBack = ''
     
     cycleFactor = 1
-    cycleEvent = 2  # cycle de la boucle des events
-    cycleMain = 0.5  # cycle de la boucle MainLoop et par héritage du socket read
+    cycleEvent = 0.5  # cycle de la boucle des events
+    cycleMain = 2  # cycle de la boucle MainLoop et par héritage du socket read
+    
+class Utils:
+    sendToJeedom = ''

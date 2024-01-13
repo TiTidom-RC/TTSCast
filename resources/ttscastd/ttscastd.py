@@ -23,6 +23,7 @@ import traceback
 import signal
 import json
 import argparse
+import threading
 
 from urllib.parse import urljoin
 
@@ -46,76 +47,85 @@ except ImportError:
 
 # Import Config
 try:
-    from config import Config
+    from utils import Utils, Config
 except ImportError:
     print("[DAEMON][IMPORT] Error: importing config")
     sys.exit(1)
 
-def read_socket():
+def eventsFromJeedom(cycle=0.5):
     global JEEDOM_SOCKET_MESSAGE
-    if not JEEDOM_SOCKET_MESSAGE.empty():
-        logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
-        message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
-        if message['apikey'] != Config.apiKey:
-            logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
-            return
-        try:
-            # TODO ***** Gestion des messages reçus de Jeedom *****
-            if message['cmd'] == 'purgettscache':
-                logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
-                if 'days' in message:
-                    Utils.purgeCache(message['days'])
-                else:
-                    Utils.purgeCache()
-            elif message['cmd'] == 'playtesttts':
-                logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
-                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName')):
-                    logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
-                    gCloudTTS.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'])
-                else:
-                    logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
-            elif message['cmd'] == 'playtts':
-                logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
-                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsEngine', 'ttsSpeed', 'ttsVolume')):
-                    logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
-                    gCloudTTS.getTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsEngine'], message['ttsSpeed'], message['ttsVolume'])
-                else:
-                    logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
-            elif message['cmd'] == "scanOn":
-                logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
-                Config.ScanMode = True
-                Config.ScanModeStart = int(time.time())
-                Config.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})
-            elif message['cmd'] == "scanOff":
-                logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
-                Config.ScanMode = False
-                Config.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
-                
-        except Exception as e:
-            logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
+    while not Config.IS_ENDING:    
+        if not JEEDOM_SOCKET_MESSAGE.empty():
+            logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
+            message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
+            if message['apikey'] != Config.apiKey:
+                logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
+                return
+            try:
+                # TODO ***** Gestion des messages reçus de Jeedom *****
+                if message['cmd'] == 'purgettscache':
+                    logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
+                    if 'days' in message:
+                        Functions.purgeCache(message['days'])
+                    else:
+                        Functions.purgeCache()
+                elif message['cmd'] == 'playtesttts':
+                    logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
+                    if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName')):
+                        logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
+                        gCloudTTS.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'])
+                    else:
+                        logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
+                elif message['cmd'] == 'playtts':
+                    logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
+                    if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsEngine', 'ttsSpeed', 'ttsVolume')):
+                        logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
+                        gCloudTTS.getTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsEngine'], message['ttsSpeed'], message['ttsVolume'])
+                    else:
+                        logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
+                elif message['cmd'] == "scanOn":
+                    logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
+                    Config.ScanMode = True
+                    Config.ScanModeStart = int(time.time())
+                    Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})
+                elif message['cmd'] == "scanOff":
+                    logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
+                    Config.ScanMode = False
+                    Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
+                    
+            except Exception as e:
+                logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
+                logging.debug(traceback.format_exc())
+        time.sleep(cycle)
+        
 
 # *** Boucle principale infinie (daemon) ***
-def mainLoop(cycle=0.3):
+def mainLoop(cycle=2):
     jeedom_socket.open()
     logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
+    threading.Thread(eventsFromJeedom, (Config.cycleEvent,)).start()
     try:
         while not Config.IS_ENDING:
-            time.sleep(cycle)
-            
-            currentTime = int(time.time())
-            if (Config.ScanMode and (Config.ScanModeStart + Config.ScanModeTimeOut) < currentTime):
-                Config.ScanMode = False
-                logging.info('[DAEMON][MAINLOOP] ScanMode END')
-                Config.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
+            try:    
+                currentTime = int(time.time())
                 
-            read_socket()
+                if (Config.ScanMode and (Config.ScanModeStart + Config.ScanModeTimeOut) < currentTime):
+                    Config.ScanMode = False
+                    logging.info('[DAEMON][MAINLOOP] ScanMode END')
+                    Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
+                time.sleep(cycle)
+            except Exception as e:
+                logging.error('[DAEMON][MAINLOOP] Exception on MainLoop :: %s', e)
+                logging.debug(traceback.format_exc())
+                shutdown()
     except KeyboardInterrupt:
+        logging.error('[DAEMON][MAINLOOP] KeyboardInterrupt on MainLoop, Shutdown.')
         shutdown()
 
 # ----------------------------------------------------------------------------
 
 class gCloudTTS:
-    """ Class TTS """
+    """ Class Google TTS """
     
     def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
         logging.debug('[DAEMON][TestTTS] Check des répertoires')
@@ -248,8 +258,8 @@ class gCloudTTS:
             logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome absent)')
             return False
 
-class Utils:
-    """ Class Utils TTS """
+class Functions:
+    """ Class Functions TTS """
     def purgeCache(nbDays='0'):
         if nbDays == '0':  # clean entire directory including containing folder
             logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
@@ -305,7 +315,7 @@ parser.add_argument("--pluginversion", help="Plugin Version", type=str)
 parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="ApiKey", type=str)
 parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
-parser.add_argument("--cycle", help="Cycle to send event", type=str)
+parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
 parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
 parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
@@ -323,8 +333,8 @@ if args.gcloudapikey:
     Config.gCloudApiKey = args.gcloudapikey
 if args.pid:
     Config.pidFile = args.pid
-if args.cycle:
-    Config.cycleFactor = float(args.cycle)
+if args.cyclefactor:
+    Config.cycleFactor = float(args.cyclefactor)
 if args.socketport:
     Config.socketPort = int(args.socketport)
 if args.ttsweb:
@@ -358,8 +368,8 @@ signal.signal(signal.SIGTERM, handler)
 
 try:
     jeedom_utils.write_pid(str(Config.pidFile))
-    Config.sendToJeedom = jeedom_com(apikey=Config.apiKey, url=Config.callBack, cycle=Config.cycleEvent)
-    if not Config.sendToJeedom.test():
+    Utils.sendToJeedom = jeedom_com(apikey=Config.apiKey, url=Config.callBack, cycle=Config.cycleEvent)
+    if not Utils.sendToJeedom.test():
         logging.error('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication ERROR (Daemon to Jeedom)')
         shutdown()
     else:
