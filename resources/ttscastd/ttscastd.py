@@ -159,8 +159,8 @@ def discoverChromeCast(source='UNKOWN'):
                     'host': device.host,
                     'port': device.port
                 }
-                data['status'] = device.getStatus()
-                data['def'] = device.getDefinition()
+                # data['status'] = device.getStatus()
+                # data['def'] = device.getDefinition()
                 
                 Utils.sendToJeedom.add_changes('devices::' + data['uuid'], data)
                 
