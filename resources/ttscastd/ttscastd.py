@@ -153,7 +153,7 @@ def discoverChromeCast(source='UNKOWN'):
                 logging.debug('[DAMEON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
                 data = {
                     'friendly_name': device.friendly_name,
-                    'uuid': device.uuid,
+                    'uuid': str(device.uuid),
                     'lastscan': currentTime,
                     'model_name': device.model_name,
                     'host': device.host,
