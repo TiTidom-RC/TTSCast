@@ -124,6 +124,8 @@ def mainLoop(cycle=2):
                 if not Config.ScanPending:
                     if Config.ScanMode:
                         threading.Thread(target=discoverChromeCast, args=('ScanMode',)).start()
+                else:
+                    logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING ! ')
                 # Pause Cycle
                 time.sleep(cycle)
             except Exception as e:
@@ -152,6 +154,9 @@ def discoverChromeCast(source='UNKOWN'):
     except Exception as e:
         logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
         logging.debug(traceback.format_exc())
+    
+    Config.ScanPending = False
+    
 
 class gCloudTTS:
     """ Class Google TTS """
