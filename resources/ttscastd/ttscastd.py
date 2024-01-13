@@ -120,7 +120,10 @@ def mainLoop(cycle=2):
                     logging.debug('[DAEMON][MAINLOOP] Heartbeat = 1')
                     Utils.sendToJeedom.send_change_immediate({'heartbeat': '1'})
                     Config.HeartbeatLastTime = currentTime
-                
+                # Scan New Chromecast
+                if not Config.ScanPending:
+                    if Config.ScanMode:
+                        threading.Thread(target=scanChromeCast, args=('ScanMode',)).start()
                 # Pause Cycle
                 time.sleep(cycle)
             except Exception as e:
@@ -132,6 +135,23 @@ def mainLoop(cycle=2):
         shutdown()
 
 # ----------------------------------------------------------------------------
+
+def scanChromeCast(source='UNKOWN'):
+    try:
+        logging.debug('[DAEMON][SCANNER] Start Scanner :: %s', source)
+        Config.ScanPending = True
+        
+        if (source == "ScanMode"):
+            devices, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_DEVICES)
+            browser.stop_discovery()
+            
+            logging.debug('[DAMEON][SCANNER] Devices découverts :: %s', len(devices))
+            for device in devices: 
+                logging.debug('[DAMEON][SCANNER] Device Name :: %s @ %s:%s uuid: %s ', device.model_name, device.host, device.port, device.uuid)
+                device.disconnect(timeout=10, blocking=False)
+    except Exception as e:
+        logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
+        logging.debug(traceback.format_exc())
 
 class gCloudTTS:
     """ Class Google TTS """
@@ -268,7 +288,7 @@ class gCloudTTS:
             return False
 
 class Functions:
-    """ Class Functions TTS """
+    """ Class Functions """
     def purgeCache(nbDays='0'):
         if nbDays == '0':  # clean entire directory including containing folder
             logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
