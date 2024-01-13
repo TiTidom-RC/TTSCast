@@ -111,7 +111,7 @@ def mainLoop(cycle=2):
                 currentTime = int(time.time())
                 
                 # Arrêt du ScanMode au bout de 60 secondes
-                if (Config.ScanMode and (Config.ScanModeStart + Config.ScanModeTimeOut) < currentTime):
+                if (Config.ScanMode and (Config.ScanModeStart + Config.ScanModeTimeOut) <= currentTime):
                     Config.ScanMode = False
                     logging.info('[DAEMON][MAINLOOP] ScanMode END')
                     Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
