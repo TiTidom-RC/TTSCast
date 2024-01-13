@@ -52,6 +52,7 @@ try {
     } elseif (isset($result['devices'])) {
         log::add('ttscast','debug','[CALLBACK] TTSCast Devices Discovery');
         foreach ($result['devices'] as $key => $data) {
+            log::add('ttscast','debug','[CALLBACK] TTSCast NEW Device :: ' . $data['uuid']);
             if (!isset($data['uuid'])) {
                 log::add('ttscast','debug','[CALLBACK] Devices :: UUID non défini !');
                 continue;
