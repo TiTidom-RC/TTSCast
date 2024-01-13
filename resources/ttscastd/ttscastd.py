@@ -122,7 +122,7 @@ def mainLoop(cycle=2):
                     Config.HeartbeatLastTime = currentTime
                 # Scan New Chromecast
                 if not Config.ScanPending:
-                    if Config.ScanMode:
+                    if Config.ScanMode and (Config.ScanLastTime < Config.ScanModeStart):
                         threading.Thread(target=discoverChromeCast, args=('ScanMode',)).start()
                 else:
                     logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING ! ')
@@ -155,8 +155,8 @@ def discoverChromeCast(source='UNKOWN'):
         logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
         logging.debug(traceback.format_exc())
     
+    Config.ScanLastTime = int(time.time())
     Config.ScanPending = False
-    
 
 class gCloudTTS:
     """ Class Google TTS """
