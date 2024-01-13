@@ -45,8 +45,10 @@ try {
                 'scanState' => 'scanOff')
             );
         }
-    } elseif (isset($result['key2'])) {
-        // do something else
+    } elseif (isset($result['heartbeat'])) {
+        if ($result['heartbeat'] == 1) {
+            log::add('ttscast','info','[CALLBACK] TTSCast Daemon Heartbeat (60s)');
+        }
     } else {
         log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 
     }

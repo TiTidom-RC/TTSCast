@@ -27,6 +27,9 @@ class Config:
     ScanModeStart = int(time.time())
     ScanModeTimeOut = 60
     
+    HeartbeatFrequency = 60
+    HeartbeatLastTime = int(time.time())
+    
     ttsCacheFolder = 'data/cache'
     ttsCacheFolderWeb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ttsCacheFolder))
     ttsCacheFolderTmp = os.path.join('/tmp/jeedom/', 'ttscast_cache')

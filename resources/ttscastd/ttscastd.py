@@ -106,13 +106,20 @@ def mainLoop(cycle=2):
     threading.Thread(target=eventsFromJeedom, args=(Config.cycleEvent,)).start()
     try:
         while not Config.IS_ENDING:
-            try:    
+            try:
+                # *** Actions de la MainLoop ***    
                 currentTime = int(time.time())
                 
+                # Arrêt du ScanMode au bout de 60 secondes
                 if (Config.ScanMode and (Config.ScanModeStart + Config.ScanModeTimeOut) < currentTime):
                     Config.ScanMode = False
                     logging.info('[DAEMON][MAINLOOP] ScanMode END')
                     Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
+                # Heartbeat du démon
+                if ((Config.HeartbeatLastTime + Config.HeartbeatFrequency) < currentTime):
+                    Utils.sendToJeedom.send_change_immediate({'heartbeat': '1'})
+                
+                # Pause Cycle
                 time.sleep(cycle)
             except Exception as e:
                 logging.error('[DAEMON][MAINLOOP] Exception on MainLoop :: %s', e)
