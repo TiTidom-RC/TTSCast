@@ -252,22 +252,42 @@ class ttscast extends eqLogic
             $eqLogic->setIsVisible(1);
             $eqLogic->setName($_data['friendly_name']);
             $eqLogic->setEqType_name('ttscast');
-        }
-        $eqLogic->setConfiguration('friendly_name', $_data['friendly_name']);
-        $eqLogic->setConfiguration('model_name', $_data['model_name']);
-        $eqLogic->setConfiguration('manufacturer', $_data['manufacturer']);
-        $eqLogic->setConfiguration('cast_type', $_data['cast_type']);
-        $eqLogic->setConfiguration('host', $_data['host']);
-        $eqLogic->setConfiguration('port', $_data['port']);
-        $eqLogic->setConfiguration('lastscan', $_data['lastscan']);
-        $eqLogic->save();
+            $eqLogic->setConfiguration('friendly_name', $_data['friendly_name']);
+            $eqLogic->setConfiguration('model_name', $_data['model_name']);
+            $eqLogic->setConfiguration('manufacturer', $_data['manufacturer']);
+            $eqLogic->setConfiguration('cast_type', $_data['cast_type']);
+            $eqLogic->setConfiguration('host', $_data['host']);
+            $eqLogic->setConfiguration('port', $_data['port']);
+            $eqLogic->setConfiguration('lastscan', $_data['lastscan']);
+            $eqLogic->save();
 
-        event::add('jeedom::alert', array(
-            'level' => 'warning',
-            'page' => 'ttscast',
-            'message' => __('[OK] ChromeCast inclus :: ' .$_data['friendly_name'], __FILE__),
-        ));
-        return $eqLogic;
+            event::add('jeedom::alert', array(
+                'level' => 'warning',
+                'page' => 'ttscast',
+                'message' => __('[OK] ChromeCast AJOUTE :: ' .$_data['friendly_name'], __FILE__),
+            ));
+            return $eqLogic;
+        }
+        else {
+            $newttscast->setConfiguration('friendly_name', $_data['friendly_name']);
+            $newttscast->setConfiguration('model_name', $_data['model_name']);
+            $newttscast->setConfiguration('manufacturer', $_data['manufacturer']);
+            $newttscast->setConfiguration('cast_type', $_data['cast_type']);
+            $newttscast->setConfiguration('host', $_data['host']);
+            $newttscast->setConfiguration('port', $_data['port']);
+            $newttscast->setConfiguration('lastscan', $_data['lastscan']);
+            $newttscast->save();
+
+            event::add('jeedom::alert', array(
+                'level' => 'warning',
+                'page' => 'ttscast',
+                'message' => __('[OK] ChromeCast MAJ :: ' .$_data['friendly_name'], __FILE__),
+            ));
+            return $newttscast;
+        }
+        
+
+        
     }
 
     /* ************************ Methodes static : JEEDOM *************************** */
