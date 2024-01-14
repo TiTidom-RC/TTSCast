@@ -462,7 +462,7 @@ class Functions:
     def jeedomTTS(ttsText, ttsLang):
         filecontent = None
         try:
-            ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=0&text=' + quote(ttsText, safe='')
+            ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
             ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
             logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
             
