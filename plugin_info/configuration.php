@@ -101,6 +101,10 @@ if (!isConnect()) {
                     <select class="configKey form-control" data-l1key="ttsLang">
                         <option value="fr-FR">{{Français (fr-FR)}}</option>
                         <option value="en-US">{{Anglais (en-US)}}</option>
+                        <option value="es-ES">{{Espagnol (es-ES)}}</option>
+                        <option value="de-DE">{{Allemand (de-DE)}}</option>
+                        <option value="it-IT">{{Italien (it-IT)}}</option>
+                        <option value="sr-RS">{{Serbe (sr-RS)}}</option>
                     </select>
                 </div>
             </div>
@@ -124,25 +128,77 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-3">
                     <select class="configKey form-control" data-l1key="gCloudTTSVoice">
-                        <option value="fr-FR-Standard-A">French (France) - Standard A Female (fr-FR-Standard-A)</option>
-                        <option value="fr-FR-Standard-B">French (France) - Standard B Male (fr-FR-Standard-B)</option>
-                        <option value="fr-FR-Standard-C">French (France) - Standard C Female (fr-FR-Standard-C)</option>
-                        <option value="fr-FR-Standard-D">French (France) - Standard D Male (fr-FR-Standard-D)</option>
-                        <option value="fr-FR-Standard-E">French (France) - Standard E Female (fr-FR-Standard-E)</option>
-                        <option value="fr-FR-Wavenet-A">French (France) - WaveNet A Female (fr-FR-Wavenet-A)</option>
-                        <option value="fr-FR-Wavenet-B">French (France) - WaveNet B Male (fr-FR-Wavenet-B)</option>
-                        <option value="fr-FR-Wavenet-C">French (France) - WaveNet C Female (fr-FR-Wavenet-C)</option>
-                        <option value="fr-FR-Wavenet-D">French (France) - WaveNet D Male (fr-FR-Wavenet-D)</option>
-                        <option value="fr-FR-Wavenet-E">French (France) - WaveNet E Female (fr-FR-Wavenet-E)</option>
-                        <option value="fr-FR-Neural2-A">French (France) - Neural2 A Female (fr-FR-Neural2-A)</option>
-                        <option value="fr-FR-Neural2-B">French (France) - Neural2 B Male (fr-FR-Neural2-B)</option>
-                        <option value="fr-FR-Neural2-C">French (France) - Neural2 C Female (fr-FR-Neural2-C)</option>
-                        <option value="fr-FR-Neural2-D">French (France) - Neural2 D Male (fr-FR-Neural2-D)</option>
-                        <option value="fr-FR-Neural2-E">French (France) - Neural2 E Female (fr-FR-Neural2-E)</option>
-                        <option value="fr-FR-Studio-A">French (France) - Studio A Female (fr-FR-Studio-A)</option>
-                        <option value="fr-FR-Studio-D">French (France) - Studio D Male (fr-FR-Studio-D)</option>
-                        <option value="fr-FR-Polyglot-1">French (France) - Polyglot 1 Male (fr-FR-Polyglot-1)</option>
-                        <option value="sr-RS-Standard-A">Serbian (Serbie) - Standard A Female (sr-RS-Standard-A)</option>
+                        <!-- French -->
+                        <option value="fr-FR-Standard-A">Français (France) - Standard A Female (fr-FR-Standard-A)</option>
+                        <option value="fr-FR-Standard-B">Français (France) - Standard B Male (fr-FR-Standard-B)</option>
+                        <option value="fr-FR-Standard-C">Français (France) - Standard C Female (fr-FR-Standard-C)</option>
+                        <option value="fr-FR-Standard-D">Français (France) - Standard D Male (fr-FR-Standard-D)</option>
+                        <option value="fr-FR-Standard-E">Français (France) - Standard E Female (fr-FR-Standard-E)</option>
+                        <option value="fr-FR-Wavenet-A">Français (France) - WaveNet A Female (fr-FR-Wavenet-A)</option>
+                        <option value="fr-FR-Wavenet-B">Français (France) - WaveNet B Male (fr-FR-Wavenet-B)</option>
+                        <option value="fr-FR-Wavenet-C">Français (France) - WaveNet C Female (fr-FR-Wavenet-C)</option>
+                        <option value="fr-FR-Wavenet-D">Français (France) - WaveNet D Male (fr-FR-Wavenet-D)</option>
+                        <option value="fr-FR-Wavenet-E">Français (France) - WaveNet E Female (fr-FR-Wavenet-E)</option>
+                        <option value="fr-FR-Neural2-A">Français (France) - Neural2 A Female (fr-FR-Neural2-A)</option>
+                        <option value="fr-FR-Neural2-B">Français (France) - Neural2 B Male (fr-FR-Neural2-B)</option>
+                        <option value="fr-FR-Neural2-C">Français (France) - Neural2 C Female (fr-FR-Neural2-C)</option>
+                        <option value="fr-FR-Neural2-D">Français (France) - Neural2 D Male (fr-FR-Neural2-D)</option>
+                        <option value="fr-FR-Neural2-E">Français (France) - Neural2 E Female (fr-FR-Neural2-E)</option>
+                        <option value="fr-FR-Studio-A">Français (France) - Studio A Female (fr-FR-Studio-A)</option>
+                        <option value="fr-FR-Studio-D">Français (France) - Studio D Male (fr-FR-Studio-D)</option>
+                        <option value="fr-FR-Polyglot-1">Français (France) - Polyglot 1 Male (fr-FR-Polyglot-1)</option>
+                        <option value="fr-CA-Standard-A">Français (Canada) - Standard A Female (fr-CA-Standard-A)</option>
+                        <option value="fr-CA-Standard-B">Français (Canada) - Standard B Male (fr-CA-Standard-B)</option>
+                        <option value="fr-CA-Standard-C">Français (Canada) - Standard C Female (fr-CA-Standard-C)</option>
+                        <option value="fr-CA-Standard-D">Français (Canada) - Standard D Male (fr-CA-Standard-D)</option>
+                        <option value="fr-CA-Wavenet-A">Français (Canada) - Wavenet A Female (fr-CA-Wavenet-A)</option>
+                        <option value="fr-CA-Wavenet-B">Français (Canada) - Wavenet B Male (fr-CA-Wavenet-B)</option>
+                        <option value="fr-CA-Wavenet-C">Français (Canada) - Wavenet C Female (fr-CA-Wavenet-C)</option>
+                        <option value="fr-CA-Wavenet-D">Français (Canada) - Wavenet D Male (fr-CA-Wavenet-D)</option>
+                        <option value="fr-CA-Neural2-A">Français (Canada) - Neural2 A Female (fr-CA-Neural2-A)</option>
+                        <option value="fr-CA-Neural2-B">Français (Canada) - Neural2 B Male (fr-CA-Neural2-B)</option>
+                        <option value="fr-CA-Neural2-C">Français (Canada) - Neural2 C Female (fr-CA-Neural2-C)</option>
+                        <option value="fr-CA-Neural2-D">Français (Canada) - Neural2 D Male (fr-CA-Neural2-D)</option>
+                        <!-- English -->
+                        <option value="en-US-Standard-A">Anglais (US) - Standard A Male (en-US-Standard-A)</option>
+                        <option value="en-US-Standard-B">Anglais (US) - Standard B Male (en-US-Standard-B)</option>
+                        <option value="en-US-Standard-C">Anglais (US) - Standard C Female (en-US-Standard-C)</option>
+                        <option value="en-US-Standard-D">Anglais (US) - Standard D Male (en-US-Standard-D)</option>
+                        <option value="en-US-Standard-E">Anglais (US) - Standard E Female (en-US-Standard-E)</option>
+                        <option value="en-US-Standard-F">Anglais (US) - Standard F Female (en-US-Standard-F)</option>
+                        <option value="en-US-Standard-G">Anglais (US) - Standard G Female (en-US-Standard-G)</option>
+                        <option value="en-US-Standard-H">Anglais (US) - Standard H Female (en-US-Standard-H)</option>
+                        <option value="en-US-Standard-I">Anglais (US) - Standard I Male (en-US-Standard-I)</option>
+                        <option value="en-US-Standard-J">Anglais (US) - Standard J Male (en-US-Standard-J)</option>
+                        <option value="en-US-Wavenet-A">Anglais (US) - Wavenet A Male (en-US-Wavenet-A)</option>
+                        <option value="en-US-Wavenet-B">Anglais (US) - Wavenet B Male (en-US-Wavenet-B)</option>
+                        <option value="en-US-Wavenet-C">Anglais (US) - Wavenet C Female (en-US-Wavenet-C)</option>
+                        <option value="en-US-Wavenet-D">Anglais (US) - Wavenet D Male (en-US-Wavenet-D)</option>
+                        <option value="en-US-Wavenet-E">Anglais (US) - Wavenet E Female (en-US-Wavenet-E)</option>
+                        <option value="en-US-Wavenet-F">Anglais (US) - Wavenet F Female (en-US-Wavenet-F)</option>
+                        <option value="en-US-Wavenet-G">Anglais (US) - Wavenet G Female (en-US-Wavenet-G)</option>
+                        <option value="en-US-Wavenet-H">Anglais (US) - Wavenet H Female (en-US-Wavenet-H)</option>
+                        <option value="en-US-Wavenet-I">Anglais (US) - Wavenet I Male (en-US-Wavenet-I)</option>
+                        <option value="en-US-Wavenet-J">Anglais (US) - Wavenet J Male (en-US-Wavenet-J)</option>
+                        <option value="en-US-Neural2-A">Anglais (US) - Neural2 A Male (en-US-Neural2-A)</option>
+                        <option value="en-US-Neural2-C">Anglais (US) - Neural2 C Female (en-US-Neural2-C)</option>
+                        <option value="en-US-Neural2-D">Anglais (US) - Neural2 D Male (en-US-Neural2-D)</option>
+                        <option value="en-US-Neural2-E">Anglais (US) - Neural2 E Female (en-US-Neural2-E)</option>
+                        <option value="en-US-Neural2-F">Anglais (US) - Neural2 F Female (en-US-Neural2-F)</option>
+                        <option value="en-US-Neural2-G">Anglais (US) - Neural2 G Female (en-US-Neural2-G)</option>
+                        <option value="en-US-Neural2-H">Anglais (US) - Neural2 H Female (en-US-Neural2-H)</option>
+                        <option value="en-US-Neural2-I">Anglais (US) - Neural2 I Male (en-US-Neural2-I)</option>
+                        <option value="en-US-Neural2-J">Anglais (US) - Neural2 J Male (en-US-Neural2-J)</option>
+                        <option value="en-US-Studio-O">Anglais (US) - Studio O Female (en-US-Studio-O)</option>
+                        <option value="en-US-Studio-Q">Anglais (US) - Studio Q Male (en-US-Studio-Q)</option>
+                        <option value="en-US-Polyglot-1">Anglais (US) - Polyglot 1 Male (en-US-Polyglot-1)</option>
+                        <option value="en-US-Journey-D">Anglais (US) - Journey D Male (en-US-Journey-D)</option>
+                        <option value="en-US-Journey-F">Anglais (US) - Journey F Female (en-US-Journey-F)</option>
+                        <option value="en-US-News-K">Anglais (US) - News K Female (en-US-News-K)</option>
+                        <option value="en-US-News-L">Anglais (US) - News L Female (en-US-News-L)</option>
+                        <option value="en-US-News-N">Anglais (US) - News N Male (en-US-News-N)</option>
+                        <!-- Serbian -->
+                        <option value="sr-RS-Standard-A">Serbe (Serbie) - Standard A Female (sr-RS-Standard-A)</option>
                     </select>
                 </div>
             </div>
