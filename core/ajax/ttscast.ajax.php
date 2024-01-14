@@ -68,7 +68,7 @@ try {
         $filepath = __DIR__ . "/../../core/config/" . init('filename');
         if (!file_exists($filepath)) {
             ajax::error('[RESET][APIKEY] Fichier introuvable : ' . $filepath);
-            throw new Exception('[RESET][APIKEY] Fichier introuvable : ' . $filepath);
+            # throw new Exception('[RESET][APIKEY] Fichier introuvable : ' . $filepath);
         }
         else {
             log::add('ttscast', 'debug', "[RESET][APIKEY] filepath: {$filepath}");
