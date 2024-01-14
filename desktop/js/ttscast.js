@@ -123,7 +123,7 @@ function changeScanState(_scanState) {
 
 $('body').on('ttscast::newdevice', function (_event, _option) {
   if (_option && _option['friendly_name']) {
-    $('#div_alert').showAlert({message: "NEW Chromecast détecté :: " + _option['friendly_name'], level: 'warning'});
+    $('#div_alert').showAlert({message: "[SCAN] Chromecast détecté :: " + _option['friendly_name'], level: 'warning'});
   }
   
 });
