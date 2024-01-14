@@ -117,7 +117,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Langue/Voix TTS (Google Cloud)}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>]
+                <label class="col-lg-3 control-label">{{Langue/Voix TTS (Google Cloud)}} [<a style="color:#FF0000;" target="_blank" href="https://cloud.google.com/text-to-speech/">{{INFOS}}</a>]
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Google Cloud TTS}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -196,6 +196,15 @@ if (!isConnect()) {
             </div> -->
             <legend><i class="fas fa-volume-down"></i> {{TTS - Options}}</legend>
             <div class="form-group">
+                <label class="col-lg-3 control-label">{{URL Jeedom Externe}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Utilise l'URL externe de Jeedom pour la lecture des fichiers TTS plutôt que l'URL interne (Recommandé = décoché)}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <input type="checkbox" class="configKey customform-address" data-l1key="ttsUseExtAddr" />
+                    <span class="addressTestURL"></span>
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Ne PAS utiliser le cache}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Génère les fichiers TTS à chaque demande. Il est vivement recommandé de ne PAS cocher cette case, sauf pour faire des tests}}"></i></sup>
                 </label>
@@ -212,15 +221,6 @@ if (!isConnect()) {
                 </div>
                 <div class="col-lg-1">
                     <a class="btn btn-warning customclass-purgettscache"><i class="fas fa-file-audio"></i> {{Vider le Cache}}</a>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{URL Jeedom Externe}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Utilise l'URL externe de Jeedom pour la lecture des fichiers TTS plutôt que l'URL interne (Recommandé = décoché)}}"></i></sup>
-                </label>
-                <div class="col-lg-2">
-                    <input type="checkbox" class="configKey customform-address" data-l1key="ttsUseExtAddr" />
-                    <span class="addressTestURL"></span>
                 </div>
             </div>
             <!-- <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
@@ -394,7 +394,7 @@ if (!isConnect()) {
                 handleAjaxError(request, status, error);
             },
             success: function(data) {
-                var spanContent = ' <a href="' + data.result + '" target="_blank">[TEST]</a>';
+                var spanContent = ' <a style="color:#FF0000;" href="' + data.result + '" target="_blank">[TEST]</a>';
                 $('.addressTestURL').html(spanContent);
             }
         });
