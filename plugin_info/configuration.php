@@ -119,7 +119,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Langue/Voix TTS (Google Cloud)}} [<a style="color:red !important;" target="_blank" href="https://cloud.google.com/text-to-speech/">{{INFOS}}</a>]
+                <label class="col-lg-3 control-label">{{Langue/Voix TTS (Google Cloud)}} [<a style="color:var(--al-success-color)!important;" target="_blank" href="https://cloud.google.com/text-to-speech/">{{Infos}}</a>]
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Google Cloud TTS}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -396,7 +396,7 @@ if (!isConnect()) {
                 handleAjaxError(request, status, error);
             },
             success: function(data) {
-                var spanContent = ' <a style="color:red !important;" href="' + data.result + '" target="_blank">[TEST (Lecture .mp3)]</a>';
+                var spanContent = ' <a style="color=var(--al-success-color)!important;" href="' + data.result + '" target="_blank">[TEST (Lecture .mp3)]</a>';
                 $('.addressTestURL').html(spanContent);
             }
         });
