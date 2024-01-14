@@ -256,6 +256,7 @@ class gCloudTTS:
                 language_code = "-".join(ttsVoiceName.split("-")[:2])
                 text_input = tts.SynthesisInput(text=ttsText)
                 voice_params = tts.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
+                # TODO Ajouter la vitesse de speech à l'AudioConfig
                 audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
 
                 client = tts.TextToSpeechClient(credentials=credentials)
@@ -291,7 +292,12 @@ class gCloudTTS:
             cast.set_volume(volume=volumeForPlay / 100)
             
             app_name = "default_media_receiver"
-            app_data = {"media_id": urltoplay, "media_type": "audio/mp3", "title": "[Jeedom] TTSCast"}
+            app_data = {
+                "media_id": urltoplay, 
+                "thumb": thumb,
+                "media_type": "audio/mp3", 
+                "title": "[Jeedom] TTSCast"
+            }
             quick_play.quick_play(cast, app_name, app_data)
             
             logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
@@ -321,8 +327,10 @@ class gCloudTTS:
             logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', volumeBeforePlay)
             cast.set_volume(volume=volumeForPlay / 100)
             
+            urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+            
             app_name = "default_media_receiver"
-            app_data = {"media_id": urltoplay, "media_type": "audio/mp3", "title": "[Jeedom] TTSCast"}
+            app_data = {"media_id": urltoplay, "media_type": "audio/mp3", "title": "[Jeedom] TTSCast", "thumb": urlThumb}
             quick_play.quick_play(cast, app_name, app_data)
             
             logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
@@ -422,6 +430,7 @@ if args.socketport:
 if args.ttsweb:
     Config.ttsWebSrvCache = urljoin(args.ttsweb, 'plugins/ttscast/data/cache/')
     Config.ttsWebSrvMedia = urljoin(args.ttsweb, 'plugins/ttscast/data/media/')
+    Config.ttsWebSrvImages = urljoin(args.ttsweb, 'plugins/ttscast/data/images/')
 
 jeedom_utils.set_log_level(Config.logLevel)
 
@@ -444,6 +453,7 @@ logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', Config.gCloudApiKey)
 logging.info('[DAEMON][MAIN] CallBack: %s', Config.callBack)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', Config.ttsWebSrvCache)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvMedia: %s', Config.ttsWebSrvMedia)
+logging.info('[DAEMON][MAIN] Jeedom WebSrvImages: %s', Config.ttsWebSrvImages)
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)
