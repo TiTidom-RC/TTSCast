@@ -129,7 +129,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Langue/Voix TTS (Google Cloud)}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>]</label>
-                <div class="col-lg-4">
+                <div class="col-lg-3">
                     <select class="configKey form-control" data-l1key="gCloudTTSVoice">
                         <option value="fr-FR-Standard-A">French (France) - Standard A Female (fr-FR-Standard-A)</option>
                         <option value="fr-FR-Standard-B">French (France) - Standard B Male (fr-FR-Standard-B)</option>
