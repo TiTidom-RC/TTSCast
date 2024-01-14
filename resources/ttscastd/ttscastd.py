@@ -328,6 +328,7 @@ class gCloudTTS:
             cast.set_volume(volume=volumeForPlay / 100)
             
             urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+            logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
             
             app_name = "default_media_receiver"
             app_data = {"media_id": urltoplay, "media_type": "audio/mp3", "title": "[Jeedom] TTSCast", "thumb": urlThumb}
