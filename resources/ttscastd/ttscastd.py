@@ -154,6 +154,8 @@ def discoverChromeCast(source='UNKOWN'):
         
         if (source == "ScanMode"):
             currentTime = int(time.time())
+            currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%m/%d/%Y, %H:%M:%S")
+
             devices, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_DEVICES)
             browser.stop_discovery()
             
@@ -163,7 +165,7 @@ def discoverChromeCast(source='UNKOWN'):
                 data = {
                     'friendly_name': device.friendly_name,
                     'uuid': str(device.uuid),
-                    'lastscan': datetime.datetime.fromtimestamp(currentTime),
+                    'lastscan': currentTimeStr ,
                     'model_name': device.model_name,
                     'cast_type': device.cast_type,
                     'manufacturer': device.manufacturer,
