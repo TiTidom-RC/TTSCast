@@ -258,8 +258,8 @@ if (!isConnect()) {
             },
             dataType: 'json',
             error: function (request, status, error) {
-                handleAjaxError(request, status, error);
                 $('#div_alert').showAlert({ message: "Coucou !", level: 'warning' });
+                handleAjaxError(request, status, error);
             },
             success: function (data) {
                 if (data.state != 'ok') {
