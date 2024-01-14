@@ -154,7 +154,7 @@ def discoverChromeCast(source='UNKOWN'):
         
         if (source == "ScanMode"):
             currentTime = int(time.time())
-            currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%m/%d/%Y, %H:%M:%S")
+            currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
             devices, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_DEVICES)
             browser.stop_discovery()
