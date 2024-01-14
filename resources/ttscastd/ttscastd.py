@@ -264,7 +264,7 @@ class gCloudTTS:
                     client.save(filepath)
                     
                     sound = AudioSegment.from_mp3(filepath)
-                    soundNew = sound._spawn(sound.raw_data, overrides={"frame_rate": int(sound.frame_rate * 2.0)})
+                    soundNew = sound._spawn(sound.raw_data, overrides={"frame_rate": int(sound.frame_rate * 1.2)})
                     soundNew.set_frame_rate(sound.frame_rate)
                     
                     soundNew.export(filepath, format="mp3")
