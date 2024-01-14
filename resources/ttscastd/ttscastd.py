@@ -189,6 +189,8 @@ class gCloudTTS:
     """ Class Google TTS """
     
     def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsLang, ttsEngine):
+        logging.debug('[DAEMON][TestTTS] TTSEngine :: %s', ttsEngine)
+        
         logging.debug('[DAEMON][TestTTS] Check des répertoires')
         cachePath = Config.ttsCacheFolderWeb
         symLinkPath = Config.ttsCacheFolderTmp
@@ -202,6 +204,9 @@ class gCloudTTS:
             os.stat(cachePath)
         except Exception:
             os.symlink(symLinkPath, cachePath)
+
+        if ttsEngine == "gCloudTTS":
+            logging.debug('[DAEMON][TestTTS] IF TTSEngine = gCloudTTS')
         
         logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
         if Config.gCloudApiKey != 'noKey':
