@@ -100,7 +100,6 @@ if (!isConnect()) {
                 <div class="col-lg-3">
                     <select class="configKey form-control customform-ttsengine" data-l1key="ttsEngine">
                         <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
-                        <option value="picotts">{{PicoTTS (Local)}}</option>
                         <option value="gtranslatetts">{{Google Translate API (Internet)}}</option>
                         <option value="gcloudtts">{{Google Cloud Text-To-Speech (Clé & Internet)}}</option>
                     </select>

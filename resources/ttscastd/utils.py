@@ -31,7 +31,7 @@ class Config:
     ScanTimeout = 10
     ScanLastTime = int(time.time())
     
-    HeartbeatFrequency = 60
+    HeartbeatFrequency = 600
     HeartbeatLastTime = int(time.time())
     
     ttsCacheFolder = 'data/cache'
