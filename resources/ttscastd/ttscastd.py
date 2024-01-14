@@ -80,9 +80,9 @@ def eventsFromJeedom(cycle=0.5):
                         Functions.purgeCache()
                 elif message['cmd'] == 'playtesttts':
                     logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
-                    if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName')):
-                        logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'])
-                        gCloudTTS.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'])
+                    if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine')):
+                        logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'])
+                        gCloudTTS.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsLang'], message['ttsEngine'])
                     else:
                         logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                 elif message['cmd'] == 'playtts':

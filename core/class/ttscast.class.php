@@ -181,9 +181,10 @@ class ttscast extends eqLogic
         $ttsText = config::byKey('ttsTestFileGen', 'ttscast', 'Bonjour, Ceci est un test de synthèse vocale via le plugin TTS Cast.');
         $ttsGoogleName = config::byKey('ttsTestGoogleName', 'ttscast', '');
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
-        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | picotts | gtranslatetts | gcloudtts
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
+        $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
-        $value = array('cmd' => 'playtesttts', 'ttsengine' => $ttsEngine, 'ttsspeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName);
+        $value = array('cmd' => 'playtesttts', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName);
         self::sendToDaemon($value);
     }
 
@@ -192,7 +193,7 @@ class ttscast extends eqLogic
         $ttsGoogleUUID = $gHome;
         $ttsVolume = $volume;
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
-        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | picotts | gtranslatetts | gcloudtts
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $value = array('cmd' => 'playtts', 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsVolume' => $ttsVolume, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName);
         self::sendToDaemon($value);
