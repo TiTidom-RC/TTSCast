@@ -147,7 +147,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Vitesse de parole}}
+                <label class="col-lg-3 control-label">{{Vitesse de Dictée}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Valeur par défaut = Normal (1.0)}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
