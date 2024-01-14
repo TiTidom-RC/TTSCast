@@ -262,6 +262,13 @@ class gCloudTTS:
                 try:
                     client = gTTS(ttsText, lang=langToTTS)
                     client.save(filepath)
+                    
+                    sound = AudioSegment.from_mp3(filepath)
+                    soundNew = sound._spawn(sound.raw_data, overrides={"frame_rate": int(sound.frame_rate * 2.0)})
+                    soundNew.set_frame_rate(sound.frame_rate)
+                    
+                    soundNew.export(filepath, format="mp3")
+                    
                 except Exception as e:
                     if os.path.isfile(filepath):
                         try:
