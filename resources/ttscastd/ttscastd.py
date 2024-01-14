@@ -53,7 +53,15 @@ try:
 except ImportError: 
     print("[DAEMON][IMPORT] Error: importing module gTTS")
     sys.exit(1)
-    
+
+# Import pyDub (Audio changing)
+try:
+    from pydub import AudioSegment
+except ImportError: 
+    print("[DAEMON][IMPORT] Error: importing module gTTS")
+    sys.exit(1)
+
+
 # Import Config
 try:
     from utils import Utils, Config
@@ -188,7 +196,10 @@ def discoverChromeCast(source='UNKOWN'):
 class gCloudTTS:
     """ Class Google TTS """
     
-    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsLang, ttsEngine):
+    def changeSpeedTTS(self, soundfile, speed):
+        logging.debug('[DAEMON][TestTTS] ChangeSpeed File :: %s', soundfile)
+    
+    def generateTestTTS(self, ttsText, ttsGoogleName, ttsVoiceName, ttsLang, ttsEngine):
         logging.debug('[DAEMON][TestTTS] TTSEngine :: %s', ttsEngine)
         
         logging.debug('[DAEMON][TestTTS] Check des répertoires')
