@@ -58,6 +58,7 @@ class Config:
     socketHost = 'localhost'
     pidFile = '/tmp/ttscastd.pid'
     apiKey = ''
+    apiTTSKey = ''
     pluginVersion = ''
     callBack = ''
     

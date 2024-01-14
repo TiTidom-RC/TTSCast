@@ -469,6 +469,7 @@ parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
 parser.add_argument("--pluginversion", help="Plugin Version", type=str)
 parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="ApiKey", type=str)
+parser.add_argument("--apittskey", help="ApiTTS Key", type=str)
 parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
 parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
 parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
@@ -484,6 +485,8 @@ if args.callback:
     Config.callBack = args.callback
 if args.apikey:
     Config.apiKey = args.apikey
+if args.apikey:
+    Config.apiTTSKey = args.apittskey
 if args.gcloudapikey:
     Config.gCloudApiKey = args.gcloudapikey
 if args.pid:

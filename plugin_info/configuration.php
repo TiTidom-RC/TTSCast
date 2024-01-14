@@ -86,13 +86,12 @@ if (!isConnect()) {
                     <span class="addressTestURL"></span>
                 </div>
             </div>
-            <div class="form-group customform-lang">
-                <label class="col-lg-3 control-label">{{Langue TTS}}</label>
-                <div class="col-lg-2">
-                    <select class="configKey form-control" data-l1key="ttsLang">
-                        <option value="fr-FR">{{Français (fr-FR)}}</option>
-                        <option value="en-US">{{Anglais (en-US)}}</option>
-                    </select>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Ne PAS utiliser le cache (Déconseillé !)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Génère le fichier TTS à chaque demande. Il est vivement conseillé de ne PAS cocher cette case, sauf en cas de tests}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsDisableCache" />
                 </div>
             </div>
             <div class="form-group">
@@ -105,8 +104,31 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
-            <div class="form-group customform-gcloudttsvoice">
-                <label class="col-lg-3 control-label">{{Voix Google Cloud Text-to-Speech}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>]</label>
+            <div class="form-group customform-gtts">
+                <label class="col-lg-3 control-label">{{Langue TTS (Google Translate))}}</label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="ttsLang">
+                        <option value="fr-FR">{{Français (fr-FR)}}</option>
+                        <option value="en-US">{{Anglais (en-US)}}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group customform-gcloudtts">
+                <label class="col-lg-3 control-label">{{Clé API (Google Cloud TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton UPLOAD}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
+                </div>
+                <div class="col-lg-2">
+                    <a class="btn btn-primary btn-file">
+                        <i class="fas fa-cloud-upload-alt"></i> {{Ajouter Clé API (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json" />
+                    </a>
+                    <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-trash-alt"></i> {{Effacer Clé API}}</a>
+                </div>
+            </div>
+            <div class="form-group customform-gcloudtts">
+                <label class="col-lg-3 control-label">{{Langue/Voix TTS (Google Cloud)}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>]</label>
                 <div class="col-lg-4">
                     <select class="configKey form-control" data-l1key="gCloudTTSVoice">
                         <option value="fr-FR-Standard-A">French (France) - Standard A Female (fr-FR-Standard-A)</option>
@@ -131,7 +153,7 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
-            <div class="form-group customform-gcloudttsspeed">
+            <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Vitesse de parole}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Valeur par défaut = Normal (1.0)}}"></i></sup>
                 </label>
@@ -148,7 +170,7 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
-            <div class="form-group">
+            <!-- <div class="form-group customform-gcloud">
                 <label class="col-lg-3 control-label">{{Delai POST Lecture}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté APRES la lecture (avant de restaurer le volume initial). Valeur de -1000 à 10000 (Défaut = 1300)}}"></i></sup>
                 </label>
@@ -165,15 +187,7 @@ if (!isConnect()) {
                     <input class="configKey form-control" type="number" data-l1key="ttsDelayPreRead" min="0" max="10000" placeholder="{{ms (0 <-> 10000)}}" />
                 </div>
                 <div class="col-lg-2">ms (Défaut: 300)</div>
-            </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Ne PAS utiliser le cache (Déconseillé !)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Génère le fichier TTS à chaque demande. Il est vivement conseillé de ne PAS cocher cette case, sauf en cas de tests}}"></i></sup>
-                </label>
-                <div class="col-lg-1">
-                    <input type="checkbox" class="configKey" data-l1key="ttsDisableCache" />
-                </div>
-            </div>
+            </div> -->
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Durée de conservation du cache (jours)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Le cache sera purgé automatiquement tous les X (0 à 90) jours via le cron daily}}"></i></sup>
@@ -199,27 +213,13 @@ if (!isConnect()) {
                     <a class="btn btn-success customclass-ttstestplay"><i class="fas fa-play-circle"></i> {{Générer + Diffuser}}</a>
                 </div>
             </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Clé API (Google Cloud TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton UPLOAD}}"></i></sup>
-                </label>
-                <div class="col-lg-3">
-                    <input class="configKey form-control custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
-                </div>
-                <div class="col-lg-2">
-                    <a class="btn btn-primary btn-file">
-                        <i class="fas fa-cloud-upload-alt"></i> {{Ajouter Clé API (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json" />
-                    </a>
-                    <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-trash-alt"></i> {{Effacer Clé API}}</a>
-                </div>
-            </div>
-            <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
+            <!-- <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Désactiver les notifications pour les nouveaux GoogleCast}}</label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsDisableNotifNewCast" />
                 </div>
-            </div>
+            </div> -->
         </div>
     </fieldset>
 </form>
@@ -227,17 +227,15 @@ if (!isConnect()) {
 <script>
     function ttsEngineSelect() {
         var val = $('.customform-ttsengine').val();
-
-        if (val == 'jeedomtts') {
-            $('.customform-gcloudttsspeed').hide();
-        } else {
-            $('.customform-gcloudttsspeed').show();
-        }
-
         if (val == 'gcloudtts') {
-            $('.customform-gcloudttsvoice').show();
+            $('.customform-gcloudtts').show();
+            $('.customform-gtts').hide();
+        } else if (val == 'gtts') {
+            $('.customform-gcloudtts').show();
+            $('.customform-gtts').show();
         } else {
-            $('.customform-gcloudttsvoice').hide();
+            $('.customform-gcloudtts').hide();
+            $('.customform-gtts').hide();
         }
     }
 

@@ -101,6 +101,7 @@ class ttscast extends eqLogic
             $cmd .= ' --ttsweb ' . network::getNetworkAccess('internal');
         }
         $cmd .= ' --apikey ' . jeedom::getApiKey(__CLASS__);
+        $cmd .= ' --apittskey ' . jeedom::getApiKey("apitts");
         $cmd .= ' --gcloudapikey ' . config::byKey('gCloudAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         log::add(__CLASS__, 'info', 'Lancement du démon');
