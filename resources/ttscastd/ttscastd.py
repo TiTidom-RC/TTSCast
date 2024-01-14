@@ -514,9 +514,8 @@ logging.info('[DAEMON][MAIN] Log level: %s', Config.logLevel)
 logging.info('[DAEMON][MAIN] Socket port: %s', Config.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', Config.socketHost)
 logging.info('[DAEMON][MAIN] CycleFactor: %s', Config.cycleFactor)
-# TODO ***** Ajouter le cycle pour les events cycleEvent ***** 
-logging.info('[DAEMON][MAIN] PID file: %s', Config.pidFile)  
-
+# TODO ***** Ajouter le cycle pour les events cycleEvent *****
+logging.info('[DAEMON][MAIN] PID file: %s', Config.pidFile)
 logging.info('[DAEMON][MAIN] ApiKey: %s', "***")
 logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', Config.gCloudApiKey)
