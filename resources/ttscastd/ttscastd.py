@@ -224,7 +224,7 @@ class gCloudTTS:
                 credentials = service_account.Credentials.from_service_account_file(os.path.join(Config.configFullPath, Config.gCloudApiKey))
 
                 logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
-                raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName
+                raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
                 filepath = os.path.join(symLinkPath, filename)
                 
@@ -325,7 +325,7 @@ class gCloudTTS:
                 credentials = service_account.Credentials.from_service_account_file(os.path.join(Config.configFullPath, Config.gCloudApiKey))
 
                 logging.debug('[DAEMON][TTS] Génération du fichier TTS (mp3)')
-                raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName
+                raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
                 filepath = os.path.join(symLinkPath, filename)
                 
