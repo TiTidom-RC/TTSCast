@@ -205,8 +205,12 @@ class gCloudTTS:
         except Exception:
             os.symlink(symLinkPath, cachePath)
 
-        if ttsEngine == "gCloudTTS":
-            logging.debug('[DAEMON][TestTTS] IF TTSEngine = gCloudTTS')
+        if ttsEngine == "gcloudtts":
+            logging.debug('[DAEMON][TestTTS] IF TTSEngine = gcloudtts')
+        elif ttsEngine == "gtranslatetts":
+            logging.debug('[DAEMON][TestTTS] IF TTSEngine = gtranslatetts')
+        elif ttsEngine == "jeedomtts":
+            logging.debug('[DAEMON][TestTTS] IF TTSEngine = jeedomtts')
         
         logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
         if Config.gCloudApiKey != 'noKey':
