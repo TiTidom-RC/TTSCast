@@ -25,8 +25,9 @@ import json
 import argparse
 import threading
 import datetime
+import requests
 
-from urllib.parse import urljoin
+from urllib.parse import urljoin, quote
 
 from uuid import UUID
 
@@ -223,7 +224,7 @@ class gCloudTTS:
                 credentials = service_account.Credentials.from_service_account_file(os.path.join(Config.configFullPath, Config.gCloudApiKey))
 
                 logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
-                raw_filename = ttsText + "|" + ttsVoiceName
+                raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
                 filepath = os.path.join(symLinkPath, filename)
                 
@@ -253,7 +254,7 @@ class gCloudTTS:
                 logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
         elif ttsEngine == "gtranslatetts":
             logging.debug('[DAEMON][TestTTS] IF TTSEngine = gtranslatetts')
-            raw_filename = ttsText + "|" + ttsLang
+            raw_filename = ttsText + "|gTTS|" + ttsLang
             filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
             filepath = os.path.join(symLinkPath, filename)
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
@@ -275,13 +276,33 @@ class gCloudTTS:
             
             urlFileToPlay = urljoin(ttsSrvWeb, filename)
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+            
             res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName)
-            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))            
+            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
         elif ttsEngine == "jeedomtts":
             logging.debug('[DAEMON][TestTTS] IF TTSEngine = jeedomtts')
-            ttsParams = '&voice=' + ttsLang
             
-
+            raw_filename = ttsText + "|JeedomTTS|" + ttsLang
+            filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+            filepath = os.path.join(symLinkPath, filename)
+            logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
+            
+            if not os.path.isfile(filepath):
+                ttsfile = Functions.jeedomTTS(ttsText, ttsLang)
+                if ttsfile is not None:
+                    with open(filepath, 'wb') as f:
+                        f.write(ttsfile)
+                else:
+                    logging.debug('[DAEMON][TestTTS] JeedomTTS Error :: Incorrect Output')
+            else:
+                logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+            
+            urlFileToPlay = urljoin(ttsSrvWeb, filename)
+            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+            
+            res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+            
     def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsEngine, ttsSpeed, ttsVolume):
         logging.debug('[DAEMON][TTS] Check des répertoires')
         cachePath = Config.ttsCacheFolderWeb
@@ -422,7 +443,7 @@ class Functions:
                 if os.path.exists(Config.ttsCacheFolderTmp):
                     shutil.rmtree(Config.ttsCacheFolderTmp)
             except Exception as e:
-                logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache entirely (nbDays = 0) :: %s', e)
+                logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache entirely (nbDays = 0) :: %s', e)
                 pass
         else:  # clean only files older than X days
             now = time.time()
@@ -435,9 +456,33 @@ class Functions:
                         os.remove(os.path.join(path, f))
                         logging.debug("[DAEMON][PURG-CACHE] File Removed " + f + " due to expiration (" + nbDays + " days)")
             except Exception as e:
-                logging.warning('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
+                logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
                 pass
-
+    
+    def jeedomTTS(ttsText, ttsLang):
+        filecontent = None
+        try:
+            ttsParams = '&voice=' + ttsLang
+            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, '?apikey=', Config.apiTTSKey, ttsParams, '&path=0&text=', quote(ttsText))
+            logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
+            
+            response = requests.post(ttsFullURI, timeout=8, verify=False)
+            filecontent = response.content
+            
+            if response.status_code != requests.codes.ok:
+                filecontent = None
+                logging.error('[DAEMON][JeedomTTS] Status Code Error :: %s', response.status_code)
+            else:
+                if len(response.content) < 254 and os.path.exists(response.content):
+                    logging.debug('[DAEMON][JeedomTTS] Response is a FilePath. Downloading Content Now.')
+                    fc = open(response.content, "rb")
+                    filecontent = fc.read()
+                    fc.close()
+        except Exception as e:
+            logging.error('[DAEMON][JeedomTTS] Error while retrieving TTS file :: %s', e)
+            filecontent = None
+        return filecontent
+            
 # ----------------------------------------------------------------------------
 
 def handler(signum=None, frame=None):
