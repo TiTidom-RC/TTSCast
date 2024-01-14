@@ -231,6 +231,7 @@ class gCloudTTS:
                 
                 if not os.path.isfile(filepath):
                     language_code = "-".join(ttsVoiceName.split("-")[:2])
+                    logging.debug('[DAEMON][TestTTS] LanguageCode :: %s', language_code)
                     text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                     audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
@@ -278,6 +279,8 @@ class gCloudTTS:
             logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))            
         elif ttsEngine == "jeedomtts":
             logging.debug('[DAEMON][TestTTS] IF TTSEngine = jeedomtts')
+            ttsParams = '&voice=' + ttsLang
+            
 
     def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsEngine, ttsSpeed, ttsVolume):
         logging.debug('[DAEMON][TTS] Check des répertoires')
