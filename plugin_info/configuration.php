@@ -396,7 +396,7 @@ if (!isConnect()) {
                 handleAjaxError(request, status, error);
             },
             success: function(data) {
-                var spanContent = ' <a style="color:blue; !important" href="' + data.result + '" target="_blank">[TEST]</a>';
+                var spanContent = ' <a style="color:blue !important;" href="' + data.result + '" target="_blank">[TEST]</a>';
                 $('.addressTestURL').html(spanContent);
             }
         });
