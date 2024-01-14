@@ -462,8 +462,8 @@ class Functions:
     def jeedomTTS(ttsText, ttsLang):
         filecontent = None
         try:
-            ttsParams = '&voice=' + ttsLang
-            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, '?apikey=', Config.apiTTSKey, ttsParams, '&path=0&text=', quote(ttsText))
+            ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=0&text=' + quote(ttsText, safe='')
+            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
             logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
             
             response = requests.post(ttsFullURI, timeout=8, verify=False)
@@ -544,7 +544,7 @@ if args.ttsweb:
     Config.ttsWebSrvCache = urljoin(args.ttsweb, 'plugins/ttscast/data/cache/')
     Config.ttsWebSrvMedia = urljoin(args.ttsweb, 'plugins/ttscast/data/media/')
     Config.ttsWebSrvImages = urljoin(args.ttsweb, 'plugins/ttscast/data/images/')
-    Config.ttsWebSrvJeeTTS = urljoin(args.ttsweb, 'core/api/tts.php')
+    Config.ttsWebSrvJeeTTS = urljoin(args.ttsweb, 'core/api/')
 
 jeedom_utils.set_log_level(Config.logLevel)
 
