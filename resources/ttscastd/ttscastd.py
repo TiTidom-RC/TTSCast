@@ -196,10 +196,10 @@ def discoverChromeCast(source='UNKOWN'):
 class gCloudTTS:
     """ Class Google TTS """
     
-    def changeSpeedTTS(self, soundfile, speed):
+    def changeSpeedTTS(soundfile, speed):
         logging.debug('[DAEMON][TestTTS] ChangeSpeed File :: %s', soundfile)
     
-    def generateTestTTS(self, ttsText, ttsGoogleName, ttsVoiceName, ttsLang, ttsEngine):
+    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsLang, ttsEngine):
         logging.debug('[DAEMON][TestTTS] TTSEngine :: %s', ttsEngine)
         
         logging.debug('[DAEMON][TestTTS] Check des répertoires')
