@@ -24,9 +24,10 @@ import signal
 import json
 import argparse
 import threading
+import datetime
 
 from urllib.parse import urljoin
-from datetime import datetime
+
 from uuid import UUID
 
 try:
@@ -162,7 +163,7 @@ def discoverChromeCast(source='UNKOWN'):
                 data = {
                     'friendly_name': device.friendly_name,
                     'uuid': str(device.uuid),
-                    'lastscan': datetime.fromtimestamp(currentTime),
+                    'lastscan': datetime.datetime.fromtimestamp(currentTime),
                     'model_name': device.model_name,
                     'cast_type': device.cast_type,
                     'manufacturer': device.manufacturer,
