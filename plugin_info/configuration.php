@@ -163,9 +163,9 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
-            <legend><i class="fas fa-volume-down"></i> {{TTS - Test}}</legend>
+            <legend><i class="fas fa-volume-down"></i> {{Tests}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Génération et Diffusion d'un fichier TTS de test)}}
+                <label class="col-lg-3 control-label">{{Tester la Synthèse Vocale (TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -196,7 +196,7 @@ if (!isConnect()) {
                 </div>
                 <div class="col-lg-2">ms (Défaut: 300)</div>
             </div> -->
-            <legend><i class="fas fa-volume-down"></i> {{TTS - Options}}</legend>
+            <legend><i class="fas fa-volume-down"></i> {{Options}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{URL Jeedom Externe}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Utilise l'URL externe de Jeedom pour la lecture des fichiers TTS plutôt que l'URL interne (Recommandé = décoché)}}"></i></sup>
