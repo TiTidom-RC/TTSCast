@@ -106,16 +106,16 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Clé API (Google Cloud TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton \'Ajouter Clé API\'}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton \'Ajouter Clé\'}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
                 </div>
                 <div class="col-lg-2">
                     <a class="btn btn-primary btn-file">
-                        <i class="fas fa-cloud-upload-alt"></i> {{Ajouter Clé API (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json" />
+                        <i class="fas fa-cloud-upload-alt"></i> {{Ajouter Clé (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json" />
                     </a>
-                    <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-trash-alt"></i> {{Effacer Clé API}}</a>
+                    <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-trash-alt"></i> {{Effacer Clé}}</a>
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
