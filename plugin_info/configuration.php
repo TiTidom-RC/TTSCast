@@ -80,7 +80,7 @@ if (!isConnect()) {
                     <input class="configKey form-control" data-l1key="cycletojeedom" placeholder="1" />
                 </div>
             </div> -->
-            <legend><i class="fas fa-volume-down"></i> {{TTS (Text-To-Speech)}}</legend>
+            <legend><i class="fas fa-volume-down"></i> {{TTS (Text To Speech)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Moteur TTS}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Moteur TTS à utiliser pour la synthèse vocale}}"></i></sup>
@@ -165,7 +165,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-volume-down"></i> {{TTS - Test}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{TEST (génération d'un fichier TTS)}}
+                <label class="col-lg-3 control-label">{{Génération et Diffusion d'un fichier TTS de test)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
