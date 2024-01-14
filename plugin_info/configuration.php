@@ -43,14 +43,14 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
 	            <label class="col-lg-3 control-label">{{Fréquence des cycles}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Fréquence (multiplicateur) des cycles du démon (Défaut = 1)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Facteur multiplicateur des cycles du démon (Défaut = 1)}}"></i></sup>
                 </label>
 	            <div class="col-lg-2">
 			        <select class="configKey form-control" data-l1key="cyclefactor">
-				        <option value="0.5">{{Plus Rapide}}</option>
-			            <option value="1" selected>{{Normal (Recommandé)}}</option>
-			            <option value="2">{{Plus Lent}}</option>
-			            <option value="3">{{Très Lent}}</option>
+				        <option value="0.5">{{Plus Rapide - 0.5}}</option>
+			            <option value="1" selected>{{Normal - 1 (Recommandé)}}</option>
+			            <option value="2">{{Plus Lent - 2}}</option>
+			            <option value="3">{{Encore Plus Lent - 3}}</option>
 			        </select>
 	            </div>
             </div>
@@ -78,24 +78,11 @@ if (!isConnect()) {
                     <input class="configKey form-control" data-l1key="cycletojeedom" placeholder="1" />
                 </div>
             </div> -->
-            <legend><i class="fas fa-volume-down"></i> {{TTS - Text To Speech}}</legend>
+            <legend><i class="fas fa-volume-down"></i> {{TTS (Text-To-Speech)}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{URL Jeedom Externe}}</label>
-                <div class="col-lg-2">
-                    <input type="checkbox" class="configKey customform-address" data-l1key="ttsUseExtAddr" />
-                    <span class="addressTestURL"></span>
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Ne PAS utiliser le cache (Déconseillé !)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Génère le fichier TTS à chaque demande. Il est vivement conseillé de ne PAS cocher cette case, sauf en cas de tests}}"></i></sup>
+                <label class="col-lg-3 control-label">{{Moteur TTS}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Moteur TTS à utiliser pour la synthèse vocale}}"></i></sup>
                 </label>
-                <div class="col-lg-1">
-                    <input type="checkbox" class="configKey" data-l1key="ttsDisableCache" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Moteur TTS}}</label>
                 <div class="col-lg-3">
                     <select class="configKey form-control customform-ttsengine" data-l1key="ttsEngine">
                         <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
@@ -105,7 +92,9 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gtts">
-                <label class="col-lg-3 control-label">{{Langue TTS (Google Translate))}}</label>
+                <label class="col-lg-3 control-label">{{Langue TTS (Google Translate))}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Langue à utiliser dans l'API Google Translate (Il n'est pas possible choisir une voix, seulement une langue)}}"></i></sup>
+                </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsLang">
                         <option value="fr-FR">{{Français (fr-FR)}}</option>
@@ -115,7 +104,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Clé API (Google Cloud TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton UPLOAD}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton \'Ajouter Clé API\'}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
@@ -128,7 +117,9 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Langue/Voix TTS (Google Cloud)}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>]</label>
+                <label class="col-lg-3 control-label">{{Langue/Voix TTS (Google Cloud)}} [<a target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>]
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Google Cloud TTS}}"></i></sup>
+                </label>
                 <div class="col-lg-3">
                     <select class="configKey form-control" data-l1key="gCloudTTSVoice">
                         <option value="fr-FR-Standard-A">French (France) - Standard A Female (fr-FR-Standard-A)</option>
@@ -170,6 +161,21 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
+            <legend><i class="fas fa-volume-down"></i> {{TTS - Test}}</legend>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{TEST (génération d'un fichier TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Bonjour TiTidom, Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
+                </div>
+                <div class="col-lg-2">
+                    <input class="configKey form-control" type="text" data-l1key="ttsTestGoogleName" placeholder="{{Nest Hub Bureau}}" />
+                </div>
+                <div class="col-lg-1">
+                    <a class="btn btn-success customclass-ttstestplay"><i class="fas fa-play-circle"></i> {{Générer + Diffuser}}</a>
+                </div>
+            </div>
             <!-- <div class="form-group customform-gcloud">
                 <label class="col-lg-3 control-label">{{Delai POST Lecture}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté APRES la lecture (avant de restaurer le volume initial). Valeur de -1000 à 10000 (Défaut = 1300)}}"></i></sup>
@@ -188,9 +194,18 @@ if (!isConnect()) {
                 </div>
                 <div class="col-lg-2">ms (Défaut: 300)</div>
             </div> -->
+            <legend><i class="fas fa-volume-down"></i> {{TTS - Options}}</legend>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Ne PAS utiliser le cache}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Génère les fichiers TTS à chaque demande. Il est vivement recommandé de ne PAS cocher cette case, sauf pour faire des tests}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsDisableCache" />
+                </div>
+            </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Durée de conservation du cache (jours)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Le cache sera purgé automatiquement tous les X (0 à 90) jours via le cron daily}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Le cache des fichiers TTS générés sera purgé automatiquement tous les X (0 à 90) jours via le cron daily}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input class="configKey form-control" type="number" data-l1key="ttsPurgeCacheDays" min="0" max="90" placeholder="{{Nombre de jours}}" />
@@ -200,17 +215,12 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{TEST (génération d'un fichier TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)}}"></i></sup>
+                <label class="col-lg-3 control-label">{{URL Jeedom Externe}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Utilise l'URL externe de Jeedom pour la lecture des fichiers TTS plutôt que l'URL interne (Recommandé = décoché)}}"></i></sup>
                 </label>
-                <div class="col-lg-3">
-                    <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Bonjour TiTidom, Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
-                </div>
                 <div class="col-lg-2">
-                    <input class="configKey form-control" type="text" data-l1key="ttsTestGoogleName" placeholder="{{Nest Hub Bureau}}" />
-                </div>
-                <div class="col-lg-1">
-                    <a class="btn btn-success customclass-ttstestplay"><i class="fas fa-play-circle"></i> {{Générer + Diffuser}}</a>
+                    <input type="checkbox" class="configKey customform-address" data-l1key="ttsUseExtAddr" />
+                    <span class="addressTestURL"></span>
                 </div>
             </div>
             <!-- <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
