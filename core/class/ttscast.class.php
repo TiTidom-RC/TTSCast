@@ -196,7 +196,7 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
-        $ttsVolume = str($volume);
+        $ttsVolume = strval($volume);
         $value = array('cmd' => 'playtts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsVolume' => $ttsVolume, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName);
         self::sendToDaemon($value);
     }
@@ -472,6 +472,7 @@ class ttscastCmd extends cmd
                 $googleUUID = $eqLogic->getLogicalId();
                 log::add('ttscast', 'debug', '[CMD] Message / Volume / GoogleUUID :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleUUID);
                 if ($logicalId == "tts" && isset($googleUUID) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
+                    log::add('ttscast', 'debug', '[CMD] Commande TTS appelée');
                     ttscast::playTTS($googleUUID, $_options['message'], intval($_options['title']));
                 }
                 else {
