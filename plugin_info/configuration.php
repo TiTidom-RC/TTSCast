@@ -249,6 +249,20 @@ if (!isConnect()) {
 
     $('.customclass-resetapikey').on('click', function () {
         const fileName = $('.custominput-apikey').val();
+        $('.custominput-apikey').val('');
+        jeedom.config.save({ 
+            plugin: 'ttscast', 
+            configuration: { 
+                gCloudAPIKey: ''
+            },
+            error: function (error) {
+                jeedomUtils.showAlert({ message: error.message, level: 'danger' });
+                return;
+            },
+            success: function () {
+                jeedomUtils.showAlert({ message: '{{Reset Clé API :: Sauvegarde OK}}', level: 'success' });
+            }
+        });
         $.ajax({
             type: "POST",
             url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
@@ -258,29 +272,15 @@ if (!isConnect()) {
             },
             dataType: 'json',
             error: function (request, status, error) {
-                $('#div_alert').showAlert({ message: error, level: 'warning' });
-                // handleAjaxError(request, status, error);
+                handleAjaxError(request, status, error);
             },
             success: function (data) {
                 if (data.state != 'ok') {
-                    $('#div_alert').showAlert({ message: data.result, level: 'danger' });
+                    jeedomUtils.showAlert({ message: data.result, level: 'danger' });
                     return;
                 }
-                $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
-                $('.custominput-apikey').val('');
-                jeedom.config.save({ 
-                    plugin: 'ttscast', 
-                    configuration: { 
-                        gCloudAPIKey: ''
-                    },
-                    error: function (error) {
-                        jeedomUtils.showAlert({ message: error.message, level: 'danger' });
-                        return;
-                    },
-                    success: function () {
-                        $('#div_alert').showAlert({ message: '{{Reset Clé API :: Sauvegarde OK}}', level: 'success' });
-                    }
-                });
+                // $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
+                jeedomUtils.showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
             }
         });
     });
