@@ -91,9 +91,9 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
-            <div class="form-group customform-gtts">
-                <label class="col-lg-3 control-label">{{Langue TTS (Google Translate))}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Langue à utiliser dans l'API Google Translate (Il n'est pas possible choisir une voix, seulement une langue)}}"></i></sup>
+            <div class="form-group customform-lang">
+                <label class="col-lg-3 control-label">{{Langue TTS}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Langue à utiliser dans l'API Google Translate et dans Jeedom TTS (Il n'est pas possible choisir une voix, seulement une langue)}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsLang">
@@ -240,12 +240,15 @@ if (!isConnect()) {
         if (val == 'gcloudtts') {
             $('.customform-gcloudtts').show();
             $('.customform-gtts').hide();
-        } else if (val == 'gtts') {
-            $('.customform-gcloudtts').show();
+            $('.customform-lang').hide();
+        } else if (val == 'gtranslatetts') {
+            $('.customform-gcloudtts').hide();
             $('.customform-gtts').show();
+            $('.customform-lang').show();
         } else {
             $('.customform-gcloudtts').hide();
             $('.customform-gtts').hide();
+            $('.customform-lang').show();
         }
     }
 
