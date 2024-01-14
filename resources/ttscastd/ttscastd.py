@@ -517,6 +517,7 @@ logging.info('[DAEMON][MAIN] CycleFactor: %s', Config.cycleFactor)
 logging.info('[DAEMON][MAIN] PID file: %s', Config.pidFile)  
 
 logging.info('[DAEMON][MAIN] ApiKey: %s', "***")
+logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', Config.gCloudApiKey)
 logging.info('[DAEMON][MAIN] CallBack: %s', Config.callBack)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', Config.ttsWebSrvCache)
