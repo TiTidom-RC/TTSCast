@@ -95,7 +95,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-lang">
                 <label class="col-lg-3 control-label">{{Langue TTS}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Langue à utiliser dans l'API Google Translate et dans Jeedom TTS (Il n'est pas possible choisir une voix, seulement une langue)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Langue à utiliser avec l'API Google Translate ou Jeedom TTS (Il n'est pas possible choisir une voix, seulement une langue)}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsLang">
@@ -105,7 +105,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Clé API (Google Cloud TTS)}}
+                <label class="col-lg-3 control-label">{{Clé API (gCloud TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton \'Ajouter Clé\'}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -119,7 +119,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Langue/Voix TTS (Google Cloud)}} <a class="btn btn-info btn-xs" target="_blank" href="https://cloud.google.com/text-to-speech/">{{INFOS}}</a>
+                <label class="col-lg-3 control-label">{{Langue/Voix TTS (gCloud TTS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://cloud.google.com/text-to-speech/">{{INFOS}}</a>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Google Cloud TTS}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -147,7 +147,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Vitesse de Dictée}}
+                <label class="col-lg-3 control-label">{{Vitesse de Dictée (gCloud TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Valeur par défaut = Normal (1.0)}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
