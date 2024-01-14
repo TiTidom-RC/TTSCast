@@ -256,11 +256,11 @@ if (!isConnect()) {
                 gCloudAPIKey: ''
             },
             error: function (error) {
-                jeedomUtils.showAlert({ message: error.message, level: 'danger' });
+                $('#div_alert').showAlert({ message: error.message, level: 'danger' });
                 return;
             },
             success: function () {
-                jeedomUtils.showAlert({ message: '{{Reset Clé API :: Sauvegarde OK}}', level: 'success' });
+                $('#div_alert').showAlert({ message: '{{Reset Clé API :: Sauvegarde OK}}', level: 'success' });
             }
         });
         $.ajax({
@@ -276,11 +276,10 @@ if (!isConnect()) {
             },
             success: function (data) {
                 if (data.state != 'ok') {
-                    jeedomUtils.showAlert({ message: data.result, level: 'danger' });
+                    $('#div_alert').showAlert({ message: data.result, level: 'danger' });
                     return;
                 }
-                // $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
-                jeedomUtils.showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
+                $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
             }
         });
     });
@@ -306,7 +305,7 @@ if (!isConnect()) {
                         gCloudAPIKey: $('.custominput-apikey').val()
                     },
                     error: function (error) {
-                        jeedomUtils.showAlert({ message: error.message, level: 'danger' });
+                        $('#div_alert').showAlert({ message: error.message, level: 'danger' });
                         return;
                     },
                     success: function () {
