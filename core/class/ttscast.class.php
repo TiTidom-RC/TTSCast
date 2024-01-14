@@ -196,7 +196,7 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
-        $ttsVolume = $volume;
+        $ttsVolume = str($volume);
         $value = array('cmd' => 'playtts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsVolume' => $ttsVolume, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName);
         self::sendToDaemon($value);
     }
