@@ -1,7 +1,7 @@
 {
 	"id" : "ttscast",
 	"name" : "TTS Cast",
-	"pluginVersion": "0.9.5",
+	"pluginVersion": "0.9.6",
 	"description" : {
 		"fr_FR": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
 		"en_US": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
