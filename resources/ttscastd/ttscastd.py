@@ -499,6 +499,7 @@ if args.ttsweb:
     Config.ttsWebSrvCache = urljoin(args.ttsweb, 'plugins/ttscast/data/cache/')
     Config.ttsWebSrvMedia = urljoin(args.ttsweb, 'plugins/ttscast/data/media/')
     Config.ttsWebSrvImages = urljoin(args.ttsweb, 'plugins/ttscast/data/images/')
+    Config.ttsWebSrvJeeTTS = urljoin(args.ttsweb, 'core/api/tts.php')
 
 jeedom_utils.set_log_level(Config.logLevel)
 
@@ -523,6 +524,7 @@ logging.info('[DAEMON][MAIN] CallBack: %s', Config.callBack)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', Config.ttsWebSrvCache)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvMedia: %s', Config.ttsWebSrvMedia)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvImages: %s', Config.ttsWebSrvImages)
+logging.info('[DAEMON][MAIN] Jeedom WebSrvJeeTTS: %s', Config.ttsWebSrvJeeTTS)
 
 signal.signal(signal.SIGINT, handler)
 signal.signal(signal.SIGTERM, handler)

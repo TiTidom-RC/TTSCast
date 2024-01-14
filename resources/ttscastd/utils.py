@@ -41,6 +41,7 @@ class Config:
     ttsWebSrvCache = ''
     ttsWebSrvMedia = ''
     ttsWebSrvImages = ''
+    ttsWebSrvJeeTTS = ''
 
     gCloudApiKey = ''
 
