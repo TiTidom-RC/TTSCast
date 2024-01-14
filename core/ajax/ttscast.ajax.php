@@ -58,7 +58,7 @@ try {
         log::add('ttscast', 'debug', "[UPLOAD][APIKEY] filepath: {$filepath}");
         file_put_contents($filepath, file_get_contents($_FILES['fileAPIKey']['tmp_name']));
         if (!file_exists($filepath)) {
-            throw new \Exception(__('Impossible de sauvegarder l\'image', __FILE__));
+            throw new Exception(__('Impossible de sauvegarder l\'image', __FILE__));
         }
 
         ajax::success("{$_FILES['fileAPIKey']['name']}");
@@ -69,10 +69,12 @@ try {
         if (!file_exists($filepath)) {
             throw new Exception('[RESET][APIKEY] Fichier introuvable : ' . $filepath);
         }
-        log::add('ttscast', 'debug', "[RESET][APIKEY] filepath: {$filepath}");
-        unlink($filepath);
-        
-        ajax::success("{$filepath}");
+        else {
+            log::add('ttscast', 'debug', "[RESET][APIKEY] filepath: {$filepath}");
+            unlink($filepath);
+            
+            ajax::success("{$filepath}");
+        }
     }
 
     if (init('action') == 'changeScanState') {
