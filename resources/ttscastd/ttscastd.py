@@ -26,6 +26,7 @@ import argparse
 import threading
 
 from urllib.parse import urljoin
+from datetime import datetime
 from uuid import UUID
 
 try:
@@ -36,21 +37,27 @@ except ImportError:
     sys.exit(1)
 
 # Import pour PyChromeCast
-
 try:    
     from google.oauth2 import service_account
-    import google.cloud.texttospeech as tts
+    import google.cloud.texttospeech as googleCloudTTS
     import pychromecast
     from pychromecast import quick_play
 except ImportError:
     print("[DAEMON][IMPORT] Error: importing module TTS")
     sys.exit(1)
 
+# Import gTTS (Google Translate TTS)
+try:
+    from gtts import gTTS
+except ImportError: 
+    print("[DAEMON][IMPORT] Error: importing module gTTS")
+    sys.exit(1)
+    
 # Import Config
 try:
     from utils import Utils, Config
 except ImportError:
-    print("[DAEMON][IMPORT] Error: importing config")
+    print("[DAEMON][IMPORT] Error: importing module config")
     sys.exit(1)
 
 def eventsFromJeedom(cycle=0.5):
@@ -155,7 +162,7 @@ def discoverChromeCast(source='UNKOWN'):
                 data = {
                     'friendly_name': device.friendly_name,
                     'uuid': str(device.uuid),
-                    'lastscan': currentTime,
+                    'lastscan': datetime.fromtimestamp(currentTime),
                     'model_name': device.model_name,
                     'cast_type': device.cast_type,
                     'manufacturer': device.manufacturer,
@@ -178,7 +185,7 @@ def discoverChromeCast(source='UNKOWN'):
 class gCloudTTS:
     """ Class Google TTS """
     
-    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName):
+    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsLang, ttsEngine):
         logging.debug('[DAEMON][TestTTS] Check des répertoires')
         cachePath = Config.ttsCacheFolderWeb
         symLinkPath = Config.ttsCacheFolderTmp
@@ -206,11 +213,11 @@ class gCloudTTS:
             
             if not os.path.isfile(filepath):
                 language_code = "-".join(ttsVoiceName.split("-")[:2])
-                text_input = tts.SynthesisInput(text=ttsText)
-                voice_params = tts.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-                audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
+                text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
+                audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
 
-                client = tts.TextToSpeechClient(credentials=credentials)
+                client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
                 response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
                 with open(filepath, "wb") as out:
@@ -254,12 +261,12 @@ class gCloudTTS:
             
             if not os.path.isfile(filepath):
                 language_code = "-".join(ttsVoiceName.split("-")[:2])
-                text_input = tts.SynthesisInput(text=ttsText)
-                voice_params = tts.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
+                text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                 # TODO Ajouter la vitesse de speech à l'AudioConfig
-                audio_config = tts.AudioConfig(audio_encoding=tts.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
+                audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
 
-                client = tts.TextToSpeechClient(credentials=credentials)
+                client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
                 response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
                 with open(filepath, "wb") as out:
@@ -291,12 +298,15 @@ class gCloudTTS:
             logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', volumeBeforePlay)
             cast.set_volume(volume=volumeForPlay / 100)
             
+            urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+            logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
+            
             app_name = "default_media_receiver"
             app_data = {
                 "media_id": urltoplay, 
-                "thumb": thumb,
                 "media_type": "audio/mp3", 
-                "title": "[Jeedom] TTSCast"
+                "title": "[Jeedom] TTSCast", 
+                "thumb": urlThumb
             }
             quick_play.quick_play(cast, app_name, app_data)
             
@@ -331,7 +341,12 @@ class gCloudTTS:
             logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
             
             app_name = "default_media_receiver"
-            app_data = {"media_id": urltoplay, "media_type": "audio/mp3", "title": "[Jeedom] TTSCast", "thumb": urlThumb}
+            app_data = {
+                "media_id": urltoplay, 
+                "media_type": "audio/mp3", 
+                "title": "[Jeedom] TTSCast", 
+                "thumb": urlThumb
+            }
             quick_play.quick_play(cast, app_name, app_data)
             
             logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
