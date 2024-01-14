@@ -204,46 +204,69 @@ class gCloudTTS:
             os.stat(cachePath)
         except Exception:
             os.symlink(symLinkPath, cachePath)
-
+        
         if ttsEngine == "gcloudtts":
             logging.debug('[DAEMON][TestTTS] IF TTSEngine = gcloudtts')
+            logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
+            if Config.gCloudApiKey != 'noKey':
+                credentials = service_account.Credentials.from_service_account_file(os.path.join(Config.configFullPath, Config.gCloudApiKey))
+
+                logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
+                raw_filename = ttsText + "|" + ttsVoiceName
+                filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+                filepath = os.path.join(symLinkPath, filename)
+                
+                logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
+                
+                if not os.path.isfile(filepath):
+                    language_code = "-".join(ttsVoiceName.split("-")[:2])
+                    text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                    voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
+                    audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
+
+                    client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
+                    response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+
+                    with open(filepath, "wb") as out:
+                        out.write(response.audio_content)
+                        logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
+                else:
+                    logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+                
+                urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+                res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+                logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+            else:
+                logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
         elif ttsEngine == "gtranslatetts":
             logging.debug('[DAEMON][TestTTS] IF TTSEngine = gtranslatetts')
-        elif ttsEngine == "jeedomtts":
-            logging.debug('[DAEMON][TestTTS] IF TTSEngine = jeedomtts')
-        
-        logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
-        if Config.gCloudApiKey != 'noKey':
-            credentials = service_account.Credentials.from_service_account_file(os.path.join(Config.configFullPath, Config.gCloudApiKey))
-
-            logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
-            raw_filename = ttsText + "|" + ttsVoiceName
+            raw_filename = ttsText + "|" + ttsLang
             filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
             filepath = os.path.join(symLinkPath, filename)
-            
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
             
             if not os.path.isfile(filepath):
-                language_code = "-".join(ttsVoiceName.split("-")[:2])
-                text_input = googleCloudTTS.SynthesisInput(text=ttsText)
-                voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-                audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'])
-
-                client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
-                response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
-
-                with open(filepath, "wb") as out:
-                    out.write(response.audio_content)
-                    logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
+                langToTTS = ttsLang.split('-')[0]
+                try:
+                    client = gTTS(ttsText, lang=langToTTS)
+                    client.save(filepath)
+                except Exception as e:
+                    if os.path.isfile(filepath):
+                        try:
+                            os.remove(filepath)
+                        except OSError:
+                            pass
+                    logging.debug('[DAEMON][TestTTS] Google Translate API ERROR :: %s', e)
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
             urlFileToPlay = urljoin(ttsSrvWeb, filename)
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName)
-            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
-        else:
-            logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
+            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))            
+        elif ttsEngine == "jeedomtts":
+            logging.debug('[DAEMON][TestTTS] IF TTSEngine = jeedomtts')
 
     def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsEngine, ttsSpeed, ttsVolume):
         logging.debug('[DAEMON][TTS] Check des répertoires')
