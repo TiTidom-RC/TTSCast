@@ -388,6 +388,130 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
+        $cmd = $this->getCmd(null, 'refresh');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Rafraîchir', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('refresh');
+            $cmd->setType('action');
+            $cmd->setSubType('other');    
+	        $cmd->setIsVisible(1);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+        
+        $cmd = $this->getCmd(null, 'refreshcast');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Rafraîchir Config', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('refreshcast');
+            $cmd->setType('action');
+            $cmd->setSubType('other');    
+	        $cmd->setIsVisible(0);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'online');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('En Ligne', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('online');
+            $cmd->setType('info');
+            $cmd->setSubType('binary');    
+	        $cmd->setIsVisible(1);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'volumelevel');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Volume', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('volumelevel');
+            $cmd->setType('info');
+            $cmd->setSubType('numeric');    
+            $cmd->setUnite('%');
+	        $cmd->setIsVisible(1);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'volumeset');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Volume Set', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('volumeset');
+            $cmd->setType('action');
+            $cmd->setSubType('slider');
+            # TODO Comment forcer le widget à "button" ?
+	        $cmd->setIsVisible(1);
+            // $cmd->setValue($volume_id);
+            $cmd->setConfiguration('minValue', 0);
+            $cmd->setConfiguration('maxValue', 100);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'volumemuted');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Mute', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('volumemuted');
+            $cmd->setType('info');
+            $cmd->setSubType('binary');
+	        $cmd->setIsVisible(1);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'volumedown');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Volume -', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('volumedown');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            // $cmd->setDisplay('icon', '<i class="fa fa-volume-down"></i>');
+	        $cmd->setIsVisible(1);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'volumeup');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Volume +', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('volumeup');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            // $cmd->setDisplay('icon', '<i class="fa fa-volume-down"></i>');
+	        $cmd->setIsVisible(1);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'playerstate');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Etat Lecteur Multimedia', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('playerstate');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
         $cmd = $this->getCmd(null, 'tts');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
