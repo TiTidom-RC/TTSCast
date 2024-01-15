@@ -1,19 +1,14 @@
 {
 	"id" : "ttscast",
 	"name" : "TTS Cast",
-	"pluginVersion": "0.1",
-	"specialAttributes" : {
-		"object" : {
-			"toto" : {"name" : {"fr_FR" : "Plop je suis un attribut spécial"},"type" : "input"},
-			"toto2" : {"name" : {"fr_FR" : "Plop je suis un attribut spécial number"},"type" : "number"}
-		},
-		"user" : {
-			"toto" : {"name" : {"fr_FR" : "Plop je suis un attribut spécial"},"type" : "select","values" : [{"value" : "1", "name" : "valeur 1"},{"value" : "plop", "name" : "valeur plop"}]}
-		}
-	},
+	"pluginVersion": "0.9.1",
 	"description" : {
-		"fr_FR": "TTS Cast : plugin permettant de générer des phrases TTS et de les faire jouer par un équipement Google (type ChromeCast)"
+		"fr_FR": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
+		"en_US": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
+		"es_ES": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
+		"de_DE": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)"
 	},
+	"utilization": "Détectez les ChromeCast présents sur votre réseau, et utilisez les pour diffuser des notifications vocales venant de Jeedom, générées à travers un moteur TTS (Text-To-Speech) disponible dans le plugin. (JeedomTTS, Google Translate API, Google Cloud TTS)",
 	"licence" : "AGPL",
 	"author" : "TiTidom",
 	"require" : "4.2.0",
@@ -21,14 +16,14 @@
 	"hasDependency" : true,
 	"hasOwnDeamon" : true,
 	"maxDependancyInstallTime" : 0,
-	"changelog" : "https://jeedom.github.io/plugin-template/#language#/changelog",
-	"documentation" : "https://jeedom.github.io/plugin-template/#language#/",
-	"changelog_beta" : "https://jeedom.github.io/plugin-template/#language#/beta/changelog",
-	"documentation_beta" : "https://jeedom.github.io/plugin-template/#language#/beta/",
-	"link" : {
-		"forum":"Lien vers le forum",
-		"video" : "Lien vers une video"
-	},
+	"changelog": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/changelog",
+    "documentation": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/index",
+    "changelog_beta": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/beta/changelog",
+    "documentation_beta": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/beta/index",
+	"link": {
+        "forum": "https://community.jeedom.com/tag/plugin-ttscast",
+        "video": ""
+    },
 	"language": [
 		"fr_FR",
 		"en_US",
@@ -44,5 +39,9 @@
 		"mobile",
 		"v4",
 		"atlas"
+	],
+	"whiteListFolders": [
+		"/data/media",
+		"/data/cache"
 	]
 }

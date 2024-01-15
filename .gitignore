@@ -4,3 +4,4 @@ core/config/*.json
 Thumbs.db
 *.php~
 .vscode
+.venv

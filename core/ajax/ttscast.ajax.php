@@ -23,17 +23,64 @@ try {
         throw new Exception(__('401 - Accès non autorisé', __FILE__));
     }
 
-  /* Fonction permettant l'envoi de l'entête 'Content-Type: application/json'
-    En V3 : indiquer l'argument 'true' pour contrôler le token d'accès Jeedom
-    En V4 : autoriser l'exécution d'une méthode 'action' en GET en indiquant le(s) nom(s) de(s) action(s) dans un tableau en argument
-  */
-    ajax::init();
+    /* Fonction permettant l'envoi de l'entête 'Content-Type: application/json'
+     En V3 : indiquer l'argument 'true' pour contrôler le token d'accès Jeedom
+     En V4 : autoriser l'exécution d'une méthode 'action' en GET en indiquant le(s) nom(s) de(s) action(s) dans un tableau en argument
+    */
+    ajax::init(array('uploadAPIKey'));
 
+    if (init('action') == 'testExternalAddress') {
+        ajax::success(ttscast::testExternalAddress(init('value')));
+    }
 
+    if (init('action') == 'purgeTTSCache') {
+		ajax::success(ttscast::purgeTTSCache());
+	}
 
+    if (init('action') == 'playTestTTS') {
+		ajax::success(ttscast::playTestTTS());
+	}
+
+    if (init('action') == 'uploadAPIKey') {
+        if (!isset($_FILES['fileAPIKey'])) {
+            throw new Exception(__('Aucun fichier trouvé. Vérifiez le paramètre PHP (post size limit)', __FILE__));
+        }
+        log::add('ttscast', 'debug', "[UPLOAD][APIKEY] filename: {$_FILES['fileAPIKey']['name']}");
+        $extension = strtolower(strrchr($_FILES['fileAPIKey']['name'], '.'));
+        if (!in_array($extension, array('.json'))) {
+            throw new Exception('Extension de fichier non valide (autorisé .json) : ' . $extension);
+        }
+        if (filesize($_FILES['fileAPIKey']['tmp_name']) > 10000) {
+            throw new Exception(__('Le fichier est trop gros (max. 10Ko)', __FILE__));
+        }
+      
+        $filepath = __DIR__ . "/../../core/config/{$_FILES['fileAPIKey']['name']}";
+        log::add('ttscast', 'debug', "[UPLOAD][APIKEY] filepath: {$filepath}");
+        file_put_contents($filepath, file_get_contents($_FILES['fileAPIKey']['tmp_name']));
+        if (!file_exists($filepath)) {
+            throw new Exception(__('Impossible de sauvegarder l\'image', __FILE__));
+        }
+
+        ajax::success("{$_FILES['fileAPIKey']['name']}");
+	}
+
+    if (init('action') == 'resetAPIKey') {
+        $filepath = __DIR__ . "/../../core/config/" . init('filename');
+        if (!file_exists($filepath)) {
+            throw new Exception('[RESET][APIKEY] Fichier introuvable : ' . $filepath);
+        }    
+        log::add('ttscast', 'debug', "[RESET][APIKEY] filepath: {$filepath}");
+        unlink($filepath);
+        ajax::success("{$filepath}");
+    }
+
+    if (init('action') == 'changeScanState') {
+        ttscast::changeScanState(init('scanState'));
+        ajax::success();
+    }
+    
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
     /*     * *********Catch exeption*************** */
-}
-catch (Exception $e) {
+} catch (Exception $e) {
     ajax::error(displayException($e), $e->getCode());
 }
