@@ -213,7 +213,7 @@ class ttscast extends eqLogic
             }
             try {
                 $pluginVersion = $data['pluginVersion'];
-                $pluginVersion .= "(" . update::byLogicalId('ttscast')->getLocalVersion() . ")";
+                // $pluginVersion .= " (" . update::byLogicalId('ttscast')->getLocalVersion() . ")";
             } catch (\Exception $e) {
                 log::add('ttscast', 'warning', '[VERSION] Impossible de récupérer la version du plugin');
             }
