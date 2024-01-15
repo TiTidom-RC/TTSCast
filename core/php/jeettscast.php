@@ -64,19 +64,19 @@ try {
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
             if (!is_object($ttscast)) {    
                 log::add('ttscast','debug','[CALLBACK] NEW TTSCast détecté :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
-                event::add('ttscast::newdevice', array(
+                /* event::add('ttscast::newdevice', array(
                     'friendly_name' => $data['friendly_name'],
                     'newone' => '1'
-                ));
+                )); */
                 $newttscast = ttscast::createAndUpdCastFromScan($data);
             }
             else {
                 log::add('ttscast','debug','[CALLBACK] TTSCast Update :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
-                event::add('ttscast::newdevice', array(
+                /* event::add('ttscast::newdevice', array(
                     'friendly_name' => $data['friendly_name'],
                     'newone' => '0'
-                ));
-                $upttscast = ttscast::createAndUpdCastFromScan($data);
+                )); */
+                $updttscast = ttscast::createAndUpdCastFromScan($data);
             }
         }
     } else {
