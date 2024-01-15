@@ -28,7 +28,7 @@ function ttscast_install() {
 
     // TODO initialiser les valeurs par défaut lors de l'install du plugin
     if (config::byKey('socketport', 'ttscast') == '') {
-        config::save('socketport', '55999', 'ttscast');
+        config::save('socketport', '55111', 'ttscast');
     }
     if (config::byKey('cyclefactor', 'ttscast') == '') {
         config::save('cyclefactor', '1', 'ttscast');
@@ -59,7 +59,7 @@ function ttscast_update() {
 
     // TODO intitaliser les valeurs par défaut lors de l'update du plugin
     if (config::byKey('socketport', 'ttscast') == '') {
-        config::save('socketport', '55999', 'ttscast');
+        config::save('socketport', '55111', 'ttscast');
     }
     if (config::byKey('cyclefactor', 'ttscast') == '') {
         config::save('cyclefactor', '1', 'ttscast');

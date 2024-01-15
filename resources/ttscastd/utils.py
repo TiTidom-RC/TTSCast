@@ -55,7 +55,7 @@ class Config:
     configFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), configFolder))
     
     logLevel = "error"
-    socketPort = 55999
+    socketPort = 55111
     socketHost = 'localhost'
     pidFile = '/tmp/ttscastd.pid'
     apiKey = ''

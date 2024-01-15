@@ -92,7 +92,7 @@ class ttscast extends eqLogic
         $cmd = self::PYTHON3_PATH . " {$path}/ttscastd.py";
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
         $cmd .= ' --pluginversion ' . config::byKey('pluginVersion', __CLASS__, '0.0.0');
-        $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55999'); // TODO Modifier le numéro de port du démon
+        $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55111'); // TODO Modifier le numéro de port du démon
         $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1');
         $cmd .= ' --callback ' . network::getNetworkAccess('internal', 'http:127.0.0.1:port:comp') . '/plugins/ttscast/core/php/jeettscast.php'; // chemin du callback
         if (config::byKey('ttsUseExtAddr', 'ttscast')==1) {
@@ -143,7 +143,7 @@ class ttscast extends eqLogic
             $params['apikey'] = jeedom::getApiKey(__CLASS__);
             $payLoad = json_encode($params);
             $socket = socket_create(AF_INET, SOCK_STREAM, 0);
-            socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55999')); // TODO Port du plugin à modifier
+            socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55111')); // TODO Port du plugin à modifier
             socket_write($socket, $payLoad, strlen($payLoad));
             socket_close($socket);
         } catch (Exception $e) {

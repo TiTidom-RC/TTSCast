@@ -37,10 +37,10 @@ if (!isConnect()) {
             <legend><i class="fas fa-university"></i> {{Démon}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Port Socket Interne}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{[ATTENTION] Ne changez ce paramètre qu'en cas de nécessité. (Défaut = 55999)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{[ATTENTION] Ne changez ce paramètre qu'en cas de nécessité. (Défaut = 55111)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <input class="configKey form-control" data-l1key="socketport" placeholder="55999" />
+                    <input class="configKey form-control" data-l1key="socketport" placeholder="55111" />
                 </div>
             </div>
             <div class="form-group">
