@@ -30,7 +30,7 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{Version}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Version du plugin à indiquer sur Community}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-lg-1">
                     <input class="configKey form-control" data-l1key="pluginVersion" readonly />
                 </div>
             </div>
