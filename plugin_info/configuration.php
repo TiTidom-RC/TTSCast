@@ -56,30 +56,6 @@ if (!isConnect()) {
 			        </select>
 	            </div>
             </div>
-            <!-- <div class="form-group">
-                <label class="col-lg-3 control-label">{{Durée du cyle (Main)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Durée du cycle de la boucle 'Main'; Valeur entre 0.5 et 10 (Défaut = 1)}}"></i></sup>
-                </label>
-                <div class="col-lg-1">
-                    <input class="configKey form-control" data-l1key="cyclemain" placeholder="1" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Durée du cyle (FromJeedom)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Durée du cycle de la boucle 'FromJeedom'; Valeur entre 0.5 et 10 (Défaut = 1)}}"></i></sup>
-                </label>
-                <div class="col-lg-1">
-                    <input class="configKey form-control" data-l1key="cyclefromjeedom" placeholder="1" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Durée du cyle (ToJeedom)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Durée du cycle de la boucle 'ToJeedom'; Valeur entre 0.5 et 10 (Défaut = 1)}}"></i></sup>
-                </label>
-                <div class="col-lg-1">
-                    <input class="configKey form-control" data-l1key="cycletojeedom" placeholder="1" />
-                </div>
-            </div> -->
             <legend><i class="fas fa-volume-down"></i> {{TTS (Text To Speech)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Moteur TTS}}
@@ -110,7 +86,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Clé API (gCloud TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton \'Ajouter Clé\'}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton 'Ajouter Clé (JSON)'}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
@@ -123,7 +99,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Langue/Voix TTS (gCloud TTS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://cloud.google.com/text-to-speech/">{{INFOS}}</a>
+                <label class="col-lg-3 control-label">{{Langue/Voix TTS (gCloud TTS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Google Cloud TTS}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -225,33 +201,15 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
-                    <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Bonjour TiTidom, Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
+                    <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Ex: Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
                 </div>
                 <div class="col-lg-2">
-                    <input class="configKey form-control" type="text" data-l1key="ttsTestGoogleName" placeholder="{{Nest Hub Bureau}}" />
+                    <input class="configKey form-control" type="text" data-l1key="ttsTestGoogleName" placeholder="{{Ex: Nest Salon}}" />
                 </div>
                 <div class="col-lg-1">
                     <a class="btn btn-success customclass-ttstestplay"><i class="fas fa-play-circle"></i> {{Générer + Diffuser}}</a>
                 </div>
             </div>
-            <!-- <div class="form-group customform-gcloud">
-                <label class="col-lg-3 control-label">{{Delai POST Lecture}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté APRES la lecture (avant de restaurer le volume initial). Valeur de -1000 à 10000 (Défaut = 1300)}}"></i></sup>
-                </label>
-                <div class="col-lg-2">
-                    <input class="configKey form-control" type="number" data-l1key="ttsDelayPostRead" min="-1000" max="10000" placeholder="{{ms (-1000 <-> 10000)}}" />
-                </div>
-                <div class="col-lg-2">ms (Défaut: 1300)</div>
-            </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Délai PRE Lecture}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Silence ajouté AVANT la lecture. Permet d'éviter de tronquer le début du fichier. Valeur de 0 à 10000 (Défaut = 300)}}"></i></sup>
-                </label>
-                <div class="col-lg-2">
-                    <input class="configKey form-control" type="number" data-l1key="ttsDelayPreRead" min="0" max="10000" placeholder="{{ms (0 <-> 10000)}}" />
-                </div>
-                <div class="col-lg-2">ms (Défaut: 300)</div>
-            </div> -->
             <legend><i class="fas fa-list-alt"></i> {{Options}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{URL Jeedom Externe}}
@@ -281,13 +239,6 @@ if (!isConnect()) {
                     <a class="btn btn-warning customclass-purgettscache"><i class="fas fa-file-audio"></i> {{Vider le Cache}}</a>
                 </div>
             </div>
-            <!-- <legend><i class="fas fa-comment"></i> {{Notifications}}</legend>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Désactiver les notifications pour les nouveaux GoogleCast}}</label>
-                <div class="col-lg-1">
-                    <input type="checkbox" class="configKey" data-l1key="ttsDisableNotifNewCast" />
-                </div>
-            </div> -->
         </div>
     </fieldset>
 </form>

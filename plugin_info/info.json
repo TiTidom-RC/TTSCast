@@ -1,14 +1,14 @@
 {
 	"id" : "ttscast",
 	"name" : "TTS Cast",
-	"pluginVersion": "0.9.6",
+	"pluginVersion": "0.9.1",
 	"description" : {
 		"fr_FR": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
 		"en_US": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
 		"es_ES": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
 		"de_DE": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)"
 	},
-	"utilization": "Détectez les ChromeCast sur votre réseau, et utilisez les pour diffuser des notifications vocales venant de Jeedom, générées à travers un moteur TTS (Text-To-Speech) dont celui de Google.",
+	"utilization": "Détectez les ChromeCast présents sur votre réseau, et utilisez les pour diffuser des notifications vocales venant de Jeedom, générées à travers un moteur TTS (Text-To-Speech) disponible dans le plugin. (JeedomTTS, Google Translate API, Google Cloud TTS)",
 	"licence" : "AGPL",
 	"author" : "TiTidom",
 	"require" : "4.2.0",

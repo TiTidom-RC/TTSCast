@@ -255,6 +255,7 @@ class ttscast extends eqLogic
             $eqLogic->setIsVisible(1);
             $eqLogic->setName($_data['friendly_name']);
             $eqLogic->setEqType_name('ttscast');
+            $eqLogic->setCategory('multimedia');
             $eqLogic->setConfiguration('friendly_name', $_data['friendly_name']);
             $eqLogic->setConfiguration('model_name', $_data['model_name']);
             $eqLogic->setConfiguration('manufacturer', $_data['manufacturer']);
@@ -265,9 +266,9 @@ class ttscast extends eqLogic
             $eqLogic->save();
 
             event::add('jeedom::alert', array(
-                'level' => 'warning',
+                'level' => 'success',
                 'page' => 'ttscast',
-                'message' => __('[OK] ChromeCast AJOUTE :: ' .$_data['friendly_name'], __FILE__),
+                'message' => __('[SCAN] ChromeCast AJOUTE :: ' .$_data['friendly_name'], __FILE__),
             ));
             return $eqLogic;
         }
@@ -282,9 +283,9 @@ class ttscast extends eqLogic
             $newttscast->save();
 
             event::add('jeedom::alert', array(
-                'level' => 'warning',
+                'level' => 'success',
                 'page' => 'ttscast',
-                'message' => __('[OK] ChromeCast MAJ :: ' .$_data['friendly_name'], __FILE__),
+                'message' => __('[SCAN] ChromeCast MAJ :: ' .$_data['friendly_name'], __FILE__),
             ));
             return $newttscast;
         }

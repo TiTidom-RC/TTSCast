@@ -35,11 +35,6 @@ $eqLogics = eqLogic::byType($plugin->getId());
                     <?php
                     }
                     ?>
-                    <div class="cursor eqLogicAction logoPrimary" data-action="add">
-                        <i class="fas fa-plus-circle"></i>
-                        <br>
-                        <span style="color:var(--txt-color)">{{Ajouter}}</span>
-                    </div>
                     <div class="cursor eqLogicAction logoSecondary" data-action="gotoPluginConf">
                         <i class="fas fa-wrench"></i>
                         <br>
