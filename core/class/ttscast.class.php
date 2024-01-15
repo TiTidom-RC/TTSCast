@@ -92,7 +92,7 @@ class ttscast extends eqLogic
         $cmd = self::PYTHON3_PATH . " {$path}/ttscastd.py";
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
         $cmd .= ' --pluginversion ' . config::byKey('pluginVersion', __CLASS__, '0.0.0');
-        $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55111'); // TODO Modifier le numéro de port du démon
+        $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55111');
         $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1');
         $cmd .= ' --callback ' . network::getNetworkAccess('internal', 'http:127.0.0.1:port:comp') . '/plugins/ttscast/core/php/jeettscast.php'; // chemin du callback
         if (config::byKey('ttsUseExtAddr', 'ttscast')==1) {
@@ -255,7 +255,7 @@ class ttscast extends eqLogic
             $eqLogic->setIsVisible(1);
             $eqLogic->setName($_data['friendly_name']);
             $eqLogic->setEqType_name('ttscast');
-            $eqLogic->setCategory('multimedia');
+            $eqLogic->setCategory('multimedia','1');
             $eqLogic->setConfiguration('friendly_name', $_data['friendly_name']);
             $eqLogic->setConfiguration('model_name', $_data['model_name']);
             $eqLogic->setConfiguration('manufacturer', $_data['manufacturer']);

@@ -58,7 +58,7 @@ try {
                 continue;
             }
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
-            if (!is_object($googlecast)) {
+            if (!is_object($ttscast)) {
                 if ($data['scanmode'] != 1) {
                     continue;
                 }
