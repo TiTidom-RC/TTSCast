@@ -52,21 +52,31 @@ try {
     } elseif (isset($result['devices'])) {
         log::add('ttscast','debug','[CALLBACK] TTSCast Devices Discovery');
         foreach ($result['devices'] as $key => $data) {
-            log::add('ttscast','debug','[CALLBACK] TTSCast NEW Device :: ' . $data['uuid']);
             if (!isset($data['uuid'])) {
-                log::add('ttscast','debug','[CALLBACK] Devices :: UUID non défini !');
+                log::add('ttscast','debug','[CALLBACK] TTSCast Device :: UUID non défini !');
+                continue;
+            }
+            log::add('ttscast','debug','[CALLBACK] TTSCast Device :: ' . $data['uuid']);
+            if ($data['scanmode'] != 1) {
+                log::add('ttscast','debug','[CALLBACK] TTSCast Device :: NoScanMode');
                 continue;
             }
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
-            if (!is_object($ttscast)) {
-                if ($data['scanmode'] != 1) {
-                    continue;
-                }
-                log::add('ttscast','debug','[CALLBACK] Chromecast détecté :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
+            if (!is_object($ttscast)) {    
+                log::add('ttscast','debug','[CALLBACK] NEW TTSCast détecté :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
                 event::add('ttscast::newdevice', array(
-                    'friendly_name' => $data['friendly_name']
+                    'friendly_name' => $data['friendly_name'],
+                    'newone' => '1'
                 ));
                 $newttscast = ttscast::createCastFromScan($data);
+            }
+            else {
+                log::add('ttscast','debug','[CALLBACK] TTSCast Update :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
+                event::add('ttscast::newdevice', array(
+                    'friendly_name' => $data['friendly_name'],
+                    'newone' => '0'
+                ));
+                $upttscast = ttscast::createCastFromScan($data);
             }
         }
     } else {

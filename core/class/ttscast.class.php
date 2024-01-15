@@ -239,11 +239,11 @@ class ttscast extends eqLogic
     public static function createCastFromScan($_data)
     {
         if (!isset($_data['uuid'])) {
-            log::add('ttscast', 'error', '[CREATEFROMSCAN] Informations manquantes pour créer l\'équipement');
+            log::add('ttscast', 'error', '[CREATEFROMSCAN] Information manquante (UUID) pour créer l\'équipement');
             event::add('jeedom::alert', array(
                 'level' => 'danger',
                 'page' => 'ttscast',
-                'message' => __('[KO] Informations manquantes pour créer l\'équipement', __FILE__),
+                'message' => __('[KO] Information manquante (UUID) pour créer l\'équipement', __FILE__),
             ));
             return false;
         }
@@ -269,7 +269,7 @@ class ttscast extends eqLogic
             event::add('jeedom::alert', array(
                 'level' => 'success',
                 'page' => 'ttscast',
-                'message' => __('[SCAN] ChromeCast AJOUTE :: ' .$_data['friendly_name'], __FILE__),
+                'message' => __('[SCAN] TTSCast AJOUTE :: ' .$_data['friendly_name'], __FILE__),
             ));
             return $eqLogic;
         }
@@ -286,7 +286,7 @@ class ttscast extends eqLogic
             event::add('jeedom::alert', array(
                 'level' => 'success',
                 'page' => 'ttscast',
-                'message' => __('[SCAN] ChromeCast MAJ :: ' .$_data['friendly_name'], __FILE__),
+                'message' => __('[SCAN] TTSCast MAJ :: ' .$_data['friendly_name'], __FILE__),
             ));
             return $newttscast;
         }

@@ -122,9 +122,12 @@ function changeScanState(_scanState) {
 }
 
 $('body').on('ttscast::newdevice', function (_event, _option) {
-  if (_option && _option['friendly_name']) {
-    $('#div_alert').showAlert({message: "[SCAN] Chromecast détecté :: " + _option['friendly_name'], level: 'warning'});
+  if (_option && _option['friendly_name'] && _option['newone'] == '1') {
+    $('#div_alert').showAlert({message: "[SCAN] NEW TTSCast détecté :: " + _option['friendly_name'], level: 'warning'});
+  } else if (_option && _option['friendly_name'] && _option['newone'] == '0') {
+    $('#div_alert').showAlert({message: "[SCAN] TTSCast MAJ :: " + _option['friendly_name'], level: 'warning'});
   }
+
   
 });
 
