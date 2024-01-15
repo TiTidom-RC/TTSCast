@@ -68,7 +68,7 @@ try {
                     'friendly_name' => $data['friendly_name'],
                     'newone' => '1'
                 ));
-                $newttscast = ttscast::createCastFromScan($data);
+                $newttscast = ttscast::createAndUpdCastFromScan($data);
             }
             else {
                 log::add('ttscast','debug','[CALLBACK] TTSCast Update :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
@@ -76,7 +76,7 @@ try {
                     'friendly_name' => $data['friendly_name'],
                     'newone' => '0'
                 ));
-                $upttscast = ttscast::createCastFromScan($data);
+                $upttscast = ttscast::createAndUpdCastFromScan($data);
             }
         }
     } else {

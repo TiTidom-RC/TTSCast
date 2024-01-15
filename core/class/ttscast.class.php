@@ -236,7 +236,7 @@ class ttscast extends eqLogic
         }
     }
 
-    public static function createCastFromScan($_data)
+    public static function createAndUpdCastFromScan($_data)
     {
         if (!isset($_data['uuid'])) {
             log::add('ttscast', 'error', '[CREATEFROMSCAN] Information manquante (UUID) pour créer l\'équipement');
