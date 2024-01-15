@@ -47,7 +47,7 @@ try {
         }
     } elseif (isset($result['heartbeat'])) {
         if ($result['heartbeat'] == 1) {
-            log::add('ttscast','info','[CALLBACK] TTSCast Daemon Heartbeat (60s)');
+            log::add('ttscast','info','[CALLBACK] TTSCast Daemon Heartbeat (600s)');
         }
     } elseif (isset($result['devices'])) {
         log::add('ttscast','debug','[CALLBACK] TTSCast Devices Discovery');
