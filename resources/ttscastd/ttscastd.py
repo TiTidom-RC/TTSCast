@@ -183,12 +183,9 @@ def scanChromeCast(_mode='UNKOWN'):
                     'manufacturer': device.manufacturer,
                     'host': device.host,
                     'port': device.port,
-                    'scanmode': 1,
-                    'schedule': 0
+                    'scanmode': 1
                 }
-                # data['status'] = device.getStatus()
-                # data['def'] = device.getDefinition()
-                
+                # Envoi vers Jeedom
                 Utils.sendToJeedom.add_changes('devices::' + data['uuid'], data)
         elif (_mode == "ScheduleMode"):
             # ScheduleMode
@@ -207,17 +204,15 @@ def scanChromeCast(_mode='UNKOWN'):
                 cast.status
                 data = {
                     'uuid': str(cast.uuid),
-                    'lastscan': currentTimeStr,
+                    'lastschedule': currentTimeStr,
                     'volumelevel': castVolumeLevel,
-                    'scanmode': 0,
                     'schedule': 1
                 }
-                # data['status'] = device.getStatus()
-                # data['def'] = device.getDefinition()
-                
+                # Déconnexion du Chromecast
                 cast.disconnect(timeout=10, blocking=False)
-                
+                # Envoi vers Jeedom
                 Utils.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                
             browser.stop_discovery()
             Config.ScanLastTime = currentTime
             

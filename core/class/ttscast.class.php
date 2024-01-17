@@ -437,8 +437,22 @@ class ttscast extends eqLogic
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('refreshcast');
             $cmd->setType('action');
-            $cmd->setSubType('other');    
+            $cmd->setSubType('other');
 	        $cmd->setIsVisible(0);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'lastschedule');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Dernier Schedule', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('lastschedule');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
@@ -451,7 +465,7 @@ class ttscast extends eqLogic
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('online');
             $cmd->setType('info');
-            $cmd->setSubType('binary');    
+            $cmd->setSubType('binary');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
