@@ -211,7 +211,7 @@ def scanChromeCast(_mode='UNKOWN'):
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
-            chromecasts, browser = pychromecast.get_listed_chromecasts(known_hosts=Config.KNOWN_DEVICES)
+            chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_DEVICES)
             # res = [sub['uuid'] for sub in Config.KNOWN_DEVICES]
             # chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=res)
             logging.debug('[DAMEON][SCANNER][SCHEDULE] Nb KNOWN_DEVICES :: %s', str(Config.KNOWN_DEVICES))
