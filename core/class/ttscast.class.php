@@ -563,7 +563,7 @@ class ttscast extends eqLogic
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('tts');
             $cmd->setType('action');
-            $cmd->setSubType('message');    
+            $cmd->setSubType('message');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
