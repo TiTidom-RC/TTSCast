@@ -330,7 +330,8 @@ class ttscast extends eqLogic
         if ($this->getLogicalId() != '') {
             $value = array(
                 'cmd' => 'addcast',
-                'uuid' => $this->getLogicalId()     
+                'uuid' => $this->getLogicalId(),
+                'host' => $this->getConfiguration('host')
             );
             self::sendToDaemon($value);
         }
