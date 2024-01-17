@@ -59,6 +59,9 @@ try {
             log::add('ttscast','debug','[CALLBACK] TTSCast Device :: ' . $data['uuid']);
             if ($data['scanmode'] != 1) {
                 log::add('ttscast','debug','[CALLBACK] TTSCast Device :: NoScanMode');
+                if ($data['schedule'] == 1) {
+                    log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: ' . $data['uuid'] . ' = ' . $data['volume_level']);
+                }
                 continue;
             }
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');

@@ -195,7 +195,7 @@ def scanChromeCast(_mode='UNKOWN'):
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
-            chromecasts, browser = pychromecast.get_listed_chromecasts(known_hosts=Config.KNOWN_DEVICES)
+            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=['Nest Hub Bureau'],known_hosts=Config.KNOWN_DEVICES)
             
             logging.debug('[DAMEON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
@@ -204,7 +204,7 @@ def scanChromeCast(_mode='UNKOWN'):
                 # Connexion au Chromecast
                 cast.wait(timeout=10)
                 castVolumeLevel = cast.status.volume_level
-                cast.status            
+                cast.status
                 data = {
                     'uuid': str(cast.uuid),
                     'lastscan': currentTimeStr,
@@ -214,6 +214,8 @@ def scanChromeCast(_mode='UNKOWN'):
                 }
                 # data['status'] = device.getStatus()
                 # data['def'] = device.getDefinition()
+                
+                cast.disconnect(timeout=10, blocking=False)
                 
                 Utils.sendToJeedom.add_changes('devices::' + data['uuid'], data)
             browser.stop_discovery()
