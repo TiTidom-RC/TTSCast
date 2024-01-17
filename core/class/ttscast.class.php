@@ -434,8 +434,10 @@ class ttscast extends eqLogic
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('volumelevel');
             $cmd->setType('info');
-            $cmd->setSubType('numeric');    
+            $cmd->setSubType('numeric');
             $cmd->setUnite('%');
+            $cmd->setTemplate('dashboard', 'core::tile');
+            $cmd->setTemplate('mobile', 'core::tile');
 	        $cmd->setIsVisible(1);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
@@ -452,8 +454,8 @@ class ttscast extends eqLogic
             $cmd->setSubType('slider');
             # TODO Comment forcer le widget à "button" ?
 	        $cmd->setIsVisible(1);
-            $cmd->setTemplate('dashboard', 'core::button');
-            $cmd->setTemplate('mobile', 'core::button');
+            $cmd->setTemplate('dashboard', 'core::value');
+            $cmd->setTemplate('mobile', 'core::value');
             $cmd->setValue($volumeLevelId);
             $cmd->setConfiguration('minValue', 0);
             $cmd->setConfiguration('maxValue', 100);
