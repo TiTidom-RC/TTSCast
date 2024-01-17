@@ -203,7 +203,7 @@ def scanChromeCast(_mode='UNKOWN'):
                 
                 # Connexion au Chromecast
                 cast.wait(timeout=10)
-                castVolumeLevel = cast.status.volume_level * 100
+                castVolumeLevel = int(cast.status.volume_level * 100)
                 cast.status
                 data = {
                     'uuid': str(cast.uuid),
