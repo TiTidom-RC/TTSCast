@@ -308,7 +308,7 @@ class ttscast extends eqLogic
                 $logicalId = $cmd->getLogicalId();
                 # log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd :: ' . $logicalId);
                 if (key_exists($logicalId, $_data)) {
-                    log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd event :: ' . $_data[$logicalId]);
+                    log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd event :: ' . $logicalId . ' = ' . $_data[$logicalId]);
                     $cmd->event($_data[$logicalId]);
                 } else {
                     # log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd NON EXIST :: ' . $logicalId);
