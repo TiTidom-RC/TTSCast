@@ -195,11 +195,11 @@ def scanChromeCast(_mode='UNKOWN'):
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
-            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=['Nest Hub Bureau'],known_hosts=Config.KNOWN_DEVICES)
+            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=['Nest Hub Bureau'], known_hosts=Config.KNOWN_DEVICES)
             
             logging.debug('[DAMEON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
-                logging.debug('[DAMEON][SCANNER][SCHEDULE] Chromecast :: %s @ uuid: %s', cast.friendly_name, cast.uuid)
+                logging.debug('[DAMEON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
                 
                 # Connexion au Chromecast
                 cast.wait(timeout=10)
