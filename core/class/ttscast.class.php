@@ -312,12 +312,9 @@ class ttscast extends eqLogic
                     $cmd->event($_data[$logicalId]);
                 } else {
                     # log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd NON EXIST :: ' . $logicalId);
-                    continue;
-                    
+                    continue;       
                 }
             }
-            $updttscast->setConfiguration('lastscan', $_data['lastscan']);
-            $updttscast->save();
         }
     }
 
