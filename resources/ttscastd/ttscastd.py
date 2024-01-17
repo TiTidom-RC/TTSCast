@@ -90,8 +90,8 @@ def eventsFromJeedom(cycle=0.5):
                         Functions.purgeCache()
                 elif message['cmd'] == "addcast":
                     logging.debug('[DAEMON][SOCKET] Add Cast from KNOWN')
-                    if all(keys in message for keys in ('uuid', 'host')) and message['uuid'] not in Config.KNOWN_DEVICES:
-                        Config.KNOWN_DEVICES[message['uuid']] = {
+                    if all(keys in message for keys in ('uuid', 'host')) and message['host'] not in Config.KNOWN_DEVICES:
+                        Config.KNOWN_DEVICES[message['host']] = {
                             'uuid': message['uuid'],
                             'host': message['host'],
                             'status': {}
