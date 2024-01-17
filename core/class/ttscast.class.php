@@ -290,9 +290,27 @@ class ttscast extends eqLogic
             ));
             return $newttscast;
         }
-        
+    }
 
-        
+    public static function scheduleUpdateCast($_data)
+    {
+        if (!isset($_data['uuid'])) {
+            log::add('ttscast', 'error', '[SCHEDULE][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
+            return false;
+        }
+        $updttscast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
+        if (!is_object($updttscast)) {
+            log::add('ttscast', 'error', '[SCHEDULE][CAST] Cast non existant dans Jeedom');
+            return false;
+        }
+        else {
+            foreach($updttscast->getCmd('info') as $cmd) {
+                $logicalId = $cmd->getLogicalId();
+                if (key_exists($logicalId, $_data)) {
+                    $cmd->event($_data[$logicalId]);
+                }    
+            }
+        }
     }
 
     /* ************************ Methodes static : JEEDOM *************************** */

@@ -59,9 +59,6 @@ try {
             log::add('ttscast','debug','[CALLBACK] TTSCast Device :: ' . $data['uuid']);
             if ($data['scanmode'] != 1) {
                 log::add('ttscast','debug','[CALLBACK] TTSCast Device :: NoScanMode');
-                if ($data['schedule'] == 1) {
-                    log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: ' . $data['uuid'] . ' = ' . $data['volume_level']);
-                }
                 continue;
             }
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
@@ -80,6 +77,28 @@ try {
                     'newone' => '0'
                 )); */
                 $updttscast = ttscast::createAndUpdCastFromScan($data);
+            }
+        }
+    } elseif (isset($result['casts'])) {
+        log::add('ttscast','debug','[CALLBACK] TTSCast Schedule');
+        foreach ($result['casts'] as $key => $data) {
+            if (!isset($data['uuid'])) {
+                log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: UUID non défini !');
+                continue;
+            }
+            log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: ' . $data['uuid']);
+            if ($data['schedule'] != 1) {
+                log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: NoScheduleMode');
+                continue;
+            }
+            log::add('ttscast','debug','[CALLBACK] TTSCast Schedule Volume :: ' . $data['uuid'] . ' = ' . $data['volume_level']);
+
+            $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
+            if (!is_object($ttscast)) {    
+                log::add('ttscast','debug','[CALLBACK] TTSCast Schedule NON EXIST :: ' . $data['uuid']);
+            }
+            else {
+                $updttscast = ttscast::scheduleUpdateCast($data);
             }
         }
     } else {

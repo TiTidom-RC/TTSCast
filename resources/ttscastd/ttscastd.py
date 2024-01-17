@@ -143,7 +143,7 @@ def mainLoop(cycle=2):
                 if not Config.ScanPending:
                     if Config.ScanMode and (Config.ScanLastTime < Config.ScanModeStart):
                         threading.Thread(target=scanChromeCast, args=('ScanMode',)).start()
-                    elif (currentTime > Config.ScanLastTime + Config.ScanSchedule):
+                    elif (Config.ScanLastTime + Config.ScanSchedule <= currentTime):
                         threading.Thread(target=scanChromeCast, args=('ScheduleMode',)).start()
                 else:
                     logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING ! ')
@@ -217,7 +217,7 @@ def scanChromeCast(_mode='UNKOWN'):
                 
                 cast.disconnect(timeout=10, blocking=False)
                 
-                Utils.sendToJeedom.add_changes('devices::' + data['uuid'], data)
+                Utils.sendToJeedom.add_changes('casts::' + data['uuid'], data)
             browser.stop_discovery()
             Config.ScanLastTime = currentTime
             
