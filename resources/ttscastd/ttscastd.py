@@ -92,7 +92,8 @@ def eventsFromJeedom(cycle=0.5):
                     logging.debug('[DAEMON][SOCKET] Add Cast from KNOWN')
                     if 'uuid' in message and message['uuid'] not in Config.KNOWN_DEVICES:
                         Config.KNOWN_DEVICES[message['uuid']] = {
-                            'uuid': message['uuid']
+                            'uuid': message['uuid'],
+                            'status': {}
                         }
                 elif message['cmd'] == "removecast":
                     logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN')
