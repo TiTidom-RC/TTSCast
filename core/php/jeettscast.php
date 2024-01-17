@@ -88,14 +88,15 @@ try {
             }
             log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: ' . $data['uuid']);
             if ($data['schedule'] != 1) {
-                log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: NoScheduleMode');
+                # log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: NoScheduleMode');
                 continue;
             }
-            log::add('ttscast','debug','[CALLBACK] TTSCast Schedule Volume :: ' . $data['uuid'] . ' = ' . $data['volume_level']);
+            # log::add('ttscast','debug','[CALLBACK] TTSCast Schedule Volume :: ' . $data['uuid'] . ' = ' . $data['volume_level']);
 
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
             if (!is_object($ttscast)) {    
-                log::add('ttscast','debug','[CALLBACK] TTSCast Schedule NON EXIST :: ' . $data['uuid']);
+                # log::add('ttscast','debug','[CALLBACK] TTSCast Schedule NON EXIST :: ' . $data['uuid']);
+                continue;
             }
             else {
                 $updttscast = ttscast::scheduleUpdateCast($data);
