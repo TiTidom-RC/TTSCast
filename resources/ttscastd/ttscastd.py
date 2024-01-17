@@ -143,7 +143,7 @@ def mainLoop(cycle=2):
                 if not Config.ScanPending:
                     if Config.ScanMode and (Config.ScanLastTime < Config.ScanModeStart):
                         threading.Thread(target=scanChromeCast, args=('ScanMode',)).start()
-                    elif (Config.ScanLastTime > Config.ScanSchedule):
+                    elif (currentTime > Config.ScanLastTime + Config.ScanSchedule):
                         threading.Thread(target=scanChromeCast, args=('ScheduleMode',)).start()
                 else:
                     logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING ! ')
@@ -168,11 +168,11 @@ def scanChromeCast(_mode='UNKOWN'):
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
-            devices, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_DEVICES)
+            chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_DEVICES)
             browser.stop_discovery()
             
-            logging.debug('[DAMEON][SCANNER] Devices découverts :: %s', len(devices))
-            for device in devices: 
+            logging.debug('[DAMEON][SCANNER] Devices découverts :: %s', len(chromecasts))
+            for device in chromecasts: 
                 logging.debug('[DAMEON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
                 data = {
                     'friendly_name': device.friendly_name,
@@ -183,7 +183,8 @@ def scanChromeCast(_mode='UNKOWN'):
                     'manufacturer': device.manufacturer,
                     'host': device.host,
                     'port': device.port,
-                    'scanmode': 1
+                    'scanmode': 1,
+                    'schedule': 0
                 }
                 # data['status'] = device.getStatus()
                 # data['def'] = device.getDefinition()
@@ -192,7 +193,32 @@ def scanChromeCast(_mode='UNKOWN'):
         elif (_mode == "ScheduleMode"):
             # ScheduleMode
             currentTime = int(time.time())
-            currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")               
+            currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
+
+            chromecasts, browser = pychromecast.discovery.get_listed_chromecasts(known_hosts=Config.KNOWN_DEVICES)
+            
+            logging.debug('[DAMEON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
+            for cast in chromecasts: 
+                logging.debug('[DAMEON][SCANNER][SCHEDULE] Chromecast :: %s @ uuid: %s', cast.friendly_name, cast.uuid)
+                
+                # Connexion au Chromecast
+                cast.wait(timeout=10)
+                castVolumeLevel = cast.status.volume_level
+                cast.status            
+                data = {
+                    'uuid': str(cast.uuid),
+                    'lastscan': currentTimeStr,
+                    'volume_level': castVolumeLevel,
+                    'scanmode': 0,
+                    'schedule': 1
+                }
+                # data['status'] = device.getStatus()
+                # data['def'] = device.getDefinition()
+                
+                Utils.sendToJeedom.add_changes('devices::' + data['uuid'], data)
+            browser.stop_discovery()
+            Config.ScanLastTime = currentTime
+            
     except Exception as e:
         logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
         logging.debug(traceback.format_exc())
