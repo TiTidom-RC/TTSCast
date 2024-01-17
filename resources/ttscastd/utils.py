@@ -29,6 +29,7 @@ class Config:
     
     ScanPending = False
     ScanTimeout = 10
+    ScanSchedule = 60
     ScanLastTime = int(time.time())
     
     HeartbeatFrequency = 600

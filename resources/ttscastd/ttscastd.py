@@ -121,11 +121,12 @@ def eventsFromJeedom(cycle=0.5):
 def mainLoop(cycle=2):
     jeedom_socket.open()
     logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
+    # *** Thread pour les Event venant de Jeedom ***
     threading.Thread(target=eventsFromJeedom, args=(Config.cycleEvent,)).start()
     try:
         while not Config.IS_ENDING:
             try:
-                # *** Actions de la MainLoop ***    
+                # *** Actions de la MainLoop ***
                 currentTime = int(time.time())
                 
                 # Arrêt du ScanMode au bout de 60 secondes
@@ -141,7 +142,9 @@ def mainLoop(cycle=2):
                 # Scan New Chromecast
                 if not Config.ScanPending:
                     if Config.ScanMode and (Config.ScanLastTime < Config.ScanModeStart):
-                        threading.Thread(target=discoverChromeCast, args=('ScanMode',)).start()
+                        threading.Thread(target=scanChromeCast, args=('ScanMode',)).start()
+                    elif (Config.ScanLastTime > Config.ScanSchedule):
+                        threading.Thread(target=scanChromeCast, args=('ScheduleMode',)).start()
                 else:
                     logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING ! ')
                 # Pause Cycle
@@ -156,12 +159,12 @@ def mainLoop(cycle=2):
 
 # ----------------------------------------------------------------------------
 
-def discoverChromeCast(source='UNKOWN'):
+def scanChromeCast(_mode='UNKOWN'):
     try:
-        logging.debug('[DAEMON][SCANNER] Start Scanner :: %s', source)
+        logging.debug('[DAEMON][SCANNER] Start Scanner :: %s', _mode)
         Config.ScanPending = True
         
-        if (source == "ScanMode"):
+        if (_mode == "ScanMode"):
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
@@ -186,7 +189,10 @@ def discoverChromeCast(source='UNKOWN'):
                 # data['def'] = device.getDefinition()
                 
                 Utils.sendToJeedom.add_changes('devices::' + data['uuid'], data)
-                             
+        elif (_mode == "ScheduleMode"):
+            # ScheduleMode
+            currentTime = int(time.time())
+            currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")               
     except Exception as e:
         logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
         logging.debug(traceback.format_exc())
