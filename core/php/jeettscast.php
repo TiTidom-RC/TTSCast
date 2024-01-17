@@ -47,7 +47,12 @@ try {
         }
     } elseif (isset($result['heartbeat'])) {
         if ($result['heartbeat'] == 1) {
-            log::add('ttscast','debug','[CALLBACK] TTSCast Daemon Heartbeat (600s)');
+            log::add('ttscast','info','[CALLBACK] TTSCast Daemon Heartbeat (600s)');
+        }
+    } elseif (isset($result['daemonStarted'])) {
+        if ($result['daemonStarted'] == '1') {
+            log::add('ttscast', 'info', '[CALLBACK] Daemon Started');
+            ttscast::sendOnStartCastToDaemon();
         }
     } elseif (isset($result['devices'])) {
         log::add('ttscast','debug','[CALLBACK] TTSCast Devices Discovery');

@@ -44,6 +44,7 @@ try:
     import google.cloud.texttospeech as googleCloudTTS
     import pychromecast
     from pychromecast import quick_play
+    import zeroconf
 except ImportError:
     print("[DAEMON][IMPORT] Error: importing module TTS")
     sys.exit(1)
@@ -87,6 +88,16 @@ def eventsFromJeedom(cycle=0.5):
                         Functions.purgeCache(message['days'])
                     else:
                         Functions.purgeCache()
+                elif message['cmd'] == "addcast":
+                    logging.debug('[DAEMON][SOCKET] Add Cast from KNOWN')
+                    if 'uuid' in message and message['uuid'] not in Config.KNOWN_DEVICES:
+                        Config.KNOWN_DEVICES[message['uuid']] = {
+                            'uuid': message['uuid']
+                        }
+                elif message['cmd'] == "removecast":
+                    logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN')
+                    if 'uuid' in message and message['uuid'] in Config.KNOWN_DEVICES:
+                        del Config.KNOWN_DEVICES[message['uuid']]
                 elif message['cmd'] == 'playtesttts':
                     logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
                     if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed')):
@@ -124,6 +135,12 @@ def mainLoop(cycle=2):
     # *** Thread pour les Event venant de Jeedom ***
     threading.Thread(target=eventsFromJeedom, args=(Config.cycleEvent,)).start()
     try:
+        # Thread pour le browsermanager (pychromecast)
+        # Config.NETCAST_BROWSERMANAGER = castBrowserManager()
+        # Config.NETCAST_BROWSERMANAGER.start()
+        
+        Utils.sendToJeedom.send_change_immediate({'daemonStarted': '1'})
+                
         while not Config.IS_ENDING:
             try:
                 # *** Actions de la MainLoop ***
@@ -192,7 +209,7 @@ def scanChromeCast(_mode='UNKOWN'):
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
-            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=['Nest Hub Bureau'], known_hosts=Config.KNOWN_DEVICES)
+            chromecasts, browser = pychromecast.get_listed_chromecasts(known_hosts=Config.KNOWN_DEVICES)
             
             logging.debug('[DAMEON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
@@ -222,7 +239,7 @@ def scanChromeCast(_mode='UNKOWN'):
     
     Config.ScanLastTime = int(time.time())
     Config.ScanPending = False
-
+                    
 class gCloudTTS:
     """ Class Google TTS """
     

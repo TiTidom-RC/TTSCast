@@ -318,6 +318,36 @@ class ttscast extends eqLogic
         }
     }
 
+    public static function sendOnStartCastToDaemon()
+    {
+        foreach(self::byType('ttscast') as $eqLogic) {
+            $eqLogic->enableCastToDaemon();
+        }
+    }
+
+    public function enableCastToDaemon()
+    {
+        if ($this->getLogicalId() != '') {
+            $value = array(
+                'cmd' => 'addcast',
+                'uuid' => $this->getLogicalId()     
+            );
+            self::sendToDaemon($value);
+        }
+
+    }
+
+    public function disableCastToDaemon()
+    {
+        if ($this->getLogicalId() != '') {
+            $value = array(
+                'cmd' => 'removecast',
+                'uuid' => $this->getLogicalId()     
+            );
+            self::sendToDaemon($value);
+        }
+    }    
+
     /* ************************ Methodes static : JEEDOM *************************** */
 
     /*
