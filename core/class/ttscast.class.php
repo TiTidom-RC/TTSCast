@@ -317,6 +317,7 @@ class ttscast extends eqLogic
                 }
             }
             $updttscast->setConfiguration('lastscan', $_data['lastscan']);
+            $updttscast->save();
         }
     }
 
