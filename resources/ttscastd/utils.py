@@ -19,7 +19,8 @@ import time
 
 class Config:
     KNOWN_HOSTS = []
-    GCAST_DEVICES = []
+    GCAST_UUID = []
+    GCAST_NAMES = []
     
     NETCAST_BROWSERMANAGER = None
     NETCAST_DEVICES = []
