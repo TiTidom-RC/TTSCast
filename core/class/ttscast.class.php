@@ -369,7 +369,7 @@ class ttscast extends eqLogic
         $currentTime = time();
         foreach(self::byType('ttscast') as $eqLogic) {
             $lastSchedule = $eqLogic->getCmd('info', 'lastschedulets');
-            if ($currentTime - $lastSchedule >= 180) {
+            if ($currentTime - $lastSchedule->execCmd() >= 180) {
                 log::add('ttscast', 'debug', '[CRON5][ONLINE] TTSCast :: ' . $eqLogic->getConfiguration('friendly_name') . ' is OFFLINE');
                 $cmd = $eqLogic->getCmd('info', 'online');
                 if (is_object($cmd)) {
