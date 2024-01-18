@@ -167,6 +167,7 @@ def mainLoop(cycle=2):
                     if Config.ScanMode and (Config.ScanLastTime < Config.ScanModeStart):
                         threading.Thread(target=scanChromeCast, args=('ScanMode',)).start()
                     elif (Config.ScanLastTime + Config.ScanSchedule <= currentTime):
+                        logging.debug('[DAEMON][SCANNER][SCHEDULE][CALL] GCAST Names :: %s', str(Config.GCAST_NAMES))
                         threading.Thread(target=scanChromeCast, args=('ScheduleMode',)).start()
                 else:
                     logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING ! ')
