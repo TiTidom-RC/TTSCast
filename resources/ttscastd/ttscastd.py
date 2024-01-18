@@ -194,9 +194,9 @@ def scanChromeCast(_mode='UNKOWN'):
             chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             browser.stop_discovery()
             
-            logging.debug('[DAMEON][SCANNER] Devices découverts :: %s', len(chromecasts))
+            logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(chromecasts))
             for device in chromecasts: 
-                logging.debug('[DAMEON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
+                logging.debug('[DAEMON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
                 data = {
                     'friendly_name': device.friendly_name,
                     'uuid': str(device.uuid),
@@ -218,10 +218,10 @@ def scanChromeCast(_mode='UNKOWN'):
             # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
             chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=Config.GCAST_UUID, known_hosts=Config.KNOWN_HOSTS)
-            logging.debug('[DAMEON][SCANNER][SCHEDULE] GCAST UUID :: %s', str(Config.GCAST_UUID))
-            logging.debug('[DAMEON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
+            logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST UUID :: %s', str(Config.GCAST_UUID))
+            logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
-                logging.debug('[DAMEON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
+                logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
                 
                 # Connexion au Chromecast
                 cast.wait(timeout=10)
