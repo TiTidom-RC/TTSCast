@@ -73,6 +73,7 @@ except ImportError:
 
 def eventsFromJeedom(cycle=0.5):
     global JEEDOM_SOCKET_MESSAGE
+    global Config
     while not Config.IS_ENDING:    
         if not JEEDOM_SOCKET_MESSAGE.empty():
             logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
@@ -136,6 +137,8 @@ def eventsFromJeedom(cycle=0.5):
 
 # *** Boucle principale infinie (daemon) ***
 def mainLoop(cycle=2):
+    global Config
+    
     jeedom_socket.open()
     logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
     # *** Thread pour les Event venant de Jeedom ***
@@ -183,6 +186,8 @@ def mainLoop(cycle=2):
 # ----------------------------------------------------------------------------
 
 def scanChromeCast(_mode='UNKOWN'):
+    global Config
+    
     try:
         logging.debug('[DAEMON][SCANNER] Start Scanner :: %s', _mode)
         Config.ScanPending = True
