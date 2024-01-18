@@ -131,6 +131,7 @@ class ttscast extends eqLogic
             system::kill($pid);
         }
         system::kill('ttscastd.py');
+        system::fuserk(config::byKey('socketport', __CLASS__, '55111'));
         sleep(1);
     }
 
