@@ -219,7 +219,7 @@ def scanChromeCast(_mode='UNKOWN'):
             # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
             
-            _gcast_names = Config.GCAST_NAMES
+            _gcast_names = Config.GCAST_NAMES.copy()
             
             logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(_gcast_names))
             
