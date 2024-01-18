@@ -90,14 +90,15 @@ def eventsFromJeedom(cycle=0.5):
                         Functions.purgeCache()
                 elif message['cmd'] == "addcast":
                     if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
+                        _uuid = UUID(message['uuid'])
                         if message['host'] not in Config.KNOWN_HOSTS:
                             Config.KNOWN_HOSTS.append(message['host'])
                             logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
                         if message['friendly_name'] not in Config.GCAST_NAMES: 
                             Config.GCAST_NAMES.append(message['friendly_name'])
                             logging.debug('[DAEMON][SOCKET] Add Cast to GCAST Names :: %s', str(Config.GCAST_NAMES))
-                        if message['uuid'] not in Config.GCAST_UUID:
-                            Config.GCAST_UUID.append(message['uuid'])
+                        if _uuid not in Config.GCAST_UUID:
+                            Config.GCAST_UUID.append(_uuid)
                             logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
                 elif message['cmd'] == "removecast":
                     if 'uuid' in message and message['host'] in Config.KNOWN_HOSTS:
@@ -216,8 +217,8 @@ def scanChromeCast(_mode='UNKOWN'):
 
             # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
-            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=Config.GCAST_NAMES, known_hosts=Config.KNOWN_HOSTS)
-            logging.debug('[DAMEON][SCANNER][SCHEDULE] GCAST UUID :: %s', str(Config.GCAST_NAMES))
+            chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=Config.GCAST_UUID, known_hosts=Config.KNOWN_HOSTS)
+            logging.debug('[DAMEON][SCANNER][SCHEDULE] GCAST UUID :: %s', str(Config.GCAST_UUID))
             logging.debug('[DAMEON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
                 logging.debug('[DAMEON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
