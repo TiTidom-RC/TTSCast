@@ -214,15 +214,12 @@ def scanChromeCast(_mode='UNKOWN'):
             # ScheduleMode
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
-            Config.ScanLastTime = currentTime
             
             # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
             logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(Config.GCAST_NAMES))
             
             chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=Config.GCAST_NAMES, known_hosts=Config.KNOWN_HOSTS)
-            browser.stop_discovery()
-                        
             logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
@@ -242,14 +239,15 @@ def scanChromeCast(_mode='UNKOWN'):
                 # Envoi vers Jeedom
                 Utils.sendToJeedom.add_changes('casts::' + data['uuid'], data)
                 
-            
-            
+            browser.stop_discovery()
     except Exception as e:
         logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
         logging.debug(traceback.format_exc())
+        return False
     
     Config.ScanLastTime = int(time.time())
     Config.ScanPending = False
+    return True
                     
 class gCloudTTS:
     """ Class Google TTS """
