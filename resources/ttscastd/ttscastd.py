@@ -218,10 +218,11 @@ def scanChromeCast(_mode='UNKOWN'):
             
             # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
+            logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(Config.GCAST_NAMES))
+            
             chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=Config.GCAST_NAMES, known_hosts=Config.KNOWN_HOSTS)
             browser.stop_discovery()
-            
-            logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', ' '.join(map(str, Config.GCAST_NAMES)))
+                        
             logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
