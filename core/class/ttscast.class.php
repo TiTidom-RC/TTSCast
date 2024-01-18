@@ -363,10 +363,24 @@ class ttscast extends eqLogic
     public static function cron() {}
     */
 
-    /*
-     * Fonction exécutée automatiquement toutes les 5 minutes par Jeedom
-    public static function cron5() {}
-    */
+    
+    // * Fonction exécutée automatiquement toutes les 5 minutes par Jeedom
+    public static function cron5() {
+        $currentTime = time();
+        foreach(self::byType('ttscast') as $eqLogic) {
+            $lastSchedule = $eqLogic->getCmd('info', 'lastschedulets');
+            if ($currentTime - $lastSchedule >= 290) {
+                log::add('ttscast', 'debug', '[CRON5][ONLINE] TTSCast :: ' . $eqLogic->getConfiguration('friendly_name') . ' is OFFLINE');
+                $cmd = $eqLogic->getCmd('info', 'online');
+                if (is_object($cmd)) {
+                    $cmd->event('0');
+                }
+                // TODO Envoyer l'event au démon pour désactiver ce cast   
+            }
+        }   
+
+    }
+    
 
     /*
      * Fonction exécutée automatiquement toutes les 10 minutes par Jeedom
@@ -488,6 +502,20 @@ class ttscast extends eqLogic
             $cmd->setType('info');
             $cmd->setSubType('string');
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'lastschedulets');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Schedule LastTime (TS)', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('lastschedulets');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
