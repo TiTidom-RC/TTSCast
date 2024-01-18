@@ -305,11 +305,11 @@ class ttscast extends eqLogic
             return false;
         }
         else {
-            $cmd = $updttscast->getCmd('info', 'online');
+            /* $cmd = $updttscast->getCmd('info', 'online');
             if (is_object($cmd)) {
                 $cmd->event('1');
                 log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd event :: online');
-            }
+            } */
             foreach($updttscast->getCmd('info') as $cmd) {
                 $logicalId = $cmd->getLogicalId();
                 # log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd :: ' . $logicalId);
