@@ -605,7 +605,7 @@ class ttscast extends eqLogic
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Cast App', __FILE__));
             $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('playerstate');
+	        $cmd->setLogicalId('playerapp');
             $cmd->setType('info');
             $cmd->setSubType('string');
 	        $cmd->setIsVisible(1);
