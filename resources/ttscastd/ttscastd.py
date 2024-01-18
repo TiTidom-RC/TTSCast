@@ -73,7 +73,7 @@ except ImportError:
 
 def eventsFromJeedom(cycle=0.5):
     global JEEDOM_SOCKET_MESSAGE
-    while not Config.isEnding:    
+    while not Config.IS_ENDING:    
         if not JEEDOM_SOCKET_MESSAGE.empty():
             logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
             message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
@@ -91,19 +91,19 @@ def eventsFromJeedom(cycle=0.5):
                 elif message['cmd'] == "addcast":
                     if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
                         _uuid = UUID(message['uuid'])
-                        if message['host'] not in Config.knownHosts:
-                            Config.knownHosts.append(message['host'])
-                            logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(Config.knownHosts))
-                        if message['friendly_name'] not in Config.gcastNames: 
-                            Config.gcastNames.append(message['friendly_name'])
-                            logging.debug('[DAEMON][SOCKET] Add Cast to GCAST Names :: %s', str(Config.gcastNames))
-                        if _uuid not in Config.gcastUUID:
-                            Config.gcastUUID.append(_uuid)
-                            logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.gcastUUID))
+                        if message['host'] not in Config.KNOWN_HOSTS:
+                            Config.KNOWN_HOSTS.append(message['host'])
+                            logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                        if message['friendly_name'] not in Config.GCAST_NAMES: 
+                            Config.GCAST_NAMES.append(message['friendly_name'])
+                            logging.debug('[DAEMON][SOCKET] Add Cast to GCAST Names :: %s', str(Config.GCAST_NAMES))
+                        if _uuid not in Config.GCAST_UUID:
+                            Config.GCAST_UUID.append(_uuid)
+                            logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
                 elif message['cmd'] == "removecast":
-                    if 'uuid' in message and message['host'] in Config.knownHosts:
-                        Config.knownHosts.remove(message['host'])
-                        logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(Config.knownHosts))
+                    if 'uuid' in message and message['host'] in Config.KNOWN_HOSTS:
+                        Config.KNOWN_HOSTS.remove(message['host'])
+                        logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
                 elif message['cmd'] == 'playtesttts':
                     logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
                     if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed')):
@@ -147,7 +147,7 @@ def mainLoop(cycle=2):
         
         Utils.sendToJeedom.send_change_immediate({'daemonStarted': '1'})
                 
-        while not Config.isEnding:
+        while not Config.IS_ENDING:
             try:
                 # *** Actions de la MainLoop ***
                 currentTime = int(time.time())
@@ -191,7 +191,7 @@ def scanChromeCast(_mode='UNKOWN'):
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
-            chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.knownHosts)
+            chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             browser.stop_discovery()
             
             logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(chromecasts))
@@ -215,10 +215,10 @@ def scanChromeCast(_mode='UNKOWN'):
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
-            # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.knownHosts)
-            # res = [sub['uuid'] for sub in Config.knownHosts]
-            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=Config.gcastNames, known_hosts=Config.knownHosts)
-            logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(Config.gcastNames))
+            # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
+            # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
+            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=Config.GCAST_NAMES, known_hosts=Config.KNOWN_HOSTS)
+            logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(Config.GCAST_NAMES))
             logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
@@ -596,7 +596,7 @@ def handler(signum=None, frame=None):
 
 def shutdown():
     logging.debug("[DAEMON] Shutdown")
-    Config.isEnding = True
+    Config.IS_ENDING = True
     logging.debug("[DAEMON] Removing PID file %s", Config.pidFile)
     try:
         os.remove(Config.pidFile)
