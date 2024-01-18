@@ -17,7 +17,7 @@
 import os
 import time
 
-class Config:
+class Config():
     KNOWN_HOSTS = []
     GCAST_UUID = []
     GCAST_NAMES = []
@@ -72,5 +72,5 @@ class Config:
     cycleEvent = 0.5  # cycle de la boucle des events
     cycleMain = 2  # cycle de la boucle MainLoop et par héritage du socket read
     
-class Utils:
+class Utils():
     sendToJeedom = ''
