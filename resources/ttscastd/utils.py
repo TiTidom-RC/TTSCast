@@ -18,14 +18,14 @@ import os
 import time
 
 class Config:
-    KNOWN_HOSTS = []
-    GCAST_UUID = []
-    GCAST_NAMES = []
+    knownHosts = []
+    gcastUUID = []
+    gcastNames = []
     
     NETCAST_BROWSERMANAGER = None
     NETCAST_DEVICES = []
 
-    IS_ENDING = False
+    isEnding = False
 
     ScanMode = False
     ScanModeStart = int(time.time())
