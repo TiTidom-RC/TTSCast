@@ -24,7 +24,7 @@ import signal
 import json
 import argparse
 import threading
-from datetime import datetime
+import datetime
 import requests
 
 from urllib.parse import urljoin, quote
@@ -190,7 +190,7 @@ def scanChromeCast(_mode='UNKOWN'):
         
         if (_mode == "ScanMode"):
             currentTime = int(time.time())
-            currentTimeStr = datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
+            currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
             chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             browser.stop_discovery()
@@ -214,7 +214,7 @@ def scanChromeCast(_mode='UNKOWN'):
         elif (_mode == "ScheduleMode"):
             # ScheduleMode
             currentTime = int(time.time())
-            currentTimeStr = datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
+            currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
             
             # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
