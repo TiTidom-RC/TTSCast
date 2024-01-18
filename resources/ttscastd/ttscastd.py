@@ -243,7 +243,8 @@ def scanChromeCast(_mode='UNKOWN'):
                     'volumelevel': castVolumeLevel,
                     'playerstate': castPlayerState,
                     'playerapp': castAppDisplayName,
-                    'schedule': 1
+                    'schedule': 1,
+                    'online': True
                 }
                 # Déconnexion du Chromecast
                 cast.disconnect(timeout=10, blocking=False)
