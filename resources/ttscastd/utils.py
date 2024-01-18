@@ -18,11 +18,11 @@ import os
 import time
 
 class Config:
-    KNOWN_DEVICES = {}
-    GCAST_DEVICES = {}
+    KNOWN_DEVICES = []
+    GCAST_DEVICES = []
     
     NETCAST_BROWSERMANAGER = None
-    NETCAST_DEVICES = {}
+    NETCAST_DEVICES = []
 
     IS_ENDING = False
 
