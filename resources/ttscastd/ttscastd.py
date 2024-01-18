@@ -89,13 +89,20 @@ def eventsFromJeedom(cycle=0.5):
                     else:
                         Functions.purgeCache()
                 elif message['cmd'] == "addcast":
-                    if all(keys in message for keys in ('uuid', 'host')) and message['host'] not in Config.KNOWN_DEVICES:
-                        Config.KNOWN_DEVICES.append(message['host'])
-                        logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(Config.KNOWN_DEVICES))
+                    if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
+                        if message['host'] not in Config.KNOWN_HOSTS:
+                            Config.KNOWN_HOSTS.append(message['host'])
+                            logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                        if message['friendly_name'] not in Config.GCAST_NAMES: 
+                            Config.GCAST_NAMES.append(message['friendly_name'])
+                            logging.debug('[DAEMON][SOCKET] Add Cast to GCAST Names :: %s', str(Config.GCAST_NAMES))
+                        if message['uuid'] not in Config.GCAST_UUID:
+                            Config.GCAST_UUID.append(message['uuid'])
+                            logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
                 elif message['cmd'] == "removecast":
-                    if 'uuid' in message and message['host'] in Config.KNOWN_DEVICES:
-                        Config.KNOWN_DEVICES.remove(message['host'])
-                        logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(Config.KNOWN_DEVICES))
+                    if 'uuid' in message and message['host'] in Config.KNOWN_HOSTS:
+                        Config.KNOWN_HOSTS.remove(message['host'])
+                        logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
                 elif message['cmd'] == 'playtesttts':
                     logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
                     if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed')):
@@ -183,7 +190,7 @@ def scanChromeCast(_mode='UNKOWN'):
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
-            chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_DEVICES)
+            chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             browser.stop_discovery()
             
             logging.debug('[DAMEON][SCANNER] Devices découverts :: %s', len(chromecasts))
@@ -207,10 +214,10 @@ def scanChromeCast(_mode='UNKOWN'):
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
-            # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_DEVICES)
-            # res = [sub['uuid'] for sub in Config.KNOWN_DEVICES]
-            chromecasts, browser = pychromecast.get_listed_chromecasts(known_hosts=Config.KNOWN_DEVICES)
-            logging.debug('[DAMEON][SCANNER][SCHEDULE] Nb KNOWN_DEVICES :: %s', str(Config.KNOWN_DEVICES))
+            # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
+            # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
+            chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=Config.GCAST_UUID, known_hosts=Config.KNOWN_HOSTS)
+            logging.debug('[DAMEON][SCANNER][SCHEDULE] Nb KNOWN_HOSTS :: %s', str(Config.KNOWN_HOSTS))
             logging.debug('[DAMEON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
                 logging.debug('[DAMEON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)

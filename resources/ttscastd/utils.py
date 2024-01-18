@@ -18,7 +18,7 @@ import os
 import time
 
 class Config:
-    KNOWN_DEVICES = []
+    KNOWN_HOSTS = []
     GCAST_DEVICES = []
     
     NETCAST_BROWSERMANAGER = None
