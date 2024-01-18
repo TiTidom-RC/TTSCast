@@ -463,7 +463,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'refreshcast');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Rafraîchir Config', __FILE__));
+            $cmd->setName(__('Rafraîchir Cast', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('refreshcast');
             $cmd->setType('action');
@@ -477,7 +477,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'lastschedule');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Dernier Schedule', __FILE__));
+            $cmd->setName(__('Schedule LastTime', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('lastschedule');
             $cmd->setType('info');
@@ -589,7 +589,21 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'playerstate');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Etat Lecteur Multimedia', __FILE__));
+            $cmd->setName(__('Cast State', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('playerstate');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'playerapp');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast App', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('playerstate');
             $cmd->setType('info');

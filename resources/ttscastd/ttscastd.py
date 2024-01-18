@@ -224,19 +224,25 @@ def scanChromeCast(_mode='UNKOWN'):
             logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(_gcast_names))
             
             # chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
-            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names)
+            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
             logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
                 
                 # Connexion au Chromecast
-                cast.wait(timeout=10)
+                cast.wait(timeout=5)
+                time.sleep(0.3)
+                
                 castVolumeLevel = int(cast.status.volume_level * 100)
-                cast.status
+                castAppDisplayName = cast.status.display_name
+                castPlayerState = cast.media_controller.status.player_state
+                
                 data = {
                     'uuid': str(cast.uuid),
                     'lastschedule': currentTimeStr,
                     'volumelevel': castVolumeLevel,
+                    'playerstate': castPlayerState,
+                    'playerapp': castAppDisplayName,
                     'schedule': 1
                 }
                 # Déconnexion du Chromecast
