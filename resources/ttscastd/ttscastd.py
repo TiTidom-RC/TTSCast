@@ -91,13 +91,11 @@ def eventsFromJeedom(cycle=0.5):
                 elif message['cmd'] == "addcast":
                     logging.debug('[DAEMON][SOCKET] Add Cast from KNOWN')
                     if all(keys in message for keys in ('uuid', 'host')) and message['host'] not in Config.KNOWN_DEVICES:
-                        Config.KNOWN_DEVICES[message['uuid']] = {
-                            'host': message['host']
-                        }
+                        Config.KNOWN_DEVICES.append(message['host'])
                 elif message['cmd'] == "removecast":
                     logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN')
-                    if 'uuid' in message and message['uuid'] in Config.KNOWN_DEVICES:
-                        del Config.KNOWN_DEVICES[message['uuid']]
+                    if 'uuid' in message and message['host'] in Config.KNOWN_DEVICES:
+                        Config.KNOWN_DEVICES.remove(message['host'])
                 elif message['cmd'] == 'playtesttts':
                     logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
                     if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed')):
