@@ -73,7 +73,6 @@ except ImportError:
 
 def eventsFromJeedom(cycle=0.5):
     global JEEDOM_SOCKET_MESSAGE
-    global Config
     while not Config.IS_ENDING:    
         if not JEEDOM_SOCKET_MESSAGE.empty():
             logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
@@ -137,8 +136,6 @@ def eventsFromJeedom(cycle=0.5):
 
 # *** Boucle principale infinie (daemon) ***
 def mainLoop(cycle=2):
-    global Config
-    
     jeedom_socket.open()
     logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
     # *** Thread pour les Event venant de Jeedom ***
@@ -186,8 +183,6 @@ def mainLoop(cycle=2):
 # ----------------------------------------------------------------------------
 
 def scanChromeCast(_mode='UNKOWN'):
-    global Config
-    
     try:
         logging.debug('[DAEMON][SCANNER] Start Scanner :: %s', _mode)
         Config.ScanPending = True
@@ -219,11 +214,14 @@ def scanChromeCast(_mode='UNKOWN'):
             # ScheduleMode
             currentTime = int(time.time())
             currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
-
+            Config.ScanLastTime = currentTime
+            
             # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
             # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
             chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=Config.GCAST_NAMES, known_hosts=Config.KNOWN_HOSTS)
-            logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(Config.GCAST_NAMES))
+            browser.stop_discovery()
+            
+            logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', ' '.join(map(str, Config.GCAST_NAMES)))
             logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
             for cast in chromecasts: 
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
@@ -243,8 +241,7 @@ def scanChromeCast(_mode='UNKOWN'):
                 # Envoi vers Jeedom
                 Utils.sendToJeedom.add_changes('casts::' + data['uuid'], data)
                 
-            browser.stop_discovery()
-            Config.ScanLastTime = currentTime
+            
             
     except Exception as e:
         logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
