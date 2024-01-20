@@ -56,7 +56,7 @@ class ttscast extends eqLogic
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip list | grep -Ewc "PyChromecast|pydub|gTTS|google-cloud-texttospeech|google-auth|click|protobuf|requests|zeroconf"') < 9) {
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==13.1.0|google-cloud-texttospeech==2.15.1|gTTS==2.5.0|pydub==0.25.1"') < 4) {
                 $return['state'] = 'nok';
             } else {
                 $return['state'] = 'ok';
@@ -338,7 +338,7 @@ class ttscast extends eqLogic
                 'cmd' => 'addcast',
                 'uuid' => $this->getLogicalId(),
                 'host' => $this->getConfiguration('host'),
-                'friendly_name' => $this->getConfiguration('friendly_name'),
+                'friendly_name' => $this->getConfiguration('friendly_name')
             );
             self::sendToDaemon($value);
         }
@@ -350,7 +350,9 @@ class ttscast extends eqLogic
         if ($this->getLogicalId() != '') {
             $value = array(
                 'cmd' => 'removecast',
-                'uuid' => $this->getLogicalId()     
+                'uuid' => $this->getLogicalId(),
+                'host' => $this->getConfiguration('host'),
+                'friendly_name' => $this->getConfiguration('friendly_name')
             );
             self::sendToDaemon($value);
         }
