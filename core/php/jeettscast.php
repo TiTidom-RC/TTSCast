@@ -66,8 +66,8 @@ try {
                     log::add('ttscast','debug','[CALLBACK] Action Return :: Le Cast a été trouvé...');
                     $cmd = $ttscast->getCmd('info', 'volumelevel');
                     if (is_object($cmd)) {
-                        log::add('ttscast','debug','[CALLBACK] Action Return :: SetVolume in Config :: ' . $_data['volumelevel']);
-                        $cmd->event($_data['volumelevel']);
+                        log::add('ttscast','debug','[CALLBACK] Action Return :: SetVolume in Config :: ' . $result['volumelevel']);
+                        $cmd->event($result['volumelevel']);
                     }
                 }
             }
