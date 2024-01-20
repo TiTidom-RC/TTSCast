@@ -735,7 +735,7 @@ class ttscastCmd extends cmd
         if ( $this->GetType = "action" ) {
 			if ($logicalId == "tts") {
                 $googleUUID = $eqLogic->getLogicalId();
-                if ($logicalId == "tts" && isset($googleUUID) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
+                if (isset($googleUUID) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
                     log::add('ttscast', 'debug', '[CMD] TTS (Message / Volume / GoogleUUID) :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleUUID);
                     ttscast::playTTS($googleUUID, $_options['message'], intval($_options['title']));
                 }
@@ -744,8 +744,11 @@ class ttscastCmd extends cmd
                 }                
             } elseif ($logicalId == "volumeset") {
                 $googleUUID = $eqLogic->getLogicalId();
-                log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['value'] . " / " . $googleUUID);
-
+                if (isset($googleUUID) && isset($_options['message'])) {
+                    log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['value'] . " / " . $googleUUID);
+                } else {
+                    log::add('ttscast', 'debug', '[CMD] VolumeSet :: ERROR = Mauvais paramètre');
+                }
             }
 		} else {
 			throw new Exception(__('Commande non implémentée actuellement', __FILE__));
