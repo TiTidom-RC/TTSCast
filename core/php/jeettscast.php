@@ -62,7 +62,7 @@ try {
             } else {
                 $ttscast = ttscast::byLogicalId($result['uuid'], 'ttscast');
                 if (is_object($ttscast)) { 
-                    $ttscast->getCmd('info', 'volume');
+                    $cmd = $ttscast->getCmd('info', 'volume');
                     $cmd->event($_data['volumelevel']);
                 }
             }
