@@ -56,7 +56,7 @@ try {
         }
     } elseif (isset($result['actionReturn'])) {
         log::add('ttscast','debug','[CALLBACK] TTSCast ActionReturn :: ' . json_encode($result));
-        if ($result['actionReturn'] == 'setVolume') {
+        if ($result['actionReturn'] == 'setvolume') {
             if (!isset($result['uuid']) || !isset($result['volumelevel'])) {
                 log::add('ttscast','debug','[CALLBACK] Action Return :: UUID et/ou VolumeLevel non défini(s) !');
             } else {
