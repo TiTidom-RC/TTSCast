@@ -743,6 +743,8 @@ class ttscastCmd extends cmd
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour diffuser un message TTS');
                 }                
             } elseif ($logicalId == "volumeset") {
+                log::add('ttscast', 'debug', '[CMD] VolumeSet Keys :: ' . str(array_keys($_options)));
+                
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['value'] . " / " . $googleUUID);
