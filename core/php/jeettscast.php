@@ -54,6 +54,15 @@ try {
             log::add('ttscast', 'info', '[CALLBACK] Daemon Started');
             ttscast::sendOnStartCastToDaemon();
         }
+    } elseif (isset($result['actionReturn'])) {
+        log::add('ttscast','debug','[CALLBACK] TTSCast Action Return');
+            foreach ($result['actionReturn'] as $key => $data) {
+                if (!isset($data['uuid'])) {
+                    log::add('ttscast','debug','[CALLBACK] Action Return :: UUID non défini !');
+                    continue;
+                }
+                log::add('ttscast','debug','[CALLBACK] Action Return :: ' . json_encode($data));
+            }
     } elseif (isset($result['devices'])) {
         log::add('ttscast','debug','[CALLBACK] TTSCast Devices Discovery');
         foreach ($result['devices'] as $key => $data) {

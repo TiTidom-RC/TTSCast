@@ -87,8 +87,9 @@ class Loops:
                         # Gestion des actions
                         logging.debug('[DAEMON][SOCKET] Action')
                         if 'cmd_action' in message:
-                            if (message['cmd_action'] == 'setvolume' and 'value' in message):
-                                logging.debug('[DAEMON][SOCKET] Action :: setVolume = %s', message['value'])
+                            if (message['cmd_action'] == 'setvolume' and all(keys in message for keys in ('value', 'googleUUID'))):
+                                logging.debug('[DAEMON][SOCKET] Action :: setVolume = %s / %s', message['value'], message['googleUUID'])
+                                Functions.setVolume(message['googleUUID'], message['value'])
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
                         if 'days' in message:
@@ -504,6 +505,39 @@ class TTSCast:
 
 class Functions:
     """ Class Functions """
+    
+    def setVolume(_googleUUID='UNKOWN', _value='0'):
+        try:
+            if _googleUUID != 'UNKOWN':
+                logging.debug('[DAEMON][setVolume] Set Volume :: %s / %s', _googleUUID, _value)
+                uuid = UUID(_googleUUID)
+                chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=[uuid])
+                if not chromecasts:
+                    logging.debug('[DAEMON][setVolume] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                    browser.stop_discovery()
+                    return False        
+                cast = chromecasts[0]
+                cast.wait(timeout=10)
+                logging.debug('[DAEMON][setVolume] Chromecast trouvé, tentative de set du volume')
+                cast.set_volume(volume=_value / 100)
+                time.sleep(0.3)
+                castVolumeLevel = int(cast.status.volume_level * 100)
+                data = {
+                    'uuid': str(cast.uuid),
+                    'action': 'setvolume',
+                    'volumelevel': castVolumeLevel,
+                    'online': '1'
+                }
+                # Déconnexion du Chromecast
+                cast.disconnect(timeout=10, blocking=False)
+                browser.stop_discovery()
+                # Envoi vers Jeedom
+                Comm.sendToJeedom.send_change_immediate({'actionReturn', data})
+                return True
+        except Exception as e:
+            logging.error('[DAEMON][setVolume] Exception on setVolume :: %s', e)
+            logging.debug(traceback.format_exc())
+            return False
     
     def scanChromeCast(_mode='UNKOWN'):
         try:
