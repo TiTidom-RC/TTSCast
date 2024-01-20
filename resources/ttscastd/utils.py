@@ -18,8 +18,12 @@ import os
 import time
 
 class Config:
-    KNOWN_DEVICES = {}
-    GCAST_DEVICES = {}
+    KNOWN_HOSTS = []
+    GCAST_UUID = []
+    GCAST_NAMES = []
+    
+    NETCAST_BROWSERMANAGER = None
+    NETCAST_DEVICES = []
 
     IS_ENDING = False
 
@@ -29,6 +33,7 @@ class Config:
     
     ScanPending = False
     ScanTimeout = 10
+    ScanSchedule = 60
     ScanLastTime = int(time.time())
     
     HeartbeatFrequency = 600
@@ -67,5 +72,5 @@ class Config:
     cycleEvent = 0.5  # cycle de la boucle des events
     cycleMain = 2  # cycle de la boucle MainLoop et par héritage du socket read
     
-class Utils:
+class Comm:
     sendToJeedom = ''

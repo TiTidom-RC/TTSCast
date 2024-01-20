@@ -44,6 +44,7 @@ try:
     import google.cloud.texttospeech as googleCloudTTS
     import pychromecast
     from pychromecast import quick_play
+    # import zeroconf
 except ImportError:
     print("[DAEMON][IMPORT] Error: importing module TTS")
     sys.exit(1)
@@ -56,146 +57,169 @@ except ImportError:
     sys.exit(1)
 
 # Import pyDub (Audio changing)
-try:
-    from pydub import AudioSegment
-except ImportError: 
-    print("[DAEMON][IMPORT] Error: importing module gTTS")
-    sys.exit(1)
-
+# try:
+#     from pydub import AudioSegment
+# except ImportError: 
+#     print("[DAEMON][IMPORT] Error: importing module gTTS")
+#     sys.exit(1)
 
 # Import Config
 try:
-    from utils import Utils, Config
+    from utils import Comm, Config
 except ImportError:
     print("[DAEMON][IMPORT] Error: importing module config")
     sys.exit(1)
 
-def eventsFromJeedom(cycle=0.5):
-    global JEEDOM_SOCKET_MESSAGE
-    while not Config.IS_ENDING:    
-        if not JEEDOM_SOCKET_MESSAGE.empty():
-            logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
-            message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
-            if message['apikey'] != Config.apiKey:
-                logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
-                return
-            try:
-                # TODO ***** Gestion des messages reçus de Jeedom *****
-                if message['cmd'] == 'purgettscache':
-                    logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
-                    if 'days' in message:
-                        Functions.purgeCache(message['days'])
-                    else:
-                        Functions.purgeCache()
-                elif message['cmd'] == 'playtesttts':
-                    logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
-                    if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed')):
-                        logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'])
-                        gCloudTTS.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'])
-                    else:
-                        logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
-                elif message['cmd'] == 'playtts':
-                    logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
-                    if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsVolume')):
-                        logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleUUID'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsVolume'])
-                        gCloudTTS.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsVolume'])
-                    else:
-                        logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
-                elif message['cmd'] == "scanOn":
-                    logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
-                    Config.ScanMode = True
-                    Config.ScanModeStart = int(time.time())
-                    Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})
-                elif message['cmd'] == "scanOff":
-                    logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
-                    Config.ScanMode = False
-                    Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
-                    
-            except Exception as e:
-                logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
-                logging.debug(traceback.format_exc())
-        time.sleep(cycle)
+class Loops:
+    # *** Boucle events from Jeedom ***
+    def eventsFromJeedom(cycle=0.5):
+        global JEEDOM_SOCKET_MESSAGE
+        while not Config.IS_ENDING:    
+            if not JEEDOM_SOCKET_MESSAGE.empty():
+                logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
+                message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
+                if message['apikey'] != Config.apiKey:
+                    logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
+                    return
+                try:
+                    # TODO ***** Gestion des messages reçus de Jeedom *****
+                    if message['cmd'] == 'action':
+                        # Gestion des actions
+                        logging.debug('[DAEMON][SOCKET] Action')
+                        if 'cmd_action' in message:
+                            if (message['cmd_action'] == 'setvolume' and all(keys in message for keys in ('value', 'googleUUID'))):
+                                logging.debug('[DAEMON][SOCKET] Action :: setVolume = %s @ %s', message['value'], message['googleUUID'])
+                                Functions.setVolume(message['googleUUID'], message['value'], message['cmd_action'])
+                            elif (message['cmd_action'] == 'volumeup' and 'googleUUID' in message):
+                                logging.debug('[DAEMON][SOCKET] Action :: Volume UP @ %s', message['googleUUID'])
+                                Functions.setVolume(message['googleUUID'], '', message['cmd_action'])
+                            elif (message['cmd_action'] == 'volumedown' and 'googleUUID' in message):
+                                logging.debug('[DAEMON][SOCKET] Action :: Volume DOWN @ %s', message['googleUUID'])
+                                Functions.setVolume(message['googleUUID'], '', message['cmd_action'])
+                    elif message['cmd'] == 'purgettscache':
+                        logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
+                        if 'days' in message:
+                            Functions.purgeCache(message['days'])
+                        else:
+                            Functions.purgeCache()
+                    elif message['cmd'] == "addcast":
+                        if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
+                            _uuid = UUID(message['uuid'])
+                            if message['host'] not in Config.KNOWN_HOSTS:
+                                Config.KNOWN_HOSTS.append(message['host'])
+                                logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                            if message['friendly_name'] not in Config.GCAST_NAMES: 
+                                Config.GCAST_NAMES.append(message['friendly_name'])
+                                logging.debug('[DAEMON][SOCKET] Add Cast to GCAST Names :: %s', str(Config.GCAST_NAMES))
+                            if _uuid not in Config.GCAST_UUID:
+                                Config.GCAST_UUID.append(_uuid)
+                                logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
+                    elif message['cmd'] == "removecast":
+                        if 'uuid' in message and message['host'] in Config.KNOWN_HOSTS:
+                            Config.KNOWN_HOSTS.remove(message['host'])
+                            logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                    elif message['cmd'] == 'playtesttts':
+                        logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
+                        if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed')):
+                            logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'])
+                            TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'])
+                        else:
+                            logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
+                    elif message['cmd'] == 'playtts':
+                        logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
+                        if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsVolume')):
+                            logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleUUID'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsVolume'])
+                            TTSCast.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsVolume'])
+                        else:
+                            logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
+                    elif message['cmd'] == "scanOn":
+                        logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
+                        Config.ScanMode = True
+                        Config.ScanModeStart = int(time.time())
+                        Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})
+                    elif message['cmd'] == "scanOff":
+                        logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
+                        Config.ScanMode = False
+                        Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
+                        
+                except Exception as e:
+                    logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
+                    logging.debug(traceback.format_exc())
+            time.sleep(cycle)
         
-
-# *** Boucle principale infinie (daemon) ***
-def mainLoop(cycle=2):
-    jeedom_socket.open()
-    logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
-    threading.Thread(target=eventsFromJeedom, args=(Config.cycleEvent,)).start()
-    try:
-        while not Config.IS_ENDING:
-            try:
-                # *** Actions de la MainLoop ***    
-                currentTime = int(time.time())
-                
-                # Arrêt du ScanMode au bout de 60 secondes
-                if (Config.ScanMode and (Config.ScanModeStart + Config.ScanModeTimeOut) <= currentTime):
-                    Config.ScanMode = False
-                    logging.info('[DAEMON][MAINLOOP] ScanMode END')
-                    Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
-                # Heartbeat du démon
-                if ((Config.HeartbeatLastTime + Config.HeartbeatFrequency) <= currentTime):
-                    logging.debug('[DAEMON][MAINLOOP] Heartbeat = 1')
-                    Utils.sendToJeedom.send_change_immediate({'heartbeat': '1'})
-                    Config.HeartbeatLastTime = currentTime
-                # Scan New Chromecast
-                if not Config.ScanPending:
-                    if Config.ScanMode and (Config.ScanLastTime < Config.ScanModeStart):
-                        threading.Thread(target=discoverChromeCast, args=('ScanMode',)).start()
-                else:
-                    logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING ! ')
-                # Pause Cycle
-                time.sleep(cycle)
-            except Exception as e:
-                logging.error('[DAEMON][MAINLOOP] Exception on MainLoop :: %s', e)
-                logging.debug(traceback.format_exc())
-                shutdown()
-    except KeyboardInterrupt:
-        logging.error('[DAEMON][MAINLOOP] KeyboardInterrupt on MainLoop, Shutdown.')
-        shutdown()
-
-# ----------------------------------------------------------------------------
-
-def discoverChromeCast(source='UNKOWN'):
-    try:
-        logging.debug('[DAEMON][SCANNER] Start Scanner :: %s', source)
-        Config.ScanPending = True
-        
-        if (source == "ScanMode"):
-            currentTime = int(time.time())
-            currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
-
-            devices, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_DEVICES)
-            browser.stop_discovery()
+    # *** Boucle principale infinie (daemon) ***
+    def mainLoop(cycle=2):
+        jeedom_socket.open()
+        logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
+        # *** Thread pour les Event venant de Jeedom ***
+        threading.Thread(target=Loops.eventsFromJeedom, args=(Config.cycleEvent,)).start()
+        try:
+            # Thread pour le browsermanager (pychromecast)
+            # Config.NETCAST_BROWSERMANAGER = castBrowserManager()
+            # Config.NETCAST_BROWSERMANAGER.start()
             
-            logging.debug('[DAMEON][SCANNER] Devices découverts :: %s', len(devices))
-            for device in devices: 
-                logging.debug('[DAMEON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
-                data = {
-                    'friendly_name': device.friendly_name,
-                    'uuid': str(device.uuid),
-                    'lastscan': currentTimeStr,
-                    'model_name': device.model_name,
-                    'cast_type': device.cast_type,
-                    'manufacturer': device.manufacturer,
-                    'host': device.host,
-                    'port': device.port,
-                    'scanmode': 1
-                }
-                # data['status'] = device.getStatus()
-                # data['def'] = device.getDefinition()
-                
-                Utils.sendToJeedom.add_changes('devices::' + data['uuid'], data)
-                             
-    except Exception as e:
-        logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
-        logging.debug(traceback.format_exc())
+            Comm.sendToJeedom.send_change_immediate({'daemonStarted': '1'})
+                    
+            while not Config.IS_ENDING:
+                try:
+                    # *** Actions de la MainLoop ***
+                    currentTime = int(time.time())
+                    
+                    # Arrêt du ScanMode au bout de 60 secondes
+                    if (Config.ScanMode and (Config.ScanModeStart + Config.ScanModeTimeOut) <= currentTime):
+                        Config.ScanMode = False
+                        logging.info('[DAEMON][MAINLOOP] ScanMode END')
+                        Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
+                    # Heartbeat du démon
+                    if ((Config.HeartbeatLastTime + Config.HeartbeatFrequency) <= currentTime):
+                        logging.debug('[DAEMON][MAINLOOP] Heartbeat = 1')
+                        Comm.sendToJeedom.send_change_immediate({'heartbeat': '1'})
+                        Config.HeartbeatLastTime = currentTime
+                    # Scan New Chromecast
+                    if not Config.ScanPending:
+                        if Config.ScanMode and (Config.ScanLastTime < Config.ScanModeStart):
+                            threading.Thread(target=Functions.scanChromeCast, args=('ScanMode',)).start()
+                        elif (Config.ScanLastTime + Config.ScanSchedule <= currentTime):
+                            logging.debug('[DAEMON][SCANNER][SCHEDULE][CALL] GCAST Names :: %s', str(Config.GCAST_NAMES))
+                            threading.Thread(target=Functions.scanChromeCast, args=('ScheduleMode',)).start()
+                    else:
+                        logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING ! ')
+                    # Pause Cycle
+                    time.sleep(cycle)
+                except Exception as e:
+                    logging.error('[DAEMON][MAINLOOP] Exception on MainLoop :: %s', e)
+                    logging.debug(traceback.format_exc())
+                    shutdown()
+        except KeyboardInterrupt:
+            logging.error('[DAEMON][MAINLOOP] KeyboardInterrupt on MainLoop, Shutdown.')
+            shutdown()
+                    
+class TTSCast:
+    """ Class TTS Cast """
     
-    Config.ScanLastTime = int(time.time())
-    Config.ScanPending = False
-
-class gCloudTTS:
-    """ Class Google TTS """
+    def jeedomTTS(ttsText, ttsLang):
+        filecontent = None
+        try:
+            ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
+            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
+            logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
+            
+            response = requests.post(ttsFullURI, timeout=8, verify=False)
+            filecontent = response.content
+            
+            if response.status_code != requests.codes.ok:
+                filecontent = None
+                logging.error('[DAEMON][JeedomTTS] Status Code Error :: %s', response.status_code)
+            else:
+                if len(response.content) < 254 and os.path.exists(response.content):
+                    logging.debug('[DAEMON][JeedomTTS] Response is a FilePath. Downloading Content Now.')
+                    fc = open(response.content, "rb")
+                    filecontent = fc.read()
+                    fc.close()
+        except Exception as e:
+            logging.error('[DAEMON][JeedomTTS] Error while retrieving TTS file :: %s', e)
+            filecontent = None
+        return filecontent
     
     def changeSpeedTTS(soundfile, speed):
         logging.debug('[DAEMON][TestTTS] ChangeSpeed File :: %s', soundfile)
@@ -248,7 +272,7 @@ class gCloudTTS:
                 
                 urlFileToPlay = urljoin(ttsSrvWeb, filename)
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+                res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
@@ -277,7 +301,7 @@ class gCloudTTS:
             urlFileToPlay = urljoin(ttsSrvWeb, filename)
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
-            res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+            res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
             logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
         elif ttsEngine == "jeedomtts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = jeedomtts')
@@ -288,7 +312,7 @@ class gCloudTTS:
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
             
             if not os.path.isfile(filepath):
-                ttsfile = Functions.jeedomTTS(ttsText, ttsLang)
+                ttsfile = TTSCast.jeedomTTS(ttsText, ttsLang)
                 if ttsfile is not None:
                     with open(filepath, 'wb') as f:
                         f.write(ttsfile)
@@ -300,7 +324,7 @@ class gCloudTTS:
             urlFileToPlay = urljoin(ttsSrvWeb, filename)
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
-            res = gCloudTTS.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+            res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
             logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             
     def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsVolume='30'):
@@ -348,7 +372,7 @@ class gCloudTTS:
                 
                 urlFileToPlay = urljoin(ttsSrvWeb, filename)
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                res = gCloudTTS.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
+                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
                 logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
@@ -377,7 +401,7 @@ class gCloudTTS:
             urlFileToPlay = urljoin(ttsSrvWeb, filename)
             logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
-            res = gCloudTTS.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
+            res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
             logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
         elif ttsEngine == "jeedomtts":
             logging.debug('[DAEMON][TTS] TTSEngine = jeedomtts')
@@ -388,7 +412,7 @@ class gCloudTTS:
             logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
             
             if not os.path.isfile(filepath):
-                ttsfile = Functions.jeedomTTS(ttsText, ttsLang)
+                ttsfile = TTSCast.jeedomTTS(ttsText, ttsLang)
                 if ttsfile is not None:
                     with open(filepath, 'wb') as f:
                         f.write(ttsfile)
@@ -400,7 +424,7 @@ class gCloudTTS:
             urlFileToPlay = urljoin(ttsSrvWeb, filename)
             logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
-            res = gCloudTTS.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
+            res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
             logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
     def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=30):
@@ -487,6 +511,129 @@ class gCloudTTS:
 
 class Functions:
     """ Class Functions """
+    
+    def setVolume(_googleUUID='UNKOWN', _value='0', _mode='setvolume'):
+        try:
+            if _googleUUID != 'UNKOWN':
+                if (_mode == 'set'):
+                    logging.debug('[DAEMON][setVolume] Set Volume :: %s / %s', _googleUUID, _value)
+                elif (_mode == 'up'):
+                    logging.debug('[DAEMON][setVolume] Volume UP :: %s', _googleUUID)
+                elif (_mode == 'down'): 
+                    logging.debug('[DAEMON][setVolume] Volume DOWN :: %s', _googleUUID)
+                    
+                uuid = UUID(_googleUUID)
+                chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=[uuid])
+                if not chromecasts:
+                    logging.debug('[DAEMON][setVolume] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                    browser.stop_discovery()
+                    return False        
+                cast = chromecasts[0]
+                cast.wait(timeout=10)
+                logging.debug('[DAEMON][setVolume] Chromecast trouvé, tentative de set du volume')
+                castVolumeLevel = None
+                if (_mode == 'setvolume'):
+                    castVolumeLevel = round(cast.set_volume(volume=float(_value) / 100) * 100)
+                elif (_mode == 'volumeup'):
+                    castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
+                elif (_mode == 'volumedown'): 
+                    castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
+                data = {
+                    'uuid': str(cast.uuid),
+                    'actionReturn': _mode,
+                    'volumelevel': castVolumeLevel,
+                    'online': '1'
+                }
+                # Déconnexion du Chromecast
+                cast.disconnect(timeout=10, blocking=False)
+                browser.stop_discovery()
+                # Envoi vers Jeedom
+                Comm.sendToJeedom.send_change_immediate(data)
+                return True
+        except Exception as e:
+            logging.error('[DAEMON][setVolume] Exception on setVolume :: %s', e)
+            logging.debug(traceback.format_exc())
+            return False
+    
+    def scanChromeCast(_mode='UNKOWN'):
+        try:
+            logging.debug('[DAEMON][SCANNER] Start Scanner :: %s', _mode)
+            Config.ScanPending = True
+            
+            if (_mode == "ScanMode"):
+                currentTime = int(time.time())
+                currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
+
+                chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_HOSTS)
+                browser.stop_discovery()
+                
+                logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(chromecasts))
+                for device in chromecasts: 
+                    logging.debug('[DAEMON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
+                    data = {
+                        'friendly_name': device.friendly_name,
+                        'uuid': str(device.uuid),
+                        'lastscan': currentTimeStr,
+                        'model_name': device.model_name,
+                        'cast_type': device.cast_type,
+                        'manufacturer': device.manufacturer,
+                        'host': device.host,
+                        'port': device.port,
+                        'scanmode': 1
+                    }
+                    # Envoi vers Jeedom
+                    Comm.sendToJeedom.add_changes('devices::' + data['uuid'], data)
+            elif (_mode == "ScheduleMode"):
+                # ScheduleMode
+                currentTime = int(time.time())
+                currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
+                
+                # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
+                # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
+                
+                _gcast_names = Config.GCAST_NAMES.copy()
+                
+                logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(_gcast_names))
+                
+                # chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
+                chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
+                logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
+                for cast in chromecasts: 
+                    logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
+                    
+                    # Connexion au Chromecast
+                    cast.wait(timeout=5)
+                    time.sleep(0.3)
+                    
+                    castVolumeLevel = int(cast.status.volume_level * 100)
+                    castAppDisplayName = cast.status.display_name
+                    castPlayerState = cast.media_controller.status.player_state
+                    
+                    data = {
+                        'uuid': str(cast.uuid),
+                        'lastschedule': currentTimeStr,
+                        'lastschedulets': currentTime,
+                        'volumelevel': castVolumeLevel,
+                        'playerstate': castPlayerState,
+                        'playerapp': castAppDisplayName,
+                        'schedule': 1,
+                        'online': '1'
+                    }
+                    # Déconnexion du Chromecast
+                    cast.disconnect(timeout=10, blocking=False)
+                    # Envoi vers Jeedom
+                    Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                    
+                browser.stop_discovery()
+        except Exception as e:
+            logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
+            logging.debug(traceback.format_exc())
+            return False
+        
+        Config.ScanLastTime = int(time.time())
+        Config.ScanPending = False
+        return True
+    
     def purgeCache(nbDays='0'):
         if nbDays == '0':  # clean entire directory including containing folder
             logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
@@ -509,31 +656,7 @@ class Functions:
             except Exception as e:
                 logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
                 pass
-    
-    def jeedomTTS(ttsText, ttsLang):
-        filecontent = None
-        try:
-            ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
-            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
-            logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
-            
-            response = requests.post(ttsFullURI, timeout=8, verify=False)
-            filecontent = response.content
-            
-            if response.status_code != requests.codes.ok:
-                filecontent = None
-                logging.error('[DAEMON][JeedomTTS] Status Code Error :: %s', response.status_code)
-            else:
-                if len(response.content) < 254 and os.path.exists(response.content):
-                    logging.debug('[DAEMON][JeedomTTS] Response is a FilePath. Downloading Content Now.')
-                    fc = open(response.content, "rb")
-                    filecontent = fc.read()
-                    fc.close()
-        except Exception as e:
-            logging.error('[DAEMON][JeedomTTS] Error while retrieving TTS file :: %s', e)
-            filecontent = None
-        return filecontent
-            
+
 # ----------------------------------------------------------------------------
 
 def handler(signum=None, frame=None):
@@ -626,14 +749,14 @@ signal.signal(signal.SIGTERM, handler)
 
 try:
     jeedom_utils.write_pid(str(Config.pidFile))
-    Utils.sendToJeedom = jeedom_com(apikey=Config.apiKey, url=Config.callBack, cycle=Config.cycleEvent)
-    if not Utils.sendToJeedom.test():
+    Comm.sendToJeedom = jeedom_com(apikey=Config.apiKey, url=Config.callBack, cycle=Config.cycleEvent)
+    if not Comm.sendToJeedom.test():
         logging.error('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication ERROR (Daemon to Jeedom)')
         shutdown()
     else:
         logging.info('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication OK (Daemon to Jeedom)')
     jeedom_socket = jeedom_socket(port=Config.socketPort, address=Config.socketHost)
-    mainLoop(Config.cycleMain)
+    Loops.mainLoop(Config.cycleMain)
 except Exception as e:
     logging.error('[DAEMON][MAIN] Fatal error: %s', e)
     logging.info(traceback.format_exc())

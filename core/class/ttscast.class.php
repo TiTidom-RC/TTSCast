@@ -56,7 +56,7 @@ class ttscast extends eqLogic
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip list | grep -Ewc "PyChromecast|pydub|gTTS|google-cloud-texttospeech|google-auth|click|protobuf|requests|zeroconf"') < 9) {
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==13.1.0|google-cloud-texttospeech==2.15.1|gTTS==2.5.0|pydub==0.25.1"') < 4) {
                 $return['state'] = 'nok';
             } else {
                 $return['state'] = 'ok';
@@ -131,6 +131,7 @@ class ttscast extends eqLogic
             system::kill($pid);
         }
         system::kill('ttscastd.py');
+        system::fuserk(config::byKey('socketport', __CLASS__, '55111'));
         sleep(1);
     }
 
@@ -198,6 +199,13 @@ class ttscast extends eqLogic
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsVolume = strval($volume);
         $value = array('cmd' => 'playtts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsVolume' => $ttsVolume, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName);
+        self::sendToDaemon($value);
+    }
+
+    public static function actionGCast($gHomeUUID=null, $action=null, $message=null) {
+        log::add('ttscast', 'debug', '[ActionGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message);
+        $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID);
+        log::add('ttscast', 'debug', '[ActionGCast] Array :: ' . json_encode($value));
         self::sendToDaemon($value);
     }
 
@@ -290,10 +298,72 @@ class ttscast extends eqLogic
             ));
             return $newttscast;
         }
-        
-
-        
     }
+
+    public static function scheduleUpdateCast($_data)
+    {
+        if (!isset($_data['uuid'])) {
+            log::add('ttscast', 'error', '[SCHEDULE][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
+            return false;
+        }
+        $updttscast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
+        if (!is_object($updttscast)) {
+            log::add('ttscast', 'error', '[SCHEDULE][CAST] Cast non existant dans Jeedom');
+            return false;
+        }
+        else {
+            /* $cmd = $updttscast->getCmd('info', 'online');
+            if (is_object($cmd)) {
+                $cmd->event('1');
+                log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd event :: online');
+            } */
+            foreach($updttscast->getCmd('info') as $cmd) {
+                $logicalId = $cmd->getLogicalId();
+                # log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd :: ' . $logicalId);
+                if (key_exists($logicalId, $_data)) {
+                    log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd event :: ' . $logicalId . ' = ' . $_data[$logicalId]);
+                    $cmd->event($_data[$logicalId]);
+                } else {
+                    # log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd NON EXIST :: ' . $logicalId);
+                    continue;       
+                }
+            }
+        }
+    }
+
+    public static function sendOnStartCastToDaemon()
+    {
+        foreach(self::byType('ttscast') as $eqLogic) {
+            $eqLogic->enableCastToDaemon();
+        }
+    }
+
+    public function enableCastToDaemon()
+    {
+        if ($this->getLogicalId() != '') {
+            $value = array(
+                'cmd' => 'addcast',
+                'uuid' => $this->getLogicalId(),
+                'host' => $this->getConfiguration('host'),
+                'friendly_name' => $this->getConfiguration('friendly_name')
+            );
+            self::sendToDaemon($value);
+        }
+
+    }
+
+    public function disableCastToDaemon()
+    {
+        if ($this->getLogicalId() != '') {
+            $value = array(
+                'cmd' => 'removecast',
+                'uuid' => $this->getLogicalId(),
+                'host' => $this->getConfiguration('host'),
+                'friendly_name' => $this->getConfiguration('friendly_name')
+            );
+            self::sendToDaemon($value);
+        }
+    }    
 
     /* ************************ Methodes static : JEEDOM *************************** */
 
@@ -302,10 +372,24 @@ class ttscast extends eqLogic
     public static function cron() {}
     */
 
-    /*
-     * Fonction exécutée automatiquement toutes les 5 minutes par Jeedom
-    public static function cron5() {}
-    */
+    
+    // * Fonction exécutée automatiquement toutes les 5 minutes par Jeedom
+    public static function cron5() {
+        $currentTime = time();
+        foreach(self::byType('ttscast') as $eqLogic) {
+            $lastSchedule = $eqLogic->getCmd('info', 'lastschedulets');
+            if ($currentTime - $lastSchedule->execCmd() >= 180) {
+                log::add('ttscast', 'debug', '[CRON5][ONLINE] TTSCast :: ' . $eqLogic->getConfiguration('friendly_name') . ' is OFFLINE');
+                $cmd = $eqLogic->getCmd('info', 'online');
+                if (is_object($cmd)) {
+                    $cmd->event('0');
+                }
+                // TODO Envoyer l'event au démon pour désactiver ce cast   
+            }
+        }   
+
+    }
+    
 
     /*
      * Fonction exécutée automatiquement toutes les 10 minutes par Jeedom
@@ -388,6 +472,8 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
+        $orderCmd = 1;
+
         $cmd = $this->getCmd(null, 'refresh');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
@@ -397,6 +483,7 @@ class ttscast extends eqLogic
             $cmd->setType('action');
             $cmd->setSubType('other');    
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
@@ -404,12 +491,41 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'refreshcast');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Rafraîchir Config', __FILE__));
+            $cmd->setName(__('Rafraîchir Cast', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('refreshcast');
             $cmd->setType('action');
-            $cmd->setSubType('other');    
+            $cmd->setSubType('other');
 	        $cmd->setIsVisible(0);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'lastschedule');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Schedule LastTime', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('lastschedule');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'lastschedulets');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Schedule LastTime (TS)', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('lastschedulets');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(0);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
@@ -421,8 +537,9 @@ class ttscast extends eqLogic
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('online');
             $cmd->setType('info');
-            $cmd->setSubType('binary');    
+            $cmd->setSubType('binary');
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
@@ -434,12 +551,18 @@ class ttscast extends eqLogic
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('volumelevel');
             $cmd->setType('info');
-            $cmd->setSubType('numeric');    
+            $cmd->setSubType('numeric');
             $cmd->setUnite('%');
+            $cmd->setConfiguration('minValue', 0);
+            $cmd->setConfiguration('maxValue', 100);
+            $cmd->setTemplate('dashboard', 'core::tile');
+            $cmd->setTemplate('mobile', 'core::tile');
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
+        $volumeLevelId = $cmd->getId();
 
         $cmd = $this->getCmd(null, 'volumeset');
         if (!is_object($cmd)) {
@@ -451,9 +574,12 @@ class ttscast extends eqLogic
             $cmd->setSubType('slider');
             # TODO Comment forcer le widget à "button" ?
 	        $cmd->setIsVisible(1);
-            // $cmd->setValue($volume_id);
+            $cmd->setTemplate('dashboard', 'core::value');
+            $cmd->setTemplate('mobile', 'core::value');
+            $cmd->setValue($volumeLevelId);
             $cmd->setConfiguration('minValue', 0);
             $cmd->setConfiguration('maxValue', 100);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
@@ -467,6 +593,7 @@ class ttscast extends eqLogic
             $cmd->setType('info');
             $cmd->setSubType('binary');
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
@@ -481,6 +608,7 @@ class ttscast extends eqLogic
             $cmd->setSubType('other');
             // $cmd->setDisplay('icon', '<i class="fa fa-volume-down"></i>');
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
@@ -495,6 +623,7 @@ class ttscast extends eqLogic
             $cmd->setSubType('other');
             // $cmd->setDisplay('icon', '<i class="fa fa-volume-down"></i>');
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
@@ -502,12 +631,27 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'playerstate');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Etat Lecteur Multimedia', __FILE__));
+            $cmd->setName(__('Cast State', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('playerstate');
             $cmd->setType('info');
             $cmd->setSubType('string');
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'playerapp');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast App', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('playerapp');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
@@ -519,8 +663,9 @@ class ttscast extends eqLogic
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('tts');
             $cmd->setType('action');
-            $cmd->setSubType('message');    
+            $cmd->setSubType('message');
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
@@ -534,6 +679,7 @@ class ttscast extends eqLogic
             $cmd->setType('action');
             $cmd->setSubType('message');    
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
@@ -596,17 +742,37 @@ class ttscastCmd extends cmd
         if ( $this->GetType = "action" ) {
 			if ($logicalId == "tts") {
                 $googleUUID = $eqLogic->getLogicalId();
-                log::add('ttscast', 'debug', '[CMD] Message / Volume / GoogleUUID :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleUUID);
-                if ($logicalId == "tts" && isset($googleUUID) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
-                    log::add('ttscast', 'debug', '[CMD] Commande TTS appelée');
+                if (isset($googleUUID) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
+                    log::add('ttscast', 'debug', '[CMD] TTS (Message / Volume / GoogleUUID) :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleUUID);
                     ttscast::playTTS($googleUUID, $_options['message'], intval($_options['title']));
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour diffuser un message TTS');
+                }                
+            } elseif ($logicalId == "volumeset") {
+                log::add('ttscast', 'debug', '[CMD] VolumeSet Keys :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID) && isset($_options['slider'])) {
+                    log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['slider'] . ' / ' . $googleUUID);
+                    ttscast::actionGCast($googleUUID, "setvolume", $_options['slider']);
+                } else {
+                    log::add('ttscast', 'debug', '[CMD] VolumeSet :: ERROR = Mauvais paramètre');
                 }
-                
-            } 
-            
+            } elseif ($logicalId == "volumedown") {
+                log::add('ttscast', 'debug', '[CMD] VolumeDOWN :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID)) {
+                    ttscast::actionGCast($googleUUID, "volumedown");
+                }
+            } elseif ($logicalId == "volumeup") {
+                log::add('ttscast', 'debug', '[CMD] VolumeUP :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID)) {
+                    ttscast::actionGCast($googleUUID, "volumeup");
+                }
+            } else {
+                throw new Exception(__('Commande Action non implémentée actuellement', __FILE__));    
+            }
 		} else {
 			throw new Exception(__('Commande non implémentée actuellement', __FILE__));
 		}
