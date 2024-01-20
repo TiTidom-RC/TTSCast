@@ -751,7 +751,7 @@ class ttscastCmd extends cmd
                 log::add('ttscast', 'debug', '[CMD] VolumeSet Keys :: ' . json_encode($_options));
 
                 $googleUUID = $eqLogic->getLogicalId();
-                if (isset($googleUUID) && isset($_options['message'])) {
+                if (isset($googleUUID) && isset($_options['slider'])) {
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['slider'] . " / " . $googleUUID);
                     tttscast::actionGCast($googleUUID, 'setvolume', $_options['slider']);
                 } else {
