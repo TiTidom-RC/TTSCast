@@ -165,10 +165,10 @@ class Loops:
                     # Scan New Chromecast
                     if not Config.ScanPending:
                         if Config.ScanMode and (Config.ScanLastTime < Config.ScanModeStart):
-                            threading.Thread(target=Utils.scanChromeCast, args=('ScanMode',)).start()
+                            threading.Thread(target=Functions.scanChromeCast, args=('ScanMode',)).start()
                         elif (Config.ScanLastTime + Config.ScanSchedule <= currentTime):
                             logging.debug('[DAEMON][SCANNER][SCHEDULE][CALL] GCAST Names :: %s', str(Config.GCAST_NAMES))
-                            threading.Thread(target=Utils.scanChromeCast, args=('ScheduleMode',)).start()
+                            threading.Thread(target=Functions.scanChromeCast, args=('ScheduleMode',)).start()
                     else:
                         logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING ! ')
                     # Pause Cycle
