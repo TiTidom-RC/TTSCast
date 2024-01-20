@@ -754,8 +754,8 @@ class ttscastCmd extends cmd
 
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['slider'])) {
-                    log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['slider'] . " / " . $googleUUID);
-                    tttscast::actionGCast($googleUUID, "setvolume", $_options['slider']);
+                    log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['slider'] . ' / ' . $googleUUID);
+                    ttscast::actionGCast($googleUUID, "setvolume", $_options['slider']);
                 } else {
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ERROR = Mauvais paramètre');
                 }
