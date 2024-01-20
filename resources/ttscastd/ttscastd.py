@@ -88,8 +88,14 @@ class Loops:
                         logging.debug('[DAEMON][SOCKET] Action')
                         if 'cmd_action' in message:
                             if (message['cmd_action'] == 'setvolume' and all(keys in message for keys in ('value', 'googleUUID'))):
-                                logging.debug('[DAEMON][SOCKET] Action :: setVolume = %s / %s', message['value'], message['googleUUID'])
-                                Functions.setVolume(message['googleUUID'], message['value'])
+                                logging.debug('[DAEMON][SOCKET] Action :: setVolume = %s @ %s', message['value'], message['googleUUID'])
+                                Functions.setVolume(message['googleUUID'], message['value'], message['cmd_action'])
+                            elif (message['cmd_action'] == 'volumeup' and 'googleUUID' in message):
+                                logging.debug('[DAEMON][SOCKET] Action :: Volume UP @ %s', message['googleUUID'])
+                                Functions.setVolume(message['googleUUID'], '', message['cmd_action'])
+                            elif (message['cmd_action'] == 'volumedown' and 'googleUUID' in message):
+                                logging.debug('[DAEMON][SOCKET] Action :: Volume DOWN @ %s', message['googleUUID'])
+                                Functions.setVolume(message['googleUUID'], '', message['cmd_action'])
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
                         if 'days' in message:
@@ -506,10 +512,16 @@ class TTSCast:
 class Functions:
     """ Class Functions """
     
-    def setVolume(_googleUUID='UNKOWN', _value='0'):
+    def setVolume(_googleUUID='UNKOWN', _value='0', _mode='setvolume'):
         try:
             if _googleUUID != 'UNKOWN':
-                logging.debug('[DAEMON][setVolume] Set Volume :: %s / %s', _googleUUID, _value)
+                if (_mode == 'set'):
+                    logging.debug('[DAEMON][setVolume] Set Volume :: %s / %s', _googleUUID, _value)
+                elif (_mode == 'up'):
+                    logging.debug('[DAEMON][setVolume] Volume UP :: %s', _googleUUID)
+                elif (_mode == 'down'): 
+                    logging.debug('[DAEMON][setVolume] Volume DOWN :: %s', _googleUUID)
+                    
                 uuid = UUID(_googleUUID)
                 chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=[uuid])
                 if not chromecasts:
@@ -519,11 +531,15 @@ class Functions:
                 cast = chromecasts[0]
                 cast.wait(timeout=10)
                 logging.debug('[DAEMON][setVolume] Chromecast trouvé, tentative de set du volume')
-                castVolumeLevel = round(cast.set_volume(volume=float(_value) / 100) * 100)
-                # castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
+                if (_mode == 'set'):
+                    castVolumeLevel = round(cast.set_volume(volume=float(_value) / 100) * 100)
+                elif (_mode == 'up'):
+                    castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
+                elif (_mode == 'down'): 
+                    castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
                 data = {
                     'uuid': str(cast.uuid),
-                    'actionReturn': 'setvolume',
+                    'actionReturn': _mode,
                     'volumelevel': castVolumeLevel,
                     'online': '1'
                 }

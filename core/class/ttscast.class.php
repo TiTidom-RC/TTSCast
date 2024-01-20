@@ -751,7 +751,6 @@ class ttscastCmd extends cmd
                 }                
             } elseif ($logicalId == "volumeset") {
                 log::add('ttscast', 'debug', '[CMD] VolumeSet Keys :: ' . json_encode($_options));
-
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['slider'])) {
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['slider'] . ' / ' . $googleUUID);
@@ -759,6 +758,20 @@ class ttscastCmd extends cmd
                 } else {
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ERROR = Mauvais paramètre');
                 }
+            } elseif ($logicalId == "volumedown") {
+                log::add('ttscast', 'debug', '[CMD] VolumeDOWN :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID)) {
+                    ttscast::actionGCast($googleUUID, "volumedown");
+                }
+            } elseif ($logicalId == "volumeup") {
+                log::add('ttscast', 'debug', '[CMD] VolumeUP :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID)) {
+                    ttscast::actionGCast($googleUUID, "volumeup");
+                }
+            } else {
+                throw new Exception(__('Commande Action non implémentée actuellement', __FILE__));    
             }
 		} else {
 			throw new Exception(__('Commande non implémentée actuellement', __FILE__));

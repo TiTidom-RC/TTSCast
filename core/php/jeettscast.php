@@ -56,17 +56,17 @@ try {
         }
     } elseif (isset($result['actionReturn'])) {
         log::add('ttscast','debug','[CALLBACK] TTSCast ActionReturn :: ' . json_encode($result));
-        if ($result['actionReturn'] == "setvolume") {
+        if ($result['actionReturn'] == "setvolume" || $result['actionReturn'] == "volumeup" || $result['actionReturn'] == "volumedown") {
             if (!isset($result['uuid']) || !isset($result['volumelevel'])) {
-                log::add('ttscast','debug','[CALLBACK] Action Return :: UUID et/ou VolumeLevel non défini(s) !');
+                log::add('ttscast','debug','[CALLBACK] Action Return Volume :: UUID et/ou VolumeLevel non défini(s) !');
             } else {
-                log::add('ttscast','debug','[CALLBACK] Action Return :: Les paramètres sont bien définis...');
+                log::add('ttscast','debug','[CALLBACK] Action Return Volume :: Les paramètres sont bien définis...');
                 $ttscast = ttscast::byLogicalId($result['uuid'], 'ttscast');
                 if (is_object($ttscast)) { 
-                    log::add('ttscast','debug','[CALLBACK] Action Return :: Le Cast a été trouvé...');
+                    log::add('ttscast','debug','[CALLBACK] Action Return Volume :: Le Cast a été trouvé...');
                     $cmd = $ttscast->getCmd('info', 'volumelevel');
                     if (is_object($cmd)) {
-                        log::add('ttscast','debug','[CALLBACK] Action Return :: SetVolume in Config :: ' . $result['volumelevel']);
+                        log::add('ttscast','debug','[CALLBACK] Action Return Volume :: SetVolume in Config :: ' . $result['volumelevel']);
                         $cmd->event($result['volumelevel']);
                     }
                 }
