@@ -83,7 +83,13 @@ class Loops:
                     return
                 try:
                     # TODO ***** Gestion des messages reçus de Jeedom *****
-                    if message['cmd'] == 'purgettscache':
+                    if message['cmd'] == 'action':
+                        # Gestion des actions
+                        logging.debug('[DAEMON][SOCKET] Action')
+                        if 'cmd_action' in message:
+                            if (message['cmd_action'] == 'setvolume' and 'value' in message):
+                                logging.debug('[DAEMON][SOCKET] Action :: setVolume = %s', message['value'])
+                    elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
                         if 'days' in message:
                             Functions.purgeCache(message['days'])
