@@ -72,5 +72,5 @@ class Config:
     cycleEvent = 0.5  # cycle de la boucle des events
     cycleMain = 2  # cycle de la boucle MainLoop et par héritage du socket read
     
-class Utils:
+class Comm:
     sendToJeedom = ''

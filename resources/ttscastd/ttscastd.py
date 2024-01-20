@@ -65,7 +65,7 @@ except ImportError:
 
 # Import Config
 try:
-    from utils import Utils, Config
+    from utils import Comm, Config
 except ImportError:
     print("[DAEMON][IMPORT] Error: importing module config")
     sys.exit(1)
@@ -123,11 +123,11 @@ class Loops:
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
                         Config.ScanMode = True
                         Config.ScanModeStart = int(time.time())
-                        Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})
+                        Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})
                     elif message['cmd'] == "scanOff":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
                         Config.ScanMode = False
-                        Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
+                        Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
                         
                 except Exception as e:
                     logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
@@ -145,7 +145,7 @@ class Loops:
             # Config.NETCAST_BROWSERMANAGER = castBrowserManager()
             # Config.NETCAST_BROWSERMANAGER.start()
             
-            Utils.sendToJeedom.send_change_immediate({'daemonStarted': '1'})
+            Comm.sendToJeedom.send_change_immediate({'daemonStarted': '1'})
                     
             while not Config.IS_ENDING:
                 try:
@@ -156,11 +156,11 @@ class Loops:
                     if (Config.ScanMode and (Config.ScanModeStart + Config.ScanModeTimeOut) <= currentTime):
                         Config.ScanMode = False
                         logging.info('[DAEMON][MAINLOOP] ScanMode END')
-                        Utils.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
+                        Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
                     # Heartbeat du démon
                     if ((Config.HeartbeatLastTime + Config.HeartbeatFrequency) <= currentTime):
                         logging.debug('[DAEMON][MAINLOOP] Heartbeat = 1')
-                        Utils.sendToJeedom.send_change_immediate({'heartbeat': '1'})
+                        Comm.sendToJeedom.send_change_immediate({'heartbeat': '1'})
                         Config.HeartbeatLastTime = currentTime
                     # Scan New Chromecast
                     if not Config.ScanPending:
@@ -526,7 +526,7 @@ class Functions:
                         'scanmode': 1
                     }
                     # Envoi vers Jeedom
-                    Utils.sendToJeedom.add_changes('devices::' + data['uuid'], data)
+                    Comm.sendToJeedom.add_changes('devices::' + data['uuid'], data)
             elif (_mode == "ScheduleMode"):
                 # ScheduleMode
                 currentTime = int(time.time())
@@ -566,7 +566,7 @@ class Functions:
                     # Déconnexion du Chromecast
                     cast.disconnect(timeout=10, blocking=False)
                     # Envoi vers Jeedom
-                    Utils.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                    Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
                     
                 browser.stop_discovery()
         except Exception as e:
@@ -693,8 +693,8 @@ signal.signal(signal.SIGTERM, handler)
 
 try:
     jeedom_utils.write_pid(str(Config.pidFile))
-    Utils.sendToJeedom = jeedom_com(apikey=Config.apiKey, url=Config.callBack, cycle=Config.cycleEvent)
-    if not Utils.sendToJeedom.test():
+    Comm.sendToJeedom = jeedom_com(apikey=Config.apiKey, url=Config.callBack, cycle=Config.cycleEvent)
+    if not Comm.sendToJeedom.test():
         logging.error('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication ERROR (Daemon to Jeedom)')
         shutdown()
     else:
