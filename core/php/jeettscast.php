@@ -60,10 +60,15 @@ try {
             if (!isset($result['uuid']) || !isset($result['volumelevel'])) {
                 log::add('ttscast','debug','[CALLBACK] Action Return :: UUID et/ou VolumeLevel non défini(s) !');
             } else {
+                log::add('ttscast','debug','[CALLBACK] Action Return :: Les paramètres sont bien définis...');
                 $ttscast = ttscast::byLogicalId($result['uuid'], 'ttscast');
                 if (is_object($ttscast)) { 
-                    $cmd = $ttscast->getCmd('info', 'volume');
-                    $cmd->event($_data['volumelevel']);
+                    log::add('ttscast','debug','[CALLBACK] Action Return :: Le Cast a été trouvé...');
+                    $cmd = $ttscast->getCmd('info', 'volumelevel');
+                    if (is_object($cmd)) {
+                        log::add('ttscast','debug','[CALLBACK] Action Return :: SetVolume in Config :: ' . $_data['volumelevel']);
+                        $cmd->event($_data['volumelevel']);
+                    }
                 }
             }
         } else {
