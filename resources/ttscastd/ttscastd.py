@@ -525,7 +525,7 @@ class Functions:
                 data = {
                     'uuid': str(cast.uuid),
                     'actionReturn': 'setvolume',
-                    'volumelevel': castVolumeLevel,
+                    'volumelevel': castVolumeLevel * 100,
                     'online': '1'
                 }
                 # Déconnexion du Chromecast
