@@ -524,7 +524,7 @@ class Functions:
                 castVolumeLevel = int(cast.status.volume_level * 100)
                 data = {
                     'uuid': str(cast.uuid),
-                    'action': 'setvolume',
+                    'actionReturn': 'setvolume',
                     'volumelevel': castVolumeLevel,
                     'online': '1'
                 }
@@ -532,7 +532,7 @@ class Functions:
                 cast.disconnect(timeout=10, blocking=False)
                 browser.stop_discovery()
                 # Envoi vers Jeedom
-                Comm.sendToJeedom.send_change_immediate({'actionReturn', data})
+                Comm.sendToJeedom.send_change_immediate(data)
                 return True
         except Exception as e:
             logging.error('[DAEMON][setVolume] Exception on setVolume :: %s', e)

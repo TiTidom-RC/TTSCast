@@ -55,14 +55,20 @@ try {
             ttscast::sendOnStartCastToDaemon();
         }
     } elseif (isset($result['actionReturn'])) {
-        log::add('ttscast','debug','[CALLBACK] TTSCast Action Return');
-            foreach ($result['actionReturn'] as $key => $data) {
-                if (!isset($data['uuid'])) {
-                    log::add('ttscast','debug','[CALLBACK] Action Return :: UUID non défini !');
-                    continue;
+        log::add('ttscast','debug','[CALLBACK] TTSCast ActionReturn :: ' . json_encode($result));
+        if ($result['actionReturn'] == 'setVolume') {
+            if (!isset($result['uuid']) || !isset($result['volumelevel'])) {
+                log::add('ttscast','debug','[CALLBACK] Action Return :: UUID et/ou VolumeLevel non défini(s) !');
+            } else {
+                $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
+                if (is_object($ttscast)) { 
+                    $ttscast->getCmd('info', 'volume');
+                    $cmd->event($_data['volumelevel']);
                 }
-                log::add('ttscast','debug','[CALLBACK] Action Return :: ' . json_encode($data));
             }
+        }
+        
+            
     } elseif (isset($result['devices'])) {
         log::add('ttscast','debug','[CALLBACK] TTSCast Devices Discovery');
         foreach ($result['devices'] as $key => $data) {
