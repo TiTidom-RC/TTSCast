@@ -519,9 +519,8 @@ class Functions:
                 cast = chromecasts[0]
                 cast.wait(timeout=10)
                 logging.debug('[DAEMON][setVolume] Chromecast trouvé, tentative de set du volume')
-                castVolumeLevel = cast.set_volume(volume=float(_value) / 100) * 100
-                # time.sleep(0.3)
-                # castVolumeLevel = int(cast.status.volume_level * 100)
+                # castVolumeLevel = cast.set_volume(volume=float(_value) / 100) * 100
+                castVolumeLevel = cast.volume_down(timeout=10)
                 data = {
                     'uuid': str(cast.uuid),
                     'actionReturn': 'setvolume',
