@@ -203,7 +203,9 @@ class ttscast extends eqLogic
     }
 
     public static function actionGCast($gHomeUUID=null, $action=null, $message=null) {
+        log::add('ttscast', 'debug', '[ActionGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message);
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID);
+        log::add('ttscast', 'debug', '[ActionGCast] Array :: ' . json_encode($value));
         self::sendToDaemon($value);
     }
 
@@ -753,7 +755,7 @@ class ttscastCmd extends cmd
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['slider'])) {
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['slider'] . " / " . $googleUUID);
-                    tttscast::actionGCast($googleUUID, 'setvolume', str($_options['slider']));
+                    tttscast::actionGCast($googleUUID, 'setvolume', $_options['slider']);
                 } else {
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ERROR = Mauvais paramètre');
                 }
