@@ -52,26 +52,6 @@ $eqLogics = eqLogic::byType($plugin->getId());
 			        </div>
                 </div>
             </div>
-            <?php
-            // à conserver
-            // sera afficher uniquement si l'utilisateur est en version 4.4 ou supérieur
-            $jeedomVersion  = jeedom::version() ?? '0';
-            $displayInfoValue = version_compare($jeedomVersion, '4.4.0', '>=');
-            if ($displayInfoValue) {
-            ?>
-			    <div class="col-sm-2">
-    				<legend><i class=" fas fa-comments"></i> {{Aide sur Community}}</legend>
-	    			<div class="eqLogicThumbnailContainer">
-		    			<div class="cursor eqLogicAction logoSecondary" data-action="createCommunityPost">
-			    			<i class="fas fa-ambulance icon_red"></i>
-				    		<br>
-					    	<span style="color:var(--txt-color)">{{Créer un Post}}</span>
-					    </div>
-				    </div>
-			    </div>
-			<?php
-			}
-			?>
         </div>
         <legend><i class="fas fa-volume-down"></i> {{Mes TTSCasts}}</legend>
         <?php
@@ -267,7 +247,6 @@ $eqLogics = eqLogic::byType($plugin->getId());
                             <tr>
                                 <th class="hidden-xs" style="min-width:50px;width:70px;">ID</th>
                                 <th style="min-width:200px;width:350px;">{{Nom}}</th>
-                                <th style="min-width:200px;width:350px;">{{Liste de commandes}}</th>
                                 <th style="min-width:100px;width:150px;">{{Type}}</th>
                                 <th style="min-width:100px;">{{Options}}</th>
                                 <th style="min-width:150px;">{{Etat}}</th>
