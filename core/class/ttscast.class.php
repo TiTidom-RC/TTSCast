@@ -739,7 +739,7 @@ class ttscastCmd extends cmd
         
         log::add('ttscast', 'debug', '[CMD] LogicalId :: ' . $logicalId);
 
-        if ( $this->GetType = "action" ) {
+        if ( $this->getType() == "action" ) {
 			if ($logicalId == "tts") {
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
