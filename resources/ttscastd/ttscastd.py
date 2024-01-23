@@ -599,7 +599,6 @@ class Functions:
                 chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
                 
-                
                 for cast in chromecasts: 
                     logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
                     
@@ -627,8 +626,7 @@ class Functions:
                         Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
                     except Exception as e:
                         logging.error('[DAEMON][SCANNER][SCHEDULE] Exception :: %s', e)
-                    finally:
-                        browser.stop_discovery()              
+                browser.stop_discovery()
         except Exception as e:
             logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
             logging.debug(traceback.format_exc())
