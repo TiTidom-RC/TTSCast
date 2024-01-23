@@ -620,12 +620,14 @@ class Functions:
                             'schedule': 1,
                             'online': '1'
                         }
-                        # Déconnexion du Chromecast
-                        cast.disconnect(timeout=10, blocking=False)
+
                         # Envoi vers Jeedom
                         Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
                     except Exception as e:
                         logging.error('[DAEMON][SCANNER][SCHEDULE] Exception :: %s', e)
+                    finally:
+                        # Déconnexion du Chromecast
+                        cast.disconnect(timeout=10, blocking=False)
                 browser.stop_discovery()
         except Exception as e:
             logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
