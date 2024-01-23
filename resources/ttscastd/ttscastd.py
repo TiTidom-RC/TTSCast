@@ -598,38 +598,41 @@ class Functions:
                 # chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
                 chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
+                
                 for cast in chromecasts: 
                     logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
                     
                     # Connexion au Chromecast
                     cast.wait(timeout=5)
-                    time.sleep(0.3)
+                    try:
+                        time.sleep(0.3)
+                        castVolumeLevel = int(cast.status.volume_level * 100)
+                        castAppDisplayName = cast.status.display_name
+                        castPlayerState = cast.media_controller.status.player_state
                     
-                    castVolumeLevel = int(cast.status.volume_level * 100)
-                    castAppDisplayName = cast.status.display_name
-                    castPlayerState = cast.media_controller.status.player_state
-                    
-                    data = {
-                        'uuid': str(cast.uuid),
-                        'lastschedule': currentTimeStr,
-                        'lastschedulets': currentTime,
-                        'volumelevel': castVolumeLevel,
-                        'playerstate': castPlayerState,
-                        'playerapp': castAppDisplayName,
-                        'schedule': 1,
-                        'online': '1'
-                    }
-                    # Déconnexion du Chromecast
-                    cast.disconnect(timeout=10, blocking=False)
-                    # Envoi vers Jeedom
-                    Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
-                    
+                        data = {
+                            'uuid': str(cast.uuid),
+                            'lastschedule': currentTimeStr,
+                            'lastschedulets': currentTime,
+                            'volumelevel': castVolumeLevel,
+                            'playerstate': castPlayerState,
+                            'playerapp': castAppDisplayName,
+                            'schedule': 1,
+                            'online': '1'
+                        }
+
+                        # Envoi vers Jeedom
+                        Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                    except Exception as e:
+                        logging.error('[DAEMON][SCANNER][SCHEDULE] Exception :: %s', e)
+                    finally:
+                        # Déconnexion du Chromecast
+                        cast.disconnect(timeout=10, blocking=False)
                 browser.stop_discovery()
         except Exception as e:
             logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
             logging.debug(traceback.format_exc())
             return False
-        
         Config.ScanLastTime = int(time.time())
         Config.ScanPending = False
         return True
