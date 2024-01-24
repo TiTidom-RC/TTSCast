@@ -221,7 +221,7 @@ class TTSCast:
             filecontent = None
         return filecontent
     
-    def voiceRSS(ttsText, ttsLang, ttsVoiceName, ttsSpeed='1.0'):
+    def voiceRSS(ttsText, ttsLang, ttsSpeed='1.0'):
         filecontent = None
         try:
             ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
