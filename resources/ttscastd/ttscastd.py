@@ -233,7 +233,7 @@ class TTSCast:
             ttsFullURI = urljoin(Config.ttsVoiceRSSUrl, ttsParams)
             logging.debug('[DAEMON][VoiceRSS] ttsFullURI :: %s', ttsFullURI)
             
-            response = requests.post(ttsFullURI, headers=ttsHeaders, timeout=30, verify=False)
+            response = requests.post(ttsFullURI, headers=ttsHeaders, timeout=30, verify=True)
             filecontent = response.content
             
             if response.status_code != requests.codes.ok:
