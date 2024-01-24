@@ -225,7 +225,7 @@ class TTSCast:
         filecontent = None
         try:
             ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-            ttsParams = '?key=' + Config.apiRSSKey + '&hl=' + ttsLang + '&src=' + quote(ttsText, safe='')
+            ttsParams = '?key=' + Config.apiRSSKey + '&hl=' + ttsLang + '&c=MP3&f=16khz_8bit_mono&ssml=false&b64=false' + '&src=' + quote(ttsText, safe='')
             ttsFullURI = urljoin(Config.ttsVoiceRSSUrl, ttsParams)
             logging.debug('[DAEMON][VoiceRSS] ttsFullURI :: %s', ttsFullURI)
             
