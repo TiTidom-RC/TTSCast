@@ -66,7 +66,7 @@ if (!isConnect()) {
                         <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
                         <option value="gtranslatetts">{{Google Translate API (Internet)}}</option>
                         <option value="gcloudtts">{{Google Cloud Text-To-Speech (Clé & Internet)}}</option>
-                        <option value="voicersstts">{{Google Cloud Text-To-Speech (Clé & Internet)}}</option>
+                        <option value="voicersstts">{{Voice RSS API (Clé & Internet)}}</option>
                     </select>
                 </div>
             </div>
@@ -91,12 +91,6 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control custominput-voicerssapikey" type="text" data-l1key="voiceRSSAPIKey" />
-                </div>
-                <div class="col-lg-2">
-                    <a class="btn btn-primary btn-file">
-                        <i class="fas fa-cloud-upload-alt"></i> {{Ajouter Clé (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json" />
-                    </a>
-                    <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-trash-alt"></i> {{Effacer Clé}}</a>
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
