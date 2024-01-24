@@ -47,6 +47,8 @@ class Config:
     ttsWebSrvMedia = ''
     ttsWebSrvImages = ''
     ttsWebSrvJeeTTS = ''
+    
+    ttsVoiceRSSUrl = 'https://api.voicerss.org/'
 
     gCloudApiKey = ''
 
@@ -65,6 +67,7 @@ class Config:
     pidFile = '/tmp/ttscastd.pid'
     apiKey = ''
     apiTTSKey = ''
+    apiRSSKey = ''
     pluginVersion = ''
     callBack = ''
     

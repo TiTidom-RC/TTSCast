@@ -1,14 +1,14 @@
 {
 	"id" : "ttscast",
 	"name" : "TTS Cast",
-	"pluginVersion": "0.9.5",
+	"pluginVersion": "0.9.6",
 	"description" : {
-		"fr_FR": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
-		"en_US": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
-		"es_ES": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)",
-		"de_DE": "TTS Cast : plugin permettant de générer des fichiers TTS et de les diffuser sur un équipement Google (type ChromeCast)"
+		"fr_FR": "TTS Cast : plugin permettant de gérer des équipements Google (type Google Home, Google Nest, Chromecast) et de diffuser dessus des notifications TTS ou sons (MP3), ou de lancer la lecture d'une radio en streaming",
+		"en_US": "TTS Cast : plugin permettant de gérer des équipements Google (type Google Home, Google Nest, Chromecast) et de diffuser dessus des notifications TTS ou sons (MP3), ou de lancer la lecture d'une radio en streaming",
+		"es_ES": "TTS Cast : plugin permettant de gérer des équipements Google (type Google Home, Google Nest, Chromecast) et de diffuser dessus des notifications TTS ou sons (MP3), ou de lancer la lecture d'une radio en streaming",
+		"de_DE": "TTS Cast : plugin permettant de gérer des équipements Google (type Google Home, Google Nest, Chromecast) et de diffuser dessus des notifications TTS ou sons (MP3), ou de lancer la lecture d'une radio en streaming",
 	},
-	"utilization": "Détectez les ChromeCast présents sur votre réseau, et utilisez les pour diffuser des notifications vocales venant de Jeedom, générées à travers un moteur TTS (Text-To-Speech) disponible dans le plugin. (JeedomTTS, Google Translate API, Google Cloud TTS)",
+	"utilization": "Détectez les Google ChromeCast présents sur votre réseau, et utilisez les pour diffuser des notifications vocales ou mp3 venant de Jeedom, générées à travers un moteur TTS (Text-To-Speech) disponible dans le plugin. (JeedomTTS, Google Translate API, Google Cloud TTS, Voice RSS)",
 	"licence" : "AGPL",
 	"author" : "TiTidom",
 	"require" : "4.2.0",

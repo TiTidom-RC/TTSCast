@@ -66,6 +66,7 @@ if (!isConnect()) {
                         <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
                         <option value="gtranslatetts">{{Google Translate API (Internet)}}</option>
                         <option value="gcloudtts">{{Google Cloud Text-To-Speech (Clé & Internet)}}</option>
+                        <option value="voicersstts">{{Google Cloud Text-To-Speech (Clé & Internet)}}</option>
                     </select>
                 </div>
             </div>
@@ -82,6 +83,20 @@ if (!isConnect()) {
                         <option value="it-IT">{{Italien (it-IT)}}</option>
                         <option value="sr-RS">{{Serbe (sr-RS)}}</option>
                     </select>
+                </div>
+            </div>
+            <div class="form-group customform-voicersstts">
+                <label class="col-lg-3 control-label">{{Clé API (Voice RSS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://www.voicerss.org/personel/">{{SITE}}</a>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Rentrer votre clé API Voice RSS, récupérable sur leur site, dans votre profil'}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control custominput-voicerssapikey" type="text" data-l1key="voiceRSSAPIKey" />
+                </div>
+                <div class="col-lg-2">
+                    <a class="btn btn-primary btn-file">
+                        <i class="fas fa-cloud-upload-alt"></i> {{Ajouter Clé (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json" />
+                    </a>
+                    <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-trash-alt"></i> {{Effacer Clé}}</a>
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
@@ -250,14 +265,22 @@ if (!isConnect()) {
             $('.customform-gcloudtts').show();
             $('.customform-gtts').hide();
             $('.customform-lang').hide();
+            $('.customform-voicersstts').hide();
         } else if (val == 'gtranslatetts') {
             $('.customform-gcloudtts').hide();
             $('.customform-gtts').show();
             $('.customform-lang').show();
+            $('.customform-voicersstts').hide();
+        } else if (val == 'voicersstts') {
+            $('.customform-gcloudtts').hide();
+            $('.customform-gtts').hide();
+            $('.customform-lang').show();
+            $('.customform-voicersstts').show();
         } else {
             $('.customform-gcloudtts').hide();
             $('.customform-gtts').hide();
             $('.customform-lang').show();
+            $('.customform-voicersstts').hide();
         }
     }
 
