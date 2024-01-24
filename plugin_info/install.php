@@ -47,6 +47,18 @@ function ttscast_install() {
     if (config::byKey('ttsPurgeCacheDays', 'ttscast') == '') {
         config::save('ttsPurgeCacheDays', '10', 'ttscast');
     }
+
+    $dependencyInfo = ttscast::dependancy_info();
+    if (!isset($dependencyInfo['state'])) {
+        message::add('ttscast', __('Veuillez vérifier les dépendances', __FILE__));
+    } elseif ($dependencyInfo['state'] == 'nok') {
+        try {
+            $plugin = plugin::byId('ttscast');
+            $plugin->dependancy_install();
+        } catch (\Throwable $th) {
+            message::add('ttscast', __('Une erreur est survenue à la mise à jour automatique des dépendances. Vérifiez les logs et relancez l\'installation des dépendances manuellement', __FILE__));
+        }
+    }
 }
 
 // Fonction exécutée automatiquement après la mise à jour du plugin

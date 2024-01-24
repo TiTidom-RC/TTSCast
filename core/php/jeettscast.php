@@ -44,6 +44,8 @@ try {
             event::add('ttscast::scanState', array(
                 'scanState' => 'scanOff')
             );
+            ttscast::sendOnStartCastToDaemon();
+
         }
     } elseif (isset($result['heartbeat'])) {
         if ($result['heartbeat'] == 1) {
