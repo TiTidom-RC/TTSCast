@@ -34,8 +34,8 @@ from uuid import UUID
 try:
     from jeedom.jeedom import *
     # from jeedom.jeedom import jeedom_socket, jeedom_utils, jeedom_com, JEEDOM_SOCKET_MESSAGE
-except ImportError:
-    print("[DAEMON][IMPORT] Error: importing module jeedom.jeedom")
+except ImportError as e:
+    print("[DAEMON][IMPORT] Error: importing module jeedom.jeedom :: %s", e)
     sys.exit(1)
 
 # Import pour PyChromeCast
@@ -45,29 +45,29 @@ try:
     import pychromecast
     from pychromecast import quick_play
     # import zeroconf
-except ImportError:
-    print("[DAEMON][IMPORT] Error: importing module TTS")
+except ImportError as e:
+    print("[DAEMON][IMPORT] Error: importing module TTS :: %s", e)
     sys.exit(1)
 
 # Import gTTS (Google Translate TTS)
 try:
     from gtts import gTTS
-except ImportError: 
-    print("[DAEMON][IMPORT] Error: importing module gTTS")
+except ImportError as e: 
+    print("[DAEMON][IMPORT] Error: importing module gTTS :: %s", e)
     sys.exit(1)
 
 # Import pyDub (Audio changing)
 # try:
 #     from pydub import AudioSegment
-# except ImportError: 
-#     print("[DAEMON][IMPORT] Error: importing module gTTS")
+# except ImportError as e: 
+#     print("[DAEMON][IMPORT] Error: importing module gTTS :: %s", e)
 #     sys.exit(1)
 
 # Import Config
 try:
     from utils import Comm, Config
-except ImportError:
-    print("[DAEMON][IMPORT] Error: importing module config")
+except ImportError as e:
+    print("[DAEMON][IMPORT] Error: importing module config :: %s", e)
     sys.exit(1)
 
 class Loops:
