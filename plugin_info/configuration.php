@@ -66,6 +66,7 @@ if (!isConnect()) {
                         <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
                         <option value="gtranslatetts">{{Google Translate API (Internet)}}</option>
                         <option value="gcloudtts">{{Google Cloud Text-To-Speech (Clé & Internet)}}</option>
+                        <option value="voicersstts">{{Voice RSS API (Clé & Internet)}}</option>
                     </select>
                 </div>
             </div>
@@ -84,6 +85,14 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
+            <div class="form-group customform-voicersstts">
+                <label class="col-lg-3 control-label">{{Clé API (Voice RSS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://www.voicerss.org/personel/">{{SITE}}</a>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Rentrer votre clé API Voice RSS, récupérable sur leur site, dans votre profil'}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control custominput-voicerssapikey" type="text" data-l1key="voiceRSSAPIKey" />
+                </div>
+            </div>
             <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Clé API (gCloud TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton 'Ajouter Clé (JSON)'}}"></i></sup>
@@ -96,6 +105,56 @@ if (!isConnect()) {
                         <i class="fas fa-cloud-upload-alt"></i> {{Ajouter Clé (JSON)}}<input class="pluginAction" data-action="uploadAPIKey" type="file" name="fileAPIKey" style="display: inline-block;" accept=".json" />
                     </a>
                     <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-trash-alt"></i> {{Effacer Clé}}</a>
+                </div>
+            </div>
+            <div class="form-group customform-voicersstts">
+                <label class="col-lg-3 control-label">{{Langue/Voix TTS (Voice RSS TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Voice RSS TTS}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <select class="configKey form-control" data-l1key="voiceRSSTTSVoice">
+                        <!-- French -->
+                        <option value="fr-fr-Bette">Français (France) - Bette Female (fr-fr-Bette)</option>
+                        <option value="fr-fr-Iva">Français (France) - Iva Female (fr-fr-Iva)</option>
+                        <option value="fr-fr-Zola">Français (France) - Zola Female (fr-fr-Zola)</option>
+                        <option value="fr-fr-Axel">Français (France) - Axel Male (fr-fr-Axel)</option>
+                        <!-- English -->
+                        <option value="en-us-Linda">Anglais (US) - Linda Female (en-us-Linda)</option>
+                        <option value="en-us-Amy">Anglais (US) - Amy Female (en-us-Amy)</option>
+                        <option value="en-us-Mary">Anglais (US) - Mary Female (en-us-Mary)</option>
+                        <option value="en-us-John">Anglais (US) - John Male (en-us-John)</option>
+                        <option value="en-us-Mike">Anglais (US) - Mike Male (en-us-Mike)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group customform-voicersstts">
+                <label class="col-lg-3 control-label">{{Vitesse de Dictée (Voice RSS TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Valeur par défaut = Normal (0)}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="voiceRSSTTSSpeed">
+                        <option value="-10">{{Lent (-10)}}</option>
+                        <option value="-9">{{Lent (-9)}}</option>
+                        <option value="-8">{{Lent (-8)}}</option>
+                        <option value="-7">{{Lent (-7)}}</option>
+                        <option value="-6">{{Lent (-6)}}</option>
+                        <option value="-5">{{Lent (-5)}}</option>
+                        <option value="-4">{{Lent (-4)}}</option>
+                        <option value="-3">{{Lent (-3)}}</option>
+                        <option value="-2">{{Lent (-2)}}</option>
+                        <option value="-1">{{Lent (-1)}}</option>
+                        <option value="0" selected>{{Normal (0)}}</option>
+                        <option value="1">{{Rapide (+1)}}</option>
+                        <option value="2">{{Rapide (+2)}}</option>
+                        <option value="3">{{Rapide (+3)}}</option>
+                        <option value="4">{{Rapide (+4)}}</option>
+                        <option value="5">{{Rapide (+5)}}</option>
+                        <option value="6">{{Rapide (+6)}}</option>
+                        <option value="7">{{Rapide (+7)}}</option>
+                        <option value="8">{{Rapide (+8)}}</option>
+                        <option value="9">{{Rapide (+9)}}</option>
+                        <option value="10">{{Rapide (+10)}}</option>
+                    </select>
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
@@ -250,14 +309,22 @@ if (!isConnect()) {
             $('.customform-gcloudtts').show();
             $('.customform-gtts').hide();
             $('.customform-lang').hide();
+            $('.customform-voicersstts').hide();
         } else if (val == 'gtranslatetts') {
             $('.customform-gcloudtts').hide();
             $('.customform-gtts').show();
             $('.customform-lang').show();
+            $('.customform-voicersstts').hide();
+        } else if (val == 'voicersstts') {
+            $('.customform-gcloudtts').hide();
+            $('.customform-gtts').hide();
+            $('.customform-lang').hide();
+            $('.customform-voicersstts').show();
         } else {
             $('.customform-gcloudtts').hide();
             $('.customform-gtts').hide();
             $('.customform-lang').show();
+            $('.customform-voicersstts').hide();
         }
     }
 
