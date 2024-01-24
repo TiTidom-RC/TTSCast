@@ -473,6 +473,29 @@ class TTSCast:
             
             res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
             logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+        elif ttsEngine == "voicersstts":
+            logging.debug('[DAEMON][TTS] TTSEngine = voicersstts')
+            
+            raw_filename = ttsText + "|VoiceRSSTTS|" + ttsLang
+            filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+            filepath = os.path.join(symLinkPath, filename)
+            logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
+            
+            if not os.path.isfile(filepath):
+                ttsfile = TTSCast.voiceRSS(ttsText, ttsLang)
+                if ttsfile is not None:
+                    with open(filepath, 'wb') as f:
+                        f.write(ttsfile)
+                else:
+                    logging.debug('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output')
+            else:
+                logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+            
+            urlFileToPlay = urljoin(ttsSrvWeb, filename)
+            logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+            
+            res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
+            logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
     def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=30):
         if googleName != '':
