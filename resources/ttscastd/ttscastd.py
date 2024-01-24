@@ -253,7 +253,7 @@ class TTSCast:
         logging.debug('[DAEMON][TestTTS] ChangeSpeed File :: %s', soundfile)
     
     def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0'):
-        logging.debug('[DAEMON][TestTTS] TTSEngine :: %s', ttsEngine)
+        logging.debug('[DAEMON][TestTTS] Param TTSEngine :: %s', ttsEngine)
         
         logging.debug('[DAEMON][TestTTS] Check des répertoires')
         cachePath = Config.ttsCacheFolderWeb
