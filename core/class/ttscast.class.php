@@ -581,12 +581,12 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
-        $cmd = $this->getCmd(null, 'volumelevel');
+        $cmd = $this->getCmd(null, 'volume_level');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Volume', __FILE__));
             $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('volumelevel');
+	        $cmd->setLogicalId('volume_level');
             $cmd->setType('info');
             $cmd->setSubType('numeric');
             $cmd->setUnite('%');
@@ -621,12 +621,12 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
-        $cmd = $this->getCmd(null, 'volumemuted');
+        $cmd = $this->getCmd(null, 'volume_muted');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Mute', __FILE__));
             $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('volumemuted');
+	        $cmd->setLogicalId('volume_muted');
             $cmd->setType('info');
             $cmd->setSubType('binary');
 	        $cmd->setIsVisible(1);
@@ -665,12 +665,12 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
-        $cmd = $this->getCmd(null, 'playerstate');
+        $cmd = $this->getCmd(null, 'player_state');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Cast State', __FILE__));
+            $cmd->setName(__('Cast Media State', __FILE__));
             $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('playerstate');
+	        $cmd->setLogicalId('player_state');
             $cmd->setType('info');
             $cmd->setSubType('string');
 	        $cmd->setIsVisible(1);
@@ -679,12 +679,124 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
-        $cmd = $this->getCmd(null, 'playerapp');
+        $cmd = $this->getCmd(null, 'display_name');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Cast App', __FILE__));
+            $cmd->setName(__('Cast App Name', __FILE__));
             $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('playerapp');
+	        $cmd->setLogicalId('display_name');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'app_id');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast App Id', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('app_id');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'status_text');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Status Text', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('status_text');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'title');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Title', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('title');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'artist');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Artist', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('artist');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'album_name');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Album', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('album_name');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'content_type');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Type', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('content_type');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'stream_type');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Stream Type', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('stream_type');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'last_updated');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Updated', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('last_updated');
             $cmd->setType('info');
             $cmd->setSubType('string');
 	        $cmd->setIsVisible(1);

@@ -641,17 +641,17 @@ class Functions:
                     castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
                 elif (_mode == 'volumedown'): 
                     castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
-                data = {
+                """ data = {
                     'uuid': str(cast.uuid),
                     'actionReturn': _mode,
-                    'volumelevel': castVolumeLevel,
+                    'volume_level': castVolumeLevel,
                     'online': '1'
-                }
+                } """
                 # Déconnexion du Chromecast
                 cast.disconnect(timeout=10, blocking=False)
                 browser.stop_discovery()
                 # Envoi vers Jeedom
-                Comm.sendToJeedom.send_change_immediate(data)
+                """ Comm.sendToJeedom.send_change_immediate(data) """
                 return True
         except Exception as e:
             logging.error('[DAEMON][setVolume] Exception on setVolume :: %s', e)
@@ -717,9 +717,9 @@ class Functions:
                             'uuid': str(cast.uuid),
                             'lastschedule': currentTimeStr,
                             'lastschedulets': currentTime,
-                            'volumelevel': castVolumeLevel,
-                            'playerstate': castPlayerState,
-                            'playerapp': castAppDisplayName,
+                            'volume_level': castVolumeLevel,
+                            'player_state': castPlayerState,
+                            'display_name': castAppDisplayName,
                             'schedule': 1,
                             'online': '1'
                         }
@@ -780,9 +780,9 @@ class myCast:
                 data = {
                     'uuid': str(self.cast.uuid),
                     'is_stand_by': status.is_stand_by,
-                    'volumelevel': castVolumeLevel,
+                    'volume_level': castVolumeLevel,
                     'volume_muted': status.volume_muted,
-                    'playerapp': castAppDisplayName,
+                    'display_name': castAppDisplayName,
                     'app_id': status.app_id,
                     'status_text': status.status_text,
                     'realtime': 1,
@@ -807,13 +807,13 @@ class myCast:
             try:
                 data = {
                     'uuid': str(self.cast.uuid),
-                    'playerstate': status.player_state,
+                    'player_state': status.player_state,
                     'title': status.title,
                     'artist': status.artist,
                     'album_name': status.album_name,
                     'content_type': status.content_type,
                     'stream_type': status.stream_type,
-                    'last_updated': status.last_updated.strftime("%d/%m/%Y - %H:%M:%S.%f"),
+                    'last_updated': status.last_updated.strftime("%d/%m/%Y - %H:%M:%S"),
                     'realtime': 1,
                     'status_type': 'media',
                     'online': '1'

@@ -149,7 +149,7 @@ try {
                 continue;
             }
             else {
-                $updttscast = ttscast::realtimeUpdateCast($data);
+                $rtcast = ttscast::realtimeUpdateCast($data);
             }
         }
     } else {
