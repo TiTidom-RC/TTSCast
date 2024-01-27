@@ -779,14 +779,18 @@ class myCast:
             
                 data = {
                     'uuid': str(self.cast.uuid),
+                    'is_stand_by': status.is_stand_by,
                     'volumelevel': castVolumeLevel,
+                    'volume_muted': status.volume_muted,
                     'playerapp': castAppDisplayName,
-                    'schedule': 1,
+                    'app_id': status.app_id,
+                    'status_text': status.status_text,
+                    'realtime': 1,
                     'online': '1'
                 }
 
                 # Envoi vers Jeedom
-                Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Cast_Status] Exception :: %s', e)
             
@@ -800,17 +804,21 @@ class myCast:
         def new_media_status(self, status):
             logging.debug('[DAEMON][NETCAST][New_Media_Status] ' + self.name + ' :: STATUS Media change :: ' + str(status))
             try:
-                castPlayerState = status.player_state
-            
                 data = {
                     'uuid': str(self.cast.uuid),
-                    'playerstate': castPlayerState,
-                    'schedule': 1,
+                    'playerstate': status.player_state,
+                    'title': status.title,
+                    'artist': status.artist,
+                    'album_name': status.album_name,
+                    'content_type': status.content_type,
+                    'stream_type': status.stream_type,
+                    'last_updated': status.last_updated,
+                    'realtime': 1,
                     'online': '1'
                 }
 
                 # Envoi vers Jeedom
-                Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)
                 
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Media_Status] Exception :: %s', e)

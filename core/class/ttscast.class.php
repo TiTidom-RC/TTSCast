@@ -336,6 +336,32 @@ class ttscast extends eqLogic
         }
     }
 
+    public static function realtimeUpdateCast($_data)
+    {
+        if (!isset($_data['uuid'])) {
+            log::add('ttscast', 'error', '[REALTIME][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
+            return false;
+        }
+        $rtcast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
+        if (!is_object($rtcast)) {
+            log::add('ttscast', 'error', '[REALTIME][CAST] Cast non existant dans Jeedom');
+            return false;
+        }
+        else {
+            foreach($rtcast->getCmd('info') as $cmd) {
+                $logicalId = $cmd->getLogicalId();
+                # log::add('ttscast', 'debug', '[REALTIME][CAST] Cast cmd :: ' . $logicalId);
+                if (key_exists($logicalId, $_data)) {
+                    log::add('ttscast', 'debug', '[REALTIME][CAST] Cast cmd event :: ' . $logicalId . ' = ' . $_data[$logicalId]);
+                    $cmd->event($_data[$logicalId]);
+                } else {
+                    log::add('ttscast', 'debug', '[REALTIME][CAST] Cast cmd NON EXIST :: ' . $logicalId);
+                    continue;
+                }
+            }
+        }
+    }
+
     public static function sendOnStartCastToDaemon()
     {
         foreach(self::byType('ttscast') as $eqLogic) {
