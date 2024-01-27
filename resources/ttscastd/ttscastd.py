@@ -781,6 +781,7 @@ class myCast:
                     'uuid': str(self.cast.uuid),
                     'volumelevel': castVolumeLevel,
                     'playerapp': castAppDisplayName,
+                    'schedule': 1,
                     'online': '1'
                 }
 
@@ -804,11 +805,13 @@ class myCast:
                 data = {
                     'uuid': str(self.cast.uuid),
                     'playerstate': castPlayerState,
+                    'schedule': 1,
                     'online': '1'
                 }
 
                 # Envoi vers Jeedom
                 Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Media_Status] Exception :: %s', e)
 
