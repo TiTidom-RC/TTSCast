@@ -27,7 +27,6 @@ import threading
 import datetime
 import requests
 
-from dateutil import tz
 from urllib.parse import urljoin, quote
 from uuid import UUID
 
@@ -801,8 +800,8 @@ class myCast:
             try:
                 tz_google = tz.tzutc()
                 tz_local = tz.tzlocal()
-                last_updated = status.last_updated.replace(tzinfo=tz_google)
-                last_updated_local = last_updated.astimezone(tz_local)
+                last_updated = status.last_updated.replace(tzinfo=datetime.timezone.utc)
+                last_updated_local = last_updated.astimezone(tz=None)
                 
                 data = {
                     'uuid': str(self.cast.uuid),
