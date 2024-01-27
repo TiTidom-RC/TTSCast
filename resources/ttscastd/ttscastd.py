@@ -665,7 +665,7 @@ class Functions:
                     logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
                 
                 try:    
-                    cast = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == _googleUUID][0]
+                    cast = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.uuid) == _googleUUID][0]
                     if not cast:
                         logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
                         return False
