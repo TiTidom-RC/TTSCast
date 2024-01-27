@@ -169,7 +169,7 @@ class Loops:
             
             for chromecast in Config.NETCAST_DEVICES:
                 chromecast.wait(timeout=10)
-                logging.info('[DAEMON][MAINLOOP][NETCAST] Chromecast with name ' + chromecast.uuid + ' connected')
+                logging.info('[DAEMON][MAINLOOP][NETCAST] Chromecast with name ' + str(chromecast.uuid) + ' connected')
                 uuid = str(chromecast.uuid)
                 
                 Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
