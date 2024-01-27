@@ -28,9 +28,9 @@ import datetime
 import requests
 
 from urllib.parse import urljoin, quote
-
 from uuid import UUID
 
+# Import pour Jeedom
 try:
     from jeedom.jeedom import *
     # from jeedom.jeedom import jeedom_socket, jeedom_utils, jeedom_com, JEEDOM_SOCKET_MESSAGE
@@ -38,15 +38,23 @@ except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module jeedom.jeedom ::", e)
     sys.exit(1)
 
-# Import pour PyChromeCast
-try:    
+# Import pour Google Cloud TTS
+try:
     from google.oauth2 import service_account
     import google.cloud.texttospeech as googleCloudTTS
+except ImportError as e:
+    print("[DAEMON][IMPORT] Error: importing module Google Cloud TTS ::", e)
+    sys.exit(1)
+
+# Import pour PyChromeCast
+try:
+    import zeroconf
     import pychromecast
     from pychromecast import quick_play
-    # import zeroconf
+    from pychromecast.controllers.media import MediaStatusListener
+    from pychromecast.controllers.receiver import CastStatusListener
 except ImportError as e:
-    print("[DAEMON][IMPORT] Error: importing module TTS ::", e)
+    print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
     sys.exit(1)
 
 # Import gTTS (Google Translate TTS)
@@ -151,15 +159,30 @@ class Loops:
     def mainLoop(cycle=2):
         jeedom_socket.open()
         logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
+        
         # *** Thread pour les Event venant de Jeedom ***
         threading.Thread(target=Loops.eventsFromJeedom, args=(Config.cycleEvent,)).start()
+        
         try:
-            # Thread pour le browsermanager (pychromecast)
-            # Config.NETCAST_BROWSERMANAGER = castBrowserManager()
-            # Config.NETCAST_BROWSERMANAGER.start()
+            # Thread pour le browser (pychromecast)
+            Config.NETCAST_DEVICES, Config.NETCAST_BROWSER = pychromecast.get_chromecasts(timeout=30)
             
+            for chromecast in Config.NETCAST_DEVICES:
+                chromecast.wait(timeout=10)
+                logging.info('[DAEMON][MAINLOOP][NETCAST] Chromecast with name ' + chromecast.uuid + ' connected')
+                uuid = str(chromecast.uuid)
+                
+                Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
+                chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
+                
+                Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
+                chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
+                
+                logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
+
+            # Informer Jeedom que le démon est démarré
             Comm.sendToJeedom.send_change_immediate({'daemonStarted': '1'})
-                    
+
             while not Config.IS_ENDING:
                 try:
                     # *** Actions de la MainLoop ***
@@ -188,7 +211,7 @@ class Loops:
                     time.sleep(cycle)
                 except Exception as e:
                     logging.error('[DAEMON][MAINLOOP] Exception on MainLoop :: %s', e)
-                    logging.debug(traceback.format_exc())
+                    logging.debug(traceback.format_exc())    
                     shutdown()
         except KeyboardInterrupt:
             logging.error('[DAEMON][MAINLOOP] KeyboardInterrupt on MainLoop, Shutdown.')
@@ -740,6 +763,30 @@ class Functions:
                 logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
                 pass
 
+class myCast:
+    class MyCastStatusListener(CastStatusListener):
+        """Cast status listener"""
+
+        def __init__(self, name, cast):
+            self.name = name
+            self.cast = cast
+
+        def new_cast_status(self, status):
+            logging.debug('[DAEMON][myCast.New_Cast_Status]' + self.name + '] STATUS Chromecast change :: ' + status)
+            
+    class MyMediaStatusListener(MediaStatusListener):
+        """Status media listener"""
+
+        def __init__(self, name, cast):
+            self.name = name
+            self.cast = cast
+
+        def new_media_status(self, status):
+            logging.debug('[DAEMON][myCast.New_Media_Status]' + self.name + '] STATUS Media change :: ' + status)
+
+        def load_media_failed(self, item, error_code):
+            logging.error('[DAEMON][myCast.Load_Media_Failed]' + self.name + '] LOAD Media FAILED for item :: ' + item + ' with code :: ' + error_code)
+
 # ----------------------------------------------------------------------------
 
 def handler(signum=None, frame=None):
@@ -747,8 +794,16 @@ def handler(signum=None, frame=None):
     shutdown()
 
 def shutdown():
-    logging.debug("[DAEMON] Shutdown")
+    logging.info("[DAEMON] Shutdown :: Begin...")
     Config.IS_ENDING = True
+    
+    logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
+    for chromecast in Config.NETCAST_DEVICES:
+        chromecast.disconnect()
+    
+    Config.NETCAST_BROWSER.stop_discovery()
+    logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
+    
     logging.debug("[DAEMON] Removing PID file %s", Config.pidFile)
     try:
         os.remove(Config.pidFile)
@@ -758,7 +813,7 @@ def shutdown():
         jeedom_socket.close()
     except Exception:
         pass
-    logging.debug("[DAEMON] Exit 0")
+    logging.info("[DAEMON] Shutdown :: Exit 0")
     sys.stdout.flush()
     os._exit(0)
 
