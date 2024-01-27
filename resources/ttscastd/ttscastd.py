@@ -27,6 +27,7 @@ import threading
 import datetime
 import requests
 
+from dateutil import tz
 from urllib.parse import urljoin, quote
 from uuid import UUID
 
@@ -798,6 +799,11 @@ class myCast:
         def new_media_status(self, status):
             logging.debug('[DAEMON][NETCAST][New_Media_Status] ' + self.name + ' :: STATUS Media change :: ' + str(status))
             try:
+                tz_google = tz.tzutc()
+                tz_local = tz.tzlocal()
+                last_updated = status.last_updated.replace(tzinfo=tz_google)
+                last_updated_local = last_updated.astimezone(tz_local)
+                
                 data = {
                     'uuid': str(self.cast.uuid),
                     'player_state': status.player_state,
@@ -806,7 +812,7 @@ class myCast:
                     'album_name': status.album_name,
                     'content_type': status.content_type,
                     'stream_type': status.stream_type,
-                    'last_updated': status.last_updated.strftime("%d/%m/%Y - %H:%M:%S"),
+                    'last_updated': last_updated_local.strftime("%d/%m/%Y - %H:%M:%S"),
                     'realtime': 1,
                     'status_type': 'media',
                     'online': '1'
