@@ -107,6 +107,12 @@ class Loops:
                             elif (message['cmd_action'] == 'media_pause' and 'googleUUID' in message):
                                 logging.debug('[DAEMON][SOCKET] Action :: Media PAUSE @ %s', message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
+                            elif (message['cmd_action'] == 'media_play' and 'googleUUID' in message):
+                                logging.debug('[DAEMON][SOCKET] Action :: Media PLAY @ %s', message['googleUUID'])
+                                Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
+                            elif (message['cmd_action'] == 'media_stop' and 'googleUUID' in message):
+                                logging.debug('[DAEMON][SOCKET] Action :: Media STOP @ %s', message['googleUUID'])
+                                Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
                         if 'days' in message:
@@ -670,16 +676,19 @@ class Functions:
                         logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
                         return False
                     # cast.wait(timeout=10)
-                    logging.debug('[DAEMON][mediaActions] Chromecast trouvé, tentative de set du volume')
+                    logging.debug('[DAEMON][mediaActions] Chromecast trouvé, lancement des actions')
                 
                     if (_mode == 'media_pause'):
                         cast.media_controller.pause()
+                        cast.disconnect(timeout=10, blocking=False)
                         # logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
                     elif (_mode == 'media_play'):
                         cast.media_controller.play()
+                        cast.disconnect(timeout=10, blocking=False)
                         # logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
                     elif (_mode == 'media_stop'): 
                         cast.quit_app()
+                        cast.disconnect(timeout=10, blocking=False)
                         # logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
                 except Exception as e:
                     logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
