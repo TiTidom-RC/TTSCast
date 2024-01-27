@@ -798,8 +798,6 @@ class myCast:
         def new_media_status(self, status):
             logging.debug('[DAEMON][NETCAST][New_Media_Status] ' + self.name + ' :: STATUS Media change :: ' + str(status))
             try:
-                tz_google = tz.tzutc()
-                tz_local = tz.tzlocal()
                 last_updated = status.last_updated.replace(tzinfo=datetime.timezone.utc)
                 last_updated_local = last_updated.astimezone(tz=None)
                 
