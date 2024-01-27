@@ -685,17 +685,6 @@ class Functions:
                     logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
                     logging.debug(traceback.format_exc())
                     return False
-                
-                if (_mode == 'setvolume'):
-                    castVolumeLevel = round(cast.set_volume(volume=float(_value) / 100) * 100)
-                elif (_mode == 'volumeup'):
-                    castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
-                elif (_mode == 'volumedown'): 
-                    castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
-                logging.debug('[DAEMON][SetVolume] Chromecast UUID / Volume :: %s / %s', _googleUUID, str(castVolumeLevel))
-                # Déconnexion du Chromecast
-                cast.disconnect(timeout=10, blocking=False)
-                browser.stop_discovery()
                 return True
         except Exception as e:
             logging.error('[DAEMON][SetVolume] Exception on setVolume :: %s', e)
