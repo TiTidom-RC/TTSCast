@@ -774,7 +774,7 @@ class myCast:
         def new_cast_status(self, status):
             logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast change :: ' + str(status))
             
-            if (all(keys in status for keys in ('volume_level', 'display_name'))):
+            if (all(keys in status.keys for keys in ('volume_level', 'display_name'))):
                 logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast volume_level :: ' + str(status.volume_level))
             
     class MyMediaStatusListener(MediaStatusListener):
