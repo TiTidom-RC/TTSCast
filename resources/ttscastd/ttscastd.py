@@ -178,7 +178,7 @@ class Loops:
                 Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
                 chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
                 
-                logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
+            logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
 
             # Informer Jeedom que le démon est démarré
             Comm.sendToJeedom.send_change_immediate({'daemonStarted': '1'})
