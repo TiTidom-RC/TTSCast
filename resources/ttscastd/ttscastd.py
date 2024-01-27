@@ -680,15 +680,15 @@ class Functions:
                 
                     if (_mode == 'media_pause'):
                         cast.media_controller.pause()
-                        cast.disconnect(timeout=10, blocking=False)
+                        # cast.disconnect(timeout=10, blocking=False)
                         # logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
                     elif (_mode == 'media_play'):
                         cast.media_controller.play()
-                        cast.disconnect(timeout=10, blocking=False)
+                        # cast.disconnect(timeout=10, blocking=False)
                         # logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
                     elif (_mode == 'media_stop'): 
                         cast.quit_app()
-                        cast.disconnect(timeout=10, blocking=False)
+                        # cast.disconnect(timeout=10, blocking=False)
                         # logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
                 except Exception as e:
                     logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
