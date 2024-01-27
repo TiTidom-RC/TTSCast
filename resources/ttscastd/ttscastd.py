@@ -663,14 +663,15 @@ class Functions:
                     logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
                 elif (_mode == 'media_stop'): 
                     logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
-                    
-                cast = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == _googleUUID][0]
-                if not cast:
-                    logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
-                    return False
-                # cast.wait(timeout=10)
-                logging.debug('[DAEMON][mediaActions] Chromecast trouvé, tentative de set du volume')
-                try:
+                
+                try:    
+                    cast = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == _googleUUID][0]
+                    if not cast:
+                        logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                        return False
+                    # cast.wait(timeout=10)
+                    logging.debug('[DAEMON][mediaActions] Chromecast trouvé, tentative de set du volume')
+                
                     if (_mode == 'media_pause'):
                         cast.media_controller.pause()
                         # logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
