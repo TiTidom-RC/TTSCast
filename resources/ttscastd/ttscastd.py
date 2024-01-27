@@ -773,8 +773,21 @@ class myCast:
 
         def new_cast_status(self, status):
             logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast change :: ' + str(status))
-            logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast volume_level :: ' + str(status.volume_level))
-            logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast JSON :: ' + json.dumps(status.__dict__))
+            try:
+                castVolumeLevel = int(status.volume_level * 100)
+                castAppDisplayName = status.display_name
+            
+                data = {
+                    'uuid': str(self.cast.uuid),
+                    'volumelevel': castVolumeLevel,
+                    'playerapp': castAppDisplayName,
+                    'online': '1'
+                }
+
+                # Envoi vers Jeedom
+                Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][New_Cast_Status] Exception :: %s', e)
             
     class MyMediaStatusListener(MediaStatusListener):
         """Status media listener"""
@@ -785,6 +798,19 @@ class myCast:
 
         def new_media_status(self, status):
             logging.debug('[DAEMON][NETCAST][New_Media_Status] ' + self.name + ' :: STATUS Media change :: ' + str(status))
+            try:
+                castPlayerState = status.player_state
+            
+                data = {
+                    'uuid': str(self.cast.uuid),
+                    'playerstate': castPlayerState,
+                    'online': '1'
+                }
+
+                # Envoi vers Jeedom
+                Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][New_Media_Status] Exception :: %s', e)
 
         def load_media_failed(self, item, error_code):
             logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + item + ' with code :: ' + error_code)
