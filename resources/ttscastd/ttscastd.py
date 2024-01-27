@@ -619,21 +619,21 @@ class Functions:
         try:
             if _googleUUID != 'UNKOWN':
                 if (_mode == 'set'):
-                    logging.debug('[DAEMON][setVolume] Set Volume :: %s / %s', _googleUUID, _value)
+                    logging.debug('[DAEMON][SetVolume] Set Volume :: %s / %s', _googleUUID, _value)
                 elif (_mode == 'up'):
-                    logging.debug('[DAEMON][setVolume] Volume UP :: %s', _googleUUID)
+                    logging.debug('[DAEMON][SetVolume] Volume UP :: %s', _googleUUID)
                 elif (_mode == 'down'): 
-                    logging.debug('[DAEMON][setVolume] Volume DOWN :: %s', _googleUUID)
+                    logging.debug('[DAEMON][SetVolume] Volume DOWN :: %s', _googleUUID)
                     
                 uuid = UUID(_googleUUID)
                 chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=[uuid])
                 if not chromecasts:
-                    logging.debug('[DAEMON][setVolume] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                    logging.debug('[DAEMON][SetVolume] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
                     browser.stop_discovery()
                     return False        
                 cast = chromecasts[0]
                 cast.wait(timeout=10)
-                logging.debug('[DAEMON][setVolume] Chromecast trouvé, tentative de set du volume')
+                logging.debug('[DAEMON][SetVolume] Chromecast trouvé, tentative de set du volume')
                 castVolumeLevel = None
                 if (_mode == 'setvolume'):
                     castVolumeLevel = round(cast.set_volume(volume=float(_value) / 100) * 100)
@@ -641,20 +641,13 @@ class Functions:
                     castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
                 elif (_mode == 'volumedown'): 
                     castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
-                """ data = {
-                    'uuid': str(cast.uuid),
-                    'actionReturn': _mode,
-                    'volume_level': castVolumeLevel,
-                    'online': '1'
-                } """
+                logging.debug('[DAEMON][SetVolume] Chromecast UUID / Volume :: %s / %s', _googleUUID, str(castVolumeLevel))
                 # Déconnexion du Chromecast
                 cast.disconnect(timeout=10, blocking=False)
                 browser.stop_discovery()
-                # Envoi vers Jeedom
-                """ Comm.sendToJeedom.send_change_immediate(data) """
                 return True
         except Exception as e:
-            logging.error('[DAEMON][setVolume] Exception on setVolume :: %s', e)
+            logging.error('[DAEMON][SetVolume] Exception on setVolume :: %s', e)
             logging.debug(traceback.format_exc())
             return False
     
