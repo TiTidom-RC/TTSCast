@@ -813,7 +813,7 @@ class myCast:
                     'album_name': status.album_name,
                     'content_type': status.content_type,
                     'stream_type': status.stream_type,
-                    'last_updated': status.last_updated,
+                    'last_updated': status.last_updated.strftime("%d/%m/%Y - %H:%M:%S"),
                     'realtime': 1,
                     'status_type': 'media',
                     'online': '1'
