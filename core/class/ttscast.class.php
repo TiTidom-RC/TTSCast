@@ -342,6 +342,12 @@ class ttscast extends eqLogic
             log::add('ttscast', 'error', '[REALTIME][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
             return false;
         }
+        if (!isset($_data['status_type'])) {
+            log::add('ttscast', 'error', '[REALTIME][CAST] Information manquante (Status_Type) pour mettre à jour l\'équipement');
+            return false;
+        } else {
+            log::add('ttscast', 'debug', '[REALTIME][CAST] Status Type :: ' . $_data['status_type']);
+        }
         $rtcast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
         if (!is_object($rtcast)) {
             log::add('ttscast', 'error', '[REALTIME][CAST] Cast non existant dans Jeedom');

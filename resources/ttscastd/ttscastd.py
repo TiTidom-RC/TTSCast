@@ -786,6 +786,7 @@ class myCast:
                     'app_id': status.app_id,
                     'status_text': status.status_text,
                     'realtime': 1,
+                    'status_type': 'cast',
                     'online': '1'
                 }
 
@@ -814,6 +815,7 @@ class myCast:
                     'stream_type': status.stream_type,
                     'last_updated': status.last_updated,
                     'realtime': 1,
+                    'status_type': 'media',
                     'online': '1'
                 }
 
