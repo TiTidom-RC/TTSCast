@@ -213,6 +213,13 @@ class Loops:
                     logging.error('[DAEMON][MAINLOOP] Exception on MainLoop :: %s', e)
                     logging.debug(traceback.format_exc())    
                     shutdown()
+            logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
+            for chromecast in Config.NETCAST_DEVICES:
+                chromecast.disconnect()
+    
+            Config.NETCAST_BROWSER.stop_discovery()
+            logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
+    
         except KeyboardInterrupt:
             logging.error('[DAEMON][MAINLOOP] KeyboardInterrupt on MainLoop, Shutdown.')
             shutdown()
@@ -796,13 +803,6 @@ def handler(signum=None, frame=None):
 def shutdown():
     logging.info("[DAEMON] Shutdown :: Begin...")
     Config.IS_ENDING = True
-    
-    logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
-    for chromecast in Config.NETCAST_DEVICES:
-        chromecast.disconnect()
-    
-    Config.NETCAST_BROWSER.stop_discovery()
-    logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
     
     logging.debug("[DAEMON] Removing PID file %s", Config.pidFile)
     try:
