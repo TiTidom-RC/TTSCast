@@ -664,7 +664,7 @@ class Functions:
                 elif (_mode == 'media_stop'): 
                     logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
                     
-                cast = Config.NETCAST_DEVICES[_googleUUID]
+                cast = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == _googleUUID][0]
                 if not cast:
                     logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
                     return False
