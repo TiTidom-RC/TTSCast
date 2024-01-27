@@ -665,6 +665,51 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
+        $cmd = $this->getCmd(null, 'media_pause');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media Pause', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media_pause');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-pause-circle"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'media_play');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media Play', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media_play');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-play-circle"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'media_stop');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media Stop', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media_stop');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-stop-circle"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
         $cmd = $this->getCmd(null, 'player_state');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
@@ -918,6 +963,24 @@ class ttscastCmd extends cmd
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID)) {
                     ttscast::actionGCast($googleUUID, "volumeup");
+                }
+            } elseif ($logicalId == "media_pause") {
+                log::add('ttscast', 'debug', '[CMD] Media PAUSE :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID)) {
+                    ttscast::actionGCast($googleUUID, $logicalId);
+                }
+            } elseif ($logicalId == "media_play") {
+                log::add('ttscast', 'debug', '[CMD] Media PLAY :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID)) {
+                    ttscast::actionGCast($googleUUID, $logicalId);
+                }
+            } elseif ($logicalId == "media_stop") {
+                log::add('ttscast', 'debug', '[CMD] Media STOP :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID)) {
+                    ttscast::actionGCast($googleUUID, $logicalId);
                 }
             } else {
                 throw new Exception(__('Commande Action non implémentée actuellement', __FILE__));    

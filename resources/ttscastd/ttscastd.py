@@ -104,6 +104,9 @@ class Loops:
                             elif (message['cmd_action'] == 'volumedown' and 'googleUUID' in message):
                                 logging.debug('[DAEMON][SOCKET] Action :: Volume DOWN @ %s', message['googleUUID'])
                                 Functions.setVolume(message['googleUUID'], '', message['cmd_action'])
+                            elif (message['cmd_action'] == 'media_pause' and 'googleUUID' in message):
+                                logging.debug('[DAEMON][SOCKET] Action :: Media PAUSE @ %s', message['googleUUID'])
+                                Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
                         if 'days' in message:
@@ -635,6 +638,53 @@ class Functions:
                 cast.wait(timeout=10)
                 logging.debug('[DAEMON][SetVolume] Chromecast trouvé, tentative de set du volume')
                 castVolumeLevel = None
+                if (_mode == 'setvolume'):
+                    castVolumeLevel = round(cast.set_volume(volume=float(_value) / 100) * 100)
+                elif (_mode == 'volumeup'):
+                    castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
+                elif (_mode == 'volumedown'): 
+                    castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
+                logging.debug('[DAEMON][SetVolume] Chromecast UUID / Volume :: %s / %s', _googleUUID, str(castVolumeLevel))
+                # Déconnexion du Chromecast
+                cast.disconnect(timeout=10, blocking=False)
+                browser.stop_discovery()
+                return True
+        except Exception as e:
+            logging.error('[DAEMON][SetVolume] Exception on setVolume :: %s', e)
+            logging.debug(traceback.format_exc())
+            return False
+    
+    def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
+        try:
+            if _googleUUID != 'UNKOWN':
+                if (_mode == 'media_pause'):
+                    logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
+                elif (_mode == 'media_play'):
+                    logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
+                elif (_mode == 'media_stop'): 
+                    logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
+                    
+                cast = Config.NETCAST_DEVICES[_googleUUID]
+                if not cast:
+                    logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                    return False
+                # cast.wait(timeout=10)
+                logging.debug('[DAEMON][mediaActions] Chromecast trouvé, tentative de set du volume')
+                try:
+                    if (_mode == 'media_pause'):
+                        cast.media_controller.pause()
+                        # logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
+                    elif (_mode == 'media_play'):
+                        cast.media_controller.play()
+                        # logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
+                    elif (_mode == 'media_stop'): 
+                        cast.quit_app()
+                        # logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
+                except Exception as e:
+                    logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
+                    logging.debug(traceback.format_exc())
+                    return False
+                
                 if (_mode == 'setvolume'):
                     castVolumeLevel = round(cast.set_volume(volume=float(_value) / 100) * 100)
                 elif (_mode == 'volumeup'):
