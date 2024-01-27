@@ -774,7 +774,7 @@ class myCast:
         def new_cast_status(self, status):
             logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast change :: ' + str(status))
             logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast volume_level :: ' + str(status.volume_level))
-            logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast JSON :: ' + json.dumps(status))
+            logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast JSON :: ' + json.dumps(status.__dict__))
             
     class MyMediaStatusListener(MediaStatusListener):
         """Status media listener"""
