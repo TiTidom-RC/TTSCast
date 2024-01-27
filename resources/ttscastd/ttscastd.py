@@ -772,7 +772,10 @@ class myCast:
             self.cast = cast
 
         def new_cast_status(self, status):
-            logging.debug('[DAEMON][NETCAST][New_Cast_Status]' + self.name + ' :: STATUS Chromecast change :: ' + str(status))
+            logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast change :: ' + str(status))
+            
+            if (all(keys in status for keys in ('volume_level', 'display_name'))):
+                logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast volume_level :: ' + str(status.volume_level))
             
     class MyMediaStatusListener(MediaStatusListener):
         """Status media listener"""
@@ -782,10 +785,10 @@ class myCast:
             self.cast = cast
 
         def new_media_status(self, status):
-            logging.debug('[DAEMON][NETCAST][New_Media_Status]' + self.name + ' :: STATUS Media change :: ' + str(status))
+            logging.debug('[DAEMON][NETCAST][New_Media_Status] ' + self.name + ' :: STATUS Media change :: ' + str(status))
 
         def load_media_failed(self, item, error_code):
-            logging.error('[DAEMON][NETCAST][Load_Media_Failed]' + self.name + ' :: LOAD Media FAILED for item :: ' + item + ' with code :: ' + error_code)
+            logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + item + ' with code :: ' + error_code)
 
 # ----------------------------------------------------------------------------
 
