@@ -780,8 +780,11 @@ class Functions:
                         castAppId = cast.status.app_id
                         castStatusText = cast.status.status_text
                         
-                        # last_updated = cast.media_controller.status.last_updated.replace(tzinfo=datetime.timezone.utc)
-                        # last_updated_local = last_updated.astimezone(tz=None)
+                        mediaLastUpdated = None
+                        if (cast.media_controller.status.last_updated is not None):
+                            last_updated = cast.media_controller.status.last_updated.replace(tzinfo=datetime.timezone.utc)
+                            last_updated_local = last_updated.astimezone(tz=None)
+                            mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
                         
                         mediaPlayerState = cast.media_controller.status.player_state
                         mediaTitle = cast.media_controller.status.title
@@ -789,7 +792,7 @@ class Functions:
                         mediaAlbumName = cast.media_controller.status.album_name
                         mediaContentType = cast.media_controller.status.content_type
                         mediaStreamType = cast.media_controller.status.stream_type
-                        # mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
+                        
                         
                         data = {
                             'uuid': str(cast.uuid),
@@ -807,7 +810,7 @@ class Functions:
                             'album_name': mediaAlbumName,
                             'content_type': mediaContentType,
                             'stream_type': mediaStreamType,
-                            # 'last_updated': mediaLastUpdated,
+                            'last_updated': mediaLastUpdated,
                             'schedule': 1,
                             'online': '1'
                         }
@@ -893,8 +896,11 @@ class myCast:
         def new_media_status(self, status):
             logging.debug('[DAEMON][NETCAST][New_Media_Status] ' + self.name + ' :: STATUS Media change :: ' + str(status))
             try:
-                last_updated = status.last_updated.replace(tzinfo=datetime.timezone.utc)
-                last_updated_local = last_updated.astimezone(tz=None)
+                mediaLastUpdated = None
+                if (status.last_updated is not None):
+                    last_updated = status.last_updated.replace(tzinfo=datetime.timezone.utc)
+                    last_updated_local = last_updated.astimezone(tz=None)
+                    mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
                 
                 data = {
                     'uuid': str(self.cast.uuid),
@@ -904,7 +910,7 @@ class myCast:
                     'album_name': status.album_name,
                     'content_type': status.content_type,
                     'stream_type': status.stream_type,
-                    'last_updated': last_updated_local.strftime("%d/%m/%Y - %H:%M:%S"),
+                    'last_updated': mediaLastUpdated,
                     'realtime': 1,
                     'status_type': 'media',
                     'online': '1'
