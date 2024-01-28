@@ -214,6 +214,13 @@ class ttscast extends eqLogic
         self::sendToDaemon($value);
     }
 
+    public static function mediaGCast($gHomeUUID=null, $action=null, $message=null, $volume=30) {
+        log::add('ttscast', 'debug', '[MediaGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $volume);
+        $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID, 'volume' => strval($volume));
+        log::add('ttscast', 'debug', '[MediaGCast] Array :: ' . json_encode($value));
+        self::sendToDaemon($value);
+    }
+
     public static function getPluginVersion() {
         $pluginVersion = '0.0.0';
         try {
@@ -960,6 +967,20 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
+        $cmd = $this->getCmd(null, 'youtube');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('YouTube', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('youtube');
+            $cmd->setType('action');
+            $cmd->setSubType('message');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
         $cmd = $this->getCmd(null, 'customcmd');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
@@ -1054,6 +1075,16 @@ class ttscastCmd extends cmd
                 if (isset($googleUUID)) {
                     ttscast::actionGCast($googleUUID, $logicalId);
                 }
+            } elseif (in_array($logicalId, ["youtube", "sound"])) {
+                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / Volume / GoogleUUID) :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleUUID);
+                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['message'], intval($_options['title']));
+                }
+                else {
+                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                }                
             } else {
                 throw new Exception(__('Commande Action non implémentée actuellement', __FILE__));    
             }

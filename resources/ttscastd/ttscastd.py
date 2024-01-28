@@ -101,6 +101,9 @@ class Loops:
                             elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
+                            elif (message['cmd_action'] in ('youtube', 'sound')):
+                                logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
+                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], int(message['volume']))
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
                         if 'days' in message:
@@ -637,41 +640,51 @@ class TTSCast:
 class Functions:
     """ Class Functions """
     
-    """ def setVolume(_googleUUID='UNKOWN', _value='0', _mode='setvolume'):
-        try:
-            if _googleUUID != 'UNKOWN':
-                if (_mode == 'set'):
-                    logging.debug('[DAEMON][SetVolume] Set Volume :: %s / %s', _googleUUID, _value)
-                elif (_mode == 'up'):
-                    logging.debug('[DAEMON][SetVolume] Volume UP :: %s', _googleUUID)
-                elif (_mode == 'down'): 
-                    logging.debug('[DAEMON][SetVolume] Volume DOWN :: %s', _googleUUID)
-                    
-                uuid = UUID(_googleUUID)
-                chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=[uuid])
+    def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _volume='30'):
+        if _googleUUID != 'UNKOWN':
+            chromecasts = None
+            cast = None
+            try:
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.uuid) == _googleUUID]
                 if not chromecasts:
-                    logging.debug('[DAEMON][SetVolume] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
-                    browser.stop_discovery()
-                    return False        
+                    logging.debug('[DAEMON][controllerActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                    return False
                 cast = chromecasts[0]
-                cast.wait(timeout=10)
-                logging.debug('[DAEMON][SetVolume] Chromecast trouvé, tentative de set du volume')
-                castVolumeLevel = None
-                if (_mode == 'setvolume'):
-                    castVolumeLevel = round(cast.set_volume(volume=float(_value) / 100) * 100)
-                elif (_mode == 'volumeup'):
-                    castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
-                elif (_mode == 'volumedown'): 
-                    castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
-                logging.debug('[DAEMON][SetVolume] Chromecast UUID / Volume :: %s / %s', _googleUUID, str(castVolumeLevel))
-                # Déconnexion du Chromecast
-                cast.disconnect(timeout=10, blocking=False)
-                browser.stop_discovery()
-                return True
-        except Exception as e:
-            logging.error('[DAEMON][SetVolume] Exception on setVolume :: %s', e)
-            logging.debug(traceback.format_exc())
-            return False """
+                logging.debug('[DAEMON][controllerActions] Chromecast trouvé, lancement des actions')
+                
+                if (_controller == 'youtube'):
+                    logging.debug('[DAEMON][controllerActions] YouTube Id @ UUID :: %s @ %s', _value, _googleUUID)
+                    
+                    volumeBeforePlay = cast.status.volume_level
+                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                    
+                    cast.set_volume(volume=_volume / 100)
+                
+                    urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+                    logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
+                
+                    app_name = "youtube"
+                    app_data = {
+                        "media_id": _value, 
+                        "media_type": "audio/mp3", 
+                        "title": "[TTSCast] YouTube",
+                        "thumb": urlThumb
+                    }
+                    quick_play.quick_play(cast, app_name, app_data)
+                    logging.debug('[DAEMON][controllerActions] Youtube :: Diffusion lancée :: %s', str(cast.media_controller.status))
+                    
+                    # Libération de la mémoire
+                    cast = None
+                    chromecasts = None
+                    return True
+            except Exception as e:
+                logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
+                logging.debug(traceback.format_exc())
+                
+                # Libération de la mémoire
+                cast = None
+                chromecasts = None
+                return False
     
     def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
         if _googleUUID != 'UNKOWN':
@@ -800,7 +813,6 @@ class Functions:
                         mediaAlbumName = cast.media_controller.status.album_name
                         mediaContentType = cast.media_controller.status.content_type
                         mediaStreamType = cast.media_controller.status.stream_type
-                        
                         
                         data = {
                             'uuid': str(cast.uuid),
