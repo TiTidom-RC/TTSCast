@@ -48,7 +48,7 @@ except ImportError as e:
 
 # Import pour PyChromeCast
 try:
-    import zeroconf
+    # import zeroconf
     import pychromecast
     from pychromecast import quick_play
     from pychromecast.controllers.media import MediaStatusListener
@@ -250,6 +250,7 @@ class TTSCast:
                     fc.close()
         except Exception as e:
             logging.error('[DAEMON][JeedomTTS] Error while retrieving TTS file :: %s', e)
+            logging.debug(traceback.format_exc())
             filecontent = None
         return filecontent
     
@@ -278,6 +279,7 @@ class TTSCast:
                 fc.close() """
         except Exception as e:
             logging.error('[DAEMON][VoiceRSS] Error while retrieving TTS file :: %s', e)
+            logging.debug(traceback.format_exc())
             filecontent = None
         return filecontent
     
@@ -542,81 +544,104 @@ class TTSCast:
     def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=30):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
-            chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=[googleName])
-            if not chromecasts:
-                logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
-                browser.stop_discovery()
-                return False        
-            cast = chromecasts[0]
-            cast.wait(timeout=10)
-            logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
             
-            volumeBeforePlay = cast.status.volume_level
-            logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', volumeBeforePlay)
-            cast.set_volume(volume=volumeForPlay / 100)
+            chromecasts = None
+            cast = None
+            try:
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.name) == googleName]
+                if not chromecasts:
+                    logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
+                    return False
+                cast = chromecasts[0]
+                # cast.wait(timeout=10)
+                logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
             
-            urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
-            logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
-            
-            app_name = "default_media_receiver"
-            app_data = {
-                "media_id": urltoplay, 
-                "media_type": "audio/mp3", 
-                "title": "[Jeedom] TTSCast", 
-                "thumb": urlThumb
-            }
-            quick_play.quick_play(cast, app_name, app_data)
-            
-            logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
-            
-            while cast.media_controller.status.player_state == 'PLAYING':
-                time.sleep(1)
-                logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', cast.media_controller.status)
-            
-            cast.quit_app()
-            cast.set_volume(volume=volumeBeforePlay)
-            cast.disconnect(timeout=10, blocking=False)
-            browser.stop_discovery()
-            return True
+                volumeBeforePlay = cast.status.volume_level
+                logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                cast.set_volume(volume=volumeForPlay / 100)
+                
+                urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+                logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
+                
+                app_name = "default_media_receiver"
+                app_data = {
+                    "media_id": urltoplay, 
+                    "media_type": "audio/mp3", 
+                    "title": "[Jeedom] TTSCast", 
+                    "thumb": urlThumb
+                }
+                quick_play.quick_play(cast, app_name, app_data)
+                
+                logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
+                
+                while cast.media_controller.status.player_state == 'PLAYING':
+                    time.sleep(1)
+                    logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
+                
+                cast.quit_app()
+                cast.set_volume(volume=volumeBeforePlay)
+                
+                # Libération de la mémoire
+                cast = None
+                chromecasts = None
+                return True
+            except Exception as e:
+                logging.debug('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
+                logging.debug(traceback.format_exc())
+                
+                # Libération de la mémoire
+                cast = None
+                chromecasts = None
+                return False
         elif googleUUID != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
-            uuid = UUID(googleUUID)
-            chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=[uuid])
-            if not chromecasts:
-                logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID :: %s', googleUUID)
-                browser.stop_discovery()
-                return False        
-            cast = chromecasts[0]
-            cast.wait(timeout=10)
-            logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
             
-            volumeBeforePlay = cast.status.volume_level
-            logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', volumeBeforePlay)
-            cast.set_volume(volume=volumeForPlay / 100)
+            chromecasts = None
+            cast = None
+            try:
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.uuid) == googleUUID]
+                if not chromecasts:
+                    logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID nom :: %s', googleUUID)
+                    return False
+                cast = chromecasts[0]
+                logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+                volumeBeforePlay = cast.status.volume_level
+                logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                cast.set_volume(volume=volumeForPlay / 100)
             
-            urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
-            logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
+                urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+                logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
             
-            app_name = "default_media_receiver"
-            app_data = {
-                "media_id": urltoplay, 
-                "media_type": "audio/mp3", 
-                "title": "[Jeedom] TTSCast", 
-                "thumb": urlThumb
-            }
-            quick_play.quick_play(cast, app_name, app_data)
+                app_name = "default_media_receiver"
+                app_data = {
+                    "media_id": urltoplay, 
+                    "media_type": "audio/mp3", 
+                    "title": "[Jeedom] TTSCast", 
+                    "thumb": urlThumb
+                }
+                quick_play.quick_play(cast, app_name, app_data)
             
-            logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', cast.media_controller.status)
+                logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
-            while cast.media_controller.status.player_state == 'PLAYING':
-                time.sleep(1)
-                logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', cast.media_controller.status)
+                while cast.media_controller.status.player_state == 'PLAYING':
+                    time.sleep(1)
+                    logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
             
-            cast.quit_app()
-            cast.set_volume(volume=volumeBeforePlay)
-            cast.disconnect(timeout=10, blocking=False)
-            browser.stop_discovery()
-            return True
+                cast.quit_app()
+                cast.set_volume(volume=volumeBeforePlay)
+                
+                # Libération de la mémoire
+                cast = None
+                chromecasts = None
+                return True
+            except Exception as e:
+                logging.debug('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
+                logging.debug(traceback.format_exc())
+                
+                # Libération de la mémoire
+                cast = None
+                chromecasts = None
+                return False
         else:
             logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome + GoogleUUID manquants)')
             return False
@@ -661,44 +686,46 @@ class Functions:
             return False
     
     def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
-        try:
-            if _googleUUID != 'UNKOWN':
-                if (_mode == 'media_pause'):
-                    logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
-                elif (_mode == 'media_play'):
-                    logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
-                elif (_mode == 'media_stop'): 
-                    logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
-                
-                try:    
-                    cast = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.uuid) == _googleUUID][0]
-                    if not cast:
-                        logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
-                        return False
-                    # cast.wait(timeout=10)
-                    logging.debug('[DAEMON][mediaActions] Chromecast trouvé, lancement des actions')
-                
-                    if (_mode == 'media_pause'):
-                        cast.media_controller.pause()
-                        # cast.disconnect(timeout=10, blocking=False)
-                        # logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
-                    elif (_mode == 'media_play'):
-                        cast.media_controller.play()
-                        # cast.disconnect(timeout=10, blocking=False)
-                        # logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
-                    elif (_mode == 'media_stop'): 
-                        cast.quit_app()
-                        # cast.disconnect(timeout=10, blocking=False)
-                        # logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
-                except Exception as e:
-                    logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
-                    logging.debug(traceback.format_exc())
+        if _googleUUID != 'UNKOWN':
+            if (_mode == 'media_pause'):
+                logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
+            elif (_mode == 'media_play'):
+                logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
+            elif (_mode == 'media_stop'): 
+                logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
+            
+            chromecasts = None
+            cast = None
+            try:    
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.uuid) == _googleUUID]
+                if not chromecasts:
+                    logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
                     return False
+                cast = chromecasts[0]
+                logging.debug('[DAEMON][mediaActions] Chromecast trouvé, lancement des actions')
+                
+                if (_mode == 'media_pause'):
+                    cast.media_controller.pause()
+                    # logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
+                elif (_mode == 'media_play'):
+                    cast.media_controller.play()
+                    # logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
+                elif (_mode == 'media_stop'): 
+                    cast.quit_app()
+                    # logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
+                
+                # Libération de la mémoire
+                cast = None
+                chromecasts = None
                 return True
-        except Exception as e:
-            logging.error('[DAEMON][SetVolume] Exception on setVolume :: %s', e)
-            logging.debug(traceback.format_exc())
-            return False
+            except Exception as e:
+                logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
+                logging.debug(traceback.format_exc())
+                
+                # Libération de la mémoire
+                cast = None
+                chromecasts = None
+                return False
     
     def scanChromeCast(_mode='UNKOWN'):
         try:
@@ -733,35 +760,54 @@ class Functions:
                 currentTime = int(time.time())
                 currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
                 
-                # chromecasts, browser = pychromecast.get_chromecasts(known_hosts=Config.KNOWN_HOSTS)
-                # res = [sub['uuid'] for sub in Config.KNOWN_HOSTS]
-                
                 _gcast_names = Config.GCAST_NAMES.copy()
                 
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(_gcast_names))
                 
                 # chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
-                chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.name in _gcast_names]
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
                 
                 for cast in chromecasts: 
-                    logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', cast.uuid)
-                    
-                    # Connexion au Chromecast
-                    cast.wait(timeout=5)
+                    logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', str(cast.uuid))
                     try:
-                        time.sleep(0.3)
+                        # time.sleep(0.3)
                         castVolumeLevel = int(cast.status.volume_level * 100)
                         castAppDisplayName = cast.status.display_name
-                        castPlayerState = cast.media_controller.status.player_state
-                    
+                        
+                        castIsStandBy = cast.status.is_stand_by
+                        castIsMuted = cast.status.volume_muted
+                        castAppId = cast.status.app_id
+                        castStatusText = cast.status.status_text
+                        
+                        last_updated = cast.media_controller.status.last_updated.replace(tzinfo=datetime.timezone.utc)
+                        last_updated_local = last_updated.astimezone(tz=None)
+                        
+                        mediaPlayerState = cast.media_controller.status.player_state
+                        mediaTitle = cast.media_controller.status.title
+                        mediaArtist = cast.media_controller.status.artist
+                        mediaAlbumName = cast.media_controller.status.album_name
+                        mediaContentType = cast.media_controller.status.content_type
+                        mediaStreamType = cast.media_controller.status.stream_type
+                        mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
+                        
                         data = {
                             'uuid': str(cast.uuid),
                             'lastschedule': currentTimeStr,
                             'lastschedulets': currentTime,
                             'volume_level': castVolumeLevel,
-                            'player_state': castPlayerState,
                             'display_name': castAppDisplayName,
+                            'is_stand_by': castIsStandBy,
+                            'volume_muted': castIsMuted,
+                            'app_id': castAppId,
+                            'status_text': castStatusText,
+                            'player_state': mediaPlayerState,
+                            'title': mediaTitle,
+                            'artist': mediaArtist,
+                            'album_name': mediaAlbumName,
+                            'content_type': mediaContentType,
+                            'stream_type': mediaStreamType,
+                            'last_updated': mediaLastUpdated,
                             'schedule': 1,
                             'online': '1'
                         }
@@ -770,10 +816,7 @@ class Functions:
                         Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
                     except Exception as e:
                         logging.error('[DAEMON][SCANNER][SCHEDULE] Exception :: %s', e)
-                    finally:
-                        # Déconnexion du Chromecast
-                        cast.disconnect(timeout=10, blocking=False)
-                browser.stop_discovery()
+                        logging.debug(traceback.format_exc())
         except Exception as e:
             logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
             logging.debug(traceback.format_exc())
@@ -790,6 +833,7 @@ class Functions:
                     shutil.rmtree(Config.ttsCacheFolderTmp)
             except Exception as e:
                 logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache entirely (nbDays = 0) :: %s', e)
+                logging.debug(traceback.format_exc())
                 pass
         else:  # clean only files older than X days
             now = time.time()
@@ -803,6 +847,7 @@ class Functions:
                         logging.debug("[DAEMON][PURG-CACHE] File Removed " + f + " due to expiration (" + nbDays + " days)")
             except Exception as e:
                 logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
+                logging.debug(traceback.format_exc())
                 pass
 
 class myCast:
@@ -836,6 +881,7 @@ class myCast:
                 Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Cast_Status] Exception :: %s', e)
+                logging.debug(traceback.format_exc())
             
     class MyMediaStatusListener(MediaStatusListener):
         """Status media listener"""
@@ -869,6 +915,7 @@ class myCast:
                 
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Media_Status] Exception :: %s', e)
+                logging.debug(traceback.format_exc())
 
         def load_media_failed(self, item, error_code):
             logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + item + ' with code :: ' + error_code)
