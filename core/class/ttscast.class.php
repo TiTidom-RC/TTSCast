@@ -641,7 +641,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'mute_on');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Mute On -', __FILE__));
+            $cmd->setName(__('Mute On', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('mute_on');
             $cmd->setType('action');
