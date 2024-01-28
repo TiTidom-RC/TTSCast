@@ -336,6 +336,38 @@ class ttscast extends eqLogic
         }
     }
 
+    public static function realtimeUpdateCast($_data)
+    {
+        if (!isset($_data['uuid'])) {
+            log::add('ttscast', 'error', '[REALTIME][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
+            return false;
+        }
+        if (!isset($_data['status_type'])) {
+            log::add('ttscast', 'error', '[REALTIME][CAST] Information manquante (Status_Type) pour mettre à jour l\'équipement');
+            return false;
+        } else {
+            log::add('ttscast', 'debug', '[REALTIME][CAST] Status Type :: ' . $_data['status_type']);
+        }
+        $rtcast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
+        if (!is_object($rtcast)) {
+            log::add('ttscast', 'error', '[REALTIME][CAST] Cast non existant dans Jeedom');
+            return false;
+        }
+        else {
+            foreach($rtcast->getCmd('info') as $cmd) {
+                $logicalId = $cmd->getLogicalId();
+                # log::add('ttscast', 'debug', '[REALTIME][CAST] Cast cmd :: ' . $logicalId);
+                if (key_exists($logicalId, $_data)) {
+                    log::add('ttscast', 'debug', '[REALTIME][CAST] Cast cmd event :: ' . $logicalId . ' = ' . $_data[$logicalId]);
+                    $cmd->event($_data[$logicalId]);
+                } else {
+                    log::add('ttscast', 'debug', '[REALTIME][CAST] Cast cmd NON EXIST :: ' . $logicalId);
+                    continue;
+                }
+            }
+        }
+    }
+
     public static function sendOnStartCastToDaemon()
     {
         foreach(self::byType('ttscast') as $eqLogic) {
@@ -549,12 +581,12 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
-        $cmd = $this->getCmd(null, 'volumelevel');
+        $cmd = $this->getCmd(null, 'volume_level');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Volume', __FILE__));
             $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('volumelevel');
+	        $cmd->setLogicalId('volume_level');
             $cmd->setType('info');
             $cmd->setSubType('numeric');
             $cmd->setUnite('%');
@@ -589,12 +621,12 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
-        $cmd = $this->getCmd(null, 'volumemuted');
+        $cmd = $this->getCmd(null, 'volume_muted');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Mute', __FILE__));
             $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('volumemuted');
+	        $cmd->setLogicalId('volume_muted');
             $cmd->setType('info');
             $cmd->setSubType('binary');
 	        $cmd->setIsVisible(1);
@@ -633,12 +665,57 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
-        $cmd = $this->getCmd(null, 'playerstate');
+        $cmd = $this->getCmd(null, 'media_pause');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Cast State', __FILE__));
+            $cmd->setName(__('Media Pause', __FILE__));
             $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('playerstate');
+	        $cmd->setLogicalId('media_pause');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-pause-circle"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'media_play');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media Play', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media_play');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-play-circle"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'media_stop');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media Stop', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media_stop');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-stop-circle"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'player_state');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media State', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('player_state');
             $cmd->setType('info');
             $cmd->setSubType('string');
 	        $cmd->setIsVisible(1);
@@ -647,12 +724,124 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
-        $cmd = $this->getCmd(null, 'playerapp');
+        $cmd = $this->getCmd(null, 'display_name');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Cast App', __FILE__));
+            $cmd->setName(__('Cast App Name', __FILE__));
             $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('playerapp');
+	        $cmd->setLogicalId('display_name');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'app_id');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast App Id', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('app_id');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'status_text');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Status Text', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('status_text');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'title');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Title', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('title');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'artist');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Artist', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('artist');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'album_name');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Album', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('album_name');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'content_type');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Type', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('content_type');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'stream_type');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Stream Type', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('stream_type');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'last_updated');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Updated', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('last_updated');
             $cmd->setType('info');
             $cmd->setSubType('string');
 	        $cmd->setIsVisible(1);
@@ -774,6 +963,24 @@ class ttscastCmd extends cmd
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID)) {
                     ttscast::actionGCast($googleUUID, "volumeup");
+                }
+            } elseif ($logicalId == "media_pause") {
+                log::add('ttscast', 'debug', '[CMD] Media PAUSE :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID)) {
+                    ttscast::actionGCast($googleUUID, $logicalId);
+                }
+            } elseif ($logicalId == "media_play") {
+                log::add('ttscast', 'debug', '[CMD] Media PLAY :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID)) {
+                    ttscast::actionGCast($googleUUID, $logicalId);
+                }
+            } elseif ($logicalId == "media_stop") {
+                log::add('ttscast', 'debug', '[CMD] Media STOP :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID)) {
+                    ttscast::actionGCast($googleUUID, $logicalId);
                 }
             } else {
                 throw new Exception(__('Commande Action non implémentée actuellement', __FILE__));    

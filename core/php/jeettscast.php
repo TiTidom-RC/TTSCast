@@ -131,6 +131,27 @@ try {
                 $updttscast = ttscast::scheduleUpdateCast($data);
             }
         }
+    } elseif (isset($result['castsRT'])) {
+        log::add('ttscast','debug','[CALLBACK] TTSCast RealTime');
+        foreach ($result['castsRT'] as $key => $data) {
+            if (!isset($data['uuid'])) {
+                log::add('ttscast','debug','[CALLBACK] TTSCast RealTime :: UUID non défini !');
+                continue;
+            }
+            log::add('ttscast','debug','[CALLBACK] TTSCast RealTime :: ' . $data['uuid']);
+            if ($data['realtime'] != 1) {
+                # log::add('ttscast','debug','[CALLBACK] TTSCast RealTime :: NoRealTimeMode');
+                continue;
+            }
+            $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
+            if (!is_object($ttscast)) {    
+                # log::add('ttscast','debug','[CALLBACK] TTSCast RealTime NON EXIST :: ' . $data['uuid']);
+                continue;
+            }
+            else {
+                $rtcast = ttscast::realtimeUpdateCast($data);
+            }
+        }
     } else {
         log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 
     }

@@ -22,8 +22,10 @@ class Config:
     GCAST_UUID = []
     GCAST_NAMES = []
     
-    NETCAST_BROWSERMANAGER = None
-    NETCAST_DEVICES = []
+    NETCAST_BROWSER = None
+    NETCAST_DEVICES = None
+    LISTENER_CAST = {}
+    LISTENER_MEDIA = {}
 
     IS_ENDING = False
 
