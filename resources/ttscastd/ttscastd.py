@@ -780,8 +780,8 @@ class Functions:
                         castAppId = cast.status.app_id
                         castStatusText = cast.status.status_text
                         
-                        last_updated = cast.media_controller.status.last_updated.replace(tzinfo=datetime.timezone.utc)
-                        last_updated_local = last_updated.astimezone(tz=None)
+                        # last_updated = cast.media_controller.status.last_updated.replace(tzinfo=datetime.timezone.utc)
+                        # last_updated_local = last_updated.astimezone(tz=None)
                         
                         mediaPlayerState = cast.media_controller.status.player_state
                         mediaTitle = cast.media_controller.status.title
@@ -789,7 +789,7 @@ class Functions:
                         mediaAlbumName = cast.media_controller.status.album_name
                         mediaContentType = cast.media_controller.status.content_type
                         mediaStreamType = cast.media_controller.status.stream_type
-                        mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
+                        # mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
                         
                         data = {
                             'uuid': str(cast.uuid),
@@ -807,7 +807,7 @@ class Functions:
                             'album_name': mediaAlbumName,
                             'content_type': mediaContentType,
                             'stream_type': mediaStreamType,
-                            'last_updated': mediaLastUpdated,
+                            # 'last_updated': mediaLastUpdated,
                             'schedule': 1,
                             'online': '1'
                         }
