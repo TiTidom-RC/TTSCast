@@ -611,7 +611,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'volumedown');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Volume -', __FILE__));
+            $cmd->setName(__('Volume Down', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('volumedown');
             $cmd->setType('action');
@@ -626,7 +626,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'volumeup');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Volume +', __FILE__));
+            $cmd->setName(__('Volume Up', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('volumeup');
             $cmd->setType('action');
@@ -641,7 +641,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'mute_on');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Volume -', __FILE__));
+            $cmd->setName(__('Mute On -', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('mute_on');
             $cmd->setType('action');
@@ -657,7 +657,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'mute_off');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Volume -', __FILE__));
+            $cmd->setName(__('Mute Off', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('mute_off');
             $cmd->setType('action');
