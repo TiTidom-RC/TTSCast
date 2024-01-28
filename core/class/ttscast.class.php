@@ -665,21 +665,6 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
-        $cmd = $this->getCmd(null, 'media_pause');
-        if (!is_object($cmd)) {
-	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Media Pause', __FILE__));
-            $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('media_pause');
-            $cmd->setType('action');
-            $cmd->setSubType('other');
-            $cmd->setDisplay('icon', '<i class="fas fa-pause-circle"></i>');
-	        $cmd->setIsVisible(1);
-            $cmd->setOrder($orderCmd++);
-	        // $cmd->setConfiguration('ttscastCmd', true);
-            $cmd->save();
-        }
-
         $cmd = $this->getCmd(null, 'media_play');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
@@ -689,6 +674,21 @@ class ttscast extends eqLogic
             $cmd->setType('action');
             $cmd->setSubType('other');
             $cmd->setDisplay('icon', '<i class="fas fa-play-circle"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'media_pause');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media Pause', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media_pause');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-pause-circle"></i>');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
