@@ -666,7 +666,7 @@ class Functions:
                     app_name = "youtube"
                     app_data = {
                         "media_id": _value, 
-                        "media_type": "audio/mp3", 
+                        # "media_type": "audio/mp3", 
                         "title": "[TTSCast] YouTube",
                         "thumb": urlThumb
                     }
