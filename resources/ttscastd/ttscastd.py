@@ -660,15 +660,15 @@ class Functions:
                     
                     cast.set_volume(volume=_volume / 100)
                 
-                    urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
-                    logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
+                    # urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+                    # logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
                 
                     app_name = "youtube"
                     app_data = {
                         "media_id": _value, 
                         # "media_type": "audio/mp3", 
-                        "title": "[TTSCast] YouTube",
-                        "thumb": urlThumb
+                        # "title": "[TTSCast] YouTube",
+                        # "thumb": urlThumb
                     }
                     quick_play.quick_play(cast, app_name, app_data)
                     logging.debug('[DAEMON][controllerActions] Youtube :: Diffusion lancée :: %s', str(cast.media_controller.status))
