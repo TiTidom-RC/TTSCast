@@ -581,7 +581,6 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('volumeset');
             $cmd->setType('action');
             $cmd->setSubType('slider');
-            # TODO Comment forcer le widget à "button" ?
 	        $cmd->setIsVisible(1);
             $cmd->setTemplate('dashboard', 'core::value');
             $cmd->setTemplate('mobile', 'core::value');
@@ -601,12 +600,48 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('volume_muted');
             $cmd->setType('info');
             $cmd->setSubType('binary');
-	        $cmd->setIsVisible(1);
+	        $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
         $mute_cmd_id = $cmd->getId();
+
+        $cmd = $this->getCmd(null, 'mute_on');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Mute On', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('mute_on');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-volume-mute"></i>');
+            $cmd->setValue($mute_cmd_id);
+	        $cmd->setIsVisible(1);
+            $cmd->setTemplate('dashboard', 'template::toggle');
+            $cmd->setTemplate('mobile', 'template::toggle');
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'mute_off');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Mute Off', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('mute_off');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-volume-off"></i>');
+            $cmd->setValue($mute_cmd_id);
+	        $cmd->setIsVisible(1);
+            $cmd->setTemplate('dashboard', 'template::toggle');
+            $cmd->setTemplate('mobile', 'template::toggle');
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
 
         $cmd = $this->getCmd(null, 'volumedown');
         if (!is_object($cmd)) {
@@ -632,38 +667,6 @@ class ttscast extends eqLogic
             $cmd->setType('action');
             $cmd->setSubType('other');
             $cmd->setDisplay('icon', '<i class="fas fa-volume-up"></i>');
-	        $cmd->setIsVisible(1);
-            $cmd->setOrder($orderCmd++);
-	        // $cmd->setConfiguration('ttscastCmd', true);
-            $cmd->save();
-        }
-
-        $cmd = $this->getCmd(null, 'mute_on');
-        if (!is_object($cmd)) {
-	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Mute On', __FILE__));
-            $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('mute_on');
-            $cmd->setType('action');
-            $cmd->setSubType('other');
-            $cmd->setDisplay('icon', '<i class="fas fa-volume-mute"></i>');
-            $cmd->setValue($mute_cmd_id);
-	        $cmd->setIsVisible(1);
-            $cmd->setOrder($orderCmd++);
-	        // $cmd->setConfiguration('ttscastCmd', true);
-            $cmd->save();
-        }
-
-        $cmd = $this->getCmd(null, 'mute_off');
-        if (!is_object($cmd)) {
-	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Mute Off', __FILE__));
-            $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('mute_off');
-            $cmd->setType('action');
-            $cmd->setSubType('other');
-            $cmd->setDisplay('icon', '<i class="fas fa-volume-off"></i>');
-            $cmd->setValue($mute_cmd_id);
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
