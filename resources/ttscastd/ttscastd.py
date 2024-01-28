@@ -95,23 +95,11 @@ class Loops:
                         # Gestion des actions
                         logging.debug('[DAEMON][SOCKET] Action')
                         if 'cmd_action' in message:
-                            if (message['cmd_action'] == 'setvolume' and all(keys in message for keys in ('value', 'googleUUID'))):
-                                logging.debug('[DAEMON][SOCKET] Action :: setVolume = %s @ %s', message['value'], message['googleUUID'])
-                                Functions.setVolume(message['googleUUID'], message['value'], message['cmd_action'])
-                            elif (message['cmd_action'] == 'volumeup' and 'googleUUID' in message):
-                                logging.debug('[DAEMON][SOCKET] Action :: Volume UP @ %s', message['googleUUID'])
-                                Functions.setVolume(message['googleUUID'], '', message['cmd_action'])
-                            elif (message['cmd_action'] == 'volumedown' and 'googleUUID' in message):
-                                logging.debug('[DAEMON][SOCKET] Action :: Volume DOWN @ %s', message['googleUUID'])
-                                Functions.setVolume(message['googleUUID'], '', message['cmd_action'])
-                            elif (message['cmd_action'] == 'media_pause' and 'googleUUID' in message):
-                                logging.debug('[DAEMON][SOCKET] Action :: Media PAUSE @ %s', message['googleUUID'])
-                                Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
-                            elif (message['cmd_action'] == 'media_play' and 'googleUUID' in message):
-                                logging.debug('[DAEMON][SOCKET] Action :: Media PLAY @ %s', message['googleUUID'])
-                                Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
-                            elif (message['cmd_action'] == 'media_stop' and 'googleUUID' in message):
-                                logging.debug('[DAEMON][SOCKET] Action :: Media STOP @ %s', message['googleUUID'])
+                            if (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
+                                logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
+                                Functions.mediaActions(message['googleUUID'], message['value'], message['cmd_action'])
+                            elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
+                                logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
@@ -649,7 +637,7 @@ class TTSCast:
 class Functions:
     """ Class Functions """
     
-    def setVolume(_googleUUID='UNKOWN', _value='0', _mode='setvolume'):
+    """ def setVolume(_googleUUID='UNKOWN', _value='0', _mode='setvolume'):
         try:
             if _googleUUID != 'UNKOWN':
                 if (_mode == 'set'):
@@ -683,20 +671,13 @@ class Functions:
         except Exception as e:
             logging.error('[DAEMON][SetVolume] Exception on setVolume :: %s', e)
             logging.debug(traceback.format_exc())
-            return False
+            return False """
     
     def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
         if _googleUUID != 'UNKOWN':
-            if (_mode == 'media_pause'):
-                logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
-            elif (_mode == 'media_play'):
-                logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
-            elif (_mode == 'media_stop'): 
-                logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
-            
             chromecasts = None
             cast = None
-            try:    
+            try:
                 chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.uuid) == _googleUUID]
                 if not chromecasts:
                     logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
@@ -704,16 +685,43 @@ class Functions:
                 cast = chromecasts[0]
                 logging.debug('[DAEMON][mediaActions] Chromecast trouvé, lancement des actions')
                 
-                if (_mode == 'media_pause'):
+                if (_mode in ('volumeset', 'volumeup', 'volumedown')):
+                    castVolumeLevel = None
+                    if (_mode == 'volumeset'):
+                        castVolumeLevel = round(cast.set_volume(volume=float(_value) / 100) * 100)
+                    elif (_mode == 'volumeup'):
+                        castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
+                    elif (_mode == 'volumedown'): 
+                        castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
+                    logging.debug('[DAEMON][mediaActions] Chromecast Volume @ UUID :: %s @ %s', str(castVolumeLevel), _googleUUID)
+                elif (_mode == 'media_pause'):
                     cast.media_controller.pause()
-                    # logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
+                    logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
                 elif (_mode == 'media_play'):
                     cast.media_controller.play()
-                    # logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
+                    logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
                 elif (_mode == 'media_stop'): 
+                    cast.media_controller.stop()
+                    logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
+                elif (_mode == 'media_quit'): 
                     cast.quit_app()
-                    # logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
-                
+                    logging.debug('[DAEMON][mediaActions] QUIT :: %s', _googleUUID)
+                elif (_mode == 'media_next'): 
+                    cast.media_controller.queue_next()
+                    logging.debug('[DAEMON][mediaActions] NEXT :: %s', _googleUUID)
+                elif (_mode == 'media_previous'): 
+                    cast.media_controller.queue_prev()
+                    logging.debug('[DAEMON][mediaActions] PREVIOUS :: %s', _googleUUID)
+                elif (_mode == 'media_rewind'): 
+                    cast.media_controller.rewind()
+                    logging.debug('[DAEMON][mediaActions] REWIND :: %s', _googleUUID)
+                elif (_mode == 'mute_on'): 
+                    cast.set_volume_muted(True)
+                    logging.debug('[DAEMON][mediaActions] MUTE ON :: %s', _googleUUID)
+                elif (_mode == 'mute_off'): 
+                    cast.set_volume_muted(False)
+                    logging.debug('[DAEMON][mediaActions] MUTE OFF :: %s', _googleUUID)
+                    
                 # Libération de la mémoire
                 cast = None
                 chromecasts = None

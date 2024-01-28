@@ -539,34 +539,6 @@ class ttscast extends eqLogic
             $cmd->save();
         }
 
-        $cmd = $this->getCmd(null, 'lastschedule');
-        if (!is_object($cmd)) {
-	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Schedule LastTime', __FILE__));
-            $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('lastschedule');
-            $cmd->setType('info');
-            $cmd->setSubType('string');
-	        $cmd->setIsVisible(1);
-            $cmd->setOrder($orderCmd++);
-	        // $cmd->setConfiguration('ttscastCmd', true);
-            $cmd->save();
-        }
-
-        $cmd = $this->getCmd(null, 'lastschedulets');
-        if (!is_object($cmd)) {
-	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Schedule LastTime (TS)', __FILE__));
-            $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('lastschedulets');
-            $cmd->setType('info');
-            $cmd->setSubType('string');
-	        $cmd->setIsVisible(0);
-            $cmd->setOrder($orderCmd++);
-	        // $cmd->setConfiguration('ttscastCmd', true);
-            $cmd->save();
-        }
-
         $cmd = $this->getCmd(null, 'online');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
@@ -634,6 +606,7 @@ class ttscast extends eqLogic
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
         }
+        $mute_cmd_id = $cmd->getId();
 
         $cmd = $this->getCmd(null, 'volumedown');
         if (!is_object($cmd)) {
@@ -643,7 +616,7 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('volumedown');
             $cmd->setType('action');
             $cmd->setSubType('other');
-            // $cmd->setDisplay('icon', '<i class="fa fa-volume-down"></i>');
+            $cmd->setDisplay('icon', '<i class="fas fa-volume-down"></i>');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
@@ -658,7 +631,69 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('volumeup');
             $cmd->setType('action');
             $cmd->setSubType('other');
-            // $cmd->setDisplay('icon', '<i class="fa fa-volume-down"></i>');
+            $cmd->setDisplay('icon', '<i class="fas fa-volume-up"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'mute_on');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Volume -', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('mute_on');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-volume-mute"></i>');
+            $cmd->setValue($mute_cmd_id);
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'mute_off');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Volume -', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('mute_off');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-volume-off"></i>');
+            $cmd->setValue($mute_cmd_id);
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'media_previous');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media Previous', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media_previous');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-step-backward"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'media_rewind');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media Rewind', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media_rewind');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-backward"></i>');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
@@ -673,7 +708,7 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('media_play');
             $cmd->setType('action');
             $cmd->setSubType('other');
-            $cmd->setDisplay('icon', '<i class="fas fa-play-circle"></i>');
+            $cmd->setDisplay('icon', '<i class="fas fa-play"></i>');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
@@ -688,7 +723,7 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('media_pause');
             $cmd->setType('action');
             $cmd->setSubType('other');
-            $cmd->setDisplay('icon', '<i class="fas fa-pause-circle"></i>');
+            $cmd->setDisplay('icon', '<i class="fas fa-pause"></i>');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
@@ -703,8 +738,66 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('media_stop');
             $cmd->setType('action');
             $cmd->setSubType('other');
-            $cmd->setDisplay('icon', '<i class="fas fa-stop-circle"></i>');
+            $cmd->setDisplay('icon', '<i class="fas fa-stop"></i>');
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'media_next');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media Next', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media_next');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-step-forward"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'media_quit');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media Quit', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media_quit');
+            $cmd->setType('action');
+            $cmd->setSubType('other');
+            $cmd->setDisplay('icon', '<i class="fas fa-eject"></i>');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'lastschedule');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Schedule LastTime', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('lastschedule');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+	        // $cmd->setConfiguration('ttscastCmd', true);
+            $cmd->save();
+        }
+
+        $cmd = $this->getCmd(null, 'lastschedulets');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Schedule LastTime (TS)', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('lastschedulets');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
@@ -948,36 +1041,12 @@ class ttscastCmd extends cmd
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['slider'])) {
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['slider'] . ' / ' . $googleUUID);
-                    ttscast::actionGCast($googleUUID, "setvolume", $_options['slider']);
+                    ttscast::actionGCast($googleUUID, "volumeset", $_options['slider']);
                 } else {
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ERROR = Mauvais paramètre');
                 }
-            } elseif ($logicalId == "volumedown") {
-                log::add('ttscast', 'debug', '[CMD] VolumeDOWN :: ' . json_encode($_options));
-                $googleUUID = $eqLogic->getLogicalId();
-                if (isset($googleUUID)) {
-                    ttscast::actionGCast($googleUUID, "volumedown");
-                }
-            } elseif ($logicalId == "volumeup") {
-                log::add('ttscast', 'debug', '[CMD] VolumeUP :: ' . json_encode($_options));
-                $googleUUID = $eqLogic->getLogicalId();
-                if (isset($googleUUID)) {
-                    ttscast::actionGCast($googleUUID, "volumeup");
-                }
-            } elseif ($logicalId == "media_pause") {
-                log::add('ttscast', 'debug', '[CMD] Media PAUSE :: ' . json_encode($_options));
-                $googleUUID = $eqLogic->getLogicalId();
-                if (isset($googleUUID)) {
-                    ttscast::actionGCast($googleUUID, $logicalId);
-                }
-            } elseif ($logicalId == "media_play") {
-                log::add('ttscast', 'debug', '[CMD] Media PLAY :: ' . json_encode($_options));
-                $googleUUID = $eqLogic->getLogicalId();
-                if (isset($googleUUID)) {
-                    ttscast::actionGCast($googleUUID, $logicalId);
-                }
-            } elseif ($logicalId == "media_stop") {
-                log::add('ttscast', 'debug', '[CMD] Media STOP :: ' . json_encode($_options));
+            } elseif (in_array($logicalId, ["volumedown", "volumeup", "media_pause", "media_play", "media_stop", "media_previous", "media_next", "media_quit", "media_rewind", "mute_on", "mute_off"])) {
+                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID)) {
                     ttscast::actionGCast($googleUUID, $logicalId);
