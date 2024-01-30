@@ -515,7 +515,7 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
-        $orderCmd = 1;
+        $orderCmd = 0;
 
         $cmd = $this->getCmd(null, 'refresh');
         if (!is_object($cmd)) {
