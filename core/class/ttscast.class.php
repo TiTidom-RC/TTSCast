@@ -28,9 +28,8 @@ class ttscast extends eqLogic
 
     /*
      * Permet de définir les possibilités de personnalisation du widget (en cas d'utilisation de la fonction 'toHtml' par exemple)
-     * Tableau multidimensionnel - exemple: array('custom' => true, 'custom::layout' => false)
-    public static $_widgetPossibility = array();
-    */
+     * Tableau multidimensionnel - exemple: array('custom' => true, 'custom::layout' => false) */
+    public static $_widgetPossibility = array('custom' => true);
 
     /*
      * Permet de crypter/décrypter automatiquement des champs de configuration du plugin
@@ -530,6 +529,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
         
         $cmd = $this->getCmd(null, 'refreshcast');
@@ -544,6 +545,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'online');
@@ -558,6 +561,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'volume_level');
@@ -577,6 +582,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
         $volumeLevelId = $cmd->getId();
 
@@ -597,6 +604,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'volume_muted');
@@ -611,6 +620,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
         $mute_cmd_id = $cmd->getId();
 
@@ -630,6 +641,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'mute_off');
@@ -648,6 +661,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'volumedown');
@@ -663,6 +678,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'volumeup');
@@ -678,6 +695,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'media_previous');
@@ -693,6 +712,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'media_rewind');
@@ -708,6 +729,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'media_play');
@@ -723,6 +746,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'media_pause');
@@ -738,6 +763,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'media_stop');
@@ -753,6 +780,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'media_next');
@@ -768,6 +797,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'media_quit');
@@ -783,6 +814,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'lastschedule');
@@ -797,6 +830,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'lastschedulets');
@@ -811,6 +846,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'player_state');
@@ -825,6 +862,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'display_name');
@@ -839,6 +878,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'app_id');
@@ -853,6 +894,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'status_text');
@@ -867,6 +910,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'title');
@@ -881,6 +926,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'artist');
@@ -895,6 +942,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'album_name');
@@ -909,6 +958,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'content_type');
@@ -923,6 +974,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'stream_type');
@@ -937,6 +990,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'last_updated');
@@ -951,6 +1006,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'tts');
@@ -965,6 +1022,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'youtube');
@@ -979,6 +1038,8 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'customcmd');
@@ -993,11 +1054,21 @@ class ttscast extends eqLogic
             $cmd->setOrder($orderCmd++);
 	        // $cmd->setConfiguration('ttscastCmd', true);
             $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        # TODO gérer les modèles IsEnabled pour l'envoyer au démon
+        if ($this->getIsEnable()) {
+            $this->enableCastToDaemon();
+        } else {
+            $this->disableCastToDaemon();
         }
     }
 
     // Fonction exécutée automatiquement avant la suppression de l'équipement
     public function preRemove() {
+        $this->disableCastToDaemon();
     }
 
     // Fonction exécutée automatiquement après la suppression de l'équipement
@@ -1027,9 +1098,7 @@ class ttscastCmd extends cmd
 {
     /* **************************Attributs****************************** */
 
-    /*
-    public static $_widgetPossibility = array();
-    */
+    public static $_widgetPossibility = array('custom' => true);
 
     /* ************************Methode static*************************** */
 
