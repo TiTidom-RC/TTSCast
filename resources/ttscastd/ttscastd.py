@@ -48,7 +48,7 @@ except ImportError as e:
 
 # Import pour PyChromeCast
 try:
-    # import zeroconf
+    import zeroconf
     import pychromecast
     from pychromecast import quick_play
     from pychromecast.controllers.media import MediaStatusListener
@@ -165,7 +165,15 @@ class Loops:
         
         try:
             # Thread pour le browser (pychromecast)
-            Config.NETCAST_DEVICES, Config.NETCAST_BROWSER = pychromecast.get_chromecasts(timeout=30)
+            # TODO est ce qu'il faut supprimer les include des listeners ?
+            
+            Config.NETCAST_ZCONF = zeroconf.Zeroconf()
+            Config.NETCAST_BROWSER = pychromecast.discovery.CastBrowser(myCast.MyCastListener(), Config.NETCAST_ZCONF, Config.KNOWN_HOSTS)
+            Config.NETCAST_BROWSER.start_discovery()
+            logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
+            
+            # Thread pour le browser (pychromecast)
+            """ Config.NETCAST_DEVICES, Config.NETCAST_BROWSER = pychromecast.get_chromecasts(timeout=30)
             
             for chromecast in Config.NETCAST_DEVICES:
                 chromecast.wait(timeout=10)
@@ -178,7 +186,7 @@ class Loops:
                 Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
                 chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
                 
-            logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
+            logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...') """
 
             # Informer Jeedom que le démon est démarré
             Comm.sendToJeedom.send_change_immediate({'daemonStarted': '1'})
@@ -874,6 +882,30 @@ class Functions:
                 pass
 
 class myCast:
+    class MyCastListener(pychromecast.discovery.AbstractCastListener):
+        """Listener for discovering chromecasts."""
+
+        def add_cast(self, uuid, _service):
+            """Called when a new cast has beeen discovered."""
+            # print(f"Found cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
+            logging.debug('[DAEMON][NETCAST][Add_Cast] Found Cast Device (Name/UUID) :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
+            # TODO Action lorsqu'un GoogleCast est ajouté
+            # TODO Config.NETCAST_DEVICES add device ?
+
+        def remove_cast(self, uuid, _service, cast_info):
+            """Called when a cast has beeen lost (MDNS info expired or host down)."""
+            # print(f"Lost cast device '{cast_info.friendly_name}' with UUID {uuid}")
+            logging.debug('[DAEMON][NETCAST][Remove_Cast] Lost Cast Device (Name/UUID) :: ' + cast_info.friendly_name + ' / ' + str(uuid))
+            # TODO Action lorsqu'un GoogleCast est supprimé
+            # TODO Config.NETCAST_DEVICES remove device + Listener ?
+
+        def update_cast(self, uuid, _service):
+            """Called when a cast has beeen updated (MDNS info renewed or changed)."""
+            # print(f"Updated cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
+            logging.debug('[DAEMON][NETCAST][Update_Cast] Updated Cast Device (Name/UUID) :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
+            # TODO Action lorsqu'un GoogleCast est mis à jour
+            # TODO Est ce que cela remplace les autres listener notamment le média ? 
+
     class MyCastStatusListener(CastStatusListener):
         """Cast status listener"""
 
@@ -959,8 +991,12 @@ def shutdown():
     try:
         for chromecast in Config.NETCAST_DEVICES:
             chromecast.disconnect()
-        Config.NETCAST_BROWSER.stop_discovery()
         logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
+        Config.NETCAST_BROWSER.stop_discovery()
+        logging.info("[DAEMON] Shutdown :: Browser Stop :: OK")
+        Config.NETCAST_ZCONF.close()
+        logging.info("[DAEMON] Shutdown :: ZeroConf Close :: OK")
+        # TODO vérifier que l'arrêt du ZeroConf est bien à appeler comme ca !
     except Exception:
         pass
     

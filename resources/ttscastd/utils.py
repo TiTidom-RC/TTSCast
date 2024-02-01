@@ -24,6 +24,7 @@ class Config:
     
     NETCAST_BROWSER = None
     NETCAST_DEVICES = None
+    NETCAST_ZCONF = None
     LISTENER_CAST = {}
     LISTENER_MEDIA = {}
 
