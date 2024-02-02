@@ -971,7 +971,8 @@ class myCast:
              
             if chromecast.uuid in Config.GCAST_UUID:
                 uuid = str(chromecast.uuid)
-                myCast.castConnectAndListen(chromecast=chromecast, uuid=uuid)
+                # myCast.castConnectAndListen(chromecast=chromecast, uuid=uuid)
+                myCast.castConnectAndListen(uuid=uuid)
                 
     class MyCastListener(pychromecast.discovery.AbstractCastListener):
         """Listener for discovering chromecasts."""
