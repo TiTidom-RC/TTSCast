@@ -137,7 +137,7 @@ class Loops:
                             if _uuid not in Config.GCAST_UUID:
                                 Config.GCAST_UUID.append(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
-                                myCast.castAddListener(uuid=_uuid)
+                                myCast.castAddListener(uuid=str(_uuid))
                                 
                     elif message['cmd'] == "removecast":
                         if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
@@ -154,7 +154,7 @@ class Loops:
                             if _uuid in Config.GCAST_UUID:
                                 Config.GCAST_UUID.remove(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(Config.GCAST_UUID))
-                                myCast.castRemoveListener(uuid=_uuid)
+                                myCast.castRemoveListener(uuid=str(_uuid))
                             
                     elif message['cmd'] == 'playtesttts':
                         logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
