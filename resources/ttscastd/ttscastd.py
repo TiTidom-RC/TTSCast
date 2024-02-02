@@ -890,7 +890,10 @@ class myCast:
             # print(f"Found cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
             logging.debug('[DAEMON][NETCAST][Add_Cast] Found Cast Device (Service/Name/UUID) :: ' + str(_service) + ' / ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
             # TODO Action lorsqu'un GoogleCast est ajouté
-            chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == uuid]
+            if Config.NETCAST_DEVICES is not None:
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == uuid]    
+            else:
+                chromecasts = None
             if not chromecasts:
                 Config.NETCAST_DEVICES.append(pychromecast.get_chromecast_from_cast_info(Config.NETCAST_BROWSER.services[uuid], Config.NETCAST_ZCONF, 1, 30, 30))
                 logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES Append :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
