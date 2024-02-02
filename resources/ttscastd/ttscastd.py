@@ -956,6 +956,7 @@ class myCast:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
 
         chromecast.disconnect(timeout=10, blocking=True)
+        chromecast.__del__()
         logging.info('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Disconnected', str(chromecast.name))
 
     def castCallBack(chromecast=None):
