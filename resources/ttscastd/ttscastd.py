@@ -167,26 +167,16 @@ class Loops:
             # Thread pour le browser (pychromecast)
             # TODO est ce qu'il faut supprimer les include des listeners ?
             
-            Config.NETCAST_ZCONF = zeroconf.Zeroconf()
+            """ Config.NETCAST_ZCONF = zeroconf.Zeroconf()
             Config.NETCAST_BROWSER = pychromecast.discovery.CastBrowser(myCast.MyCastListener(), Config.NETCAST_ZCONF, Config.KNOWN_HOSTS)
             Config.NETCAST_BROWSER.start_discovery()
-            logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
+            logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...') """
             
             # Thread pour le browser (pychromecast)
-            """ Config.NETCAST_DEVICES, Config.NETCAST_BROWSER = pychromecast.get_chromecasts(timeout=30)
-            
-            for chromecast in Config.NETCAST_DEVICES:
-                chromecast.wait(timeout=10)
-                logging.info('[DAEMON][MAINLOOP][NETCAST] Chromecast with name ' + str(chromecast.uuid) + ' connected')
-                uuid = str(chromecast.uuid)
-                
-                Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
-                chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
-                
-                Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
-                chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
-                
-            logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...') """
+            Config.NETCAST_BROWSER = pychromecast.get_chromecasts(tries=3, retry_wait=10, timeout=60, blocking=False, callback=myCast.castCallBack, zeroconf_instance=Config.NETCAST_ZCONF, known_hosts=Config.KNOWN_HOSTS)
+            Config.NETCAST_BROWSER.start_discovery()
+
+            logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
 
             # Informer Jeedom que le démon est démarré
             Comm.sendToJeedom.send_change_immediate({'daemonStarted': '1'})
@@ -765,11 +755,11 @@ class Functions:
                 currentTime = int(time.time())
                 currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
 
-                chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_HOSTS)
-                browser.stop_discovery()
+                # chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_HOSTS)
+                # browser.stop_discovery()
                 
-                logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(chromecasts))
-                for device in chromecasts: 
+                logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(Config.NETCAST_DEVICES))
+                for device in Config.NETCAST_DEVICES:
                     logging.debug('[DAEMON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
                     data = {
                         'friendly_name': device.friendly_name,
@@ -882,23 +872,37 @@ class Functions:
                 pass
 
 class myCast:
+
+    def castCallBack(chromecast=None):
+        """ Service CallBack de découverte des Google Cast """
+        if chromecast is not None:
+            chromecast.wait(timeout=10)
+            logging.info('[DAEMON][MAINLOOP][NETCAST] Chromecast with name ' + str(chromecast.uuid) + ' connected')
+            uuid = str(chromecast.uuid)
+            
+            Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
+            chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
+            
+            Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
+            chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
+        
     class MyCastListener(pychromecast.discovery.AbstractCastListener):
         """Listener for discovering chromecasts."""
 
         def add_cast(self, uuid, _service):
             """Called when a new cast has beeen discovered."""
             # print(f"Found cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
-            logging.debug('[DAEMON][NETCAST][Add_Cast] Found Cast Device (Service/Name/UUID) :: ' + str(_service) + ' / ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
+            logging.debug('[DAEMON][NETCAST][Add_Cast] Found Cast Device (Name/UUID) :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
             # TODO Action lorsqu'un GoogleCast est ajouté
             if Config.NETCAST_DEVICES is not None:
-                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == uuid]    
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == uuid]
             else:
                 chromecasts = None
             if not chromecasts:
                 Config.NETCAST_DEVICES.append(pychromecast.get_chromecast_from_cast_info(Config.NETCAST_BROWSER.services[uuid], Config.NETCAST_ZCONF, 1, 30, 30))
                 logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES Append :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
             else:
-                logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES KO :: Device déjà présent')
+                logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES :: Device déjà présent')
             # TODO Config.NETCAST_DEVICES add device ?
 
         def remove_cast(self, uuid, _service, cast_info):
