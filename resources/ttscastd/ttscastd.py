@@ -893,7 +893,9 @@ class myCast:
             chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == uuid]
             if not chromecasts:
                 Config.NETCAST_DEVICES.append(pychromecast.get_chromecast_from_cast_info(Config.NETCAST_BROWSER.services[uuid], Config.NETCAST_ZCONF, 1, 30, 30))
-                        
+                logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES Append :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
+            else:
+                logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES KO :: Device déjà présent')
             # TODO Config.NETCAST_DEVICES add device ?
 
         def remove_cast(self, uuid, _service, cast_info):
