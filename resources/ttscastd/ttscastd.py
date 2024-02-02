@@ -876,7 +876,7 @@ class myCast:
         """ Service CallBack de découverte des Google Cast """
         if chromecast is not None:
             chromecast.wait(timeout=10)
-            logging.info('[DAEMON][MAINLOOP][NETCAST] Chromecast with name ' + str(chromecast.uuid) + ' connected')
+            logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name ' + str(chromecast.uuid) + ' connected')
             uuid = str(chromecast.uuid)
             
             Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
@@ -1008,7 +1008,6 @@ def shutdown():
         logging.info("[DAEMON] Shutdown :: Browser Stop :: OK")
         Config.NETCAST_ZCONF.close()
         logging.info("[DAEMON] Shutdown :: ZeroConf Close :: OK")
-        # TODO vérifier que l'arrêt du ZeroConf est bien à appeler comme ca !
     except Exception:
         pass
     
