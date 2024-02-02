@@ -946,11 +946,13 @@ class myCast:
         logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Remove Listeners', str(chromecast.name))
     
         if (uuid in Config.LISTENER_CAST):
+            chromecast.register_status_listener(None)
             del Config.LISTENER_CAST[uuid]
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Status Listener already deleted', str(chromecast.name))
             
         if (uuid in Config.LISTENER_MEDIA):
+            chromecast.media_controller.register_status_listener(None)
             del Config.LISTENER_MEDIA[uuid]
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
