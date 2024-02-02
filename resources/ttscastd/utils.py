@@ -23,7 +23,7 @@ class Config:
     GCAST_NAMES = []
     
     NETCAST_BROWSER = None
-    NETCAST_DEVICES = None
+    NETCAST_DEVICES = []
     NETCAST_ZCONF = None
     LISTENER_CAST = {}
     LISTENER_MEDIA = {}
