@@ -754,12 +754,6 @@ class Functions:
             if (_mode == "ScanMode"):
                 currentTime = int(time.time())
                 currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
-
-                # chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_HOSTS)
-                # browser.stop_discovery()
-                
-                Config.NETCAST_ZCONF.close()
-                Config.NETCAST_ZCONF = zeroconf.Zeroconf()
                 
                 logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(Config.NETCAST_DEVICES))
                 for device in Config.NETCAST_DEVICES:
@@ -786,7 +780,6 @@ class Functions:
                 
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(_gcast_names))
                 
-                # chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
                 chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.name in _gcast_names]
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb NetCast vs Cast :: %s vs %s', len(Config.NETCAST_DEVICES), len(chromecasts))
                 
