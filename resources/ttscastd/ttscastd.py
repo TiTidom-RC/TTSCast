@@ -167,12 +167,13 @@ class Loops:
             # Thread pour le browser (pychromecast)
             # TODO est ce qu'il faut supprimer les include des listeners ?
             
-            """ Config.NETCAST_ZCONF = zeroconf.Zeroconf()
+            """ 
             Config.NETCAST_BROWSER = pychromecast.discovery.CastBrowser(myCast.MyCastListener(), Config.NETCAST_ZCONF, Config.KNOWN_HOSTS)
             Config.NETCAST_BROWSER.start_discovery()
             logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...') """
             
             # Thread pour le browser (pychromecast)
+            Config.NETCAST_ZCONF = zeroconf.Zeroconf()
             Config.NETCAST_BROWSER = pychromecast.get_chromecasts(tries=3, retry_wait=10, timeout=60, blocking=False, callback=myCast.castCallBack, zeroconf_instance=Config.NETCAST_ZCONF, known_hosts=Config.KNOWN_HOSTS)
 
             logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
