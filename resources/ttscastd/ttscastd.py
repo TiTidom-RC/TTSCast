@@ -137,6 +137,7 @@ class Loops:
                             if _uuid not in Config.GCAST_UUID:
                                 Config.GCAST_UUID.append(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
+                                myCast.castAddListener(uuid=_uuid)
                                 
                     elif message['cmd'] == "removecast":
                         if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
@@ -153,6 +154,7 @@ class Loops:
                             if _uuid in Config.GCAST_UUID:
                                 Config.GCAST_UUID.remove(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(Config.GCAST_UUID))
+                                myCast.castRemoveListener(uuid=_uuid)
                             
                     elif message['cmd'] == 'playtesttts':
                         logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
@@ -904,6 +906,42 @@ class Functions:
 
 class myCast:
 
+    def castAddListener(chromecast=None, uuid=''):
+        """ Add Listener for Chromecast """
+        if not chromecast:
+            chromecast = Config.NETCAST_DEVICES[uuid]
+        
+        logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
+    
+        if (uuid not in Config.LISTENER_CAST):
+            Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
+            chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
+        else:
+            logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Status Listener already active', str(chromecast.name))
+            
+        if (uuid not in Config.LISTENER_MEDIA):
+            Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
+            chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
+        else:
+            logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Media Listener already active', str(chromecast.name))
+                       
+    def castRemoveListener(chromecast=None, uuid=''):
+        """ Remove Listener for Chromecast """
+        if not chromecast:
+            chromecast = Config.NETCAST_DEVICES[uuid]
+    
+        logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Remove Listeners', str(chromecast.name))
+    
+        if (uuid in Config.LISTENER_CAST):
+            del Config.LISTENER_CAST[uuid]
+        else:
+            logging.warning('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Status Listener already deleted', str(chromecast.name))
+            
+        if (uuid in Config.LISTENER_MEDIA):
+            del Config.LISTENER_MEDIA[uuid]
+        else:
+            logging.warning('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
+
     def castCallBack(chromecast=None):
         """ Service CallBack de découverte des Google Cast """
 
@@ -919,14 +957,10 @@ class myCast:
             chromecast.wait(timeout=10)
             logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
             
-            uuid = str(chromecast.uuid)
-            
-            Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
-            chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
-            
-            Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
-            chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
-        
+            if any(myNewCast.uuid == chromecast.uuid for myNewCast in Config.GCAST_UUID):
+                uuid = str(chromecast.uuid)
+                myCast.castAddListener(chromecast=chromecast, uuid=uuid)        
+                
     class MyCastListener(pychromecast.discovery.AbstractCastListener):
         """Listener for discovering chromecasts."""
 

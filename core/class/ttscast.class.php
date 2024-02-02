@@ -377,7 +377,12 @@ class ttscast extends eqLogic
     public static function sendOnStartCastToDaemon()
     {
         foreach(self::byType('ttscast') as $eqLogic) {
-            $eqLogic->enableCastToDaemon();
+            if ($eqLogic->getIsEnable()) {
+                $eqLogic->enableCastToDaemon();
+            }
+            else {
+                $eqLogic->disableCastToDaemon();
+            }   
         }
     }
 
