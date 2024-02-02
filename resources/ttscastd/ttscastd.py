@@ -1008,9 +1008,10 @@ def shutdown():
         logging.info("[DAEMON] Shutdown :: Browser Stop :: OK")
         Config.NETCAST_ZCONF.close()
         logging.info("[DAEMON] Shutdown :: ZeroConf Close :: OK")
-    except Exception:
-        pass
-    
+    except Exception as e:
+        # pass
+        logging.error('[DAEMON] Exception on Shutdown :: %s', e)
+        logging.debug(traceback.format_exc())
     logging.debug("[DAEMON] Removing PID file %s", Config.pidFile)
     try:
         os.remove(Config.pidFile)
