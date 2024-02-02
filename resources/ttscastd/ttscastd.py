@@ -137,7 +137,7 @@ class Loops:
                             if _uuid not in Config.GCAST_UUID:
                                 Config.GCAST_UUID.append(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
-                                myCast.castConnectAndListen(uuid=str(_uuid))
+                                myCast.castListeners(uuid=str(_uuid))
                                 
                     elif message['cmd'] == "removecast":
                         if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
@@ -906,32 +906,29 @@ class Functions:
 
 class myCast:
 
-    def castConnectAndListen(chromecast=None, uuid=''):
+    def castListeners(chromecast=None, uuid=''):
         """ Connect and Add Listener for Chromecast """
         if not chromecast:
             chromecasts = [cast for cast in Config.NETCAST_DEVICES if str(cast.uuid) == uuid]
             
             if not chromecasts:
-                logging.debug('[DAEMON][NETCAST][CastConnectAndListen] Aucun Chromecast avec cet UUID :: %s', uuid)
+                logging.debug('[DAEMON][NETCAST][CastListeners] Aucun Chromecast avec cet UUID :: %s', uuid)
                 return False
             chromecast = chromecasts[0]
         
-        chromecast.wait(timeout=10)
-        logging.info('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Connected', str(chromecast.name))
-        
-        logging.info('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
+        logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
     
         if (uuid not in Config.LISTENER_CAST):
             Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
             chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
         else:
-            logging.debug('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Status Listener already active', str(chromecast.name))
+            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Status Listener already active', str(chromecast.name))
             
         if (uuid not in Config.LISTENER_MEDIA):
             Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
             chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
         else:
-            logging.debug('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Media Listener already active', str(chromecast.name))
+            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Media Listener already active', str(chromecast.name))
                        
     def castRemove(chromecast=None, uuid=''):
         """ Remove Listener and Connection for Chromecast """
@@ -942,8 +939,6 @@ class myCast:
                 logging.debug('[DAEMON][NETCAST][CastRemove] Aucun Chromecast avec cet UUID :: %s', uuid)
                 return False
             chromecast = chromecasts[0]
-    
-        logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Remove Listeners', str(chromecast.name))
     
         if (uuid in Config.LISTENER_CAST):
             chromecast.register_status_listener(None)
@@ -956,11 +951,11 @@ class myCast:
             del Config.LISTENER_MEDIA[uuid]
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
-
-        chromecast.disconnect()
-        chromecast = None
         
-        logging.info('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Disconnected', str(chromecast.name))
+        logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Listeners Removed', str(chromecast.name))
+
+        """ chromecast.disconnect()
+        logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Disconnected', str(chromecast.name)) """
 
     def castCallBack(chromecast=None):
         """ Service CallBack de découverte des Google Cast """
@@ -972,11 +967,14 @@ class myCast:
             else:
                 logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
             logging.info('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: %s', len(Config.NETCAST_DEVICES))
+            
+            chromecast.wait(timeout=10)
+            logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
              
             if chromecast.uuid in Config.GCAST_UUID:
                 uuid = str(chromecast.uuid)
                 # myCast.castConnectAndListen(chromecast=chromecast, uuid=uuid)
-                myCast.castConnectAndListen(uuid=uuid)
+                myCast.castListeners(uuid=uuid)
                 
     class MyCastListener(pychromecast.discovery.AbstractCastListener):
         """Listener for discovering chromecasts."""
