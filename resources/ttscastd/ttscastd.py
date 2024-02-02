@@ -784,7 +784,7 @@ class Functions:
                 
                 # chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
                 chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.name in _gcast_names]
-                logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
+                logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb NetCast vs Cast :: %s vs %s', len(Config.NETCAST_DEVICES), len(chromecasts))
                 
                 for cast in chromecasts: 
                     logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', str(cast.uuid))
