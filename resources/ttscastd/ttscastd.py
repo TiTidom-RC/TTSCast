@@ -879,14 +879,14 @@ class myCast:
         if chromecast is not None:
             if any(mycast.uuid == chromecast.uuid for mycast in Config.NETCAST_DEVICES):
                 Config.NETCAST_DEVICES.append(chromecast)
-                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: ' + str(chromecast.name) + ' :: Added to NETCAST_DEVICES')
-                logging.info('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: ' + len(Config.NETCAST_DEVICES))
+                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Added to NETCAST_DEVICES', str(chromecast.name))
+                logging.info('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: %s', len(Config.NETCAST_DEVICES))
             else:
-                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: ' + str(chromecast.name) + ' :: Already in NETCAST_DEVICES')
-                logging.info('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: ' + len(Config.NETCAST_DEVICES))
+                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
+                logging.info('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: %s', len(Config.NETCAST_DEVICES))
 
             chromecast.wait(timeout=10)
-            logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: ' + str(chromecast.name) + ' :: Connected')
+            logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
             
             uuid = str(chromecast.uuid)
             
