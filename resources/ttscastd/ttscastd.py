@@ -85,68 +85,105 @@ class Loops:
         while not Config.IS_ENDING:    
             if not JEEDOM_SOCKET_MESSAGE.empty():
                 logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
+                
                 message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
+                
                 if message['apikey'] != Config.apiKey:
                     logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
                     return
+                
                 try:
                     # TODO ***** Gestion des messages reçus de Jeedom *****
                     if message['cmd'] == 'action':
                         # Gestion des actions
                         logging.debug('[DAEMON][SOCKET] Action')
+                        
                         if 'cmd_action' in message:
+                            
                             if (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
                                 logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], message['value'], message['cmd_action'])
+                            
                             elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
+                            
                             elif (message['cmd_action'] in ('youtube', 'sound')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], int(message['volume']))
+                                
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
+                        
                         if 'days' in message:
                             Functions.purgeCache(message['days'])
+                        
                         else:
                             Functions.purgeCache()
+                            
                     elif message['cmd'] == "addcast":
+                        
                         if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
                             _uuid = UUID(message['uuid'])
+                            
                             if message['host'] not in Config.KNOWN_HOSTS:
                                 Config.KNOWN_HOSTS.append(message['host'])
                                 logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                            
                             if message['friendly_name'] not in Config.GCAST_NAMES: 
                                 Config.GCAST_NAMES.append(message['friendly_name'])
                                 logging.debug('[DAEMON][SOCKET] Add Cast to GCAST Names :: %s', str(Config.GCAST_NAMES))
+                            
                             if _uuid not in Config.GCAST_UUID:
                                 Config.GCAST_UUID.append(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
+                                
                     elif message['cmd'] == "removecast":
-                        if 'uuid' in message and message['host'] in Config.KNOWN_HOSTS:
-                            Config.KNOWN_HOSTS.remove(message['host'])
-                            logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                        if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
+                            _uuid = UUID(message['uuid'])
+                            
+                            if message['host'] in Config.KNOWN_HOSTS:
+                                Config.KNOWN_HOSTS.remove(message['host'])
+                                logging.debug('[DAEMON][SOCKET] Remve Cast from KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                            
+                            if message['friendly_name'] in Config.GCAST_NAMES: 
+                                Config.GCAST_NAMES.remove(message['friendly_name'])
+                                logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST Names :: %s', str(Config.GCAST_NAMES))
+                            
+                            if _uuid in Config.GCAST_UUID:
+                                Config.GCAST_UUID.remove(_uuid)
+                                logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(Config.GCAST_UUID))
+                            
                     elif message['cmd'] == 'playtesttts':
                         logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
+                        
                         if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
                             logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
                             TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'])
+                        
                         else:
                             logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
+                            
                     elif message['cmd'] == 'playtts':
                         logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
+                        
                         if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsVolume', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
                             logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleUUID'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsVolume'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
                             TTSCast.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsVolume'])
+                        
                         else:
                             logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
+                            
                     elif message['cmd'] == "scanOn":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
+                        
                         Config.ScanMode = True
                         Config.ScanModeStart = int(time.time())
                         Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})
+                        
                     elif message['cmd'] == "scanOff":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
+                        
                         Config.ScanMode = False
                         Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
                         
@@ -164,14 +201,6 @@ class Loops:
         threading.Thread(target=Loops.eventsFromJeedom, args=(Config.cycleEvent,)).start()
         
         try:
-            # Thread pour le browser (pychromecast)
-            # TODO est ce qu'il faut supprimer les include des listeners ?
-            
-            """ 
-            Config.NETCAST_BROWSER = pychromecast.discovery.CastBrowser(myCast.MyCastListener(), Config.NETCAST_ZCONF, Config.KNOWN_HOSTS)
-            Config.NETCAST_BROWSER.start_discovery()
-            logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...') """
-            
             # Thread pour le browser (pychromecast)
             Config.NETCAST_ZCONF = zeroconf.Zeroconf()
             Config.NETCAST_BROWSER = pychromecast.get_chromecasts(tries=3, retry_wait=10, timeout=60, blocking=False, callback=myCast.castCallBack, zeroconf_instance=Config.NETCAST_ZCONF, known_hosts=Config.KNOWN_HOSTS)
@@ -754,6 +783,12 @@ class Functions:
             if (_mode == "ScanMode"):
                 currentTime = int(time.time())
                 currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
+            
+                # Thread pour le discovery (pychromecast)
+                """ 
+                browser = pychromecast.discovery.CastBrowser(myCast.MyCastListener(), Config.NETCAST_ZCONF, Config.KNOWN_HOSTS)
+                browser.start_discovery()
+                logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...') """
                 
                 logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(Config.NETCAST_DEVICES))
                 for device in Config.NETCAST_DEVICES:
@@ -781,7 +816,7 @@ class Functions:
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(_gcast_names))
                 
                 chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.name in _gcast_names]
-                logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb NetCast vs Cast :: %s vs %s', len(Config.NETCAST_DEVICES), len(chromecasts))
+                logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb NetCast vs JeeCast :: %s vs %s', len(Config.NETCAST_DEVICES), len(chromecasts))
                 
                 for cast in chromecasts: 
                     logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast Name :: %s', cast.name)
