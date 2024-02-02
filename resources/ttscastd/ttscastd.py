@@ -943,9 +943,6 @@ class myCast:
                 return False
             chromecast = chromecasts[0]
     
-        chromecast.disconnect(timeout=10, blocking=True)
-        logging.info('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Disconnected', str(chromecast.name))
-    
         logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Remove Listeners', str(chromecast.name))
     
         if (uuid in Config.LISTENER_CAST):
@@ -957,6 +954,9 @@ class myCast:
             del Config.LISTENER_MEDIA[uuid]
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
+
+        chromecast.disconnect(timeout=10, blocking=True)
+        logging.info('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Disconnected', str(chromecast.name))
 
     def castCallBack(chromecast=None):
         """ Service CallBack de découverte des Google Cast """
@@ -987,7 +987,7 @@ class myCast:
             else:
                 chromecasts = None
             if not chromecasts:
-                Config.NETCAST_DEVICES.append(pychromecast.get_chromecast_from_cast_info(Config.NETCAST_BROWSER.services[uuid], Config.NETCAST_ZCONF, 1, 30, 30))
+                Config.NETCAST_DEVICES.append(pychromecast.get_chromecast_from_cast_info(Config.NETCAST_BROWSER.services[uuid], Config.NETCAST_ZCONF, 1, 10, 30))
                 logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES Append :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
             else:
                 logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES :: Device déjà présent')
