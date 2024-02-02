@@ -916,7 +916,7 @@ class myCast:
                 return False
             chromecast = chromecasts[0]
         
-        chromecast.connect(timeout=10)
+        chromecast.wait(timeout=10)
         logging.info('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Connected', str(chromecast.name))
         
         logging.info('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
@@ -958,6 +958,7 @@ class myCast:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
 
         chromecast.disconnect()
+        chromecast = None
         
         logging.info('[DAEMON][NETCAST][CastConnectAndListen] Chromecast with name :: %s :: Disconnected', str(chromecast.name))
 
