@@ -758,18 +758,21 @@ class Functions:
                 # chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_HOSTS)
                 # browser.stop_discovery()
                 
+                Config.NETCAST_ZCONF.close()
+                Config.NETCAST_ZCONF = zeroconf.Zeroconf()
+                
                 logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(Config.NETCAST_DEVICES))
                 for device in Config.NETCAST_DEVICES:
-                    logging.debug('[DAEMON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
+                    logging.debug('[DAEMON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.cast_info.friendly_name, device.cast_info.model_name, device.cast_info.host, device.cast_info.port, device.uuid)
                     data = {
-                        'friendly_name': device.friendly_name,
+                        'friendly_name': device.cast_info.friendly_name,
                         'uuid': str(device.uuid),
                         'lastscan': currentTimeStr,
-                        'model_name': device.model_name,
-                        'cast_type': device.cast_type,
-                        'manufacturer': device.manufacturer,
-                        'host': device.host,
-                        'port': device.port,
+                        'model_name': device.cast_info.model_name,
+                        'cast_type': device.cast_info.cast_type,
+                        'manufacturer': device.cast_info.manufacturer,
+                        'host': device.cast_info.host,
+                        'port': device.cast_info.port,
                         'scanmode': 1
                     }
                     # Envoi vers Jeedom
