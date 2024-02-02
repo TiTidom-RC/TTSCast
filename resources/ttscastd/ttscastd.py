@@ -791,7 +791,7 @@ class Functions:
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb NetCast vs Cast :: %s vs %s', len(Config.NETCAST_DEVICES), len(chromecasts))
                 
                 for cast in chromecasts: 
-                    logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', str(cast.uuid))
+                    logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast Name :: %s', cast.name)
                     try:
                         # time.sleep(0.3)
                         castVolumeLevel = int(cast.status.volume_level * 100)
