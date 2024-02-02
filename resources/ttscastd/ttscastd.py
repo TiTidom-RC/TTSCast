@@ -888,8 +888,9 @@ class myCast:
         def add_cast(self, uuid, _service):
             """Called when a new cast has beeen discovered."""
             # print(f"Found cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
-            logging.debug('[DAEMON][NETCAST][Add_Cast] Found Cast Device (Name/UUID) :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
+            logging.debug('[DAEMON][NETCAST][Add_Cast] Found Cast Device (Service/Name/UUID) :: ' + _service.friendly_name + ' / ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
             # TODO Action lorsqu'un GoogleCast est ajouté
+            
             # TODO Config.NETCAST_DEVICES add device ?
 
         def remove_cast(self, uuid, _service, cast_info):
