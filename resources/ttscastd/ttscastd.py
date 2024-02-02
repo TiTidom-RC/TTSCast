@@ -909,7 +909,7 @@ class myCast:
     def castAddListener(chromecast=None, uuid=''):
         """ Add Listener for Chromecast """
         if not chromecast:
-            chromecast = next((cast for cast in Config.NETCAST_DEVICES if cast.uuid == uuid), None)
+            chromecast = [cast for cast in Config.NETCAST_DEVICES if cast.uuid == uuid][0]
         
         logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
     
@@ -928,7 +928,7 @@ class myCast:
     def castRemoveListener(chromecast=None, uuid=''):
         """ Remove Listener for Chromecast """
         if not chromecast:
-            chromecast = next((cast for cast in Config.NETCAST_DEVICES if cast.uuid == uuid), None)
+            chromecast = [cast for cast in Config.NETCAST_DEVICES if cast.uuid == uuid][0]
     
         logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Remove Listeners', str(chromecast.name))
     
