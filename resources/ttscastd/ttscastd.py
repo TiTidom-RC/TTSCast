@@ -876,9 +876,12 @@ class myCast:
         """ Service CallBack de découverte des Google Cast """
 
         if chromecast is not None:
-            Config.NETCAST_DEVICES.append(chromecast)
-            logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: ' + str(chromecast.name) + ' :: Added to NETCAST_DEVICES')
-            
+            if any(mycast.uuid == chromecast.uuid for mycast in Config.NETCAST_DEVICES):
+                Config.NETCAST_DEVICES.append(chromecast)
+                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: ' + str(chromecast.name) + ' :: Added to NETCAST_DEVICES')
+            else:
+                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: ' + str(chromecast.name) + ' :: Already in NETCAST_DEVICES')
+
             chromecast.wait(timeout=10)
             logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: ' + str(chromecast.name) + ' :: Connected')
             
