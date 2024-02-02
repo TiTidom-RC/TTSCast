@@ -967,7 +967,7 @@ class myCast:
             chromecast.wait(timeout=10)
             logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
             
-            if any(myNewCast.uuid == chromecast.uuid for myNewCast in Config.GCAST_UUID):
+            if chromecast.uuid in Config.GCAST_UUID:
                 uuid = str(chromecast.uuid)
                 myCast.castAddListener(chromecast=chromecast, uuid=uuid)        
                 
