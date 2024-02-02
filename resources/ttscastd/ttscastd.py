@@ -876,7 +876,7 @@ class myCast:
         """ Service CallBack de découverte des Google Cast """
         if chromecast is not None:
             chromecast.wait(timeout=10)
-            logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name ' + str(chromecast.uuid) + ' connected')
+            logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name ' + str(chromecast.name) + ' connected')
             uuid = str(chromecast.uuid)
             
             Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
