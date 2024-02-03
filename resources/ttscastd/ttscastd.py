@@ -109,13 +109,9 @@ class Loops:
                             elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
-                            
-                            elif (message['cmd_action'] in ('youtube')):
-                                logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
-                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _volume=int(message['volume']))
                                 
-                            elif (message['cmd_action'] in ('dashcast')):
-                                logging.debug('[DAEMON][SOCKET] Controller :: %s @ %s', message['cmd_action'], message['googleUUID'])
+                            elif (message['cmd_action'] in ('youtube', 'dashcast')):
+                                logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message['options'])
                                 
                     elif message['cmd'] == 'purgettscache':
@@ -680,7 +676,7 @@ class Functions:
     """ Class Functions """
     
     def checkIfDashCast(chromecast=None):
-        if chromecast is not None and (not chromecast.is_idle or chromecast.status.app_id == '84912283'): # DashCast = '84912283'
+        if chromecast is not None and (not chromecast.is_idle or chromecast.status.app_id == '84912283'):  # DashCast = '84912283'
             logging.debug('[DAEMON][checkIfDashCast] QuitDashCastApp')
             chromecast.quit_app()
             t = 5
@@ -690,7 +686,7 @@ class Functions:
         time.sleep(0.5)
         return True
     
-    def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _volume='30', _options=''):
+    def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _options=''):
         if _googleUUID != 'UNKOWN':
             chromecasts = None
             cast = None
@@ -711,18 +707,32 @@ class Functions:
                     volumeBeforePlay = cast.status.volume_level
                     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
                     
+                    _playlist = False
+                    _enqueue = False
+                    _volume = 30
+                    
+                    try:
+                        options_json = json.loads("{" + _options + "}")
+                        _playlist = options_json['playlist'] if 'playlist' in options_json else False
+                        _enqueue = options_json['enqueue'] if 'enqueue' in options_json else False
+                        _volume = options_json['volume'] if 'volume' in options_json else 30
+                    except ValueError as e:
+                        logging.debug('[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: %s', e)
+                    
                     cast.set_volume(volume=_volume / 100)
-                
-                    # urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
-                    # logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
-                
+
                     app_name = "youtube"
-                    app_data = {
-                        "media_id": _value, 
-                        # "media_type": "audio/mp3", 
-                        # "title": "[TTSCast] YouTube",
-                        # "thumb": urlThumb
-                    }
+                    
+                    if _playlist:
+                        app_data = {
+                            "media_id": _value,
+                            "enqueue": _enqueue
+                        }
+                    else:
+                        app_data = {
+                            "playlist_id": _value,
+                            "enqueue": _enqueue
+                        }
                     quick_play.quick_play(cast, app_name, app_data)
                     logging.debug('[DAEMON][controllerActions] Youtube :: Diffusion lancée :: %s', str(cast.media_controller.status))
                     
@@ -745,7 +755,7 @@ class Functions:
                         _force = options_json['force'] if 'force' in options_json else False
                         _reload_seconds = options_json['reload_seconds'] if 'reload_seconds' in options_json else None
                     except ValueError as e:
-                        logging.debug('[DAEMON][controllerActions] DashCast Exception :: %s', e)
+                        logging.debug('[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: %s', e)
                     
                     if not cast.is_idle or ('quit_app' in options_json and options_json['quit_app']):
                         logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
