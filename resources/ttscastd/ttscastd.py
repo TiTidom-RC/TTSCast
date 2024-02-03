@@ -225,7 +225,7 @@ class Loops:
                         Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
                     # Heartbeat du démon
                     if ((Config.HeartbeatLastTime + Config.HeartbeatFrequency) <= currentTime):
-                        logging.debug('[DAEMON][MAINLOOP] Heartbeat = 1')
+                        logging.info('[DAEMON][MAINLOOP] Heartbeat = 1')
                         Comm.sendToJeedom.send_change_immediate({'heartbeat': '1'})
                         Config.HeartbeatLastTime = currentTime
                         Functions.getResourcesUsage()
@@ -879,7 +879,7 @@ class Functions:
         return True
     
     def getResourcesUsage():
-        if logging.getLogger().isEnabledFor(logging.DEBUG):
+        if logging.getLogger().isEnabledFor(logging.INFO):
             resourcesUse = resource.getrusage(resource.RUSAGE_SELF)
             try:
                 uTime = getattr(resourcesUse, 'ru_utime')
@@ -889,7 +889,7 @@ class Functions:
                 currentTime = int(time.time())
                 timeDiff = currentTime - Config.ResourcesLastTime
                 timeDiffTotal = currentTime - Config.ResourcesFirstTime
-                logging.debug('[DAEMON][RESOURCES] Total CPU Time used : %.3fs (%.2f%%)  |  Last %i sec : %.3fs (%.2f%%)  | Memory : %s Mo', totalTime, totalTime / timeDiffTotal * 100, timeDiff, totalTime - Config.ResourcesLastUsed, (totalTime - Config.ResourcesLastUsed) / timeDiff * 100, int(round(maxRSS / 1024)))
+                logging.info('[DAEMON][RESOURCES] Total CPU Time used : %.3fs (%.2f%%)  |  Last %i sec : %.3fs (%.2f%%)  | Memory : %s Mo', totalTime, totalTime / timeDiffTotal * 100, timeDiff, totalTime - Config.ResourcesLastUsed, (totalTime - Config.ResourcesLastUsed) / timeDiff * 100, int(round(maxRSS / 1024)))
                 Config.ResourcesLastUsed = totalTime
                 Config.ResourcesLastTime = currentTime
             except Exception:
