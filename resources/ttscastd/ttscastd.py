@@ -54,6 +54,7 @@ try:
     from pychromecast import quick_play
     from pychromecast.controllers.media import MediaStatusListener
     from pychromecast.controllers.receiver import CastStatusListener
+    from pychromecast.controllers import dashcast
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
     sys.exit(1)
@@ -705,6 +706,31 @@ class Functions:
                     cast = None
                     chromecasts = None
                     return True
+                elif (_controller == 'dashcast'):
+                    logging.debug('[DAEMON][controllerActions] DashCast URL @ UUID :: %s @ %s', _value, _googleUUID)
+                    
+                    player = dashcast.DashCastController()
+                    cast.register_handle(player)
+                    
+                    if not cast.id_idle:
+                        logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
+                        cast.quit_app()
+                        t = 5
+                        while cast.status.app_id is not None and t > 0:
+                            time.sleep(0.1)
+                            t = t - 0.1                                       
+                    time.sleep(1)
+                    
+                    player.load_url(_value)
+                    time.sleep(1)
+                    
+                    # Libération de la mémoire
+                    cast.unregister_handle(player)
+                    player = None
+                    cast = None
+                    chromecasts = None
+                    return True
+                    
             except Exception as e:
                 logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
                 logging.debug(traceback.format_exc())
