@@ -1047,7 +1047,7 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
-        $cmd = $this->getCmd(null, 'customcmd');
+        /* $cmd = $this->getCmd(null, 'customcmd');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Custom Cmd', __FILE__));
@@ -1061,7 +1061,7 @@ class ttscast extends eqLogic
             $cmd->save();
         } else {
             $orderCmd++;
-        }
+        } */
 
         # TODO gérer les modèles IsEnabled pour l'envoyer au démon
         if ($this->getIsEnable()) {
