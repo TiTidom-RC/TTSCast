@@ -714,7 +714,7 @@ class Functions:
                     logging.debug('[DAEMON][controllerActions] DashCast URL / Options @ UUID :: %s / %s @ %s', _value, _options, _googleUUID)
                     
                     player = dashcast.DashCastController()
-                    cast.register_handle(player)
+                    cast.register_handler(player)
                     
                     if not cast.id_idle:
                         logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
@@ -729,7 +729,7 @@ class Functions:
                     time.sleep(1)
                     
                     # Libération de la mémoire
-                    cast.unregister_handle(player)
+                    cast.unregister_handler(player)
                     player = None
                     cast = None
                     chromecasts = None
