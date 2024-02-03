@@ -800,11 +800,11 @@ class Functions:
                                 radioUrl = radio['location']
                                 radioTitle = "[Jeedom] " + radio['title']
                                 
-                                # app_name = "default_media_receiver"
-                                app_name = "bubbleupnp"
+                                app_name = "default_media_receiver"
+                                # app_name = "bubbleupnp"
                                 app_data = {
                                     "media_id": radioUrl,
-                                    "media_type": "audio/mpeg",
+                                    "media_type": "audio/mp3",
                                     "title": radioTitle,
                                     "thumb": radioThumb,
                                     "stream_type": "LIVE"
