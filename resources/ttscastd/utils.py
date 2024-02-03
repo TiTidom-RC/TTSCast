@@ -42,6 +42,10 @@ class Config:
     HeartbeatFrequency = 600
     HeartbeatLastTime = int(time.time())
     
+    ResourcesLastUsed = 0
+    ResourcesLastTime = int(time.time())
+    ResourcesFirstTime = int(time.time())
+    
     ttsCacheFolder = 'data/cache'
     ttsCacheFolderWeb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ttsCacheFolder))
     ttsCacheFolderTmp = os.path.join('/tmp/jeedom/', 'ttscast_cache')

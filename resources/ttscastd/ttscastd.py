@@ -14,6 +14,7 @@
 # along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import resource
 import shutil
 import sys
 import os
@@ -227,6 +228,7 @@ class Loops:
                         logging.debug('[DAEMON][MAINLOOP] Heartbeat = 1')
                         Comm.sendToJeedom.send_change_immediate({'heartbeat': '1'})
                         Config.HeartbeatLastTime = currentTime
+                        Functions.getResourcesUsage()
                     # Scan New Chromecast
                     if not Config.ScanPending:
                         if Config.ScanMode and (Config.ScanLastTime < Config.ScanModeStart):
@@ -302,9 +304,6 @@ class TTSCast:
             logging.debug(traceback.format_exc())
             filecontent = None
         return filecontent
-    
-    def changeSpeedTTS(soundfile, speed):
-        logging.debug('[DAEMON][TestTTS] ChangeSpeed File :: %s', soundfile)
     
     def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0'):
         logging.debug('[DAEMON][TestTTS] Param TTSEngine :: %s', ttsEngine)
@@ -879,6 +878,23 @@ class Functions:
         Config.ScanPending = False
         return True
     
+    def getResourcesUsage():
+        if logging.getLogger().isEnabledFor(logging.DEBUG):
+            resourcesUse = resource.getrusage(resource.RUSAGE_SELF)
+            try:
+                uTime = getattr(resourcesUse, 'ru_utime')
+                sTime = getattr(resourcesUse, 'ru_stime')
+                maxRSS = getattr(resourcesUse, 'ru_maxrss')
+                totalTime = uTime + sTime
+                currentTime = int(time.time())
+                timeDiff = currentTime - Config.ResourcesLastTime
+                timeDiffTotal = currentTime - Config.ResourcesFirstTime
+                logging.debug('[DAEMON][RESOURCES] Total CPU Time used : %.3fs (%.2f%%)  |  Last %i sec : %.3fs (%.2f%%)  | Memory : %s Mo', totalTime, totalTime / timeDiffTotal * 100, timeDiff, totalTime - Config.ResourcesLastUsed, (totalTime - Config.ResourcesLastUsed) / timeDiff * 100, int(round(maxRSS / 1024)))
+                Config.ResourcesLastUsed = totalTime
+                Config.ResourcesLastTime = currentTime
+            except Exception:
+                pass
+        
     def purgeCache(nbDays='0'):
         if nbDays == '0':  # clean entire directory including containing folder
             logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
