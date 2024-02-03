@@ -804,7 +804,7 @@ class Functions:
                                 app_name = "bubbleupnp"
                                 app_data = {
                                     "media_id": radioUrl,
-                                    "media_type": "audio/mp3",
+                                    "media_type": "audio/mpeg",
                                     "title": radioTitle,
                                     "thumb": radioThumb,
                                     "stream_type": "LIVE"
