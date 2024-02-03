@@ -799,6 +799,7 @@ class Functions:
                                 # logging.debug('[DAEMON][controllerActions] Radio Thumb path :: %s', urlThumb)
                                 radioUrl = radio['location']
                                 radioTitle = "[Jeedom] " + radio['title']
+                                radioSubTitle = "[Jeedom] TTSCast Radio"
                                 
                                 app_name = "default_media_receiver"
                                 # app_name = "bubbleupnp"
@@ -807,6 +808,11 @@ class Functions:
                                     "media_type": "audio/mp3",
                                     "title": radioTitle,
                                     "thumb": radioThumb,
+                                    "metadata": {
+                                        "title": radioTitle,
+                                        "subtitle": radioSubTitle,
+                                        "images": [{"url": radioThumb}]
+                                    },
                                     "stream_type": "LIVE"
                                 }
                                 quick_play.quick_play(cast, app_name, app_data)
