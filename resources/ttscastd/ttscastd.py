@@ -716,7 +716,7 @@ class Functions:
                     player = dashcast.DashCastController()
                     cast.register_handler(player)
                     
-                    if not cast.id_idle:
+                    if not cast.is_idle:
                         logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
                         cast.quit_app()
                         t = 5
