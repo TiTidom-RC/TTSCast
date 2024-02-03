@@ -1207,7 +1207,7 @@ class myCast:
                 logging.debug(traceback.format_exc())
 
         def load_media_failed(self, item, error_code):
-            logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + item + ' with code :: ' + error_code)
+            logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(item) + ' with code :: ' + str(error_code))
 
 # ----------------------------------------------------------------------------
 
