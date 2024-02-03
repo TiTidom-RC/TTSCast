@@ -1,7 +1,7 @@
 {
 	"id" : "ttscast",
 	"name" : "TTS Cast",
-	"pluginVersion": "0.9.20",
+	"pluginVersion": "0.9.15",
 	"description" : {
 		"fr_FR": "TTS Cast : plugin permettant de gérer des équipements Google (type Google Home, Google Nest, Chromecast) et de diffuser dessus des notifications TTS ou sons (MP3), ou de lancer la lecture d'une radio en streaming",
 		"en_US": "TTS Cast : plugin permettant de gérer des équipements Google (type Google Home, Google Nest, Chromecast) et de diffuser dessus des notifications TTS ou sons (MP3), ou de lancer la lecture d'une radio en streaming",
