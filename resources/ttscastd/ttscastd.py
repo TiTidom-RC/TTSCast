@@ -577,8 +577,10 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
                     return False
                 cast = chromecasts[0]
-                # cast.wait(timeout=10)
                 logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+            
+                # Si DashCast alors sortir de l'appli avant sinon cela plante
+                Functions.checkIfDashCast(cast)
             
                 volumeBeforePlay = cast.status.volume_level
                 logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
@@ -629,6 +631,10 @@ class TTSCast:
                     return False
                 cast = chromecasts[0]
                 logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+                
+                # Si DashCast alors sortir de l'appli avant sinon cela plante
+                Functions.checkIfDashCast(cast)
+                
                 volumeBeforePlay = cast.status.volume_level
                 logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
                 cast.set_volume(volume=volumeForPlay / 100)
@@ -673,6 +679,16 @@ class TTSCast:
 class Functions:
     """ Class Functions """
     
+    def checkIfDashCast(chromecast=None):
+        if chromecast is not None and (not chromecast.is_idle or chromecast.status.app_id == '84912283'): # DashCast = '84912283'
+            logging.debug('[DAEMON][checkIfDashCast] QuitDashCastApp')
+            chromecast.quit_app()
+            t = 5
+            while chromecast.status.app_id is not None and t > 0:
+                time.sleep(0.1)
+                t = t - 0.1
+        return True
+    
     def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _volume='30', _options=''):
         if _googleUUID != 'UNKOWN':
             chromecasts = None
@@ -687,6 +703,9 @@ class Functions:
                 
                 if (_controller == 'youtube'):
                     logging.debug('[DAEMON][controllerActions] YouTube Id @ UUID :: %s @ %s', _value, _googleUUID)
+                    
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
                     
                     volumeBeforePlay = cast.status.volume_level
                     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
@@ -710,6 +729,7 @@ class Functions:
                     cast = None
                     chromecasts = None
                     return True
+                
                 elif (_controller == 'dashcast'):
                     logging.debug('[DAEMON][controllerActions] DashCast URL / Options @ UUID :: %s / %s @ %s', _value, _options, _googleUUID)
                     
@@ -737,15 +757,16 @@ class Functions:
                     
                     logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: %s | %s', _value, str(options_json))
                     player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)
+                    time.sleep(2)
+                    
+                    cast.unregister_handler(player)
                     time.sleep(1)
                     
                     # Libération de la mémoire
-                    cast.unregister_handler(player)
                     player = None
                     cast = None
                     chromecasts = None
                     return True
-                    
             except Exception as e:
                 logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
                 logging.debug(traceback.format_exc())
