@@ -110,7 +110,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
                                 
-                            elif (message['cmd_action'] in ('youtube', 'dashcast')):
+                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message['options'])
                                 
@@ -773,6 +773,12 @@ class Functions:
                     cast = None
                     chromecasts = None
                     return True
+                
+                elif (_controller == 'radios'):
+                    logging.debug('[DAEMON][controllerActions] Radio Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+                    
+                    return True
+                
             except Exception as e:
                 logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
                 logging.debug(traceback.format_exc())

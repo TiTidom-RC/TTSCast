@@ -1222,6 +1222,16 @@ class ttscastCmd extends cmd
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
                 }                
+            } elseif (in_array($logicalId, ["radios"])) {
+                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID) && isset($_options['select'])) {
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Select / GoogleUUID) :: ' . $_options['select'] . " / " . $googleUUID);
+                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['select']);
+                }
+                else {
+                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                }                
             } else {
                 throw new Exception(__('Commande Action non implémentée actuellement', __FILE__));    
             }
