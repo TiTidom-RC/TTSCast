@@ -716,7 +716,17 @@ class Functions:
                     player = dashcast.DashCastController()
                     cast.register_handler(player)
                     
-                    if not cast.is_idle:
+                    _force = None
+                    _reload_seconds = None
+                    
+                    try:
+                        options_json = json.loads("{" + _options + "}")    
+                        _force = options_json['force'] if 'force' in options_json else False
+                        _reload_seconds = options_json['reload_seconds'] if 'reload_seconds' in options_json else None
+                    except ValueError as e:
+                        logging.debug('[DAEMON][controllerActions] DashCast Exception :: %s', e)
+                    
+                    if not cast.is_idle or ('quit_app' in options_json and options_json['quit_app']):
                         logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
                         cast.quit_app()
                         t = 5
@@ -724,19 +734,6 @@ class Functions:
                             time.sleep(0.1)
                             t = t - 0.1                                       
                     time.sleep(1)
-                    
-                    options_json = {}
-                    _force = False
-                    _reload_seconds = 0
-                    try:
-                        options_json = json.loads("{" + _options + "}")
-                        
-                        if "force" in options_json:
-                            _force = options_json['force']
-                        if "reload_seconds" in options_json:
-                            _reload_seconds = options_json['reload_seconds']
-                    except ValueError as e:
-                        logging.debug('[DAEMON][controllerActions] DashCast Exception :: %s', e)
                     
                     logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: %s | %s', _value, str(options_json))
                     player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)
