@@ -725,7 +725,7 @@ class Functions:
                             t = t - 0.1                                       
                     time.sleep(1)
                     
-                    player.load_url(_value)
+                    player.load_url(url=_value)
                     time.sleep(1)
                     
                     # Libération de la mémoire
