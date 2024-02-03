@@ -14,6 +14,7 @@
 # along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+import resource
 import shutil
 import sys
 import os
@@ -48,7 +49,7 @@ except ImportError as e:
 
 # Import pour PyChromeCast
 try:
-    # import zeroconf
+    import zeroconf
     import pychromecast
     from pychromecast import quick_play
     from pychromecast.controllers.media import MediaStatusListener
@@ -85,65 +86,107 @@ class Loops:
         while not Config.IS_ENDING:    
             if not JEEDOM_SOCKET_MESSAGE.empty():
                 logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
+                
                 message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
+                
                 if message['apikey'] != Config.apiKey:
                     logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
                     return
+                
                 try:
                     # TODO ***** Gestion des messages reçus de Jeedom *****
                     if message['cmd'] == 'action':
                         # Gestion des actions
                         logging.debug('[DAEMON][SOCKET] Action')
+                        
                         if 'cmd_action' in message:
+                            
                             if (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
                                 logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], message['value'], message['cmd_action'])
+                            
                             elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
+                            
+                            elif (message['cmd_action'] in ('youtube', 'sound')):
+                                logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
+                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], int(message['volume']))
+                                
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
+                        
                         if 'days' in message:
                             Functions.purgeCache(message['days'])
+                        
                         else:
                             Functions.purgeCache()
+                            
                     elif message['cmd'] == "addcast":
+                        
                         if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
                             _uuid = UUID(message['uuid'])
+                            
                             if message['host'] not in Config.KNOWN_HOSTS:
                                 Config.KNOWN_HOSTS.append(message['host'])
                                 logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                            
                             if message['friendly_name'] not in Config.GCAST_NAMES: 
                                 Config.GCAST_NAMES.append(message['friendly_name'])
                                 logging.debug('[DAEMON][SOCKET] Add Cast to GCAST Names :: %s', str(Config.GCAST_NAMES))
+                            
                             if _uuid not in Config.GCAST_UUID:
                                 Config.GCAST_UUID.append(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
+                                myCast.castListeners(uuid=str(_uuid))
+                                
                     elif message['cmd'] == "removecast":
-                        if 'uuid' in message and message['host'] in Config.KNOWN_HOSTS:
-                            Config.KNOWN_HOSTS.remove(message['host'])
-                            logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                        if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
+                            _uuid = UUID(message['uuid'])
+                            
+                            if message['host'] in Config.KNOWN_HOSTS:
+                                Config.KNOWN_HOSTS.remove(message['host'])
+                                logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                            
+                            if message['friendly_name'] in Config.GCAST_NAMES: 
+                                Config.GCAST_NAMES.remove(message['friendly_name'])
+                                logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST Names :: %s', str(Config.GCAST_NAMES))
+                            
+                            if _uuid in Config.GCAST_UUID:
+                                Config.GCAST_UUID.remove(_uuid)
+                                logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(Config.GCAST_UUID))
+                                myCast.castRemove(uuid=str(_uuid))
+                            
                     elif message['cmd'] == 'playtesttts':
                         logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
+                        
                         if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
                             logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
                             TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'])
+                        
                         else:
                             logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
+                            
                     elif message['cmd'] == 'playtts':
                         logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
+                        
                         if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsVolume', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
                             logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleUUID'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsVolume'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
                             TTSCast.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsVolume'])
+                        
                         else:
                             logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
+                            
                     elif message['cmd'] == "scanOn":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
+                        
                         Config.ScanMode = True
                         Config.ScanModeStart = int(time.time())
                         Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})
+                        
                     elif message['cmd'] == "scanOff":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
+                        
                         Config.ScanMode = False
                         Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
                         
@@ -162,19 +205,9 @@ class Loops:
         
         try:
             # Thread pour le browser (pychromecast)
-            Config.NETCAST_DEVICES, Config.NETCAST_BROWSER = pychromecast.get_chromecasts(timeout=30)
-            
-            for chromecast in Config.NETCAST_DEVICES:
-                chromecast.wait(timeout=10)
-                logging.info('[DAEMON][MAINLOOP][NETCAST] Chromecast with name ' + str(chromecast.uuid) + ' connected')
-                uuid = str(chromecast.uuid)
-                
-                Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
-                chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
-                
-                Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
-                chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
-                
+            Config.NETCAST_ZCONF = zeroconf.Zeroconf()
+            Config.NETCAST_BROWSER = pychromecast.get_chromecasts(tries=3, retry_wait=10, timeout=60, blocking=False, callback=myCast.castCallBack, zeroconf_instance=Config.NETCAST_ZCONF, known_hosts=Config.KNOWN_HOSTS)
+
             logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
 
             # Informer Jeedom que le démon est démarré
@@ -192,9 +225,10 @@ class Loops:
                         Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})
                     # Heartbeat du démon
                     if ((Config.HeartbeatLastTime + Config.HeartbeatFrequency) <= currentTime):
-                        logging.debug('[DAEMON][MAINLOOP] Heartbeat = 1')
+                        logging.info('[DAEMON][MAINLOOP] Heartbeat = 1')
                         Comm.sendToJeedom.send_change_immediate({'heartbeat': '1'})
                         Config.HeartbeatLastTime = currentTime
+                        Functions.getResourcesUsage()
                     # Scan New Chromecast
                     if not Config.ScanPending:
                         if Config.ScanMode and (Config.ScanLastTime < Config.ScanModeStart):
@@ -270,9 +304,6 @@ class TTSCast:
             logging.debug(traceback.format_exc())
             filecontent = None
         return filecontent
-    
-    def changeSpeedTTS(soundfile, speed):
-        logging.debug('[DAEMON][TestTTS] ChangeSpeed File :: %s', soundfile)
     
     def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0'):
         logging.debug('[DAEMON][TestTTS] Param TTSEngine :: %s', ttsEngine)
@@ -637,41 +668,51 @@ class TTSCast:
 class Functions:
     """ Class Functions """
     
-    """ def setVolume(_googleUUID='UNKOWN', _value='0', _mode='setvolume'):
-        try:
-            if _googleUUID != 'UNKOWN':
-                if (_mode == 'set'):
-                    logging.debug('[DAEMON][SetVolume] Set Volume :: %s / %s', _googleUUID, _value)
-                elif (_mode == 'up'):
-                    logging.debug('[DAEMON][SetVolume] Volume UP :: %s', _googleUUID)
-                elif (_mode == 'down'): 
-                    logging.debug('[DAEMON][SetVolume] Volume DOWN :: %s', _googleUUID)
-                    
-                uuid = UUID(_googleUUID)
-                chromecasts, browser = pychromecast.get_listed_chromecasts(uuids=[uuid])
+    def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _volume='30'):
+        if _googleUUID != 'UNKOWN':
+            chromecasts = None
+            cast = None
+            try:
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.uuid) == _googleUUID]
                 if not chromecasts:
-                    logging.debug('[DAEMON][SetVolume] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
-                    browser.stop_discovery()
-                    return False        
+                    logging.debug('[DAEMON][controllerActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                    return False
                 cast = chromecasts[0]
-                cast.wait(timeout=10)
-                logging.debug('[DAEMON][SetVolume] Chromecast trouvé, tentative de set du volume')
-                castVolumeLevel = None
-                if (_mode == 'setvolume'):
-                    castVolumeLevel = round(cast.set_volume(volume=float(_value) / 100) * 100)
-                elif (_mode == 'volumeup'):
-                    castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
-                elif (_mode == 'volumedown'): 
-                    castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
-                logging.debug('[DAEMON][SetVolume] Chromecast UUID / Volume :: %s / %s', _googleUUID, str(castVolumeLevel))
-                # Déconnexion du Chromecast
-                cast.disconnect(timeout=10, blocking=False)
-                browser.stop_discovery()
-                return True
-        except Exception as e:
-            logging.error('[DAEMON][SetVolume] Exception on setVolume :: %s', e)
-            logging.debug(traceback.format_exc())
-            return False """
+                logging.debug('[DAEMON][controllerActions] Chromecast trouvé, lancement des actions')
+                
+                if (_controller == 'youtube'):
+                    logging.debug('[DAEMON][controllerActions] YouTube Id @ UUID :: %s @ %s', _value, _googleUUID)
+                    
+                    volumeBeforePlay = cast.status.volume_level
+                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                    
+                    cast.set_volume(volume=_volume / 100)
+                
+                    # urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+                    # logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
+                
+                    app_name = "youtube"
+                    app_data = {
+                        "media_id": _value, 
+                        # "media_type": "audio/mp3", 
+                        # "title": "[TTSCast] YouTube",
+                        # "thumb": urlThumb
+                    }
+                    quick_play.quick_play(cast, app_name, app_data)
+                    logging.debug('[DAEMON][controllerActions] Youtube :: Diffusion lancée :: %s', str(cast.media_controller.status))
+                    
+                    # Libération de la mémoire
+                    cast = None
+                    chromecasts = None
+                    return True
+            except Exception as e:
+                logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
+                logging.debug(traceback.format_exc())
+                
+                # Libération de la mémoire
+                cast = None
+                chromecasts = None
+                return False
     
     def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
         if _googleUUID != 'UNKOWN':
@@ -743,22 +784,25 @@ class Functions:
             if (_mode == "ScanMode"):
                 currentTime = int(time.time())
                 currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
-
-                chromecasts, browser = pychromecast.discovery.discover_chromecasts(known_hosts=Config.KNOWN_HOSTS)
-                browser.stop_discovery()
+            
+                # Thread pour le discovery (pychromecast)
+                """ 
+                browser = pychromecast.discovery.CastBrowser(myCast.MyCastListener(), Config.NETCAST_ZCONF, Config.KNOWN_HOSTS)
+                browser.start_discovery()
+                logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...') """
                 
-                logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(chromecasts))
-                for device in chromecasts: 
-                    logging.debug('[DAEMON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.friendly_name, device.model_name, device.host, device.port, device.uuid)
+                logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(Config.NETCAST_DEVICES))
+                for device in Config.NETCAST_DEVICES:
+                    logging.debug('[DAEMON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.cast_info.friendly_name, device.cast_info.model_name, device.cast_info.host, device.cast_info.port, device.uuid)
                     data = {
-                        'friendly_name': device.friendly_name,
+                        'friendly_name': device.cast_info.friendly_name,
                         'uuid': str(device.uuid),
                         'lastscan': currentTimeStr,
-                        'model_name': device.model_name,
-                        'cast_type': device.cast_type,
-                        'manufacturer': device.manufacturer,
-                        'host': device.host,
-                        'port': device.port,
+                        'model_name': device.cast_info.model_name,
+                        'cast_type': device.cast_info.cast_type,
+                        'manufacturer': device.cast_info.manufacturer,
+                        'host': device.cast_info.host,
+                        'port': device.cast_info.port,
                         'scanmode': 1
                     }
                     # Envoi vers Jeedom
@@ -772,12 +816,11 @@ class Functions:
                 
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(_gcast_names))
                 
-                # chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=_gcast_names, known_hosts=Config.KNOWN_HOSTS)
                 chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.name in _gcast_names]
-                logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb Cast :: %s', len(chromecasts))
+                logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb NetCast vs JeeCast :: %s vs %s', len(Config.NETCAST_DEVICES), len(chromecasts))
                 
                 for cast in chromecasts: 
-                    logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast :: uuid: %s', str(cast.uuid))
+                    logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast Name :: %s', cast.name)
                     try:
                         # time.sleep(0.3)
                         castVolumeLevel = int(cast.status.volume_level * 100)
@@ -800,7 +843,6 @@ class Functions:
                         mediaAlbumName = cast.media_controller.status.album_name
                         mediaContentType = cast.media_controller.status.content_type
                         mediaStreamType = cast.media_controller.status.stream_type
-                        
                         
                         data = {
                             'uuid': str(cast.uuid),
@@ -836,6 +878,23 @@ class Functions:
         Config.ScanPending = False
         return True
     
+    def getResourcesUsage():
+        if logging.getLogger().isEnabledFor(logging.INFO):
+            resourcesUse = resource.getrusage(resource.RUSAGE_SELF)
+            try:
+                uTime = getattr(resourcesUse, 'ru_utime')
+                sTime = getattr(resourcesUse, 'ru_stime')
+                maxRSS = getattr(resourcesUse, 'ru_maxrss')
+                totalTime = uTime + sTime
+                currentTime = int(time.time())
+                timeDiff = currentTime - Config.ResourcesLastTime
+                timeDiffTotal = currentTime - Config.ResourcesFirstTime
+                logging.info('[DAEMON][RESOURCES] Total CPU Time used : %.3fs (%.2f%%) | Last %i sec : %.3fs (%.2f%%) | Memory : %s Mo', totalTime, totalTime / timeDiffTotal * 100, timeDiff, totalTime - Config.ResourcesLastUsed, (totalTime - Config.ResourcesLastUsed) / timeDiff * 100, int(round(maxRSS / 1024)))
+                Config.ResourcesLastUsed = totalTime
+                Config.ResourcesLastTime = currentTime
+            except Exception:
+                pass
+        
     def purgeCache(nbDays='0'):
         if nbDays == '0':  # clean entire directory including containing folder
             logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
@@ -862,6 +921,110 @@ class Functions:
                 pass
 
 class myCast:
+
+    def castListeners(chromecast=None, uuid=''):
+        """ Connect and Add Listener for Chromecast """
+        if not chromecast:
+            chromecasts = [cast for cast in Config.NETCAST_DEVICES if str(cast.uuid) == uuid]
+            
+            if not chromecasts:
+                logging.debug('[DAEMON][NETCAST][CastListeners] Aucun Chromecast avec cet UUID :: %s', uuid)
+                return False
+            chromecast = chromecasts[0]
+        
+        logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
+    
+        if (uuid not in Config.LISTENER_CAST):
+            Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
+            chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
+        else:
+            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Status Listener already active', str(chromecast.name))
+            
+        if (uuid not in Config.LISTENER_MEDIA):
+            Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
+            chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
+        else:
+            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Media Listener already active', str(chromecast.name))
+                       
+    def castRemove(chromecast=None, uuid=''):
+        """ Remove Listener and Connection for Chromecast """
+        if not chromecast:
+            chromecasts = [cast for cast in Config.NETCAST_DEVICES if str(cast.uuid) == uuid]
+            
+            if not chromecasts:
+                logging.debug('[DAEMON][NETCAST][CastRemove] Aucun Chromecast avec cet UUID :: %s', uuid)
+                return False
+            chromecast = chromecasts[0]
+    
+        if (uuid in Config.LISTENER_CAST):
+            chromecast.register_status_listener(None)
+            del Config.LISTENER_CAST[uuid]
+        else:
+            logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Status Listener already deleted', str(chromecast.name))
+            
+        if (uuid in Config.LISTENER_MEDIA):
+            chromecast.media_controller.register_status_listener(None)
+            del Config.LISTENER_MEDIA[uuid]
+        else:
+            logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
+        
+        logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Listeners Removed', str(chromecast.name))
+
+        """ chromecast.disconnect()
+        logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Disconnected', str(chromecast.name)) """
+
+    def castCallBack(chromecast=None):
+        """ Service CallBack de découverte des Google Cast """
+
+        if chromecast is not None:
+            if not any(mycast.uuid == chromecast.uuid for mycast in Config.NETCAST_DEVICES):
+                Config.NETCAST_DEVICES.append(chromecast)
+                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Added to NETCAST_DEVICES', str(chromecast.name))
+            else:
+                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
+            logging.info('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: %s', len(Config.NETCAST_DEVICES))
+            
+            chromecast.wait(timeout=10)
+            logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
+             
+            if chromecast.uuid in Config.GCAST_UUID:
+                uuid = str(chromecast.uuid)
+                # myCast.castConnectAndListen(chromecast=chromecast, uuid=uuid)
+                myCast.castListeners(uuid=uuid)
+                
+    class MyCastListener(pychromecast.discovery.AbstractCastListener):
+        """Listener for discovering chromecasts."""
+
+        def add_cast(self, uuid, _service):
+            """Called when a new cast has beeen discovered."""
+            # print(f"Found cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
+            logging.debug('[DAEMON][NETCAST][Add_Cast] Found Cast Device (Name/UUID) :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
+            # TODO Action lorsqu'un GoogleCast est ajouté
+            if Config.NETCAST_DEVICES is not None:
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == uuid]
+            else:
+                chromecasts = None
+            if not chromecasts:
+                Config.NETCAST_DEVICES.append(pychromecast.get_chromecast_from_cast_info(Config.NETCAST_BROWSER.services[uuid], Config.NETCAST_ZCONF, 1, 10, 30))
+                logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES Append :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
+            else:
+                logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES :: Device déjà présent')
+            # TODO Config.NETCAST_DEVICES add device ?
+
+        def remove_cast(self, uuid, _service, cast_info):
+            """Called when a cast has beeen lost (MDNS info expired or host down)."""
+            # print(f"Lost cast device '{cast_info.friendly_name}' with UUID {uuid}")
+            logging.debug('[DAEMON][NETCAST][Remove_Cast] Lost Cast Device (Name/UUID) :: ' + cast_info.friendly_name + ' / ' + str(uuid))
+            # TODO Action lorsqu'un GoogleCast est supprimé
+            # TODO Config.NETCAST_DEVICES remove device + Listener ?
+
+        def update_cast(self, uuid, _service):
+            """Called when a cast has beeen updated (MDNS info renewed or changed)."""
+            # print(f"Updated cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
+            logging.debug('[DAEMON][NETCAST][Update_Cast] Updated Cast Device (Name/UUID) :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
+            # TODO Action lorsqu'un GoogleCast est mis à jour
+            # TODO Est ce que cela remplace les autres listener notamment le média ? 
+
     class MyCastStatusListener(CastStatusListener):
         """Cast status listener"""
 
@@ -946,12 +1109,16 @@ def shutdown():
     logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
     try:
         for chromecast in Config.NETCAST_DEVICES:
-            chromecast.disconnect()
-        Config.NETCAST_BROWSER.stop_discovery()
+            chromecast.disconnect(timeout=5, blocking=False)
         logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
-    except Exception:
-        pass
-    
+        Config.NETCAST_BROWSER.stop_discovery()
+        logging.info("[DAEMON] Shutdown :: Browser Stop :: OK")
+        Config.NETCAST_ZCONF.close()
+        logging.info("[DAEMON] Shutdown :: ZeroConf Close :: OK")
+    except Exception as e:
+        # pass
+        logging.error('[DAEMON] Exception on Shutdown :: %s', e)
+        logging.debug(traceback.format_exc())
     logging.debug("[DAEMON] Removing PID file %s", Config.pidFile)
     try:
         os.remove(Config.pidFile)
