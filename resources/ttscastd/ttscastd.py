@@ -889,7 +889,7 @@ class Functions:
                 currentTime = int(time.time())
                 timeDiff = currentTime - Config.ResourcesLastTime
                 timeDiffTotal = currentTime - Config.ResourcesFirstTime
-                logging.info('[DAEMON][RESOURCES] Total CPU Time used : %.3fs (%.2f%%)  |  Last %i sec : %.3fs (%.2f%%)  | Memory : %s Mo', totalTime, totalTime / timeDiffTotal * 100, timeDiff, totalTime - Config.ResourcesLastUsed, (totalTime - Config.ResourcesLastUsed) / timeDiff * 100, int(round(maxRSS / 1024)))
+                logging.info('[DAEMON][RESOURCES] Total CPU Time used : %.3fs (%.2f%%) | Last %i sec : %.3fs (%.2f%%) | Memory : %s Mo', totalTime, totalTime / timeDiffTotal * 100, timeDiff, totalTime - Config.ResourcesLastUsed, (totalTime - Config.ResourcesLastUsed) / timeDiff * 100, int(round(maxRSS / 1024)))
                 Config.ResourcesLastUsed = totalTime
                 Config.ResourcesLastTime = currentTime
             except Exception:
