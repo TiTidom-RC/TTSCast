@@ -1187,7 +1187,7 @@ class ttscastCmd extends cmd
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Options / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID);
-                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['message']);
+                    ttscast::dashGCast($googleUUID, $logicalId, $_options['message'], $_options['title']);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
