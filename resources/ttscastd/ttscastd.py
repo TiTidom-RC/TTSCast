@@ -716,6 +716,7 @@ class Functions:
                         _playlist = options_json['playlist'] if 'playlist' in options_json else False
                         _enqueue = options_json['enqueue'] if 'enqueue' in options_json else False
                         _volume = options_json['volume'] if 'volume' in options_json else 30
+                        logging.debug('[DAEMON][controllerActions] YouTube :: Options :: %s', str(options_json))
                     except ValueError as e:
                         logging.debug('[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: %s', e)
                     
@@ -723,7 +724,7 @@ class Functions:
 
                     app_name = "youtube"
                     
-                    if _playlist:
+                    if (_playlist):
                         app_data = {
                             "playlist_id": _value,
                             "enqueue": _enqueue
