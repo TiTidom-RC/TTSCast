@@ -220,6 +220,13 @@ class ttscast extends eqLogic
         self::sendToDaemon($value);
     }
 
+    public static function dashGCast($gHomeUUID=null, $action=null, $message=null, $options=null) {
+        log::add('ttscast', 'debug', '[DashGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options);
+        $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID, 'options' => $options);
+        log::add('ttscast', 'debug', '[DashGCast] Array :: ' . json_encode($value));
+        self::sendToDaemon($value);
+    }
+
     public static function getPluginVersion() {
         $pluginVersion = '0.0.0';
         try {
@@ -1178,9 +1185,9 @@ class ttscastCmd extends cmd
             } elseif (in_array($logicalId, ["dashcast"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
-                if (isset($googleUUID) && isset($_options['value'])) {
-                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Options / GoogleUUID) :: ' . $_options['value'] . " / " . $googleUUID);
-                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['value']);
+                if (isset($googleUUID) && isset($_options['message'])) {
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Options / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID);
+                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['message']);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);

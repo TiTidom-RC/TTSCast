@@ -110,9 +110,13 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
                             
-                            elif (message['cmd_action'] in ('youtube', 'sound')):
+                            elif (message['cmd_action'] in ('youtube')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
-                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], int(message['volume']))
+                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _volume=int(message['volume']))
+                                
+                            elif (message['cmd_action'] in ('dashcast')):
+                                logging.debug('[DAEMON][SOCKET] Controller :: %s @ %s', message['cmd_action'], message['googleUUID'])
+                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message('options'))
                                 
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
@@ -669,7 +673,7 @@ class TTSCast:
 class Functions:
     """ Class Functions """
     
-    def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _volume='30'):
+    def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _volume='30', _options=''):
         if _googleUUID != 'UNKOWN':
             chromecasts = None
             cast = None
@@ -707,7 +711,7 @@ class Functions:
                     chromecasts = None
                     return True
                 elif (_controller == 'dashcast'):
-                    logging.debug('[DAEMON][controllerActions] DashCast URL @ UUID :: %s @ %s', _value, _googleUUID)
+                    logging.debug('[DAEMON][controllerActions] DashCast URL / Options @ UUID :: %s / %s @ %s', _value, _options, _googleUUID)
                     
                     player = dashcast.DashCastController()
                     cast.register_handle(player)
