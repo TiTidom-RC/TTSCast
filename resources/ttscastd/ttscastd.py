@@ -725,12 +725,12 @@ class Functions:
                     
                     if _playlist:
                         app_data = {
-                            "media_id": _value,
+                            "playlist_id": _value,
                             "enqueue": _enqueue
                         }
                     else:
                         app_data = {
-                            "playlist_id": _value,
+                            "video_id": _value,
                             "enqueue": _enqueue
                         }
                     quick_play.quick_play(cast, app_name, app_data)
