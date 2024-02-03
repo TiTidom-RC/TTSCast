@@ -777,6 +777,40 @@ class Functions:
                 elif (_controller == 'radios'):
                     logging.debug('[DAEMON][controllerActions] Radio Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
                     
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
+                    
+                    if not os.path.isfile(Config.radiosFilePath):
+                        logging.error('[DAEMON][controllerActions] Radios JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
+                    else:    
+                        f = open(Config.radiosFilePath, "r")
+                        radiosArray = json.loads(f.read())
+                        
+                        if _value in radiosArray:
+                            radio = radiosArray[_value]
+                            if "radio_nologo" in radio['image']:
+                                radioThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+                            else:
+                                radioThumb = radio['image']
+                            # logging.debug('[DAEMON][controllerActions] Radio Thumb path :: %s', urlThumb)
+                            radioUrl = radio['location']
+                            radioTitle = "[Jeedom] " + radio['title']
+                            
+                            # app_name = "default_media_receiver"
+                            app_name = "bubbleupnp"
+                            app_data = {
+                                "media_id": radioUrl,
+                                "media_type": "audio/mp3",
+                                "title": radioTitle,
+                                "thumb": radioThumb,
+                                "stream_type": "LIVE"
+                            }
+                            quick_play.quick_play(cast, app_name, app_data)
+                            logging.debug('[DAEMON][controllerActions] Diffusion Radio lancée :: %s', str(cast.media_controller.status))
+                    
+                    # Libération de la mémoire
+                    cast = None
+                    chromecasts = None
                     return True
                 
             except Exception as e:
