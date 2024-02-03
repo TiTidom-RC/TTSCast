@@ -116,7 +116,7 @@ class Loops:
                                 
                             elif (message['cmd_action'] in ('dashcast')):
                                 logging.debug('[DAEMON][SOCKET] Controller :: %s @ %s', message['cmd_action'], message['googleUUID'])
-                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message('options'))
+                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message['options'])
                                 
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
