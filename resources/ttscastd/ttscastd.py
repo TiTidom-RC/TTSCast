@@ -726,7 +726,7 @@ class Functions:
                     time.sleep(1)
                     
                     player.load_url(url=_value)
-                    time.sleep(1)
+                    time.sleep(10)
                     
                     # Libération de la mémoire
                     cast.unregister_handler(player)
