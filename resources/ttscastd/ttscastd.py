@@ -687,6 +687,7 @@ class Functions:
             while chromecast.status.app_id is not None and t > 0:
                 time.sleep(0.1)
                 t = t - 0.1
+        time.sleep(0.5)
         return True
     
     def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _volume='30', _options=''):
