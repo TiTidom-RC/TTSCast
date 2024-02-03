@@ -146,7 +146,7 @@ class Loops:
                             
                             if message['host'] in Config.KNOWN_HOSTS:
                                 Config.KNOWN_HOSTS.remove(message['host'])
-                                logging.debug('[DAEMON][SOCKET] Remve Cast from KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
+                                logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(Config.KNOWN_HOSTS))
                             
                             if message['friendly_name'] in Config.GCAST_NAMES: 
                                 Config.GCAST_NAMES.remove(message['friendly_name'])
