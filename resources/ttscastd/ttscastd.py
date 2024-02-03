@@ -54,6 +54,7 @@ try:
     from pychromecast import quick_play
     from pychromecast.controllers.media import MediaStatusListener
     from pychromecast.controllers.receiver import CastStatusListener
+    from pychromecast.controllers import dashcast
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
     sys.exit(1)
@@ -108,10 +109,10 @@ class Loops:
                             elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
-                            
-                            elif (message['cmd_action'] in ('youtube', 'sound')):
+                                
+                            elif (message['cmd_action'] in ('youtube', 'dashcast')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
-                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], int(message['volume']))
+                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message['options'])
                                 
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
@@ -572,8 +573,10 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
                     return False
                 cast = chromecasts[0]
-                # cast.wait(timeout=10)
                 logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+            
+                # Si DashCast alors sortir de l'appli avant sinon cela plante
+                Functions.checkIfDashCast(cast)
             
                 volumeBeforePlay = cast.status.volume_level
                 logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
@@ -624,6 +627,10 @@ class TTSCast:
                     return False
                 cast = chromecasts[0]
                 logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+                
+                # Si DashCast alors sortir de l'appli avant sinon cela plante
+                Functions.checkIfDashCast(cast)
+                
                 volumeBeforePlay = cast.status.volume_level
                 logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
                 cast.set_volume(volume=volumeForPlay / 100)
@@ -668,7 +675,18 @@ class TTSCast:
 class Functions:
     """ Class Functions """
     
-    def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _volume='30'):
+    def checkIfDashCast(chromecast=None):
+        if chromecast is not None and (not chromecast.is_idle or chromecast.status.app_id == '84912283'):  # DashCast = '84912283'
+            logging.debug('[DAEMON][checkIfDashCast] QuitDashCastApp')
+            chromecast.quit_app()
+            t = 5
+            while chromecast.status.app_id is not None and t > 0:
+                time.sleep(0.1)
+                t = t - 0.1
+        time.sleep(0.5)
+        return True
+    
+    def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _options=''):
         if _googleUUID != 'UNKOWN':
             chromecasts = None
             cast = None
@@ -683,25 +701,75 @@ class Functions:
                 if (_controller == 'youtube'):
                     logging.debug('[DAEMON][controllerActions] YouTube Id @ UUID :: %s @ %s', _value, _googleUUID)
                     
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
+                    
                     volumeBeforePlay = cast.status.volume_level
-                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                    logging.debug('[DAEMON][controllerActions] Volume avant lecture :: %s', str(volumeBeforePlay))
+                    
+                    _playlist = None
+                    _enqueue = False
+                    _volume = 30
+                    
+                    try:
+                        options_json = json.loads("{" + _options + "}")
+                        _playlist = options_json['playlist'] if 'playlist' in options_json else None
+                        _enqueue = options_json['enqueue'] if 'enqueue' in options_json else False
+                        _volume = options_json['volume'] if 'volume' in options_json else 30
+                        logging.debug('[DAEMON][controllerActions] YouTube :: Options :: %s', str(options_json))
+                    except ValueError as e:
+                        logging.debug('[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: %s', e)
                     
                     cast.set_volume(volume=_volume / 100)
-                
-                    # urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
-                    # logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
-                
+
                     app_name = "youtube"
                     app_data = {
-                        "media_id": _value, 
-                        # "media_type": "audio/mp3", 
-                        # "title": "[TTSCast] YouTube",
-                        # "thumb": urlThumb
+                        "media_id": _value,
+                        "playlist_id": _playlist,
+                        "enqueue": _enqueue
                     }
                     quick_play.quick_play(cast, app_name, app_data)
                     logging.debug('[DAEMON][controllerActions] Youtube :: Diffusion lancée :: %s', str(cast.media_controller.status))
                     
                     # Libération de la mémoire
+                    cast = None
+                    chromecasts = None
+                    return True
+                
+                elif (_controller == 'dashcast'):
+                    logging.debug('[DAEMON][controllerActions] DashCast URL / Options @ UUID :: %s / %s @ %s', _value, _options, _googleUUID)
+                    
+                    player = dashcast.DashCastController()
+                    cast.register_handler(player)
+                    
+                    _force = None
+                    _reload_seconds = None
+                    
+                    try:
+                        options_json = json.loads("{" + _options + "}")    
+                        _force = options_json['force'] if 'force' in options_json else False
+                        _reload_seconds = options_json['reload_seconds'] if 'reload_seconds' in options_json else None
+                    except ValueError as e:
+                        logging.debug('[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: %s', e)
+                    
+                    if not cast.is_idle or ('quit_app' in options_json and options_json['quit_app']):
+                        logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
+                        cast.quit_app()
+                        t = 5
+                        while cast.status.app_id is not None and t > 0:
+                            time.sleep(0.1)
+                            t = t - 0.1                                       
+                    time.sleep(1)
+                    
+                    logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: %s | %s', _value, str(options_json))
+                    player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)
+                    time.sleep(2)
+                    
+                    cast.unregister_handler(player)
+                    time.sleep(1)
+                    
+                    # Libération de la mémoire
+                    player = None
                     cast = None
                     chromecasts = None
                     return True
