@@ -730,7 +730,7 @@ class Functions:
                         }
                     else:
                         app_data = {
-                            "video_id": _value,
+                            "media_id": _value,
                             "enqueue": _enqueue
                         }
                     quick_play.quick_play(cast, app_name, app_data)
