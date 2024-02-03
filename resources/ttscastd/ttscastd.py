@@ -705,15 +705,15 @@ class Functions:
                     Functions.checkIfDashCast(cast)
                     
                     volumeBeforePlay = cast.status.volume_level
-                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                    logging.debug('[DAEMON][controllerActions] Volume avant lecture :: %s', str(volumeBeforePlay))
                     
-                    _playlist = False
+                    _playlist = None
                     _enqueue = False
                     _volume = 30
                     
                     try:
                         options_json = json.loads("{" + _options + "}")
-                        _playlist = options_json['playlist'] if 'playlist' in options_json else False
+                        _playlist = options_json['playlist'] if 'playlist' in options_json else None
                         _enqueue = options_json['enqueue'] if 'enqueue' in options_json else False
                         _volume = options_json['volume'] if 'volume' in options_json else 30
                         logging.debug('[DAEMON][controllerActions] YouTube :: Options :: %s', str(options_json))
@@ -723,17 +723,11 @@ class Functions:
                     cast.set_volume(volume=_volume / 100)
 
                     app_name = "youtube"
-                    
-                    if (_playlist):
-                        app_data = {
-                            "playlist_id": _value,
-                            "enqueue": _enqueue
-                        }
-                    else:
-                        app_data = {
-                            "media_id": _value,
-                            "enqueue": _enqueue
-                        }
+                    app_data = {
+                        "media_id": _value,
+                        "playlist_id": _playlist,
+                        "enqueue": _enqueue
+                    }
                     quick_play.quick_play(cast, app_name, app_data)
                     logging.debug('[DAEMON][controllerActions] Youtube :: Diffusion lancée :: %s', str(cast.media_controller.status))
                     
