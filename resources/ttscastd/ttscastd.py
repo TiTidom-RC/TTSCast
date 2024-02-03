@@ -727,7 +727,7 @@ class Functions:
                     
                     logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl :: %s', _value)
                     player.load_url(url=_value, force=True)
-                    time.sleep(10)
+                    time.sleep(1)
                     
                     # Libération de la mémoire
                     cast.unregister_handler(player)
