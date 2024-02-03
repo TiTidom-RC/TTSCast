@@ -725,10 +725,12 @@ class Functions:
                             t = t - 0.1                                       
                     time.sleep(1)
                     
+                    options_json = {}
                     _force = False
                     _reload_seconds = 0
                     try:
                         options_json = json.loads(_options)
+                        
                         if "force" in options_json:
                             _force = options_json['force']
                         if "reload_seconds" in options_json:
@@ -736,7 +738,7 @@ class Functions:
                     except ValueError as e:
                         logging.debug('[DAEMON][controllerActions] DashCast Exception :: %s', e)
                     
-                    logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: %s | %s', _value, str(_options))
+                    logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: %s | %s', _value, str(options_json))
                     player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)
                     time.sleep(1)
                     
