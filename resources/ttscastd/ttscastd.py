@@ -729,7 +729,7 @@ class Functions:
                     _force = False
                     _reload_seconds = 0
                     try:
-                        options_json = json.loads(_options)
+                        options_json = json.loads("{" + _options + "}")
                         
                         if "force" in options_json:
                             _force = options_json['force']
