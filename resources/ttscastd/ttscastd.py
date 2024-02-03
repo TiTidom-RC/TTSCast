@@ -725,8 +725,19 @@ class Functions:
                             t = t - 0.1                                       
                     time.sleep(1)
                     
-                    logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl :: %s', _value)
-                    player.load_url(url=_value, force=True)
+                    _force = False
+                    _reload_seconds = 0
+                    try:
+                        options_json = json.loads(_options)
+                        if "force" in options_json:
+                            _force = options_json['force']
+                        if "reload_seconds" in options_json:
+                            _reload_seconds = options_json['reload_seconds']
+                    except ValueError as e:
+                        logging.debug('[DAEMON][controllerActions] DashCast Exception :: %s', e)
+                    
+                    logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: %s | %s', _value, str(_options))
+                    player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)
                     time.sleep(1)
                     
                     # Libération de la mémoire
