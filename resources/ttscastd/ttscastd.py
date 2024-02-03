@@ -798,7 +798,7 @@ class Functions:
                                     radioThumb = radio['image']
                                 # logging.debug('[DAEMON][controllerActions] Radio Thumb path :: %s', urlThumb)
                                 radioUrl = radio['location']
-                                radioTitle = "[Jeedom] " + radio['title']
+                                radioTitle = radio['title']
                                 radioSubTitle = "[Jeedom] TTSCast Radio"
                                 
                                 app_name = "default_media_receiver"
