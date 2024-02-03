@@ -23,7 +23,8 @@ class Config:
     GCAST_NAMES = []
     
     NETCAST_BROWSER = None
-    NETCAST_DEVICES = None
+    NETCAST_DEVICES = []
+    NETCAST_ZCONF = None
     LISTENER_CAST = {}
     LISTENER_MEDIA = {}
 
@@ -38,8 +39,12 @@ class Config:
     ScanSchedule = 60
     ScanLastTime = int(time.time())
     
-    HeartbeatFrequency = 600
+    HeartbeatFrequency = 60
     HeartbeatLastTime = int(time.time())
+    
+    ResourcesLastUsed = 0
+    ResourcesLastTime = int(time.time())
+    ResourcesFirstTime = int(time.time())
     
     ttsCacheFolder = 'data/cache'
     ttsCacheFolderWeb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ttsCacheFolder))
