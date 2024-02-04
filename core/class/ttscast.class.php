@@ -411,8 +411,38 @@ class ttscast extends eqLogic
             );
             self::sendToDaemon($value);
         }
-    }    
+    }
 
+    public function getRadioList()
+    {
+        $radiosReturn = '';
+        try {
+            if (!file_exists(dirname(__FILE__) . '/../../data/radios/radios.json')) {
+                log::add('ttscast', 'error', '[getRadioList] Radios File Missing :: KO');
+                return $radiosReturn;
+            }
+            $radiosJson = json_decode(file_get_contents(dirname(__FILE__) . "/../../data/radios/radios.json"), true);            
+            if (!is_array($radiosJson)) {
+                log::add('ttscast', 'error', '[getRadioList] Impossible de décoder le fichier radios.json :: KO');
+                return $radiosReturn;
+            }
+
+            $radiosArray = array();
+            foreach ($radiosJson as $radioId => $radioData) {
+                $radiosArray[$radioId] = $radioData['title'];
+            }
+            ksort($radiosArray);
+
+            foreach ($radiosArray as $radioId => $radioTitle) {
+                $radiosReturn .= $radioId . '|' . $radioTitle . ';';
+            }
+            $radiosReturn = trim($radiosReturn, ";");
+
+        } catch (Exception $e) {
+            log::add('ttscast', 'error', '[getRadioList] Radio Listing ERROR :: ' . $e->getMessage());
+        }
+        return $radiosReturn;
+    }
     /* ************************ Methodes static : JEEDOM *************************** */
 
     /*
@@ -1063,6 +1093,23 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
+        $cmd = $this->getCmd(null, 'radios');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Radio', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('radios');
+            $cmd->setType('action');
+            $cmd->setSubType('select');
+            $radioList = $this->getRadioList();
+            $cmd->setConfiguration('listValue', $radioList);
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
         /* $cmd = $this->getCmd(null, 'customcmd');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
@@ -1171,6 +1218,16 @@ class ttscastCmd extends cmd
                 if (isset($googleUUID) && isset($_options['message'])) {
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID);
                     ttscast::mediaGCast($googleUUID, $logicalId, $_options['message'], $_options['title']);
+                }
+                else {
+                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                }                
+            } elseif (in_array($logicalId, ["radios"])) {
+                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID) && isset($_options['select'])) {
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Select / GoogleUUID) :: ' . $_options['select'] . " / " . $googleUUID);
+                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['select']);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);

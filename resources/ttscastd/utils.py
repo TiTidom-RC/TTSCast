@@ -50,6 +50,8 @@ class Config:
     ttsCacheFolderWeb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ttsCacheFolder))
     ttsCacheFolderTmp = os.path.join('/tmp/jeedom/', 'ttscast_cache')
     
+    radiosFilePath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/radios/radios.json'))
+    
     ttsWebSrvCache = ''
     ttsWebSrvMedia = ''
     ttsWebSrvImages = ''

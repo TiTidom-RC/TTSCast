@@ -110,7 +110,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
                                 
-                            elif (message['cmd_action'] in ('youtube', 'dashcast')):
+                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message['options'])
                                 
@@ -773,6 +773,56 @@ class Functions:
                     cast = None
                     chromecasts = None
                     return True
+                
+                elif (_controller == 'radios'):
+                    logging.debug('[DAEMON][controllerActions] Radio Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+                    
+                    if _value == '':
+                        cast.quit_app()
+                        time.sleep(1)
+                    else:
+                        # Si DashCast alors sortir de l'appli avant sinon cela plante
+                        Functions.checkIfDashCast(cast)
+                        
+                        if not os.path.isfile(Config.radiosFilePath):
+                            logging.error('[DAEMON][controllerActions] Radios JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
+                        else:    
+                            f = open(Config.radiosFilePath, "r")
+                            radiosArray = json.loads(f.read())
+                            
+                            if _value in radiosArray:
+                                radio = radiosArray[_value]
+                                if "NoLogo" in radio['image']:
+                                    radioThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+                                else:
+                                    radioThumb = radio['image']
+                                # logging.debug('[DAEMON][controllerActions] Radio Thumb path :: %s', urlThumb)
+                                radioUrl = radio['location']
+                                radioTitle = radio['title']
+                                radioSubTitle = "[Jeedom] TTSCast Radio"
+                                
+                                app_name = "default_media_receiver"
+                                # app_name = "bubbleupnp"
+                                app_data = {
+                                    "media_id": radioUrl,
+                                    "media_type": "audio/mp3",
+                                    "title": radioTitle,
+                                    "thumb": radioThumb,
+                                    "metadata": {
+                                        "title": radioTitle,
+                                        "subtitle": radioSubTitle,
+                                        "images": [{"url": radioThumb}]
+                                    },
+                                    "stream_type": "LIVE"
+                                }
+                                quick_play.quick_play(cast, app_name, app_data)
+                                logging.debug('[DAEMON][controllerActions] Diffusion Radio lancée :: %s', str(cast.media_controller.status))
+                    
+                    # Libération de la mémoire
+                    cast = None
+                    chromecasts = None
+                    return True
+                
             except Exception as e:
                 logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
                 logging.debug(traceback.format_exc())
@@ -1163,7 +1213,7 @@ class myCast:
                 logging.debug(traceback.format_exc())
 
         def load_media_failed(self, item, error_code):
-            logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + item + ' with code :: ' + error_code)
+            logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(item) + ' with code :: ' + str(error_code))
 
 # ----------------------------------------------------------------------------
 
