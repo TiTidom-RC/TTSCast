@@ -792,7 +792,7 @@ class Functions:
                             
                             if _value in radiosArray:
                                 radio = radiosArray[_value]
-                                if "radio_nologo" in radio['image']:
+                                if "NoLogo" in radio['image']:
                                     radioThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                                 else:
                                     radioThumb = radio['image']
