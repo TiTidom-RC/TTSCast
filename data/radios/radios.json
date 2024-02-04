@@ -27,12 +27,7 @@
    "fip":{
       "location":"http://direct.fipradio.fr/live/fip-midfi.mp3",
       "title":"FIP",
-      "image":"https://www.fip.fr/static/media/512-512.af1a1fc4.png"
-   },
-   "jazz":{
-      "location":"http://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3",
-      "title":"Jazz",
-      "image":"http://www.jazzradio.fr/media/pochette.jpg"
+      "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/1024px-FIP_logo_2005.svg.png"
    },
    "voltage_lounge":{
       "location":"http://voltagelounge.ice.infomaniak.ch/voltagelounge-128.mp3",
