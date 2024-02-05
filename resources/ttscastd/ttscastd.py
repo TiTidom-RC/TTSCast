@@ -801,8 +801,8 @@ class Functions:
                                 radioTitle = radio['title']
                                 radioSubTitle = "[Jeedom] TTSCast Radio"
                                 
-                                # app_name = "default_media_receiver"
-                                app_name = "bubbleupnp"
+                                app_name = "default_media_receiver"
+                                # app_name = "bubbleupnp"
                                 app_data = {
                                     "media_id": radioUrl,
                                     "media_type": "audio/mp3",
@@ -815,8 +815,8 @@ class Functions:
                                     },
                                     "stream_type": "LIVE"
                                 }
-                                # quick_play.quick_play(cast, app_name, app_data)
-                                cast.media_controller.play_media(radioUrl, "audio/mp3")
+                                quick_play.quick_play(cast, app_name, app_data)
+                                # cast.media_controller.play_media(radioUrl, "audio/mp3")
                                 logging.debug('[DAEMON][controllerActions] Diffusion Radio lancée :: %s', str(cast.media_controller.status))
                     
                     # Libération de la mémoire
