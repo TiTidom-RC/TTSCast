@@ -1119,7 +1119,7 @@ class myCast:
                 logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
             logging.info('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: %s', len(Config.NETCAST_DEVICES))
             
-            chromecast.wait(timeout=10)
+            chromecast.wait(timeout=30)
             logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
              
             if chromecast.uuid in Config.GCAST_UUID:
