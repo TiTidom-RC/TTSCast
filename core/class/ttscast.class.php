@@ -192,7 +192,7 @@ class ttscast extends eqLogic
         self::sendToDaemon($value);
     }
 
-    public static function playTTS($gHome=null, $message=null, $volume=30) {
+    public static function playTTS($gHome=null, $message=null, $options=null) {
         $ttsText = $message;
         $ttsGoogleUUID = $gHome;
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
@@ -201,8 +201,8 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
-        $ttsVolume = strval($volume);
-        $value = array('cmd' => 'playtts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsVolume' => $ttsVolume, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
+        $ttsOptions = $options;
+        $value = array('cmd' => 'playtts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
         self::sendToDaemon($value);
     }
 
@@ -1189,10 +1189,11 @@ class ttscastCmd extends cmd
 
         if ( $this->getType() == "action" ) {
 			if ($logicalId == "tts") {
+                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
-                if (isset($googleUUID) && isset($_options['message']) && isset($_options['title']) && is_numeric($_options['title'])) {
-                    log::add('ttscast', 'debug', '[CMD] TTS (Message / Volume / GoogleUUID) :: ' . $_options['message'] . " / " . $_options['title'] . " / " . $googleUUID);
-                    ttscast::playTTS($googleUUID, $_options['message'], intval($_options['title']));
+                if (isset($googleUUID) && isset($_options['message'])) {
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID);
+                    ttscast::playTTS($googleUUID, $_options['message'], $_options['title']);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour diffuser un message TTS');
