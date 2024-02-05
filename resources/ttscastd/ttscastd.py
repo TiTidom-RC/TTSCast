@@ -816,7 +816,7 @@ class Functions:
                                     "stream_type": "LIVE"
                                 }
                                 # quick_play.quick_play(cast, app_name, app_data)
-                                cast.media_controoler.play_media(radioUrl, "audio/mp3")
+                                cast.media_controller.play_media(radioUrl, "audio/mp3")
                                 logging.debug('[DAEMON][controllerActions] Diffusion Radio lancée :: %s', str(cast.media_controller.status))
                     
                     # Libération de la mémoire
