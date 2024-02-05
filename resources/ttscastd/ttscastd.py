@@ -450,6 +450,8 @@ class TTSCast:
         except Exception:
             os.symlink(symLinkPath, cachePath)
         
+        if not ttsOptions:
+            ttsOptions = None
         _ttsVolume = None
         
         try:
