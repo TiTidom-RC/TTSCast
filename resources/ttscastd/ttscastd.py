@@ -801,8 +801,8 @@ class Functions:
                                 radioTitle = radio['title']
                                 radioSubTitle = "[Jeedom] TTSCast Radio"
                                 
-                                app_name = "default_media_receiver"
-                                # app_name = "bubbleupnp"
+                                # app_name = "default_media_receiver"
+                                app_name = "bubbleupnp"
                                 app_data = {
                                     "media_id": radioUrl,
                                     "media_type": "audio/mp3",
