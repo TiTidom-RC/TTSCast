@@ -443,6 +443,45 @@ class ttscast extends eqLogic
         }
         return $radiosReturn;
     }
+
+    public function getSoundList()
+    {
+        $filesReturn = '';
+        try {
+            $filesArray = array();
+            foreach (glob(dirname(__FILE__) . '/../../data/media/*.mp3') as $fileName) {
+                $filesArray[$fileName] = ucwords(pathinfo($fileName, PATHINFO_FILENAME));
+            }
+            natsort($filesArray);
+            foreach ($filesArray as $filePath => $fileName) {
+                $filesReturn .= $filePath . '|' . $fileName . ';';
+            }
+            $filesReturn = trim($filesReturn, ";");
+        } catch (Exception $e) {
+            log::add('ttscast', 'error', '[getSoundList] Sound Listing ERROR :: ' . $e->getMessage());
+        }
+        return $filesReturn;
+    }
+
+    public function getCustomSoundList()
+    {
+        $filesReturn = '';
+        try {
+            $filesArray = array();
+            foreach (glob(dirname(__FILE__) . '/../../data/media/custom/*.mp3') as $fileName) {
+                $filesArray[$fileName] = ucwords(pathinfo($fileName, PATHINFO_FILENAME));
+            }
+            natsort($filesArray);
+            foreach ($filesArray as $filePath => $fileName) {
+                $filesReturn .= $filePath . '|' . $fileName . ';';
+            }
+            $filesReturn = trim($filesReturn, ";");
+        } catch (Exception $e) {
+            log::add('ttscast', 'error', '[getCustomSoundList] Custom Sound Listing ERROR :: ' . $e->getMessage());
+        }
+        return $filesReturn;
+    }
+
     /* ************************ Methodes static : JEEDOM *************************** */
 
     /*
@@ -1102,6 +1141,40 @@ class ttscast extends eqLogic
             $cmd->setType('action');
             $cmd->setSubType('select');
             $radioList = $this->getRadioList();
+            $cmd->setConfiguration('listValue', $radioList);
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        $cmd = $this->getCmd(null, 'sounds');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Sound', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('sounds');
+            $cmd->setType('action');
+            $cmd->setSubType('select');
+            $radioList = $this->getSoundList();
+            $cmd->setConfiguration('listValue', $radioList);
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        $cmd = $this->getCmd(null, 'customsounds');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Custom Sound', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('customsounds');
+            $cmd->setType('action');
+            $cmd->setSubType('select');
+            $radioList = $this->getCustomSoundList();
             $cmd->setConfiguration('listValue', $radioList);
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
