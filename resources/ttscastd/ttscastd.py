@@ -591,7 +591,7 @@ class TTSCast:
                 Functions.checkIfDashCast(cast)
             
                 volumeBeforePlay = cast.status.volume_level
-                if (volumeBeforePlay is not None):
+                if (volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
                     cast.set_volume(volume=volumeForPlay / 100)
                 
@@ -646,7 +646,7 @@ class TTSCast:
                 Functions.checkIfDashCast(cast)
                 
                 volumeBeforePlay = cast.status.volume_level
-                if (volumeBeforePlay is not None):
+                if (volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
                     cast.set_volume(volume=volumeForPlay / 100)
             
