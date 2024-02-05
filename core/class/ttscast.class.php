@@ -1286,7 +1286,7 @@ class ttscastCmd extends cmd
                 if (isset($googleUUID)) {
                     ttscast::actionGCast($googleUUID, $logicalId);
                 }
-            } elseif (in_array($logicalId, ["youtube", "dashcast", "sounds", "customsounds"])) {
+            } elseif (in_array($logicalId, ["youtube", "dashcast"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
@@ -1296,7 +1296,7 @@ class ttscastCmd extends cmd
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
                 }                
-            } elseif (in_array($logicalId, ["radios"])) {
+            } elseif (in_array($logicalId, ["radios", "sounds", "customsounds"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['select'])) {
