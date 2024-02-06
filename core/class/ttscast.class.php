@@ -469,7 +469,7 @@ class ttscast extends eqLogic
         try {
             $filesArray = array();
             foreach (glob(dirname(__FILE__) . '/../../data/media/custom/*.mp3') as $fileName) {
-                $filesArray[$fileName] = ucwords(str_replace("_", " ", pathinfo($fileName, PATHINFO_FILENAME)));
+                $filesArray[$fileName] = ucwords(str_replace(["_", "-"], " ", pathinfo($fileName, PATHINFO_FILENAME)));
             }
             natsort($filesArray);
             foreach ($filesArray as $filePath => $fileName) {
