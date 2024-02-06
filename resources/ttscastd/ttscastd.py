@@ -114,7 +114,7 @@ class Loops:
                                 
                             elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'sounds', 'customsounds')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
-                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message['options'])
+                                # Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message['options'])
                                 threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options']]).start()
                                 
                     elif message['cmd'] == 'purgettscache':
