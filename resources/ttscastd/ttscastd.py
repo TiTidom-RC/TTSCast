@@ -870,11 +870,17 @@ class Functions:
                         }
                         quick_play.quick_play(cast, app_name, app_data)
                         logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound lancée :: %s', str(cast.media_controller.status))
-
-                    # Libération de la mémoire
-                    cast = None
-                    chromecasts = None
-                    return True
+                        
+                        while cast.media_controller.status.player_state == 'PLAYING':
+                            time.sleep(1)
+                            logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound en cours :: %s', str(cast.media_controller.status))
+            
+                        cast.quit_app()
+                
+                # Libération de la mémoire
+                cast = None
+                chromecasts = None
+                return True
                 
             except Exception as e:
                 logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)

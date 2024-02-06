@@ -469,7 +469,7 @@ class ttscast extends eqLogic
         try {
             $filesArray = array();
             foreach (glob(dirname(__FILE__) . '/../../data/media/custom/*.mp3') as $fileName) {
-                $filesArray[$fileName] = ucwords(str_replace(["_", "-"], " ", pathinfo($fileName, PATHINFO_FILENAME)));
+                $filesArray[pathinfo($fileName, PATHINFO_BASENAME)] = ucwords(str_replace(["_", "-"], " ", pathinfo($fileName, PATHINFO_FILENAME)));
             }
             natsort($filesArray);
             foreach ($filesArray as $filePath => $fileName) {
@@ -493,6 +493,7 @@ class ttscast extends eqLogic
                     $cmd->save();
                 }
             }
+            log::add('ttscast', 'info', '[updateRadioList] Radio List Update :: OK ');
         } catch (Exception $e) {
             log::add('ttscast', 'error', '[updateRadioList] Radio Update ERROR :: ' . $e->getMessage());
         }
@@ -509,6 +510,7 @@ class ttscast extends eqLogic
                     $cmd->save();
                 }
             }
+            log::add('ttscast', 'info', '[updateSoundList] Sound List Update :: OK ');
         } catch (Exception $e) {
             log::add('ttscast', 'error', '[updateSoundList] Sound Update ERROR :: ' . $e->getMessage());
         }
@@ -525,6 +527,7 @@ class ttscast extends eqLogic
                     $cmd->save();
                 }
             }
+            log::add('ttscast', 'info', '[updateCustomSoundList] Custom Sound List Update :: OK ');
         } catch (Exception $e) {
             log::add('ttscast', 'error', '[updateCustomSoundList] Custom Sound Update ERROR :: ' . $e->getMessage());
         }
