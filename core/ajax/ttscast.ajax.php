@@ -42,15 +42,15 @@ try {
 	}
 
     if (init('action') == 'updateRadios') {
-		ajax::success(ttscast::updateRadios());
+		ajax::success(ttscast::updateRadioList());
 	}
 
     if (init('action') == 'updateSounds') {
-		ajax::success(ttscast::updateSounds());
+		ajax::success(ttscast::updateSoundList());
 	}
 
     if (init('action') == 'updateCustomSounds') {
-		ajax::success(ttscast::updateCustomSounds());
+		ajax::success(ttscast::updateCustomSoundList());
 	}
 
     if (init('action') == 'uploadAPIKey') {
