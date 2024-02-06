@@ -997,56 +997,62 @@ class Functions:
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb NetCast vs JeeCast :: %s vs %s', len(Config.NETCAST_DEVICES), len(chromecasts))
                 
                 for cast in chromecasts: 
+                    
                     logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast Name :: %s', cast.name)
                     try:
-                        # time.sleep(0.3)
-                        castVolumeLevel = int(cast.status.volume_level * 100)
-                        castAppDisplayName = cast.status.display_name
-                        
-                        castIsStandBy = cast.status.is_stand_by
-                        castIsMuted = cast.status.volume_muted
-                        castAppId = cast.status.app_id
-                        castStatusText = cast.status.status_text
-                        
-                        mediaLastUpdated = None
-                        if (cast.media_controller.status.last_updated is not None):
-                            last_updated = cast.media_controller.status.last_updated.replace(tzinfo=datetime.timezone.utc)
-                            last_updated_local = last_updated.astimezone(tz=None)
-                            mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
-                        
-                        mediaPlayerState = cast.media_controller.status.player_state
-                        mediaTitle = cast.media_controller.status.title
-                        mediaArtist = cast.media_controller.status.artist
-                        mediaAlbumName = cast.media_controller.status.album_name
-                        mediaContentType = cast.media_controller.status.content_type
-                        mediaStreamType = cast.media_controller.status.stream_type
-                        
-                        data = {
-                            'uuid': str(cast.uuid),
-                            'lastschedule': currentTimeStr,
-                            'lastschedulets': currentTime,
-                            'volume_level': castVolumeLevel,
-                            'display_name': castAppDisplayName,
-                            'is_stand_by': castIsStandBy,
-                            'volume_muted': castIsMuted,
-                            'app_id': castAppId,
-                            'status_text': castStatusText,
-                            'player_state': mediaPlayerState,
-                            'title': mediaTitle,
-                            'artist': mediaArtist,
-                            'album_name': mediaAlbumName,
-                            'content_type': mediaContentType,
-                            'stream_type': mediaStreamType,
-                            'last_updated': mediaLastUpdated,
-                            'schedule': 1,
-                            'online': '1'
-                        }
+                        if (cast.status is not None and cast.media_controller.status is not None):
+                            castVolumeLevel = int(cast.status.volume_level * 100)
+                            castAppDisplayName = cast.status.display_name
+                            
+                            castIsStandBy = cast.status.is_stand_by
+                            castIsMuted = cast.status.volume_muted
+                            castAppId = cast.status.app_id
+                            castStatusText = cast.status.status_text
+                            
+                            mediaLastUpdated = None
+                            if (cast.media_controller.status.last_updated is not None):
+                                last_updated = cast.media_controller.status.last_updated.replace(tzinfo=datetime.timezone.utc)
+                                last_updated_local = last_updated.astimezone(tz=None)
+                                mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
+                            else:
+                                mediaLastUpdated = "KO"
+                            
+                            mediaPlayerState = cast.media_controller.status.player_state
+                            mediaTitle = cast.media_controller.status.title
+                            mediaArtist = cast.media_controller.status.artist
+                            mediaAlbumName = cast.media_controller.status.album_name
+                            mediaContentType = cast.media_controller.status.content_type
+                            mediaStreamType = cast.media_controller.status.stream_type
+                            
+                            data = {
+                                'uuid': str(cast.uuid),
+                                'lastschedule': currentTimeStr,
+                                'lastschedulets': currentTime,
+                                'volume_level': castVolumeLevel,
+                                'display_name': castAppDisplayName,
+                                'is_stand_by': castIsStandBy,
+                                'volume_muted': castIsMuted,
+                                'app_id': castAppId,
+                                'status_text': castStatusText,
+                                'player_state': mediaPlayerState,
+                                'title': mediaTitle,
+                                'artist': mediaArtist,
+                                'album_name': mediaAlbumName,
+                                'content_type': mediaContentType,
+                                'stream_type': mediaStreamType,
+                                'last_updated': mediaLastUpdated,
+                                'schedule': 1,
+                                'online': '1'
+                            }
 
-                        # Envoi vers Jeedom
-                        Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                            # Envoi vers Jeedom
+                            Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                        else:
+                            logging.warning('[DAEMON][SCANNER][SCHEDULE] Chromecast Status is KO :: %s', cast.name)
                     except Exception as e:
                         logging.error('[DAEMON][SCANNER][SCHEDULE] Exception :: %s', e)
                         logging.debug(traceback.format_exc())
+                        
         except Exception as e:
             logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
             logging.debug(traceback.format_exc())

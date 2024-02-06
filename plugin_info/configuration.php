@@ -301,31 +301,31 @@ if (!isConnect()) {
             <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, Sounds, Custom Sounds)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Radio}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des radios de vos équipements}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des radios de vos équipements. ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-updateradios"><i class="fas fa-sync"></i> {{MàJ Radios}}</a>
+                    <a class="btn btn-warning customclass-updateradios"><i class="fas fa-sync"></i> {{MàJ Radios}}</a>
                 </div>
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Sound}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons (.mp3)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons (.mp3). ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-updatesounds"><i class="fas fa-file-audio"></i> {{MàJ Sounds}}</a>
+                    <a class="btn btn-warning customclass-updatesounds"><i class="fas fa-file-audio"></i> {{MàJ Sounds}}</a>
                 </div>
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Custom Sound}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons personnalisés (.mp3)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons personnalisés (.mp3). ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-updatecustomsounds"><i class="fas fa-file-audio"></i> {{MàJ Custom Sounds}}</a>
+                    <a class="btn btn-warning customclass-updatecustomsounds"><i class="fas fa-file-audio"></i> {{MàJ Custom Sounds}}</a>
                 </div>
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Ajouter un fichier :: Custom Sound}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Télécharge un fichier (.mp3) pour l'ajouter à la liste des 'Custom Sounds'}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Télécharge un fichier (.mp3) pour l'ajouter au répertoire des Custom Sounds}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <a class="btn btn-primary btn-file">
