@@ -304,7 +304,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des radios de vos équipements}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-sync"></i> {{MàJ Radios}}</a>
+                    <a class="btn btn-success customclass-updateradios"><i class="fas fa-sync"></i> {{MàJ Radios}}</a>
                 </div>
             </div>
             <div class="form-group">
@@ -312,7 +312,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons (.mp3)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-file-audio"></i> {{MàJ Sounds}}</a>
+                    <a class="btn btn-success customclass-updatesounds"><i class="fas fa-file-audio"></i> {{MàJ Sounds}}</a>
                 </div>
             </div>
             <div class="form-group">
@@ -320,7 +320,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons personnalisés (.mp3)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-file-audio"></i> {{MàJ Custom Sounds}}</a>
+                    <a class="btn btn-success customclass-updatecustomsounds"><i class="fas fa-file-audio"></i> {{MàJ Custom Sounds}}</a>
                 </div>
             </div>
             <div class="form-group">
@@ -328,7 +328,9 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Télécharge un fichier (.mp3) pour l'ajouter à la liste des 'Custom Sounds'}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-uloadcustomsound"><i class="fas fa-file-upload"></i> {{Ajouter un Custom Sound (.mp3)}}</a>
+                    <a class="btn btn-primary btn-file">
+                        <i class="fas fa-file-upload"></i> {{Ajouter un Custom Sound (.mp3)}}<input class="pluginAction" data-action="uploadCustomSound" type="file" name="fileCustomSound" style="display: inline-block;" accept=".mp3" />
+                    </a>
                 </div>
             </div>
         </div>
@@ -435,6 +437,24 @@ if (!isConnect()) {
         });
     });
 
+    $('.pluginAction[data-action=uploadCustomSound]').on('click', function () {
+        $(this).fileupload({
+            replaceFileInput: false,
+            url: 'plugins/ttscast/core/ajax/ttscast.ajax.php?action=uploadCustomSound',
+            dataType: 'json',
+            done: function (e, data) {
+                if (data.result.state != 'ok') {
+                    $('#div_alert').showAlert({ message: data.result.result, level: 'danger' });
+                    return;
+                }
+                $('#div_alert').showAlert({
+                    message: '{{Upload Custom Sound (OK) :: }}' + data.result.result,
+                    level: 'success'
+                });
+            }
+        });
+    });
+
     $('.customclass-purgettscache').on('click', function() {
         $.ajax({
             type: "POST",
@@ -462,6 +482,87 @@ if (!isConnect()) {
         });
     });
 
+    $('.customclass-updateradios').on('click', function() {
+        $.ajax({
+            type: "POST",
+            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
+            data: {
+                action: "updateRadios"
+            },
+            dataType: 'json',
+            error: function(request, status, error) {
+                handleAjaxError(request, status, error);
+            },
+            success: function(data) {
+                if (data.state != 'ok') {
+                    $('#div_alert').showAlert({
+                        message: data.result,
+                        level: 'danger'
+                    });
+                    return;
+                }
+                $('#div_alert').showAlert({
+                    message: '{{Demande de mise à jour des listes :: Radio :: envoyée (voir les logs ttscast)}}',
+                    level: 'success'
+                });
+            }
+        });
+    });
+
+    $('.customclass-updatesounds').on('click', function() {
+        $.ajax({
+            type: "POST",
+            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
+            data: {
+                action: "updateSounds"
+            },
+            dataType: 'json',
+            error: function(request, status, error) {
+                handleAjaxError(request, status, error);
+            },
+            success: function(data) {
+                if (data.state != 'ok') {
+                    $('#div_alert').showAlert({
+                        message: data.result,
+                        level: 'danger'
+                    });
+                    return;
+                }
+                $('#div_alert').showAlert({
+                    message: '{{Demande de mise à jour des listes :: Sound :: envoyée (voir les logs ttscast)}}',
+                    level: 'success'
+                });
+            }
+        });
+    });
+
+    $('.customclass-updatecustomsounds').on('click', function() {
+        $.ajax({
+            type: "POST",
+            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
+            data: {
+                action: "updateCustomSounds"
+            },
+            dataType: 'json',
+            error: function(request, status, error) {
+                handleAjaxError(request, status, error);
+            },
+            success: function(data) {
+                if (data.state != 'ok') {
+                    $('#div_alert').showAlert({
+                        message: data.result,
+                        level: 'danger'
+                    });
+                    return;
+                }
+                $('#div_alert').showAlert({
+                    message: '{{Demande de mise à jour des listes :: Custom Sound :: envoyée (voir les logs ttscast)}}',
+                    level: 'success'
+                });
+            }
+        });
+    });
+    
     $('.customclass-ttstestplay').on('click', function() {
         $.ajax({
             type: "POST",
@@ -482,7 +583,7 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: '{{Demande de génération du TTS de test evoyée (voir les logs du démon pour le résultat)}}',
+                    message: '{{Demande de génération du TTS de test envoyée (voir les logs du démon pour le résultat)}}',
                     level: 'success'
                 });
             }
