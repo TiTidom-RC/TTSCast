@@ -110,7 +110,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
                                 
-                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios')):
+                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'sounds', 'customsounds')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message['options'])
                                 
@@ -600,9 +600,9 @@ class TTSCast:
                 
                 app_name = "default_media_receiver"
                 app_data = {
-                    "media_id": urltoplay, 
-                    "media_type": "audio/mp3", 
-                    "title": "[Jeedom] TTSCast", 
+                    "media_id": urltoplay,
+                    "media_type": "audio/mp3",
+                    "title": "[Jeedom] TTSCast",
                     "thumb": urlThumb
                 }
                 quick_play.quick_play(cast, app_name, app_data)
@@ -835,6 +835,42 @@ class Functions:
                                 # cast.media_controller.play_media(radioUrl, "audio/mp3")
                                 logging.debug('[DAEMON][controllerActions] Diffusion Radio lancée :: %s', str(cast.media_controller.status))
                     
+                elif (_controller in ['sounds', 'customsounds']):
+                    logging.debug('[DAEMON][controllerActions] Sound/CustomSound Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+                    
+                    if _value == '':
+                        cast.quit_app()
+                        time.sleep(1)
+                    else:
+                        # Si DashCast alors sortir de l'appli avant sinon cela plante
+                        Functions.checkIfDashCast(cast)
+                        
+                        if (_controller == 'customsounds'):
+                            soundURL = urljoin(Config.ttsWebSrvMedia, 'custom/' + _value)
+                        else:
+                            soundURL = urljoin(Config.ttsWebSrvMedia, _value)
+                        logging.debug('[DAEMON][controllerActions] Sound FilePath :: %s', soundURL)
+
+                        soundThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+                        soundTitle = _value
+                        soundSubTitle = "[Jeedom] TTSCast Sound"
+
+                        app_name = "default_media_receiver"
+                        # app_name = "bubbleupnp"
+                        app_data = {
+                            "media_id": soundURL,
+                            "media_type": "audio/mp3",
+                            "title": soundTitle,
+                            "thumb": soundThumb,
+                            "metadata": {
+                                "title": soundTitle,
+                                "subtitle": soundSubTitle,
+                                "images": [{"url": soundThumb}]
+                            }
+                        }
+                        quick_play.quick_play(cast, app_name, app_data)
+                        logging.debug('[DAEMON][controllerActions] Diffusion Sound lancée :: %s', str(cast.media_controller.status))
+
                     # Libération de la mémoire
                     cast = None
                     chromecasts = None
