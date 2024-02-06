@@ -56,7 +56,7 @@ if (!isConnect()) {
 			        </select>
 	            </div>
             </div>
-            <legend><i class="fas fa-volume-down"></i> {{TTS (Text To Speech)}}</legend>
+            <legend><i class="fab fa-chromecast"></i> {{TTS (Text To Speech)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Moteur TTS}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Moteur TTS à utiliser pour la synthèse vocale}}"></i></sup>
@@ -295,32 +295,40 @@ if (!isConnect()) {
                     <input class="configKey form-control" type="number" data-l1key="ttsPurgeCacheDays" min="0" max="90" placeholder="{{Nombre de jours}}" />
                 </div>
                 <div class="col-lg-1">
-                    <a class="btn btn-warning customclass-purgettscache"><i class="fas fa-file-audio"></i> {{Vider le Cache}}</a>
+                    <a class="btn btn-warning customclass-purgettscache"><i class="fas fa-trash-alt"></i> {{Vider le Cache}}</a>
                 </div>
             </div>
-            <legend><i class="fas fa-list-alt"></i> {{Listes (Radios, Sounds, Custom Sounds)}}</legend>
+            <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, Sounds, Custom Sounds)}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour les listes : Radio}}
+                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Radio}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des radios de vos équipements}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-play-circle"></i> {{MAJ Radios}}</a>
+                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-sync"></i> {{MàJ Radios}}</a>
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour les listes : Sound}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons (mp3)}}"></i></sup>
+                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Sound}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons (.mp3)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-play-circle"></i> {{MAJ Sounds}}</a>
+                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-file-audio"></i> {{MàJ Sounds}}</a>
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour les listes : Custom Sound}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons personnalisés (mp3)}}"></i></sup>
+                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Custom Sound}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons personnalisés (.mp3)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-play-circle"></i> {{MAJ Custom Sounds}}</a>
+                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-file-audio"></i> {{MàJ Custom Sounds}}</a>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Ajouter un fichier :: Custom Sound}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Télécharge un fichier (.mp3) pour l'ajouter à la liste des 'Custom Sounds'}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <a class="btn btn-success customclass-uloadcustomsound"><i class="fas fa-file-upload"></i> {{Ajouter un Custom Sound (.mp3)}}</a>
                 </div>
             </div>
         </div>
