@@ -300,7 +300,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-list-alt"></i> {{Listes (Radios, Sounds, Custom Sounds)}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour la liste 'Radio'}}
+                <label class="col-lg-3 control-label">{{Mettre à jour les listes : Radio}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des radios de vos équipements}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -308,7 +308,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour la liste 'Sound'}}
+                <label class="col-lg-3 control-label">{{Mettre à jour les listes : Sound}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons (mp3)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -316,7 +316,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour la liste 'Custom Sound'}}
+                <label class="col-lg-3 control-label">{{Mettre à jour les listes : Custom Sound}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons personnalisés (mp3)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
