@@ -110,7 +110,7 @@ try {
         if (!file_exists($filepath)) {
             throw new Exception(__('[UPLOAD][CustomSound] Impossible de sauvegarder le fichier', __FILE__));
         }
-
+        log::add('ttscast', 'info', "[UPLOAD][CustomSound] Upload OK :: {$_FILES['fileCustomSound']['name']}");
         ajax::success("{$_FILES['fileCustomSound']['name']}");
 	}
 
