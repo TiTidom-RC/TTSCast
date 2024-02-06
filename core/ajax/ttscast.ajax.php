@@ -49,7 +49,7 @@ try {
 		ajax::success(ttscast::updateSounds());
 	}
 
-    if (init('action') == 'updateRadios') {
+    if (init('action') == 'updateCustomSounds') {
 		ajax::success(ttscast::updateCustomSounds());
 	}
 
