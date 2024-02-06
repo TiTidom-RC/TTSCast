@@ -849,7 +849,7 @@ class Functions:
                             soundURL = urljoin(Config.ttsWebSrvMedia, 'custom/' + _value)
                         else:
                             soundURL = urljoin(Config.ttsWebSrvMedia, _value)
-                        logging.debug('[DAEMON][controllerActions] Sound FilePath :: %s', soundURL)
+                        logging.debug('[DAEMON][controllerActions] Sound/CustomSound FilePath :: %s', soundURL)
 
                         soundThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                         soundTitle = _value
@@ -869,7 +869,7 @@ class Functions:
                             }
                         }
                         quick_play.quick_play(cast, app_name, app_data)
-                        logging.debug('[DAEMON][controllerActions] Diffusion Sound lancée :: %s', str(cast.media_controller.status))
+                        logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound lancée :: %s', str(cast.media_controller.status))
 
                     # Libération de la mémoire
                     cast = None

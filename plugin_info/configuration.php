@@ -298,6 +298,31 @@ if (!isConnect()) {
                     <a class="btn btn-warning customclass-purgettscache"><i class="fas fa-file-audio"></i> {{Vider le Cache}}</a>
                 </div>
             </div>
+            <legend><i class="fas fa-list-alt"></i> {{Listes (Radios, Sounds, Custom Sounds)}}</legend>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Mettre à jour la liste 'Radio'}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des radios de vos équipements}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-play-circle"></i> {{MAJ Radios}}</a>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Mettre à jour la liste 'Sound'}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons (mp3)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-play-circle"></i> {{MAJ Sounds}}</a>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Mettre à jour la liste 'Custom Sound'}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons personnalisés (mp3)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <a class="btn btn-success customclass-updatelistes"><i class="fas fa-play-circle"></i> {{MAJ Custom Sounds}}</a>
+                </div>
+            </div>
         </div>
     </fieldset>
 </form>
