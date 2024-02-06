@@ -1219,7 +1219,6 @@ class ttscast extends eqLogic
             $orderCmd++;
         } */
 
-        # TODO gérer les modèles IsEnabled pour l'envoyer au démon
         if ($this->getIsEnable()) {
             $this->enableCastToDaemon();
         } else {
