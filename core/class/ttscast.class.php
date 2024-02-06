@@ -482,7 +482,7 @@ class ttscast extends eqLogic
         return $filesReturn;
     }
 
-    public function updateRadioList()
+    public static function updateRadioList()
     {
         try {
             foreach(self::byType('ttscast') as $eqLogic) {
@@ -498,7 +498,7 @@ class ttscast extends eqLogic
         }
     }
 
-    public function updateSoundList()
+    public static function updateSoundList()
     {
         try {
             foreach(self::byType('ttscast') as $eqLogic) {
@@ -514,7 +514,7 @@ class ttscast extends eqLogic
         }
     }
 
-    public function updateCustomSoundList()
+    public static function updateCustomSoundList()
     {
         try {
             foreach(self::byType('ttscast') as $eqLogic) {
