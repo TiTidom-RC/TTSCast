@@ -41,6 +41,18 @@ try {
 		ajax::success(ttscast::playTestTTS());
 	}
 
+    if (init('action') == 'updateRadios') {
+		ajax::success(ttscast::updateRadios());
+	}
+
+    if (init('action') == 'updateSounds') {
+		ajax::success(ttscast::updateSounds());
+	}
+
+    if (init('action') == 'updateRadios') {
+		ajax::success(ttscast::updateCustomSounds());
+	}
+
     if (init('action') == 'uploadAPIKey') {
         if (!isset($_FILES['fileAPIKey'])) {
             throw new Exception(__('[UPLOAD][APIKEY] Aucun fichier trouvé. Vérifiez le paramètre PHP (post size limit)', __FILE__));

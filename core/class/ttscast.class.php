@@ -482,6 +482,54 @@ class ttscast extends eqLogic
         return $filesReturn;
     }
 
+    public function updateRadioList()
+    {
+        try {
+            foreach(self::byType('ttscast') as $eqLogic) {
+                $cmd = $eqLogic->getCmd(null, 'radios');
+                if (is_object($cmd)) {
+                    $radioList = $eqLogic->getRadioList();
+                    $cmd->setConfiguration('listValue', $radioList);
+                    $cmd->save();
+                }
+            }
+        } catch (Exception $e) {
+            log::add('ttscast', 'error', '[updateRadioList] Radio Update ERROR :: ' . $e->getMessage());
+        }
+    }
+
+    public function updateSoundList()
+    {
+        try {
+            foreach(self::byType('ttscast') as $eqLogic) {
+                $cmd = $eqLogic->getCmd(null, 'sounds');
+                if (is_object($cmd)) {
+                    $soundList = $eqLogic->getSoundList();
+                    $cmd->setConfiguration('listValue', $soundList);
+                    $cmd->save();
+                }
+            }
+        } catch (Exception $e) {
+            log::add('ttscast', 'error', '[updateSoundList] Sound Update ERROR :: ' . $e->getMessage());
+        }
+    }
+
+    public function updateCustomSoundList()
+    {
+        try {
+            foreach(self::byType('ttscast') as $eqLogic) {
+                $cmd = $eqLogic->getCmd(null, 'customsounds');
+                if (is_object($cmd)) {
+                    $customSoundList = $eqLogic->getCustomSoundList();
+                    $cmd->setConfiguration('listValue', $customSoundList);
+                    $cmd->save();
+                }
+            }
+        } catch (Exception $e) {
+            log::add('ttscast', 'error', '[updateCustomSoundList] Custom Sound Update ERROR :: ' . $e->getMessage());
+        }
+    }
+
     /* ************************ Methodes static : JEEDOM *************************** */
 
     /*
@@ -1157,8 +1205,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('sounds');
             $cmd->setType('action');
             $cmd->setSubType('select');
-            $radioList = $this->getSoundList();
-            $cmd->setConfiguration('listValue', $radioList);
+            $soundList = $this->getSoundList();
+            $cmd->setConfiguration('listValue', $soundList);
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1174,8 +1222,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('customsounds');
             $cmd->setType('action');
             $cmd->setSubType('select');
-            $radioList = $this->getCustomSoundList();
-            $cmd->setConfiguration('listValue', $radioList);
+            $customSoundList = $this->getCustomSoundList();
+            $cmd->setConfiguration('listValue', $customSoundList);
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
