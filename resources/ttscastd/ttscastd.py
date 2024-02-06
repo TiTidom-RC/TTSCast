@@ -875,7 +875,7 @@ class Functions:
                         quick_play.quick_play(cast, app_name, app_data)
                         logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound lancée :: %s', str(cast.media_controller.status))
                         
-                        while cast.media_controller.status.player_state == 'PLAYING':
+                        while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
                             time.sleep(1)
                             logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound en cours :: %s', str(cast.media_controller.status))
             
