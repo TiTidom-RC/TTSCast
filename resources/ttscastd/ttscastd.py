@@ -1019,7 +1019,7 @@ class Functions:
                                 last_updated_local = last_updated.astimezone(tz=None)
                                 mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
                             else:
-                                mediaLastUpdated = "KO"
+                                mediaLastUpdated = "N/A"
                             
                             mediaPlayerState = cast.media_controller.status.player_state
                             mediaTitle = cast.media_controller.status.title
