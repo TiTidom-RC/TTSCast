@@ -1114,7 +1114,7 @@ class Functions:
                     for f in os.listdir(path):
                         os.remove(os.path.join(path, f))
                         nbFiles += 1
-                    logging.info("[DAEMON][PURGE-CACHE] Clean Cache (OK) :: " + nbFiles + " Files Deleted")
+                    logging.info("[DAEMON][PURGE-CACHE] Clean Cache (OK) :: %s Files Deleted", str(nbFiles))
             except Exception as e:
                 logging.error('[DAEMON][PURGE-CACHE] Error while cleaning all cache files :: %s', e)
                 logging.debug(traceback.format_exc())
