@@ -121,10 +121,10 @@ class Loops:
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
                         
                         if 'days' in message:
-                            Functions.purgeCache(message['days'])
+                            threading.Thread(target=Functions.purgeCache, args=[message['days']]).start()
                         
                         else:
-                            Functions.purgeCache()
+                            threading.Thread(target=Functions.purgeCache).start()
                             
                     elif message['cmd'] == "addcast":
                         
@@ -1106,28 +1106,32 @@ class Functions:
         
     def purgeCache(nbDays='0'):
         if nbDays == '0':  # clean entire directory including containing folder
-            logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
+            logging.info('[DAEMON][PURGE-CACHE] Clean Cache :: ALL Files.')
+            path = Config.ttsCacheFolderTmp
             try:
-                if os.path.exists(Config.ttsCacheFolderTmp):
-                    shutil.rmtree(Config.ttsCacheFolderTmp)
+                if os.path.exists(path):
+                    nbFiles = 0
+                    for f in os.listdir(path):
+                        os.remove(os.path.join(path, f))
+                        nbFiles += 1
+                    logging.info("[DAEMON][PURGE-CACHE] Clean Cache (OK) :: " + nbFiles + " Files Deleted")
             except Exception as e:
-                logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache entirely (nbDays = 0) :: %s', e)
+                logging.error('[DAEMON][PURGE-CACHE] Error while cleaning all cache files :: %s', e)
                 logging.debug(traceback.format_exc())
-                pass
         else:  # clean only files older than X days
+            logging.info('[DAEMON][PURGE-CACHE] Clean Cache :: Based on Files Age.')
             now = time.time()
             path = Config.ttsCacheFolderTmp
             try:
-                for f in os.listdir(path):
-                    logging.debug("[DAEMON][PURGE-CACHE] Age for " + f + " is " + str(
-                        int((now - (os.stat(os.path.join(path, f)).st_mtime)) / 86400)) + " days")
-                    if os.stat(os.path.join(path, f)).st_mtime < (now - (int(nbDays) * 86400)):
-                        os.remove(os.path.join(path, f))
-                        logging.debug("[DAEMON][PURG-CACHE] File Removed " + f + " due to expiration (" + nbDays + " days)")
+                if os.path.exists(path):
+                    for f in os.listdir(path):
+                        logging.debug("[DAEMON][PURGE-CACHE] Age for " + f + " is " + str(int((now - (os.stat(os.path.join(path, f)).st_mtime)) / 86400)) + " days")
+                        if os.stat(os.path.join(path, f)).st_mtime < (now - (int(nbDays) * 86400)):
+                            os.remove(os.path.join(path, f))
+                            logging.info("[DAEMON][PURGE-CACHE] File Removed " + f + " due to expiration (" + nbDays + " days)")
             except Exception as e:
-                logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
+                logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on files age :: %s', e)
                 logging.debug(traceback.format_exc())
-                pass
 
 class myCast:
 
