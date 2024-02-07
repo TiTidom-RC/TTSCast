@@ -291,15 +291,15 @@ class TTSCast:
             ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
             # TODO choisir le bon format pour le texte de VoiceRSS : 16khz_16bit_mono ? 22khz_8bit_mono ? 22khz_16bit_mono ? 24khz_8bit_mono ? 24khz_16bit_mono ? 32khz_8bit_mono ? 32khz_16bit_mono ? 44khz_8bit_mono ? 44khz_16bit_mono ? 48khz_8bit_mono ? 48khz_16bit_mono ?  
             ttsParams = {
-                'key': Config.apiRSSKey,
-                'hl': ttsLangCode,
-                'v': ttsVoiceName,
-                'src': ttsText,
-                'r': ttsSpeed,
-                'c': 'mp3',
-                'f': '24khz_16bit_mono',
-                'ssml': 'false',
-                'b64': 'false'
+                "key": Config.apiRSSKey,
+                "hl": ttsLangCode,
+                "v": ttsVoiceName,
+                "src": ttsText,
+                "r": ttsSpeed,
+                "c": 'mp3',
+                "f": '24khz_16bit_mono',
+                "ssml": 'false',
+                "b64": 'false'
             }
             # ttsFullURI = urljoin(Config.ttsVoiceRSSUrl, ttsParams)
             # logging.debug('[DAEMON][VoiceRSS] ttsFullURI :: %s', ttsFullURI)
