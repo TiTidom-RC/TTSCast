@@ -259,12 +259,24 @@ class TTSCast:
     def jeedomTTS(ttsText, ttsLang):
         filecontent = None
         try:
-            ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
-            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
-            logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
+            # ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
+            # ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
+            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, 'tts.php')
+            # logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
             
-            response = requests.post(ttsFullURI, timeout=30, verify=False)
+            ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            ttsParams = {
+                'apikey': Config.apiTTSKey,
+                'voice': ttsLang,
+                'path': 1,
+                'text': ttsText
+            }
+            
+            response = requests.post(ttsFullURI, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=True)
             filecontent = response.content
+            
+            # response = requests.post(ttsFullURI, timeout=30, verify=False)
+            # filecontent = response.content
             
             if response.status_code != requests.codes.ok:
                 filecontent = None
@@ -289,7 +301,8 @@ class TTSCast:
             logging.debug('[DAEMON][VoiceRSS] LanguageCode / VoiceName :: %s / %s', ttsLangCode, ttsVoiceName)
             
             ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-            # TODO choisir le bon format pour le texte de VoiceRSS : 16khz_16bit_mono ? 22khz_8bit_mono ? 22khz_16bit_mono ? 24khz_8bit_mono ? 24khz_16bit_mono ? 32khz_8bit_mono ? 32khz_16bit_mono ? 44khz_8bit_mono ? 44khz_16bit_mono ? 48khz_8bit_mono ? 48khz_16bit_mono ?  
+            
+            # TODO Formats disponibles pour VoiceRSS : 16khz_16bit_mono ? 22khz_8bit_mono ? 22khz_16bit_mono ? 24khz_8bit_mono ? 24khz_16bit_mono ? 32khz_8bit_mono ? 32khz_16bit_mono ? 44khz_8bit_mono ? 44khz_16bit_mono ? 48khz_8bit_mono ? 48khz_16bit_mono ?  
             ttsParams = {
                 "key": Config.apiRSSKey,
                 "hl": ttsLangCode,
@@ -301,10 +314,6 @@ class TTSCast:
                 "ssml": 'false',
                 "b64": 'false'
             }
-            # ttsFullURI = urljoin(Config.ttsVoiceRSSUrl, ttsParams)
-            # logging.debug('[DAEMON][VoiceRSS] ttsFullURI :: %s', ttsFullURI)
-            
-            params = urlencode(ttsParams)
             
             response = requests.post(Config.ttsVoiceRSSUrl, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=True)
             filecontent = response.content
