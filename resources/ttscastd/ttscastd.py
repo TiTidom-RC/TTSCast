@@ -259,24 +259,24 @@ class TTSCast:
     def jeedomTTS(ttsText, ttsLang):
         filecontent = None
         try:
-            # ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
-            # ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
-            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, 'tts.php')
+            ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
+            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
+            # ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, 'tts.php')
             # logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
             
-            ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-            ttsParams = {
+            # ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            """ ttsParams = {
                 'apikey': Config.apiTTSKey,
                 'voice': ttsLang,
                 'path': 1,
                 'text': ttsText
-            }
+            } """
             
-            response = requests.post(ttsFullURI, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=False)
-            filecontent = response.content
-            
-            # response = requests.post(ttsFullURI, timeout=30, verify=False)
+            # response = requests.post(ttsFullURI, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=False)
             # filecontent = response.content
+            
+            response = requests.post(ttsFullURI, timeout=30, verify=False)
+            filecontent = response.content
             
             if response.status_code != requests.codes.ok:
                 filecontent = None
