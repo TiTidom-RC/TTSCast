@@ -624,7 +624,7 @@ class TTSCast:
                 
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
                 
-                while cast.media_controller.status.player_state == 'PLAYING':
+                while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
                     time.sleep(1)
                     logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
                 
@@ -679,7 +679,7 @@ class TTSCast:
             
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
-                while cast.media_controller.status.player_state == 'PLAYING':
+                while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
                     time.sleep(1)
                     logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
             
