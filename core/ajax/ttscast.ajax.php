@@ -100,6 +100,8 @@ try {
         if (!in_array($extension, array('.mp3'))) {
             throw new Exception('[UPLOAD][CustomSound] Extension de fichier non valide (autorisé .mp3) : ' . $extension);
         }
+
+        # TODO limiter taille upload mp3 dans les customSounds ?
         /* if (filesize($_FILES['fileCustomSound']['tmp_name']) > 10000) {
             throw new Exception(__('[UPLOAD][CustomSound] Le fichier est trop gros (max. 10Ko)', __FILE__));
         } */

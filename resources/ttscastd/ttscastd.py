@@ -497,7 +497,7 @@ class TTSCast:
                     if os.path.exists(gKey):
                         credentials = service_account.Credentials.from_service_account_file(gKey)
                     else:
-                        logging.error('[DAEMON][TTS] Impossible de charger le fichier JSON (clé API) :: KO')
+                        logging.error('[DAEMON][TTS] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return False
 
                     logging.debug('[DAEMON][TTS] Génération du fichier TTS (mp3)')
@@ -528,6 +528,7 @@ class TTSCast:
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
                     logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
+            
             elif ttsEngine == "gtranslatetts":
                 logging.debug('[DAEMON][TTS] TTSEngine = gtranslatetts')
                 raw_filename = ttsText + "|gTTS|" + ttsLang
@@ -555,6 +556,7 @@ class TTSCast:
                 
                 res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume)
                 logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+            
             elif ttsEngine == "jeedomtts":
                 logging.debug('[DAEMON][TTS] TTSEngine = jeedomtts')
                 
@@ -578,6 +580,7 @@ class TTSCast:
                 
                 res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume)
                 logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+            
             elif ttsEngine == "voicersstts":
                 logging.debug('[DAEMON][TTS] TTSEngine = voicersstts')
                 logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
@@ -604,6 +607,7 @@ class TTSCast:
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
                     logging.warning('[DAEMON][TTS] Clé API (Voice RSS) invalide :: ' + Config.apiRSSKey)  
+                    
         except Exception as e:
             logging.error('[DAEMON][TTS] Exception on TTS :: %s', e)
             logging.debug(traceback.format_exc())
@@ -664,6 +668,7 @@ class TTSCast:
                 cast = None
                 chromecasts = None
                 return False
+        
         elif googleUUID != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
             
