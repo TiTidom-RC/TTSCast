@@ -297,7 +297,7 @@ class TTSCast:
                 "src": ttsText,
                 "r": ttsSpeed,
                 "c": 'mp3',
-                "f": '24khz_16bit_mono',
+                "f": '16khz_16bit_mono',
                 "ssml": 'false',
                 "b64": 'false'
             }
