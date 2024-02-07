@@ -59,7 +59,7 @@ class Config:
     ttsWebSrvImages = ''
     ttsWebSrvJeeTTS = ''
     
-    ttsVoiceRSSUrl = 'https://api.voicerss.org/'
+    ttsVoiceRSSUrl = 'api.voicerss.org:443'
 
     gCloudApiKey = ''
 
