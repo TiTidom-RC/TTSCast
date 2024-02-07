@@ -263,7 +263,7 @@ class TTSCast:
             ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
             logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
             
-            response = requests.post(ttsFullURI, timeout=8, verify=False)
+            response = requests.post(ttsFullURI, timeout=30, verify=False)
             filecontent = response.content
             
             if response.status_code != requests.codes.ok:
