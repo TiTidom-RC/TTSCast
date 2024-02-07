@@ -272,7 +272,7 @@ class TTSCast:
                 'text': ttsText
             }
             
-            response = requests.post(ttsFullURI, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=True)
+            response = requests.post(ttsFullURI, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=False)
             filecontent = response.content
             
             # response = requests.post(ttsFullURI, timeout=30, verify=False)
