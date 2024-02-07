@@ -193,7 +193,7 @@ class ttscast extends eqLogic
     }
 
     public static function playTTS($gHome=null, $message=null, $options=null) {
-        $ttsText = $message;
+        $ttsText = htmlspecialchars($message);
         $ttsGoogleUUID = $gHome;
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
         $ttsRSSVoiceName = config::byKey('voiceRSSTTSVoice', 'ttscast', 'fr-fr-Bette');
