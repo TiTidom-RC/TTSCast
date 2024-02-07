@@ -28,7 +28,7 @@ import threading
 import datetime
 import requests
 
-from urllib.parse import urljoin, quote
+from urllib.parse import urljoin, quote, urlencode
 from uuid import UUID
 
 # Import pour Jeedom
@@ -289,11 +289,22 @@ class TTSCast:
             logging.debug('[DAEMON][TestTTS] LanguageCode / VoiceName :: %s / %s', ttsLangCode, ttsVoiceName)
             
             ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-            ttsParams = '?key=' + Config.apiRSSKey + '&hl=' + ttsLangCode + '&v=' + ttsVoiceName + '&r=' + ttsSpeed + '&c=MP3&f=16khz_8bit_mono&ssml=false&b64=false' + '&src=' + quote(ttsText, safe='')
-            ttsFullURI = urljoin(Config.ttsVoiceRSSUrl, ttsParams)
-            logging.debug('[DAEMON][VoiceRSS] ttsFullURI :: %s', ttsFullURI)
+            # TODO choisir le bon format pour le texte de VoiceRSS : 16khz_16bit_mono ? 22khz_8bit_mono ? 22khz_16bit_mono ? 24khz_8bit_mono ? 24khz_16bit_mono ? 32khz_8bit_mono ? 32khz_16bit_mono ? 44khz_8bit_mono ? 44khz_16bit_mono ? 48khz_8bit_mono ? 48khz_16bit_mono ?  
+            ttsParams = {
+                'key': Config.apiRSSKey,
+                'hl': ttsLangCode,
+                'v': ttsVoiceName,
+                'src': ttsText,
+                'r': ttsSpeed,
+                'c': 'mp3',
+                'f': '24khz_16bit_mono',
+                'ssml': 'false',
+                'b64': 'false'
+            }
+            # ttsFullURI = urljoin(Config.ttsVoiceRSSUrl, ttsParams)
+            # logging.debug('[DAEMON][VoiceRSS] ttsFullURI :: %s', ttsFullURI)
             
-            response = requests.post(ttsFullURI, headers=ttsHeaders, timeout=30, verify=True)
+            response = requests.post(Config.ttsVoiceRSSUrl, headers=ttsHeaders, params=urlencode(ttsParams), timeout=30, verify=True)
             filecontent = response.content
             
             if response.status_code != requests.codes.ok:
