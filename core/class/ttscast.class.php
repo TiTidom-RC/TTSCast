@@ -1116,7 +1116,7 @@ class ttscast extends eqLogic
             $cmd->setType('action');
             $cmd->setSubType('message');
 	        $cmd->setIsVisible(1);
-            $cmd->setDisplay('parameters', '{"title_placeholder": "Options : [volume]", "message_placeholder": "TTS"}');
+            $cmd->setDisplay('parameters', "{'title_placeholder': 'Options : [volume]', 'message_placeholder': 'TTS'}");
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
