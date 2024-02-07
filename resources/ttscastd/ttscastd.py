@@ -286,7 +286,7 @@ class TTSCast:
         try:
             ttsLangCode = "-".join(ttsLang.split("-")[:2])
             ttsVoiceName = ttsLang.split("-")[2:][0]
-            logging.debug('[DAEMON][TestTTS] LanguageCode / VoiceName :: %s / %s', ttsLangCode, ttsVoiceName)
+            logging.debug('[DAEMON][VoiceRSS] LanguageCode / VoiceName :: %s / %s', ttsLangCode, ttsVoiceName)
             
             ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
             # TODO choisir le bon format pour le texte de VoiceRSS : 16khz_16bit_mono ? 22khz_8bit_mono ? 22khz_16bit_mono ? 24khz_8bit_mono ? 24khz_16bit_mono ? 32khz_8bit_mono ? 32khz_16bit_mono ? 44khz_8bit_mono ? 44khz_16bit_mono ? 48khz_8bit_mono ? 48khz_16bit_mono ?  
