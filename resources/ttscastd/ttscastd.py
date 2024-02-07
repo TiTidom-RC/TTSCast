@@ -263,6 +263,7 @@ class TTSCast:
             # ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
             ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, 'tts.php')
             logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
+            logging.debug('[DAEMON][JeedomTTS] ttsText Length :: %s', str(len(ttsText)))
             
             ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
             ttsParams = {
