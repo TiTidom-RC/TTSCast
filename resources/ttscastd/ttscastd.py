@@ -15,7 +15,6 @@
 
 import logging
 import resource
-import shutil
 import sys
 import os
 import time
@@ -28,7 +27,7 @@ import threading
 import datetime
 import requests
 
-from urllib.parse import urljoin, quote, urlencode
+from urllib.parse import urljoin, urlencode
 from uuid import UUID
 
 # Import pour Jeedom
