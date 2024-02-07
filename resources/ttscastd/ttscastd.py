@@ -15,7 +15,6 @@
 
 import logging
 import resource
-import shutil
 import sys
 import os
 import time
@@ -28,7 +27,7 @@ import threading
 import datetime
 import requests
 
-from urllib.parse import urljoin, quote
+from urllib.parse import urljoin, urlencode
 from uuid import UUID
 
 # Import pour Jeedom
@@ -104,24 +103,27 @@ class Loops:
                             
                             if (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
                                 logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
-                                Functions.mediaActions(message['googleUUID'], message['value'], message['cmd_action'])
+                                # Functions.mediaActions(message['googleUUID'], message['value'], message['cmd_action'])
+                                threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], message['value'], message['cmd_action']]).start()
                             
                             elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
-                                Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
+                                # Functions.mediaActions(message['googleUUID'], '', message['cmd_action'])
+                                threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], '', message['cmd_action']]).start()
                                 
-                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios')):
+                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'sounds', 'customsounds')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
-                                Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message['options'])
+                                # Functions.controllerActions(message['googleUUID'], message['cmd_action'], message['value'], _options=message['options'])
+                                threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options']]).start()
                                 
                     elif message['cmd'] == 'purgettscache':
                         logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
                         
                         if 'days' in message:
-                            Functions.purgeCache(message['days'])
+                            threading.Thread(target=Functions.purgeCache, args=[message['days']]).start()
                         
                         else:
-                            Functions.purgeCache()
+                            threading.Thread(target=Functions.purgeCache).start()
                             
                     elif message['cmd'] == "addcast":
                         
@@ -163,17 +165,18 @@ class Loops:
                         
                         if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
                             logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
-                            TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'])
-                        
+                            # TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'])
+                            threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed']]).start()
                         else:
                             logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                             
                     elif message['cmd'] == 'playtts':
                         logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
                         
-                        if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsVolume', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
-                            logging.debug('[DAEMON][SOCKET] TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleUUID'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsVolume'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
-                            TTSCast.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsVolume'])
+                        if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
+                            logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))
+                            # TTSCast.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'])
+                            threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()
                         
                         else:
                             logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
@@ -255,12 +258,25 @@ class TTSCast:
     def jeedomTTS(ttsText, ttsLang):
         filecontent = None
         try:
-            ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
-            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
+            # ttsParams = 'tts.php?apikey=' + Config.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
+            # ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, ttsParams)
+            ttsFullURI = urljoin(Config.ttsWebSrvJeeTTS, 'tts.php')
             logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
+            logging.debug('[DAEMON][JeedomTTS] ttsText Length :: %s', str(len(ttsText)))
             
-            response = requests.post(ttsFullURI, timeout=8, verify=False)
+            ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
+            ttsParams = {
+                'apikey': Config.apiTTSKey,
+                'voice': ttsLang,
+                'path': 1,
+                'text': ttsText
+            }
+            
+            response = requests.post(ttsFullURI, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=False)
             filecontent = response.content
+            
+            # response = requests.post(ttsFullURI, timeout=30, verify=False)
+            # filecontent = response.content
             
             if response.status_code != requests.codes.ok:
                 filecontent = None
@@ -282,14 +298,24 @@ class TTSCast:
         try:
             ttsLangCode = "-".join(ttsLang.split("-")[:2])
             ttsVoiceName = ttsLang.split("-")[2:][0]
-            logging.debug('[DAEMON][TestTTS] LanguageCode / VoiceName :: %s / %s', ttsLangCode, ttsVoiceName)
+            logging.debug('[DAEMON][VoiceRSS] LanguageCode / VoiceName :: %s / %s', ttsLangCode, ttsVoiceName)
             
             ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
-            ttsParams = '?key=' + Config.apiRSSKey + '&hl=' + ttsLangCode + '&v=' + ttsVoiceName + '&r=' + ttsSpeed + '&c=MP3&f=16khz_8bit_mono&ssml=false&b64=false' + '&src=' + quote(ttsText, safe='')
-            ttsFullURI = urljoin(Config.ttsVoiceRSSUrl, ttsParams)
-            logging.debug('[DAEMON][VoiceRSS] ttsFullURI :: %s', ttsFullURI)
             
-            response = requests.post(ttsFullURI, headers=ttsHeaders, timeout=30, verify=True)
+            # TODO Formats disponibles pour VoiceRSS : 16khz_16bit_mono ? 22khz_8bit_mono ? 22khz_16bit_mono ? 24khz_8bit_mono ? 24khz_16bit_mono ? 32khz_8bit_mono ? 32khz_16bit_mono ? 44khz_8bit_mono ? 44khz_16bit_mono ? 48khz_8bit_mono ? 48khz_16bit_mono ?  
+            ttsParams = {
+                "key": Config.apiRSSKey,
+                "hl": ttsLangCode,
+                "v": ttsVoiceName,
+                "src": ttsText,
+                "r": ttsSpeed,
+                "c": 'mp3',
+                "f": '16khz_16bit_mono',
+                "ssml": 'false',
+                "b64": 'false'
+            }
+            
+            response = requests.post(Config.ttsVoiceRSSUrl, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=True)
             filecontent = response.content
             
             if response.status_code != requests.codes.ok:
@@ -435,133 +461,158 @@ class TTSCast:
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Voice RSS) invalide :: ' + Config.apiRSSKey)
                 
-    def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsVolume='30'):
-        logging.debug('[DAEMON][TTS] Check des répertoires')
-        cachePath = Config.ttsCacheFolderWeb
-        symLinkPath = Config.ttsCacheFolderTmp
-        ttsSrvWeb = Config.ttsWebSrvCache
-        
+    def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None):
         try:
-            os.stat(symLinkPath)
-        except Exception:
-            os.mkdir(symLinkPath)
-        try:
-            os.stat(cachePath)
-        except Exception:
-            os.symlink(symLinkPath, cachePath)
-        
-        if ttsEngine == "gcloudtts":
-            logging.debug('[DAEMON][TTS] TTSEngine = gcloudtts')
-            logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
-            if Config.gCloudApiKey != 'noKey':
-                credentials = service_account.Credentials.from_service_account_file(os.path.join(Config.configFullPath, Config.gCloudApiKey))
+            logging.debug('[DAEMON][TTS] Check des répertoires')
+            cachePath = Config.ttsCacheFolderWeb
+            symLinkPath = Config.ttsCacheFolderTmp
+            ttsSrvWeb = Config.ttsWebSrvCache
+            
+            try:
+                os.stat(symLinkPath)
+            except Exception:
+                os.mkdir(symLinkPath)
+            try:
+                os.stat(cachePath)
+            except Exception:
+                os.symlink(symLinkPath, cachePath)
+            
+            if not ttsOptions:
+                ttsOptions = None
+            _ttsVolume = None
+            
+            try:
+                if (ttsOptions is not None):
+                    options_json = json.loads("{" + ttsOptions + "}")
+                    _ttsVolume = options_json['volume'] if 'volume' in options_json else None
+                    logging.debug('[DAEMON][TTS] Options :: %s', str(options_json))
+            except ValueError as e:
+                logging.debug('[DAEMON][TTS] Options mal formatées (Json KO) :: %s', e)
+            
+            if ttsEngine == "gcloudtts":
+                logging.debug('[DAEMON][TTS] TTSEngine = gcloudtts')
+                logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
+                if Config.gCloudApiKey != 'noKey':
+                    gKey = os.path.join(Config.configFullPath, Config.gCloudApiKey)
+                    if os.path.exists(gKey):
+                        credentials = service_account.Credentials.from_service_account_file(gKey)
+                    else:
+                        logging.error('[DAEMON][TTS] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
+                        return False
 
-                logging.debug('[DAEMON][TTS] Génération du fichier TTS (mp3)')
-                raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed
+                    logging.debug('[DAEMON][TTS] Génération du fichier TTS (mp3)')
+                    raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed
+                    filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+                    filepath = os.path.join(symLinkPath, filename)
+                    
+                    logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
+                    
+                    if not os.path.isfile(filepath):
+                        language_code = "-".join(ttsVoiceName.split("-")[:2])
+                        text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                        voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
+                        audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
+
+                        client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
+                        response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+
+                        with open(filepath, "wb") as out:
+                            out.write(response.audio_content)
+                            logging.debug('[DAEMON][TTS] Fichier TTS généré :: %s', filepath)
+                    else:
+                        logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+                    
+                    urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                    logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume)
+                    logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                else:
+                    logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
+            
+            elif ttsEngine == "gtranslatetts":
+                logging.debug('[DAEMON][TTS] TTSEngine = gtranslatetts')
+                raw_filename = ttsText + "|gTTS|" + ttsLang
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
                 filepath = os.path.join(symLinkPath, filename)
-                
                 logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                 
                 if not os.path.isfile(filepath):
-                    language_code = "-".join(ttsVoiceName.split("-")[:2])
-                    text_input = googleCloudTTS.SynthesisInput(text=ttsText)
-                    voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-                    audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
-
-                    client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
-                    response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
-
-                    with open(filepath, "wb") as out:
-                        out.write(response.audio_content)
-                        logging.debug('[DAEMON][TTS] Fichier TTS généré :: %s', filepath)
+                    langToTTS = ttsLang.split('-')[0]
+                    try:
+                        client = gTTS(ttsText, lang=langToTTS)
+                        client.save(filepath)
+                    except Exception as e:
+                        if os.path.isfile(filepath):
+                            try:
+                                os.remove(filepath)
+                            except OSError:
+                                pass
+                        logging.debug('[DAEMON][TTS] Google Translate API ERROR :: %s', e)
                 else:
                     logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
                 urlFileToPlay = urljoin(ttsSrvWeb, filename)
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
+                
+                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume)
                 logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
-            else:
-                logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
-        elif ttsEngine == "gtranslatetts":
-            logging.debug('[DAEMON][TTS] TTSEngine = gtranslatetts')
-            raw_filename = ttsText + "|gTTS|" + ttsLang
-            filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
-            filepath = os.path.join(symLinkPath, filename)
-            logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
             
-            if not os.path.isfile(filepath):
-                langToTTS = ttsLang.split('-')[0]
-                try:
-                    client = gTTS(ttsText, lang=langToTTS)
-                    client.save(filepath)
-                except Exception as e:
-                    if os.path.isfile(filepath):
-                        try:
-                            os.remove(filepath)
-                        except OSError:
-                            pass
-                    logging.debug('[DAEMON][TTS] Google Translate API ERROR :: %s', e)
-            else:
-                logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
-            
-            urlFileToPlay = urljoin(ttsSrvWeb, filename)
-            logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-            
-            res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
-            logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
-        elif ttsEngine == "jeedomtts":
-            logging.debug('[DAEMON][TTS] TTSEngine = jeedomtts')
-            
-            raw_filename = ttsText + "|JeedomTTS|" + ttsLang
-            filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
-            filepath = os.path.join(symLinkPath, filename)
-            logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
-            
-            if not os.path.isfile(filepath):
-                ttsfile = TTSCast.jeedomTTS(ttsText, ttsLang)
-                if ttsfile is not None:
-                    with open(filepath, 'wb') as f:
-                        f.write(ttsfile)
-                else:
-                    logging.debug('[DAEMON][TTS] JeedomTTS Error :: Incorrect Output')
-            else:
-                logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
-            
-            urlFileToPlay = urljoin(ttsSrvWeb, filename)
-            logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-            
-            res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
-            logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
-        elif ttsEngine == "voicersstts":
-            logging.debug('[DAEMON][TTS] TTSEngine = voicersstts')
-            logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
-            if Config.apiRSSKey != 'noKey':
-                raw_filename = ttsText + "|VoiceRSSTTS|" + ttsRSSVoiceName + "|" + ttsRSSSpeed
+            elif ttsEngine == "jeedomtts":
+                logging.debug('[DAEMON][TTS] TTSEngine = jeedomtts')
+                
+                raw_filename = ttsText + "|JeedomTTS|" + ttsLang
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
                 filepath = os.path.join(symLinkPath, filename)
                 logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                 
                 if not os.path.isfile(filepath):
-                    ttsfile = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed)
+                    ttsfile = TTSCast.jeedomTTS(ttsText, ttsLang)
                     if ttsfile is not None:
                         with open(filepath, 'wb') as f:
                             f.write(ttsfile)
                     else:
-                        logging.debug('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output')
+                        logging.debug('[DAEMON][TTS] JeedomTTS Error :: Incorrect Output')
                 else:
                     logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
                 urlFileToPlay = urljoin(ttsSrvWeb, filename)
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
-                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=int(ttsVolume))
+                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume)
                 logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
-            else:
-                logging.warning('[DAEMON][TTS] Clé API (Voice RSS) invalide :: ' + Config.apiRSSKey)  
+            
+            elif ttsEngine == "voicersstts":
+                logging.debug('[DAEMON][TTS] TTSEngine = voicersstts')
+                logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
+                if Config.apiRSSKey != 'noKey':
+                    raw_filename = ttsText + "|VoiceRSSTTS|" + ttsRSSVoiceName + "|" + ttsRSSSpeed
+                    filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+                    filepath = os.path.join(symLinkPath, filename)
+                    logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
+                    
+                    if not os.path.isfile(filepath):
+                        ttsfile = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed)
+                        if ttsfile is not None:
+                            with open(filepath, 'wb') as f:
+                                f.write(ttsfile)
+                        else:
+                            logging.debug('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output')
+                    else:
+                        logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+                    
+                    urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                    logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+                    
+                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume)
+                    logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                else:
+                    logging.warning('[DAEMON][TTS] Clé API (Voice RSS) invalide :: ' + Config.apiRSSKey)  
+                    
+        except Exception as e:
+            logging.error('[DAEMON][TTS] Exception on TTS :: %s', e)
+            logging.debug(traceback.format_exc())
 
-    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=30):
+    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
             
@@ -579,29 +630,31 @@ class TTSCast:
                 Functions.checkIfDashCast(cast)
             
                 volumeBeforePlay = cast.status.volume_level
-                logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
-                cast.set_volume(volume=volumeForPlay / 100)
+                if (volumeForPlay is not None):
+                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                    cast.set_volume(volume=volumeForPlay / 100)
                 
                 urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
                 
                 app_name = "default_media_receiver"
                 app_data = {
-                    "media_id": urltoplay, 
-                    "media_type": "audio/mp3", 
-                    "title": "[Jeedom] TTSCast", 
+                    "media_id": urltoplay,
+                    "media_type": "audio/mp3",
+                    "title": "[Jeedom] TTSCast",
                     "thumb": urlThumb
                 }
                 quick_play.quick_play(cast, app_name, app_data)
                 
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
                 
-                while cast.media_controller.status.player_state == 'PLAYING':
+                while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
                     time.sleep(1)
                     logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
                 
                 cast.quit_app()
-                cast.set_volume(volume=volumeBeforePlay)
+                if (volumeForPlay is not None):
+                    cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
                 cast = None
@@ -615,6 +668,7 @@ class TTSCast:
                 cast = None
                 chromecasts = None
                 return False
+        
         elif googleUUID != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
             
@@ -632,8 +686,9 @@ class TTSCast:
                 Functions.checkIfDashCast(cast)
                 
                 volumeBeforePlay = cast.status.volume_level
-                logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
-                cast.set_volume(volume=volumeForPlay / 100)
+                if (volumeForPlay is not None):
+                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                    cast.set_volume(volume=volumeForPlay / 100)
             
                 urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -649,12 +704,13 @@ class TTSCast:
             
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
-                while cast.media_controller.status.player_state == 'PLAYING':
+                while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
                     time.sleep(1)
                     logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
             
                 cast.quit_app()
-                cast.set_volume(volume=volumeBeforePlay)
+                if (volumeForPlay is not None):
+                    cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
                 cast = None
@@ -704,23 +760,23 @@ class Functions:
                     # Si DashCast alors sortir de l'appli avant sinon cela plante
                     Functions.checkIfDashCast(cast)
                     
-                    volumeBeforePlay = cast.status.volume_level
-                    logging.debug('[DAEMON][controllerActions] Volume avant lecture :: %s', str(volumeBeforePlay))
-                    
                     _playlist = None
                     _enqueue = False
-                    _volume = 30
+                    _volume = None
                     
                     try:
                         options_json = json.loads("{" + _options + "}")
                         _playlist = options_json['playlist'] if 'playlist' in options_json else None
                         _enqueue = options_json['enqueue'] if 'enqueue' in options_json else False
-                        _volume = options_json['volume'] if 'volume' in options_json else 30
+                        _volume = options_json['volume'] if 'volume' in options_json else None
                         logging.debug('[DAEMON][controllerActions] YouTube :: Options :: %s', str(options_json))
                     except ValueError as e:
                         logging.debug('[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: %s', e)
                     
-                    cast.set_volume(volume=_volume / 100)
+                    volumeBeforePlay = cast.status.volume_level
+                    if (_volume is not None):
+                        logging.debug('[DAEMON][controllerActions] Volume avant lecture :: %s', str(volumeBeforePlay))
+                        cast.set_volume(volume=_volume / 100)
 
                     app_name = "youtube"
                     app_data = {
@@ -816,12 +872,55 @@ class Functions:
                                     "stream_type": "LIVE"
                                 }
                                 quick_play.quick_play(cast, app_name, app_data)
+                                # cast.media_controller.play_media(radioUrl, "audio/mp3")
                                 logging.debug('[DAEMON][controllerActions] Diffusion Radio lancée :: %s', str(cast.media_controller.status))
                     
-                    # Libération de la mémoire
-                    cast = None
-                    chromecasts = None
-                    return True
+                elif (_controller in ['sounds', 'customsounds']):
+                    logging.debug('[DAEMON][controllerActions] Sound/CustomSound Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+                    
+                    if _value == '':
+                        cast.quit_app()
+                        time.sleep(1)
+                    else:
+                        # Si DashCast alors sortir de l'appli avant sinon cela plante
+                        Functions.checkIfDashCast(cast)
+                        
+                        if (_controller == 'customsounds'):
+                            soundURL = urljoin(Config.ttsWebSrvMedia, 'custom/' + _value)
+                        else:
+                            soundURL = urljoin(Config.ttsWebSrvMedia, _value)
+                        logging.debug('[DAEMON][controllerActions] Sound/CustomSound FilePath :: %s', soundURL)
+
+                        soundThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+                        soundTitle = _value
+                        soundSubTitle = "[Jeedom] TTSCast Sound"
+
+                        app_name = "default_media_receiver"
+                        # app_name = "bubbleupnp"
+                        app_data = {
+                            "media_id": soundURL,
+                            "media_type": "audio/mp3",
+                            "title": soundTitle,
+                            "thumb": soundThumb,
+                            "metadata": {
+                                "title": soundTitle,
+                                "subtitle": soundSubTitle,
+                                "images": [{"url": soundThumb}]
+                            }
+                        }
+                        quick_play.quick_play(cast, app_name, app_data)
+                        logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound lancée :: %s', str(cast.media_controller.status))
+                        
+                        while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
+                            time.sleep(1)
+                            logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound en cours :: %s', str(cast.media_controller.status))
+            
+                        cast.quit_app()
+                
+                # Libération de la mémoire
+                cast = None
+                chromecasts = None
+                return True
                 
             except Exception as e:
                 logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
@@ -938,56 +1037,62 @@ class Functions:
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb NetCast vs JeeCast :: %s vs %s', len(Config.NETCAST_DEVICES), len(chromecasts))
                 
                 for cast in chromecasts: 
+                    
                     logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast Name :: %s', cast.name)
                     try:
-                        # time.sleep(0.3)
-                        castVolumeLevel = int(cast.status.volume_level * 100)
-                        castAppDisplayName = cast.status.display_name
-                        
-                        castIsStandBy = cast.status.is_stand_by
-                        castIsMuted = cast.status.volume_muted
-                        castAppId = cast.status.app_id
-                        castStatusText = cast.status.status_text
-                        
-                        mediaLastUpdated = None
-                        if (cast.media_controller.status.last_updated is not None):
-                            last_updated = cast.media_controller.status.last_updated.replace(tzinfo=datetime.timezone.utc)
-                            last_updated_local = last_updated.astimezone(tz=None)
-                            mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
-                        
-                        mediaPlayerState = cast.media_controller.status.player_state
-                        mediaTitle = cast.media_controller.status.title
-                        mediaArtist = cast.media_controller.status.artist
-                        mediaAlbumName = cast.media_controller.status.album_name
-                        mediaContentType = cast.media_controller.status.content_type
-                        mediaStreamType = cast.media_controller.status.stream_type
-                        
-                        data = {
-                            'uuid': str(cast.uuid),
-                            'lastschedule': currentTimeStr,
-                            'lastschedulets': currentTime,
-                            'volume_level': castVolumeLevel,
-                            'display_name': castAppDisplayName,
-                            'is_stand_by': castIsStandBy,
-                            'volume_muted': castIsMuted,
-                            'app_id': castAppId,
-                            'status_text': castStatusText,
-                            'player_state': mediaPlayerState,
-                            'title': mediaTitle,
-                            'artist': mediaArtist,
-                            'album_name': mediaAlbumName,
-                            'content_type': mediaContentType,
-                            'stream_type': mediaStreamType,
-                            'last_updated': mediaLastUpdated,
-                            'schedule': 1,
-                            'online': '1'
-                        }
+                        if (cast.status is not None and cast.media_controller.status is not None):
+                            castVolumeLevel = int(cast.status.volume_level * 100)
+                            castAppDisplayName = cast.status.display_name
+                            
+                            castIsStandBy = cast.status.is_stand_by
+                            castIsMuted = cast.status.volume_muted
+                            castAppId = cast.status.app_id
+                            castStatusText = cast.status.status_text
+                            
+                            mediaLastUpdated = None
+                            if (cast.media_controller.status.last_updated is not None):
+                                last_updated = cast.media_controller.status.last_updated.replace(tzinfo=datetime.timezone.utc)
+                                last_updated_local = last_updated.astimezone(tz=None)
+                                mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
+                            else:
+                                mediaLastUpdated = "N/A"
+                            
+                            mediaPlayerState = cast.media_controller.status.player_state
+                            mediaTitle = cast.media_controller.status.title
+                            mediaArtist = cast.media_controller.status.artist
+                            mediaAlbumName = cast.media_controller.status.album_name
+                            mediaContentType = cast.media_controller.status.content_type
+                            mediaStreamType = cast.media_controller.status.stream_type
+                            
+                            data = {
+                                'uuid': str(cast.uuid),
+                                'lastschedule': currentTimeStr,
+                                'lastschedulets': currentTime,
+                                'volume_level': castVolumeLevel,
+                                'display_name': castAppDisplayName,
+                                'is_stand_by': castIsStandBy,
+                                'volume_muted': castIsMuted,
+                                'app_id': castAppId,
+                                'status_text': castStatusText,
+                                'player_state': mediaPlayerState,
+                                'title': mediaTitle,
+                                'artist': mediaArtist,
+                                'album_name': mediaAlbumName,
+                                'content_type': mediaContentType,
+                                'stream_type': mediaStreamType,
+                                'last_updated': mediaLastUpdated,
+                                'schedule': 1,
+                                'online': '1'
+                            }
 
-                        # Envoi vers Jeedom
-                        Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                            # Envoi vers Jeedom
+                            Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)
+                        else:
+                            logging.warning('[DAEMON][SCANNER][SCHEDULE] Chromecast Status is KO :: %s', cast.name)
                     except Exception as e:
                         logging.error('[DAEMON][SCANNER][SCHEDULE] Exception :: %s', e)
                         logging.debug(traceback.format_exc())
+                        
         except Exception as e:
             logging.error('[DAEMON][SCANNER] Exception on Scanner :: %s', e)
             logging.debug(traceback.format_exc())
@@ -1015,28 +1120,32 @@ class Functions:
         
     def purgeCache(nbDays='0'):
         if nbDays == '0':  # clean entire directory including containing folder
-            logging.debug('[DAEMON][PURGE-CACHE] nbDays is 0.')
+            logging.info('[DAEMON][PURGE-CACHE] Clean Cache :: ALL Files.')
+            path = Config.ttsCacheFolderTmp
             try:
-                if os.path.exists(Config.ttsCacheFolderTmp):
-                    shutil.rmtree(Config.ttsCacheFolderTmp)
+                if os.path.exists(path):
+                    nbFiles = 0
+                    for f in os.listdir(path):
+                        os.remove(os.path.join(path, f))
+                        nbFiles += 1
+                    logging.info("[DAEMON][PURGE-CACHE] Clean Cache (OK) :: %s Files Deleted", str(nbFiles))
             except Exception as e:
-                logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache entirely (nbDays = 0) :: %s', e)
+                logging.error('[DAEMON][PURGE-CACHE] Error while cleaning all cache files :: %s', e)
                 logging.debug(traceback.format_exc())
-                pass
         else:  # clean only files older than X days
+            logging.info('[DAEMON][PURGE-CACHE] Clean Cache :: Based on Files Age.')
             now = time.time()
             path = Config.ttsCacheFolderTmp
             try:
-                for f in os.listdir(path):
-                    logging.debug("[DAEMON][PURGE-CACHE] Age for " + f + " is " + str(
-                        int((now - (os.stat(os.path.join(path, f)).st_mtime)) / 86400)) + " days")
-                    if os.stat(os.path.join(path, f)).st_mtime < (now - (int(nbDays) * 86400)):
-                        os.remove(os.path.join(path, f))
-                        logging.debug("[DAEMON][PURG-CACHE] File Removed " + f + " due to expiration (" + nbDays + " days)")
+                if os.path.exists(path):
+                    for f in os.listdir(path):
+                        logging.debug("[DAEMON][PURGE-CACHE] Age for " + f + " is " + str(int((now - (os.stat(os.path.join(path, f)).st_mtime)) / 86400)) + " days")
+                        if os.stat(os.path.join(path, f)).st_mtime < (now - (int(nbDays) * 86400)):
+                            os.remove(os.path.join(path, f))
+                            logging.info("[DAEMON][PURGE-CACHE] File Removed " + f + " due to expiration (" + nbDays + " days)")
             except Exception as e:
-                logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on file age :: %s', e)
+                logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on files age :: %s', e)
                 logging.debug(traceback.format_exc())
-                pass
 
 class myCast:
 
@@ -1102,7 +1211,7 @@ class myCast:
                 logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
             logging.info('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: %s', len(Config.NETCAST_DEVICES))
             
-            chromecast.wait(timeout=10)
+            chromecast.wait(timeout=30)
             logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
              
             if chromecast.uuid in Config.GCAST_UUID:
