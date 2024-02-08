@@ -1116,7 +1116,7 @@ class ttscast extends eqLogic
             $cmd->setType('action');
             $cmd->setSubType('message');
 	        $cmd->setIsVisible(1);
-            $cmd->setDisplay('parameters', array("title_placeholder" => "Options : [volume]", "message_placeholder" => "TTS"));
+            $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "TTS"));
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
@@ -1133,7 +1133,7 @@ class ttscast extends eqLogic
                 $cmd->setType('action');
                 $cmd->setSubType('message');
                 $cmd->setIsVisible(1);
-                $cmd->setDisplay('parameters', array("title_placeholder" => "Options : [volume, playlist, enqueue]", "message_placeholder" => "Vidéo Id"));
+                $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "Vidéo Id"));
                 $cmd->setOrder($orderCmd++);
                 $cmd->save();
             } else {
@@ -1149,7 +1149,7 @@ class ttscast extends eqLogic
                 $cmd->setType('action');
                 $cmd->setSubType('message');
                 $cmd->setIsVisible(1);
-                $cmd->setDisplay('parameters', array("title_placeholder" => "Options : [force, quit_app, reload_seconds]", "message_placeholder" => "Page Web (URL)"));
+                $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "Page Web (URL)"));
                 $cmd->setOrder($orderCmd++);
                 $cmd->save();
             } else {
