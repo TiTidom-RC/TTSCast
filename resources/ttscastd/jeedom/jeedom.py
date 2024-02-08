@@ -51,7 +51,7 @@ class jeedom_com():
 			start_time = datetime.datetime.now()
 			changes = self.changes
 			self.changes = {}
-			logging.info('[DAEMON][COM] Send to jeedom: %s', changes)
+			logging.debug('[DAEMON][COM] Send to jeedom: %s', changes)
 			i = 0
 			while i < self.retry:
 				try:
@@ -101,7 +101,7 @@ class jeedom_com():
 		threading.Thread(target=self.thread_change, args=(change,)).start()
 
 	def thread_change(self, change):
-		logging.info('[DAEMON][COM] Send to jeedom : %s', change)
+		logging.debug('[DAEMON][COM] Send to jeedom : %s', change)
 		i = 0
 		while i < self.retry:
 			try:
@@ -186,7 +186,7 @@ class jeedom_utils():
 	@staticmethod
 	def write_pid(path):
 		pid = str(os.getpid())
-		logging.info("[DAEMON][UTILS] Writing PID %s to %s", pid, path)
+		logging.debug("[DAEMON][UTILS] Writing PID %s to %s", pid, path)
 		open(path, 'w').write("%s\n" % pid)
 
 	@staticmethod
@@ -205,7 +205,7 @@ JEEDOM_SOCKET_MESSAGE = Queue()
 class jeedom_socket_handler(StreamRequestHandler):
 	def handle(self):
 		global JEEDOM_SOCKET_MESSAGE
-		logging.info("[DAEMON][HANDLER] Client connected to [%s:%d]", self.client_address[0], self.client_address[1])
+		logging.debug("[DAEMON][HANDLER] Client connected to [%s:%d]", self.client_address[0], self.client_address[1])
 		lg = self.rfile.readline()
 		JEEDOM_SOCKET_MESSAGE.put(lg)
   
@@ -213,14 +213,14 @@ class jeedom_socket_handler(StreamRequestHandler):
 			lgdecode = json.loads(lg.strip())
 			if lgdecode and lgdecode['apikey']:
 				lgdecode['apikey'] = '***'
-			logging.info("[DAEMON][HANDLER] Message read from socket :: %s", str(json.dumps(lgdecode).encode('utf-8')))
+			logging.debug("[DAEMON][HANDLER] Message read from socket :: %s", str(json.dumps(lgdecode).encode('utf-8')))
 		except Exception as error:
-			logging.debug("[DAEMON][HANDLER] JSON Exception :: %s", error)
-			logging.info("[DAEMON][HANDLER] Message read from socket :: %s", str(lg.strip()))
+			logging.error("[DAEMON][HANDLER] JSON Exception :: %s", error)
+			logging.debug("[DAEMON][HANDLER] Message read from socket :: %s", str(lg.strip()))
 		# logging.info("Message read from socket: %s", str(lg.strip()))
   
 		self.netAdapterClientConnected = False
-		logging.info("[DAEMON][HANDLER] Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
+		logging.debug("[DAEMON][HANDLER] Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
 
 class jeedom_socket():
 
@@ -235,7 +235,7 @@ class jeedom_socket():
 			logging.info("[DAEMON][SOCKET] Socket interface started")
 			threading.Thread(target=self.loopNetServer, args=()).start()
 		else:
-			logging.info("[DAEMON][SOCKET] Cannot start socket interface")
+			logging.error("[DAEMON][SOCKET] Cannot start socket interface")
 
 	def loopNetServer(self):
 		logging.info("[DAEMON][SOCKET] LoopNetServer Thread started")
