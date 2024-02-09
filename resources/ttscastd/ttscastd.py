@@ -943,13 +943,13 @@ class Functions:
             _value = options_json['value'] if 'value' in options_json else None
             
             _options = ""
-            _options += ("\"force\": " + options_json['force'] + "\"") if 'force' in options_json else ""
-            _options += ("\"reload_seconds\": " + options_json['reload_seconds'] + "\"") if 'relaod_seconds' in options_json else ""
-            _options += ("\"quit_app\": " + options_json['quit_app'] + "\"") if 'quit_app' in options_json else ""
+            _options += ("\"force\": " + str(options_json['force']) + "\"") if 'force' in options_json else ""
+            _options += ("\"reload_seconds\": " + str(options_json['reload_seconds']) + "\"") if 'relaod_seconds' in options_json else ""
+            _options += ("\"quit_app\": " + str(options_json['quit_app']) + "\"") if 'quit_app' in options_json else ""
             _options += ("\"playlist\": \"" + options_json['playlist'] + "\"") if 'playlist' in options_json else ""
-            _options += ("\"enqueue\": \"" + options_json['enqueue'] + "\"") if 'enqueue' in options_json else ""
-            _options += ("\"volume\": \"" + options_json['volume'] + "\"") if 'volume' in options_json else ""
-            _options += ("\"enqueue\": \"" + options_json['enqueue'] + "\"") if 'enqueue' in options_json else ""
+            _options += ("\"enqueue\": \"" + str(options_json['enqueue']) + "\"") if 'enqueue' in options_json else ""
+            _options += ("\"volume\": \"" + str(options_json['volume']) + "\"") if 'volume' in options_json else ""
+            _options += ("\"enqueue\": \"" + str(options_json['enqueue']) + "\"") if 'enqueue' in options_json else ""
             
             logging.debug('[DAEMON][cmdDecoder] Options :: %s', _options)
 
