@@ -264,6 +264,9 @@ class ttscast extends eqLogic
             if (array_key_exists('volume', $data)) {
                 $resOptions['volume'] = $data['volume'];
             }
+            if (array_key_exists('ding', $data)) {
+                $resOptions['ding'] = $data['ding'];
+            }
 
             $resCmd['title'] = substr(json_encode($resOptions), 1, -1);
             log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd Title :: ' . $resCmd['title']);
