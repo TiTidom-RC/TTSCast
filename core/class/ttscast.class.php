@@ -225,12 +225,13 @@ class ttscast extends eqLogic
         try {
             $data = json_decode("{" . $customCmd . "}", true);
             log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd Data :: ' . json_encode($data));
+            $resAction = '';
             $resCmd = array();
             $resOptions = array();
 
             # Commande et Valeur
             if (array_key_exists('cmd_action', $data)) {
-                $resCmd['cmd_action'] = $data['cmd_action'];
+                $resAction = $data['cmd_action'];
             }
             if (array_key_exists('value', $data)) {
                 $resCmd['message'] = $data['value'];
@@ -257,7 +258,7 @@ class ttscast extends eqLogic
             }
 
             $resCmd['titre'] = substr(json_encode($resOptions), 1, -1);
-            return $resCmd;
+            return [$resAction, $resCmd];
         }
         catch (Exception $e) {
             log::add('ttscast', 'error', '[customCmdDecoder] CustomCmd Decoder Exception :: ' . $e->getMessage());
@@ -1332,7 +1333,7 @@ class ttscastCmd extends cmd
 			if (in_array($logicalId, ["customcmd"])) {
                 if (isset($_options['message'])) {
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
-                    $_options = ttscast::customCmdDecoder($_options['message']);
+                    [$logicalId, $_options] = ttscast::customCmdDecoder($_options['message']);
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Custom Decoded Message) :: ' . json_encode($_options));
                 }
                 else {
