@@ -100,8 +100,11 @@ class Loops:
                         logging.debug('[DAEMON][SOCKET] Action')
                         
                         if 'cmd_action' in message:
+                            if (message['cmd_action'] == 'customcmd' and all(keys in message for keys in ('value', 'googleUUID'))):
+                                logging.debug('[DAEMON][SOCKET] Action :: CustomCmd = %s @ %s', message['value'], message['googleUUID'])
+                                # TODO Gérer les commandes Custom pour rebasculer sur des fonctions standards
                             
-                            if (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
+                            elif (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
                                 logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
                                 # Functions.mediaActions(message['googleUUID'], message['value'], message['cmd_action'])
                                 threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], message['value'], message['cmd_action']]).start()

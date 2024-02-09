@@ -210,14 +210,21 @@ class ttscast extends eqLogic
     public static function actionGCast($gHomeUUID=null, $action=null, $message=null) {
         log::add('ttscast', 'debug', '[ActionGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message);
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID);
-        log::add('ttscast', 'debug', '[ActionGCast] Array :: ' . json_encode($value));
+        log::add('ttscast', 'debug', '[ActionGCast] ArrayToSend :: ' . json_encode($value));
         self::sendToDaemon($value);
     }
 
     public static function mediaGCast($gHomeUUID=null, $action=null, $message=null, $options=null) {
         log::add('ttscast', 'debug', '[MediaGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options);
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID, 'options' => $options);
-        log::add('ttscast', 'debug', '[MediaGCast] Array :: ' . json_encode($value));
+        log::add('ttscast', 'debug', '[MediaGCast] ArrayToSend :: ' . json_encode($value));
+        self::sendToDaemon($value);
+    }
+
+    public static function customCmd($gHomeUUID=null, $action=null, $message=null, $options=null) {
+        log::add('ttscast', 'debug', '[CustomCmd] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options);
+        $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID, 'options' => $options);
+        log::add('ttscast', 'debug', '[CustomCmd] ArrayToSend :: ' . json_encode($value));
         self::sendToDaemon($value);
     }
 
@@ -1208,7 +1215,7 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
-        /* $cmd = $this->getCmd(null, 'customcmd');
+        $cmd = $this->getCmd(null, 'customcmd');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Custom Cmd', __FILE__));
@@ -1217,11 +1224,12 @@ class ttscast extends eqLogic
             $cmd->setType('action');
             $cmd->setSubType('message');    
 	        $cmd->setIsVisible(1);
+            $cmd->setDisplay('parameters', array("title_disable" => "1", "title_placeholder" => "Options", "message_placeholder" => "Custom Cmd"));
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
             $orderCmd++;
-        } */
+        }
 
         if ($this->getIsEnable()) {
             $this->enableCastToDaemon();
@@ -1325,6 +1333,16 @@ class ttscastCmd extends cmd
                 if (isset($googleUUID) && isset($_options['select'])) {
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Select / GoogleUUID) :: ' . $_options['select'] . " / " . $googleUUID);
                     ttscast::mediaGCast($googleUUID, $logicalId, $_options['select']);
+                }
+                else {
+                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                }                
+            } elseif (in_array($logicalId, ["customcmd"])) {
+                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (isset($googleUUID) && isset($_options['message'])) {
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID);
+                    ttscast::customCmd($googleUUID, $logicalId, $_options['message'], $_options['title']);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
