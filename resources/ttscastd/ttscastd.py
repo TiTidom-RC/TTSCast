@@ -612,7 +612,7 @@ class TTSCast:
             logging.error('[DAEMON][TTS] Exception on TTS :: %s', e)
             logging.debug(traceback.format_exc())
 
-    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None):
+    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=False):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
             
@@ -630,10 +630,12 @@ class TTSCast:
                 Functions.checkIfDashCast(cast)
             
                 volumeBeforePlay = cast.status.volume_level
-                cast.set_volume(volume=0)
-                # if (volumeForPlay is not None):
-                #     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
-                #     cast.set_volume(volume=volumeForPlay / 100)
+                if not appDing:
+                    cast.set_volume(volume=0)
+                else:
+                    if (volumeForPlay is not None):
+                        logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                        cast.set_volume(volume=volumeForPlay / 100)
                 
                 urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -642,12 +644,17 @@ class TTSCast:
                 app_data = {
                     "media_id": urltoplay,
                     "media_type": "audio/mp3",
-                    "title": "[Jeedom] TTSCast",
-                    "thumb": urlThumb
+                    "title": "TTSCast",
+                    "thumb": urlThumb,
+                    "metadata": {
+                        "title": "TTSCast",
+                        "subtitle": "Jeedom",
+                        "images": [{"url": urlThumb}]
+                    }
                 }
                 quick_play.quick_play(cast, app_name, app_data)
                 
-                if (volumeForPlay is not None):
+                if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
                     cast.set_volume(volume=volumeForPlay / 100)
                 
@@ -658,7 +665,7 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
                 
                 cast.quit_app()
-                if (volumeForPlay is not None):
+                if (not appDing or volumeForPlay is not None):
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
@@ -691,10 +698,12 @@ class TTSCast:
                 Functions.checkIfDashCast(cast)
                 
                 volumeBeforePlay = cast.status.volume_level
-                cast.set_volume(volume=0)
-                # if (volumeForPlay is not None):
-                #     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
-                #     cast.set_volume(volume=volumeForPlay / 100)
+                if not appDing:
+                    cast.set_volume(volume=0)
+                else:
+                    if (volumeForPlay is not None):
+                        logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                        cast.set_volume(volume=volumeForPlay / 100)
             
                 urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -703,11 +712,18 @@ class TTSCast:
                 app_data = {
                     "media_id": urltoplay, 
                     "media_type": "audio/mp3", 
-                    "title": "[Jeedom] TTSCast", 
-                    "thumb": urlThumb
+                    "title": "TTSCast", 
+                    "thumb": urlThumb,
+                    "metadata": {
+                        "title": "TTSCast",
+                        "subtitle": "Jeedom",
+                        "images": [{"url": urlThumb}]
+                    }
                 }
+                
                 quick_play.quick_play(cast, app_name, app_data)
-                if (volumeForPlay is not None):
+                
+                if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
                     cast.set_volume(volume=volumeForPlay / 100)
                 
@@ -718,7 +734,7 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
             
                 cast.quit_app()
-                if (volumeForPlay is not None):
+                if (not appDing or volumeForPlay is not None):
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
