@@ -1330,7 +1330,7 @@ class ttscastCmd extends cmd
         if ( $this->getType() == "action" ) {
 			if (in_array($logicalId, ["customcmd"])) {
                 if (isset($_options['message'])) {
-                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Custom Message) :: ' . $_options['message']);
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                     $_options = ttscast::customCmdDecoder($_options['message']);
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Custom Decoded Message) :: ' . json_encode($_options));
                 }
