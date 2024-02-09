@@ -942,20 +942,29 @@ class Functions:
             _cmd_action = options_json['cmd_action'] if 'cmd_action' in options_json else None
             _value = options_json['value'] if 'value' in options_json else None
             
-            _options = ""
-            _options += ("\"force\": " + str(options_json['force']) + "\"") if 'force' in options_json else ""
-            _options += ("\"reload_seconds\": " + str(options_json['reload_seconds']) + "\"") if 'relaod_seconds' in options_json else ""
-            _options += ("\"quit_app\": " + str(options_json['quit_app']) + "\"") if 'quit_app' in options_json else ""
-            _options += ("\"playlist\": \"" + options_json['playlist'] + "\"") if 'playlist' in options_json else ""
-            _options += ("\"enqueue\": \"" + str(options_json['enqueue']) + "\"") if 'enqueue' in options_json else ""
-            _options += ("\"volume\": \"" + str(options_json['volume']) + "\"") if 'volume' in options_json else ""
-            _options += ("\"enqueue\": \"" + str(options_json['enqueue']) + "\"") if 'enqueue' in options_json else ""
+            _options = {}
             
-            logging.debug('[DAEMON][cmdDecoder] Options :: %s', _options)
+            if 'force' in options_json:
+                _options['force'] = options_json['force']
+            if 'reload_seconds' in options_json:
+                _options['reload_seconds'] = options_json['reload_seconds']
+            if 'reload_seconds' in options_json:
+                _options['quit_app'] = options_json['quit_app']
+            if 'reload_seconds' in options_json:
+                _options['playlist'] = options_json['playlist']
+            if 'reload_seconds' in options_json:
+                _options['enqueue'] = options_json['enqueue']
+            if 'reload_seconds' in options_json:
+                _options['volume'] = options_json['volume']
+            if 'reload_seconds' in options_json:
+                _options['enqueue'] = options_json['enqueue']
+            
+            retJson = json.dumps(_options)[1:-1] 
+            logging.debug('[DAEMON][cmdDecoder] Options :: %s', retJson)
 
             return _cmd_action, _value, _options
         except ValueError as e:
-            logging.debug('[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: %s', e)
+            logging.debug('[DAEMON][cmdDecoder] Options mal formatées (Json KO) :: %s', e)
             return None, None, None
     
     def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
