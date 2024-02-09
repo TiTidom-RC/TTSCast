@@ -103,8 +103,10 @@ class Loops:
                             if (message['cmd_action'] == 'customcmd' and all(keys in message for keys in ('value', 'googleUUID'))):
                                 logging.debug('[DAEMON][SOCKET] Action :: CustomCmd = %s @ %s', message['value'], message['googleUUID'])
                                 # TODO Gérer les commandes Custom pour rebasculer sur des fonctions standards
+                                message['cmd_action'], message['value'], message['options'] = Functions.cmdDecoder(message['value'])
                             
-                            elif (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
+                            # Traitement des actions (inclus les CustomCmd)
+                            if (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
                                 logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
                                 # Functions.mediaActions(message['googleUUID'], message['value'], message['cmd_action'])
                                 threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], message['value'], message['cmd_action']]).start()
@@ -933,6 +935,29 @@ class Functions:
                 cast = None
                 chromecasts = None
                 return False
+    
+    def cmdDecoder(_customcmd=None):
+        
+        try:
+            options_json = json.loads("{" + _customcmd + "}")
+            _cmd_action = options_json['cmd_action'] if 'cmd_action' in options_json else None
+            _value = options_json['value'] if 'value' in options_json else None
+            
+            _options = ""
+            _options += ("\"force\": " + options_json['force'] + "\"") if 'force' in options_json else ""
+            _options += ("\"reload_seconds\": " + options_json['reload_seconds'] + "\"") if 'relaod_seconds' in options_json else ""
+            _options += ("\"quit_app\": " + options_json['quit_app'] + "\"") if 'quit_app' in options_json else ""
+            _options += ("\"playlist\": \"" + options_json['playlist'] + "\"") if 'playlist' in options_json else ""
+            _options += ("\"enqueue\": \"" + options_json['enqueue'] + "\"") if 'enqueue' in options_json else ""
+            _options += ("\"volume\": \"" + options_json['volume'] + "\"") if 'volume' in options_json else ""
+            _options += ("\"enqueue\": \"" + options_json['enqueue'] + "\"") if 'enqueue' in options_json else ""
+            
+            logging.debug('[DAEMON][cmdDecoder] Options :: %s', _options)
+
+            return _cmd_action, _value, _options
+        except ValueError as e:
+            logging.debug('[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: %s', e)
+            return None, None, None
     
     def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
         if _googleUUID != 'UNKOWN':
