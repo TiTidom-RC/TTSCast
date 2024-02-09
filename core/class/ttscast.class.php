@@ -55,7 +55,7 @@ class ttscast extends eqLogic
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==13.1.0|google-cloud-texttospeech==2.15.1|gTTS==2.5.0|pydub==0.25.1"') < 4) {
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==13.1.0|google-cloud-texttospeech==2.16.1|gTTS==2.5.1|pydub==0.25.1"') < 4) {
                 $return['state'] = 'nok';
             } else {
                 $return['state'] = 'ok';
@@ -188,12 +188,11 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'jeedomtts');  // jeedomtts | gtranslatetts | gcloudtts | voicersstts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
-        $value = array('cmd' => 'playtesttts', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
         self::sendToDaemon($value);
     }
 
     public static function playTTS($gHome=null, $message=null, $options=null) {
-        # $ttsText = htmlspecialchars($message);
         $ttsText = $message;
         $ttsGoogleUUID = $gHome;
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
@@ -203,22 +202,77 @@ class ttscast extends eqLogic
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsOptions = $options;
-        $value = array('cmd' => 'playtts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
+        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
         self::sendToDaemon($value);
     }
 
     public static function actionGCast($gHomeUUID=null, $action=null, $message=null) {
         log::add('ttscast', 'debug', '[ActionGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message);
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID);
-        log::add('ttscast', 'debug', '[ActionGCast] Array :: ' . json_encode($value));
+        log::add('ttscast', 'debug', '[ActionGCast] ArrayToSend :: ' . json_encode($value));
         self::sendToDaemon($value);
     }
 
     public static function mediaGCast($gHomeUUID=null, $action=null, $message=null, $options=null) {
         log::add('ttscast', 'debug', '[MediaGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options);
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID, 'options' => $options);
-        log::add('ttscast', 'debug', '[MediaGCast] Array :: ' . json_encode($value));
+        log::add('ttscast', 'debug', '[MediaGCast] ArrayToSend :: ' . json_encode($value));
         self::sendToDaemon($value);
+    }
+
+    public static function customCmdDecoder($customCmd=null) {
+        log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd :: ' . $customCmd);
+        try {
+            $data = json_decode("{" . $customCmd . "}", true);
+            log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd Data :: ' . json_encode($data));
+            $resAction = '';
+            $resCmd = array();
+            $resOptions = array();
+
+            # Commande et Valeur
+            if (array_key_exists('action', $data)) {
+                $resAction = $data['action'];
+            }
+            if (array_key_exists('value', $data)) {
+                if (in_array($resAction, ["radios", "sounds", "customsounds"])) {
+                    $resCmd['select'] = $data['value'];
+                }
+                elseif (in_array($resAction, ["volumeset"])) {
+                    $resCmd['slider'] = $data['value'];
+                }
+                else {
+                    $resCmd['message'] = $data['value'];
+                }
+            }
+
+            # Options
+            if (array_key_exists('force', $data)) {
+                $resOptions['force'] = $data['force'];
+            }
+            if (array_key_exists('reload_seconds', $data)) {
+                $resOptions['reload_seconds'] = $data['reload_seconds'];
+            }
+            if (array_key_exists('quit_app', $data)) {
+                $resOptions['quit_app'] = $data['quit_app'];
+            }
+            if (array_key_exists('playlist', $data)) {
+                $resOptions['playlist'] = $data['playlist'];
+            }
+            if (array_key_exists('enqueue', $data)) {
+                $resOptions['enqueue'] = $data['enqueue'];
+            }
+            if (array_key_exists('volume', $data)) {
+                $resOptions['volume'] = $data['volume'];
+            }
+
+            $resCmd['title'] = substr(json_encode($resOptions), 1, -1);
+            log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd Title :: ' . $resCmd['title']);
+            return [$resAction, $resCmd];
+        }
+        catch (Exception $e) {
+            log::add('ttscast', 'error', '[customCmdDecoder] CustomCmd Decoder Exception :: ' . $e->getMessage());
+            return null;
+        }
     }
 
     public static function getPluginVersion() {
@@ -451,7 +505,7 @@ class ttscast extends eqLogic
         try {
             $filesArray = array();
             foreach (glob(dirname(__FILE__) . '/../../data/media/*.mp3') as $fileName) {
-                $filesArray[pathinfo($fileName, PATHINFO_BASENAME)] = ucwords(str_replace("_", " ", pathinfo($fileName, PATHINFO_FILENAME)));
+                $filesArray[pathinfo($fileName, PATHINFO_BASENAME)] = ucwords(str_replace(["_", "-"], " ", pathinfo($fileName, PATHINFO_FILENAME)));
             }
             natsort($filesArray);
             foreach ($filesArray as $filePath => $fileName) {
@@ -1116,6 +1170,7 @@ class ttscast extends eqLogic
             $cmd->setType('action');
             $cmd->setSubType('message');
 	        $cmd->setIsVisible(1);
+            $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "TTS"));
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
@@ -1132,6 +1187,7 @@ class ttscast extends eqLogic
                 $cmd->setType('action');
                 $cmd->setSubType('message');
                 $cmd->setIsVisible(1);
+                $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "Vidéo Id"));
                 $cmd->setOrder($orderCmd++);
                 $cmd->save();
             } else {
@@ -1147,6 +1203,7 @@ class ttscast extends eqLogic
                 $cmd->setType('action');
                 $cmd->setSubType('message');
                 $cmd->setIsVisible(1);
+                $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "Page Web (URL)"));
                 $cmd->setOrder($orderCmd++);
                 $cmd->save();
             } else {
@@ -1205,7 +1262,7 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
-        /* $cmd = $this->getCmd(null, 'customcmd');
+        $cmd = $this->getCmd(null, 'customcmd');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Custom Cmd', __FILE__));
@@ -1214,11 +1271,12 @@ class ttscast extends eqLogic
             $cmd->setType('action');
             $cmd->setSubType('message');    
 	        $cmd->setIsVisible(1);
+            $cmd->setDisplay('parameters', array("title_disable" => "1", "title_placeholder" => "Options", "message_placeholder" => "Custom Cmd"));
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
             $orderCmd++;
-        } */
+        }
 
         if ($this->getIsEnable()) {
             $this->enableCastToDaemon();
@@ -1281,7 +1339,18 @@ class ttscastCmd extends cmd
         log::add('ttscast', 'debug', '[CMD] LogicalId :: ' . $logicalId);
 
         if ( $this->getType() == "action" ) {
-			if ($logicalId == "tts") {
+			if (in_array($logicalId, ["customcmd"])) {
+                if (isset($_options['message'])) {
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+                    [$logicalId, $_options] = ttscast::customCmdDecoder($_options['message']);
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Custom Decoded Message) :: ' . json_encode($_options));
+                }
+                else {
+                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                }                
+            }
+            
+            if ($logicalId == "tts") {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
@@ -1321,7 +1390,7 @@ class ttscastCmd extends cmd
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['select'])) {
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Select / GoogleUUID) :: ' . $_options['select'] . " / " . $googleUUID);
-                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['select']);
+                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['select'], $_options['title']);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);

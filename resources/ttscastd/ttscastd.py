@@ -101,7 +101,28 @@ class Loops:
                         
                         if 'cmd_action' in message:
                             
-                            if (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
+                            # Traitement des actions (inclus les CustomCmd)
+                            if message['cmd_action'] == 'ttstest':
+                                logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
+                        
+                                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
+                                    logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
+                                    # TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'])
+                                    threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed']]).start()
+                                else:
+                                    logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
+                            
+                            elif message['cmd_action'] == 'tts':
+                                logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
+                        
+                                if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
+                                    logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))
+                                    # TTSCast.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'])
+                                    threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()                        
+                                else:
+                                    logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
+                            
+                            elif (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
                                 logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
                                 # Functions.mediaActions(message['googleUUID'], message['value'], message['cmd_action'])
                                 threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], message['value'], message['cmd_action']]).start()
@@ -159,27 +180,6 @@ class Loops:
                                 Config.GCAST_UUID.remove(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(Config.GCAST_UUID))
                                 myCast.castRemove(uuid=str(_uuid))
-                            
-                    elif message['cmd'] == 'playtesttts':
-                        logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
-                        
-                        if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
-                            logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
-                            # TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'])
-                            threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed']]).start()
-                        else:
-                            logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
-                            
-                    elif message['cmd'] == 'playtts':
-                        logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
-                        
-                        if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
-                            logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))
-                            # TTSCast.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'])
-                            threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()
-                        
-                        else:
-                            logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
                             
                     elif message['cmd'] == "scanOn":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
@@ -775,7 +775,7 @@ class Functions:
                     
                     volumeBeforePlay = cast.status.volume_level
                     if (_volume is not None):
-                        logging.debug('[DAEMON][controllerActions] Volume avant lecture :: %s', str(volumeBeforePlay))
+                        logging.debug('[DAEMON][controllerActions] YouTube :: Volume avant lecture :: %s', str(volumeBeforePlay))
                         cast.set_volume(volume=_volume / 100)
 
                     app_name = "youtube"
@@ -785,7 +785,7 @@ class Functions:
                         "enqueue": _enqueue
                     }
                     quick_play.quick_play(cast, app_name, app_data)
-                    logging.debug('[DAEMON][controllerActions] Youtube :: Diffusion lancée :: %s', str(cast.media_controller.status))
+                    logging.debug('[DAEMON][controllerActions] YouTube :: Diffusion lancée :: %s', str(cast.media_controller.status))
                     
                     # Libération de la mémoire
                     cast = None
@@ -842,7 +842,20 @@ class Functions:
                         
                         if not os.path.isfile(Config.radiosFilePath):
                             logging.error('[DAEMON][controllerActions] Radios JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
-                        else:    
+                        else:
+                            _volume = None
+                            try:
+                                options_json = json.loads("{" + _options + "}")
+                                _volume = options_json['volume'] if 'volume' in options_json else None
+                                logging.debug('[DAEMON][controllerActions] Radios :: Options :: %s', str(options_json))
+                            except ValueError as e:
+                                logging.debug('[DAEMON][controllerActions] Radios :: Options mal formatées (Json KO) :: %s', e)
+                        
+                            volumeBeforePlay = cast.status.volume_level
+                            if (_volume is not None):
+                                logging.debug('[DAEMON][controllerActions] Radios :: Volume avant lecture :: %s', str(volumeBeforePlay))
+                                cast.set_volume(volume=_volume / 100)
+                            
                             f = open(Config.radiosFilePath, "r")
                             radiosArray = json.loads(f.read())
                             
@@ -852,13 +865,11 @@ class Functions:
                                     radioThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                                 else:
                                     radioThumb = radio['image']
-                                # logging.debug('[DAEMON][controllerActions] Radio Thumb path :: %s', urlThumb)
                                 radioUrl = radio['location']
                                 radioTitle = radio['title']
                                 radioSubTitle = "[Jeedom] TTSCast Radio"
                                 
                                 app_name = "default_media_receiver"
-                                # app_name = "bubbleupnp"
                                 app_data = {
                                     "media_id": radioUrl,
                                     "media_type": "audio/mp3",
@@ -872,7 +883,6 @@ class Functions:
                                     "stream_type": "LIVE"
                                 }
                                 quick_play.quick_play(cast, app_name, app_data)
-                                # cast.media_controller.play_media(radioUrl, "audio/mp3")
                                 logging.debug('[DAEMON][controllerActions] Diffusion Radio lancée :: %s', str(cast.media_controller.status))
                     
                 elif (_controller in ['sounds', 'customsounds']):
@@ -885,11 +895,24 @@ class Functions:
                         # Si DashCast alors sortir de l'appli avant sinon cela plante
                         Functions.checkIfDashCast(cast)
                         
+                        _volume = None
+                        try:
+                            options_json = json.loads("{" + _options + "}")
+                            _volume = options_json['volume'] if 'volume' in options_json else None
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Options :: %s', str(options_json))
+                        except ValueError as e:
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Options mal formatées (Json KO) :: %s', e)
+
+                        volumeBeforePlay = cast.status.volume_level
+                        if (_volume is not None):
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume avant lecture :: %s', str(volumeBeforePlay))
+                            cast.set_volume(volume=_volume / 100)
+                        
                         if (_controller == 'customsounds'):
                             soundURL = urljoin(Config.ttsWebSrvMedia, 'custom/' + _value)
                         else:
                             soundURL = urljoin(Config.ttsWebSrvMedia, _value)
-                        logging.debug('[DAEMON][controllerActions] Sound/CustomSound FilePath :: %s', soundURL)
+                        logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: FilePath :: %s', soundURL)
 
                         soundThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                         soundTitle = _value
@@ -916,6 +939,8 @@ class Functions:
                             logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound en cours :: %s', str(cast.media_controller.status))
             
                         cast.quit_app()
+                        if (_volume is not None):
+                            cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
                 cast = None
@@ -1416,7 +1441,6 @@ logging.info('[DAEMON][MAIN] Log level: %s', Config.logLevel)
 logging.info('[DAEMON][MAIN] Socket port: %s', Config.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', Config.socketHost)
 logging.info('[DAEMON][MAIN] CycleFactor: %s', Config.cycleFactor)
-# TODO ***** Ajouter le cycle pour les events cycleEvent *****
 logging.info('[DAEMON][MAIN] PID file: %s', Config.pidFile)
 logging.info('[DAEMON][MAIN] ApiKey: %s', "***")
 logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***")
