@@ -224,6 +224,7 @@ class ttscast extends eqLogic
         log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd :: ' . $customCmd);
         try {
             $data = json_decode("{" . $customCmd . "}", true);
+            log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd Data :: ' . json_encode($data));
             $resCmd = array();
             $resOptions = array();
 
@@ -232,7 +233,7 @@ class ttscast extends eqLogic
                 $resCmd['cmd_action'] = $customCmd['cmd_action'];
             }
             if (array_key_exists('value', $data)) {
-                $resCmd['value'] = $customCmd['value'];
+                $resCmd['message'] = $customCmd['value'];
             }
 
             # Options
@@ -255,7 +256,7 @@ class ttscast extends eqLogic
                 $resOptions['volume'] = $customCmd['volume'];
             }
 
-            $resCmd['options'] = substr(json_encode($resOptions), 1, -1);
+            $resCmd['titre'] = substr(json_encode($resOptions), 1, -1);
             return $resCmd;
         }
         catch (Exception $e) {
