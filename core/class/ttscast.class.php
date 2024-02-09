@@ -238,22 +238,22 @@ class ttscast extends eqLogic
 
             # Options
             if (array_key_exists('force', $data)) {
-                $resOptions['force'] = $customCmd['force'];
+                $resOptions['force'] = $data['force'];
             }
             if (array_key_exists('reload_seconds', $data)) {
-                $resOptions['reload_seconds'] = $customCmd['reload_seconds'];
+                $resOptions['reload_seconds'] = $data['reload_seconds'];
             }
             if (array_key_exists('quit_app', $data)) {
-                $resOptions['quit_app'] = $customCmd['quit_app'];
+                $resOptions['quit_app'] = $data['quit_app'];
             }
             if (array_key_exists('playlist', $data)) {
-                $resOptions['playlist'] = $customCmd['playlist'];
+                $resOptions['playlist'] = $data['playlist'];
             }
             if (array_key_exists('enqueue', $data)) {
-                $resOptions['enqueue'] = $customCmd['enqueue'];
+                $resOptions['enqueue'] = $data['enqueue'];
             }
             if (array_key_exists('volume', $data)) {
-                $resOptions['volume'] = $customCmd['volume'];
+                $resOptions['volume'] = $data['volume'];
             }
 
             $resCmd['titre'] = substr(json_encode($resOptions), 1, -1);
