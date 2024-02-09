@@ -100,10 +100,6 @@ class Loops:
                         logging.debug('[DAEMON][SOCKET] Action')
                         
                         if 'cmd_action' in message:
-                            """ if (message['cmd_action'] == 'customcmd' and all(keys in message for keys in ('value', 'googleUUID'))):
-                                logging.debug('[DAEMON][SOCKET] Action :: CustomCmd = %s @ %s', message['value'], message['googleUUID'])
-                                # TODO Gérer les commandes Custom pour rebasculer sur des fonctions standards
-                                message['cmd_action'], message['value'], message['options'] = Functions.cmdDecoder(message['value']) """
                             
                             # Traitement des actions (inclus les CustomCmd)
                             if message['cmd_action'] == 'ttstest':
@@ -934,36 +930,6 @@ class Functions:
                 cast = None
                 chromecasts = None
                 return False
-    
-    def cmdDecoder(_customcmd=None):
-        
-        try:
-            options_json = json.loads("{" + _customcmd + "}")
-            _cmd_action = options_json['cmd_action'] if 'cmd_action' in options_json else None
-            _value = options_json['value'] if 'value' in options_json else None
-            
-            _options = {}
-            
-            if 'force' in options_json:
-                _options['force'] = options_json['force']
-            if 'reload_seconds' in options_json:
-                _options['reload_seconds'] = options_json['reload_seconds']
-            if 'quit_app' in options_json:
-                _options['quit_app'] = options_json['quit_app']
-            if 'playlist' in options_json:
-                _options['playlist'] = options_json['playlist']
-            if 'enqueue' in options_json:
-                _options['enqueue'] = options_json['enqueue']
-            if 'volume' in options_json:
-                _options['volume'] = options_json['volume']
-            
-            retJson = json.dumps(_options)[1:-1] 
-            logging.debug('[DAEMON][cmdDecoder] Options :: %s', retJson)
-
-            return _cmd_action, _value, retJson
-        except ValueError as e:
-            logging.debug('[DAEMON][cmdDecoder] Options mal formatées (Json KO) :: %s', e)
-            return None, None, None
     
     def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
         if _googleUUID != 'UNKOWN':
