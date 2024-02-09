@@ -100,10 +100,10 @@ class Loops:
                         logging.debug('[DAEMON][SOCKET] Action')
                         
                         if 'cmd_action' in message:
-                            if (message['cmd_action'] == 'customcmd' and all(keys in message for keys in ('value', 'googleUUID'))):
+                            """ if (message['cmd_action'] == 'customcmd' and all(keys in message for keys in ('value', 'googleUUID'))):
                                 logging.debug('[DAEMON][SOCKET] Action :: CustomCmd = %s @ %s', message['value'], message['googleUUID'])
                                 # TODO Gérer les commandes Custom pour rebasculer sur des fonctions standards
-                                message['cmd_action'], message['value'], message['options'] = Functions.cmdDecoder(message['value'])
+                                message['cmd_action'], message['value'], message['options'] = Functions.cmdDecoder(message['value']) """
                             
                             # Traitement des actions (inclus les CustomCmd)
                             if message['cmd_action'] == 'ttstest':
@@ -948,21 +948,19 @@ class Functions:
                 _options['force'] = options_json['force']
             if 'reload_seconds' in options_json:
                 _options['reload_seconds'] = options_json['reload_seconds']
-            if 'reload_seconds' in options_json:
+            if 'quit_app' in options_json:
                 _options['quit_app'] = options_json['quit_app']
-            if 'reload_seconds' in options_json:
+            if 'playlist' in options_json:
                 _options['playlist'] = options_json['playlist']
-            if 'reload_seconds' in options_json:
+            if 'enqueue' in options_json:
                 _options['enqueue'] = options_json['enqueue']
-            if 'reload_seconds' in options_json:
+            if 'volume' in options_json:
                 _options['volume'] = options_json['volume']
-            if 'reload_seconds' in options_json:
-                _options['enqueue'] = options_json['enqueue']
             
             retJson = json.dumps(_options)[1:-1] 
             logging.debug('[DAEMON][cmdDecoder] Options :: %s', retJson)
 
-            return _cmd_action, _value, _options
+            return _cmd_action, _value, retJson
         except ValueError as e:
             logging.debug('[DAEMON][cmdDecoder] Options mal formatées (Json KO) :: %s', e)
             return None, None, None
