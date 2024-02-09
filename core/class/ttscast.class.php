@@ -230,10 +230,10 @@ class ttscast extends eqLogic
 
             # Commande et Valeur
             if (array_key_exists('cmd_action', $data)) {
-                $resCmd['cmd_action'] = $customCmd['cmd_action'];
+                $resCmd['cmd_action'] = $data['cmd_action'];
             }
             if (array_key_exists('value', $data)) {
-                $resCmd['message'] = $customCmd['value'];
+                $resCmd['message'] = $data['value'];
             }
 
             # Options
