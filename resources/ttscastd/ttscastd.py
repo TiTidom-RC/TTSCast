@@ -654,10 +654,12 @@ class TTSCast:
                 }
                 quick_play.quick_play(cast, app_name, app_data)
                 
-                if (not appDing and volumeForPlay is not None):
+                if (volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
                     cast.set_volume(volume=volumeForPlay / 100)
-                
+                elif (not appDing):
+                    cast.set_volume(volume=volumeBeforePlay)
+                    
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
                 
                 while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
@@ -665,7 +667,7 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
                 
                 cast.quit_app()
-                if (not appDing or volumeForPlay is not None):
+                if (volumeForPlay is not None):
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
@@ -723,9 +725,11 @@ class TTSCast:
                 
                 quick_play.quick_play(cast, app_name, app_data)
                 
-                if (not appDing and volumeForPlay is not None):
+                if (volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
                     cast.set_volume(volume=volumeForPlay / 100)
+                elif (not appDing):
+                    cast.set_volume(volume=volumeBeforePlay)
                 
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
@@ -734,7 +738,7 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
             
                 cast.quit_app()
-                if (not appDing or volumeForPlay is not None):
+                if (volumeForPlay is not None):
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
