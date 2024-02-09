@@ -612,7 +612,7 @@ class TTSCast:
             logging.error('[DAEMON][TTS] Exception on TTS :: %s', e)
             logging.debug(traceback.format_exc())
 
-    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=False):
+    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
             
