@@ -1,0 +1,322 @@
+{
+   "france_inter":{
+      "location":"https://icecast.radiofrance.fr/franceinter-hifi.aac",
+      "title":"France Inter",
+      "image":"https://upload.wikimedia.org/wikipedia/fr/3/39/France_Inter_logo.svg"
+   },
+   "africa_n1_paris":{
+      "location":"http://african1paris.ice.infomaniak.ch/african1paris-128.mp3",
+      "title":"Africa N°1 Paris",
+      "image":"NoLogo"
+   },
+   "europe_1":{
+      "location":"https://stream.europe1.fr/europe1.aac",
+      "title":"Europe 1",
+      "image":"http://db.radioline.fr/pictures/podcast_1bda6dc23d20a07bda74a2ada806caa8/logo200.jpg"
+   },
+   "france_bleue":{
+      "location":"http://direct.francebleu.fr/live/fb1071-midfi.mp3",
+      "title":"France Bleue 107.1",
+      "image":"https://www.francebleu.fr/img/logo_francebleu.png"
+   },
+   "radio_classique":{
+      "location":"http://radioclassique.ice.infomaniak.ch/radioclassique-high.mp3",
+      "title":"Radio Classique",
+      "image":"https://www.radioclassique.fr/wp-content/themes/radioclassique/favicons/apple-touch-icon.png"
+   },
+   "fip":{
+      "location":"http://direct.fipradio.fr/live/fip-midfi.mp3",
+      "title":"FIP",
+      "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/d/d5/FIP_logo_2005.svg/1024px-FIP_logo_2005.svg.png"
+   },
+   "voltage_lounge":{
+      "location":"http://voltagelounge.ice.infomaniak.ch/voltagelounge-128.mp3",
+      "title":"Voltage Lounge",
+      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+   },
+   "rtl":{
+      "location":"http://streaming.radio.rtl.fr/rtl-1-44-128",
+      "title":"RTL",
+      "image":"https://www.radio.de/images/broadcasts/88/5b/5168/c300.png"
+   },
+   "fip_nouveaute":{
+      "location":"http://direct.fipradio.fr/live/fip-webradio5.mp3",
+      "title":"FIP Nouveauté",
+      "image":"NoLogo"
+   },
+   "fip_jazz":{
+      "location":"http://direct.fipradio.fr/live/fip-webradio2.mp3",
+      "title":"FIP Jazz",
+      "image":"https://www.fip.fr/dist/favicons/logo-120.png"
+   },
+   "fip_monde":{
+      "location":"http://direct.fipradio.fr/live/fipworld-hifi.aac",
+      "title":"FIP Monde",
+      "image":"https://cdn-profiles.tunein.com/s262538/images/logod.png?t=636966437370000000"
+   },
+   "france_culture":{
+      "location":"http://direct.franceculture.fr/live/franceculture-midfi.mp3",
+      "title":"France Culture",
+      "image":"NoLogo"
+   },
+   "radio_suisse_classique":{
+      "location":"http://stream.srg-ssr.ch/m/rsc_fr/aacp_96",
+      "title":"Radio Suisse Classique",
+      "image":"http://www.radioswissclassic.ch/social-media/rsc-web.png"
+   },
+   "jazz_ladies_crooners":{
+      "location":"http://jazzladiescrooners.ice.infomaniak.ch/jazzladiescrooners-high.mp3",
+      "title":"Jazz Ladies-Crooners",
+      "image":"http://www.jazzradio.fr/media/radio/thumb/90x90_ladies-and-crooners.png"
+   },
+   "pulsradio_trance":{
+      "location":"http://icecast.pulsradio.com:80/pulstranceHD.mp3",
+      "title":"PulsRadio Trance",
+      "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
+   },
+   "pulsradio_lounge":{
+      "location":"http://icecast.pulsradio.com/relaxHD.mp3",
+      "title":"PulsRadio Lounge",
+      "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
+   },
+   "pulsradio_dance":{
+      "location":"http://icecast.pulsradio.com:80/pulsHD.mp3",
+      "title":"PulsRadio Dance",
+      "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
+   },
+   "pulsradio_club":{
+      "location":"http://icecast.pulsradio.com/mxHD.mp3",
+      "title":"PulsRadio Club",
+      "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
+   },
+   "pulsradio_hits":{
+      "location":"http://icecast.pulsradio.com:80/hitpartyHD.mp3",
+      "title":"PulsRadio Hits",
+      "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
+   },
+   "pulsradio_80":{
+      "location":"http://icecast.pulsradio.com:80/magicradioHD.mp3",
+      "title":"PulsRadio 80",
+      "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
+   },
+   "pulsradio_90":{
+      "location":"http://icecast.pulsradio.com:80/puls90HD.mp3",
+      "title":"PulsRadio 90",
+      "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
+   },
+   "pulsradio_2000":{
+      "location":"http://icecast.pulsradio.com/puls00HD.mp3",
+      "title":"PulsRadio 2000",
+      "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
+   },
+   "mix_x_fm":{
+      "location":"https://mixxfmfr.ice.infomaniak.ch/mixxfmfr-192.mp3",
+      "title":"MIX X FM",
+      "image":"http://ecouter.lesindesradios.fr/logos/orange48.png"
+   },
+   "sweet_fm":{
+      "location":"http://sweetfm-sable-sur-sarthe.ice.infomaniak.ch/sweetfm-sable-sur-sarthe-192.mp3",
+      "title":"Sweet FM",
+      "image":"https://images.lesindesradios.fr/fit-in/300x2000/filters:format(webp)/filters:quality(100)/radios/sweetfm/images/logo_GYAPPbBOZO.png"
+   },
+   "rtl_2":{
+      "location":"http://streaming.radio.rtl2.fr/rtl2-1-44-128",
+      "title":"RTL 2",
+      "image":"https://fr.wikipedia.org/wiki/RTL2#/media/Fichier:RTL2.png"
+   },
+   "bfm_business":{
+      "location":"https://audio.bfmtv.com/bfmbusiness_128.mp3",
+      "title":"BFM Business",
+      "image":"https://backend.radioplayer.fr/logos/28-600x600.png"
+   },
+   "cherie_fm":{
+      "location":"http://cdn.nrjaudio.fm/audio1/fr/30201/mp3_128.mp3",
+      "title":"Cherie FM",
+      "image":"https://zupimages.net/up/23/37/ofi4.png"
+   },
+   "cherie_fm_80":{
+      "location":"http://cdn.nrjaudio.fm/adwz1/fr/30237/mp3_128.mp3",
+      "title":"Cherie 80",
+      "image":"https://zupimages.net/up/23/37/ofi4.png"
+   },
+   "cherie_fm_90":{
+      "location":"http://cdn.nrjaudio.fm/adwz1/fr/30239/mp3_128.mp3",
+      "title":"Cherie 90",
+      "image":"https://zupimages.net/up/23/37/ofi4.png"
+   },
+   "cherie_fm_acoustic":{
+      "location":"http://cdn.nrjaudio.fm/adwz1/fr/30269/mp3_128.mp3",
+      "title":"Cherie Acoustic",
+      "image":"https://zupimages.net/up/23/37/ofi4.png"
+   },
+   "fun_radio":{
+      "location":"http://streaming.radio.funradio.fr/fun-1-44-128",
+      "title":"Fun Radio",
+      "image":"NoLogo"
+   },
+   "france_info":{
+      "location":"http://direct.franceinfo.fr/live/franceinfo-midfi.mp3",
+      "title":"France Info",
+      "image":"https://www.francetvinfo.fr/assets/common/images/pwa/ios/120-5487caf3.png"
+   },
+   "france_musique":{
+      "location":"http://direct.francemusique.fr/live/francemusique-midfi.mp3",
+      "title":"France Musique",
+      "image":"NoLogo"
+   },
+   "jazz_radio":{
+      "location":"http://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3",
+      "title":"Jazz Radio",
+      "image":"https://www.jazzradio.fr/media/pochette.jpg"
+   },
+   "latina":{
+      "location":"http://start-latina.ice.infomaniak.ch/start-latina-high.mp3",
+      "title":"Latina",
+      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/latina/images/favicon.ico"
+   },
+   "m_radio":{
+      "location":"http://mfm.ice.infomaniak.ch/mfm-128.mp3",
+      "title":"M Radio",
+      "image":"https://mradio.fr/apple-touch-icon-120x120.png"
+   },
+   "mouv":{
+      "location":"http://icecast.radiofrance.fr/mouv-hifi.aac",
+      "title":"Mouv",
+      "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/d/d3/Le_Mouv%27_logo_2008.svg/1024px-Le_Mouv%27_logo_2008.svg.png"
+   },
+   "nostalgie":{
+      "location":"http://cdn.nrjaudio.fm/audio1/fr/30601/mp3_128.mp3",
+      "title":"Nostalgie France",
+      "image":"NoLogo"
+   },
+   "nova":{
+      "location":"http://novazz.ice.infomaniak.ch/novazz-128.mp3",
+      "title":"Nova",
+      "image":"NoLogo"
+   },
+   "nrj":{
+      "location":"http://cdn.nrjaudio.fm/audio1/fr/30001/mp3_128.mp3",
+      "title":"NRJ France",
+      "image":"NoLogo"
+   },
+   "nrj_uhd":{
+      "location":"http://cdn.nrjaudio.fm/audio1/fr/40101/aac_576.mp3",
+      "title":"NRJ France Ultra HD",
+      "image":"NoLogo"
+   },
+   "oui_fm":{
+      "location":"http://ouifm.ice.infomaniak.ch/ouifm-high.mp3",
+      "title":"Oui FM",
+      "image":"https://images.lesindesradios.fr/fit-in/300x2000/filters:format(webp)/filters:quality(100)/radios/oui-fm/images/logo_KoooUByHla.png"
+   },
+   "phare_fm":{
+      "location":"http://str0.creacast.com/pharefm",
+      "title":"Phare FM",
+      "image":"http://pharefm.com/favicon.ico"
+   },
+   "fg":{
+      "location":"http://radiofg.impek.com/fg",
+      "title":"Radio FG",
+      "image":"NoLogo"
+   },
+   "rcf":{
+      "location":"http://rcf.streamakaci.com/rcf.mp3",
+      "title":"RCF",
+      "image":"https://www.rcf.fr/favicon.ico"
+   },
+   "rfi_monde_hd":{
+      "location":"http://live02.rfi.fr/rfimonde-96k.mp3",
+      "title":"RFI Monde HD",
+      "image":"http://www.rfi.fr/apple-touch-icon.png"
+   },
+   "rfi_monde":{
+      "location":"http://live02.rfi.fr/rfimonde-64.mp3",
+      "title":"RFI Monde",
+      "image":"http://www.rfi.fr/apple-touch-icon.png"
+   },
+   "rfm":{
+      "location":"http://stream.rfm.fr/rfm.mp3",
+      "title":"RFM",
+      "image":"http://cdn-rfm.lanmedia.fr/apple-touch-icon-120x120.png"
+   },
+   "rire_et_chansons":{
+      "location":"http://cdn.nrjaudio.fm/audio1/fr/30401/mp3_128.mp3",
+      "title":"Rire & Chansons",
+      "image":"NoLogo"
+   },
+   "rmc":{
+      "location":"https://audio.bfmtv.com/rmcradio_128.mp3",
+      "title":"RMC",
+      "image":"https://i1.wp.com/www.mediasportif.fr/wp-content/uploads/2014/05/Radio-RMC.jpg"
+   },
+   "skyrock":{
+      "location":"http://icecast.skyrock.net/s/natio_mp3_128k",
+      "title":"Skyrock",
+      "image":"https://play-lh.googleusercontent.com/dPiQ01OUKZVfRZUbbb-EVK5g9miS_K-xrxHgmBbynGG-GQ53yt3GzFKr0zUTnb-xswQ=s200-rw"
+   },
+   "sud_radio":{
+      "location":"http://start-sud.ice.infomaniak.ch/start-sud-high.mp3",
+      "title":"Sud Radio",
+      "image":"https://www.sudradio.fr/wp-content/uploads/2019/06/cropped-favicon-180x180.png"
+   },
+   "tsf_jazz":{
+      "location":"http://tsfjazz.ice.infomaniak.ch/tsfjazz-high.mp3",
+      "title":"TSF Jazz",
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/TSFJazz-2017.jpg/800px-TSFJazz-2017.jpg"
+   },
+   "virgin_radio":{
+      "location":"http://ais-live.cloud-services.paris:8000/virgin.mp3",
+      "title":"Virgin Radio",
+      "image":"NoLogo"
+   },
+   "vibration":{
+      "location":"http://vibration.ice.infomaniak.ch/vibration-high.mp3",
+      "title":"Vibration",
+      "image":"NoLogo"
+   },
+   "virage":{
+      "location":"http://virageradio.ice.infomaniak.ch/virageradio-high.mp3",
+      "title":"Virage Radio",
+      "image":"https://www.virageradio.com/apple-touch-icon-120x120.png"
+   },
+   "voltage":{
+      "location":"http://start-voltage.ice.infomaniak.ch/start-voltage-high.mp3",
+      "title":"Voltage",
+      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+   },
+   "voltage_work":{
+      "location":"http://voltagework.ice.infomaniak.ch/voltagework-128.mp3",
+      "title":"Voltage @Work",
+      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+   },
+   "voltage_2000":{
+      "location":"http://voltage2000.ice.infomaniak.ch/voltage2000-128.mp3",
+      "title":"Voltage 2000",
+      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+   },
+   "voltage_80":{
+      "location":"http://voltage80s.ice.infomaniak.ch/voltage80s-128.mp3",
+      "title":"Voltage 80's",
+      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+   },
+   "voltage_90":{
+      "location":"http://voltage90s.ice.infomaniak.ch/voltage90s-128.mp3",
+      "title":"Voltage 90's",
+      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+   },
+   "voltage_club":{
+      "location":"http://voltageclub.ice.infomaniak.ch/voltageclub-128.mp3",
+      "title":"Voltage Club",
+      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+   },
+   "voltage_love":{
+      "location":"http://voltagelove.ice.infomaniak.ch/voltagelove-128.mp3",
+      "title":"Voltage Love",
+      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+   },
+   "wit_fm":{
+      "location":"http://start-witfm.ice.infomaniak.ch/start-witfm-high.mp3",
+      "title":"Wit FM",
+      "image":"NoLogo"
+   }
+}

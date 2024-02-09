@@ -1,19 +1,14 @@
 {
 	"id" : "ttscast",
 	"name" : "TTS Cast",
-	"pluginVersion": "0.1",
-	"specialAttributes" : {
-		"object" : {
-			"toto" : {"name" : {"fr_FR" : "Plop je suis un attribut spécial"},"type" : "input"},
-			"toto2" : {"name" : {"fr_FR" : "Plop je suis un attribut spécial number"},"type" : "number"}
-		},
-		"user" : {
-			"toto" : {"name" : {"fr_FR" : "Plop je suis un attribut spécial"},"type" : "select","values" : [{"value" : "1", "name" : "valeur 1"},{"value" : "plop", "name" : "valeur plop"}]}
-		}
-	},
+	"pluginVersion": "1.0.0",
 	"description" : {
-		"fr_FR": "TTS Cast : plugin permettant de générer des phrases TTS et de les faire jouer par un équipement Google (type ChromeCast)"
+		"fr_FR": "Plugin pour gérer ses équipements Google, type Google Home, Nest Mini, Nest Hub (Max), Chromecast. Il permet de générer des notifications TTS (Text To Speech) et de les diffuser sur les équipements Google. Il permet également de diffuser des sons (mp3), des vidéos YouTube, une page Web, ou encore une radio en streaming sur ces mêmes équipements.",
+		"en_US": "Plugin pour gérer ses équipements Google, type Google Home, Nest Mini, Nest Hub (Max), Chromecast. Il permet de générer des notifications TTS (Text To Speech) et de les diffuser sur les équipements Google. Il permet également de diffuser des sons (mp3), des vidéos YouTube, une page Web, ou encore une radio en streaming sur ces mêmes équipements.",
+		"es_ES": "Plugin pour gérer ses équipements Google, type Google Home, Nest Mini, Nest Hub (Max), Chromecast. Il permet de générer des notifications TTS (Text To Speech) et de les diffuser sur les équipements Google. Il permet également de diffuser des sons (mp3), des vidéos YouTube, une page Web, ou encore une radio en streaming sur ces mêmes équipements.",
+		"de_DE": "Plugin pour gérer ses équipements Google, type Google Home, Nest Mini, Nest Hub (Max), Chromecast. Il permet de générer des notifications TTS (Text To Speech) et de les diffuser sur les équipements Google. Il permet également de diffuser des sons (mp3), des vidéos YouTube, une page Web, ou encore une radio en streaming sur ces mêmes équipements."
 	},
+	"utilization": "Scannez les Google Home/Nest/ChromeCast présents sur votre réseau, et utilisez les pour diffuser des notifications vocales (TTS), des sons (mp3), des vidéos YouTube, des pages Web (DashCast), ou une Radio (en streaming) à partir de Jeedom. Plusieurs moteurs TTS (pour générer les notifications vocales) sont disponibles dans le plugin (JeedomTTS, Google Translate API, Google Cloud TTS, Voice RSS)",
 	"licence" : "AGPL",
 	"author" : "TiTidom",
 	"require" : "4.2.0",
@@ -21,14 +16,14 @@
 	"hasDependency" : true,
 	"hasOwnDeamon" : true,
 	"maxDependancyInstallTime" : 0,
-	"changelog" : "https://jeedom.github.io/plugin-template/#language#/changelog",
-	"documentation" : "https://jeedom.github.io/plugin-template/#language#/",
-	"changelog_beta" : "https://jeedom.github.io/plugin-template/#language#/beta/changelog",
-	"documentation_beta" : "https://jeedom.github.io/plugin-template/#language#/beta/",
-	"link" : {
-		"forum":"Lien vers le forum",
-		"video" : "Lien vers une video"
-	},
+	"changelog": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/changelog",
+    "documentation": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/index",
+    "changelog_beta": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/beta/changelog",
+    "documentation_beta": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/beta/index",
+	"link": {
+        "forum": "https://community.jeedom.com/tag/plugin-ttscast",
+        "video": ""
+    },
 	"language": [
 		"fr_FR",
 		"en_US",
@@ -44,5 +39,9 @@
 		"mobile",
 		"v4",
 		"atlas"
+	],
+	"whiteListFolders": [
+		"/data/media",
+		"/data/cache"
 	]
 }

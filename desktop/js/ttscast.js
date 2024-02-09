@@ -32,6 +32,7 @@ function addCmdToTable(_cmd) {
   if (!isset(_cmd.configuration)) {
     _cmd.configuration = {}
   }
+
   var tr = '<tr class="cmd" data-cmd_id="' + init(_cmd.id) + '">'
   tr += '<td class="hidden-xs">'
   tr += '<span class="cmdAttr" data-l1key="id"></span>'
@@ -85,3 +86,68 @@ function addCmdToTable(_cmd) {
     }
   })
 }
+
+$('.pluginAction[data-action=openLocation]').on('click', function () {
+	window.open($(this).attr("data-location"), "_blank", null);
+});
+
+$('.customclass-scanState').on('click', function () {
+	var scanState = $(this).attr('data-scanState');
+  // $('#div_alert').showAlert({message: 'scanState Click :: ' + scanState, level: 'warning'});
+	changeScanState(scanState);
+});
+
+function changeScanState(_scanState) {
+  $.ajax({  // fonction permettant de faire de l'ajax
+    type: "POST", // methode de transmission des données au fichier php
+      url: "plugins/ttscast/core/ajax/ttscast.ajax.php", // url du fichier php
+      data: {
+          action: "changeScanState",
+          scanState: _scanState,
+      },
+      dataType: 'json',
+      error: function (request, status, error) {
+          handleAjaxError(request, status, error);
+      },
+      success: function (data) {  // si l'appel a bien fonctionné
+          if (data.state != 'ok') {
+              $('#div_alert').showAlert({message: data.result, level: 'danger'});
+              return;
+          }
+      }
+  });
+}
+
+$('body').on('ttscast::newdevice', function (_event, _option) {
+  if (_option && _option['friendly_name'] && _option['newone'] == '1') {
+    $('#div_alert').showAlert({message: "[SCAN] NEW TTSCast détecté :: " + _option['friendly_name'], level: 'warning'});
+  } else if (_option && _option['friendly_name'] && _option['newone'] == '0') {
+    $('#div_alert').showAlert({message: "[SCAN] TTSCast MAJ :: " + _option['friendly_name'], level: 'warning'});
+  }
+
+  
+});
+
+$('body').on('ttscast::scanState', function (_event, _options) {
+  if (_options['scanState'] == "scanOn") {
+    // $('#div_alert').showAlert({message: 'Le Scan est ACTIF !', level: 'warning'});
+    if ($('.customclass-scanState').attr('data-scanState') == "scanOn") {
+      $.hideAlert();
+      $('.customclass-scanState').attr('data-scanState', 'scanOff');
+      $('.customclass-scanState').removeClass('logoPrimary').addClass('logoSecondary');
+      $('.customicon-scanState').addClass('icon_red');
+      $('.customtext-scanState').text('{{Stop Scan}}');
+      $('#div_alert').showAlert({message: '{{Mode Scan ACTIF pour 60 secondes. (Cliquez sur \'Stop Scan\' pour l\'arrêter avant)}}', level: 'warning'});
+    }
+  } else {    
+    if ($('.customclass-scanState').attr('data-scanState') == "scanOff") {
+      $.hideAlert();
+      // $('#div_alert').showAlert({message: '{{Mode Scan TERMINE.}}', level: 'success'});
+      $('.customclass-scanState').attr('data-scanState', 'scanOn');
+      $('.customclass-scanState').removeClass('logoSecondary').addClass('logoPrimary');
+      $('.customicon-scanState').removeClass('icon_red');
+      $('.customtext-scanState').text('{{Scan}}');
+      window.location.reload();
+    }
+  }
+});
