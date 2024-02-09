@@ -234,7 +234,15 @@ class ttscast extends eqLogic
                 $resAction = $data['cmd_action'];
             }
             if (array_key_exists('value', $data)) {
-                $resCmd['message'] = $data['value'];
+                if (in_array($resAction, ["radios", "sounds", "customsounds"])) {
+                    $resCmd['select'] = $data['value'];
+                }
+                elseif (in_array($resAction, ["volumeset"])) {
+                    $resCmd['slider'] = $data['value'];
+                }
+                else {
+                    $resCmd['message'] = $data['value'];
+                }
             }
 
             # Options
