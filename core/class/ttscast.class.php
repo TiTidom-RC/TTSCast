@@ -257,8 +257,8 @@ class ttscast extends eqLogic
                 $resOptions['volume'] = $data['volume'];
             }
 
-            $resCmd['titre'] = substr(json_encode($resOptions), 1, -1);
-            log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd Titre :: ' . $resCmd);
+            $resCmd['title'] = substr(json_encode($resOptions), 1, -1);
+            log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd Title :: ' . $resCmd);
             return [$resAction, $resCmd];
         }
         catch (Exception $e) {
