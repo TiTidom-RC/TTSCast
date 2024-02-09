@@ -230,8 +230,8 @@ class ttscast extends eqLogic
             $resOptions = array();
 
             # Commande et Valeur
-            if (array_key_exists('cmd_action', $data)) {
-                $resAction = $data['cmd_action'];
+            if (array_key_exists('action', $data)) {
+                $resAction = $data['action'];
             }
             if (array_key_exists('value', $data)) {
                 if (in_array($resAction, ["radios", "sounds", "customsounds"])) {
