@@ -106,7 +106,27 @@ class Loops:
                                 message['cmd_action'], message['value'], message['options'] = Functions.cmdDecoder(message['value'])
                             
                             # Traitement des actions (inclus les CustomCmd)
-                            if (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
+                            if message['cmd_action'] == 'playtesttts':
+                                logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
+                        
+                                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
+                                    logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
+                                    # TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'])
+                                    threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed']]).start()
+                                else:
+                                    logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
+                            
+                            elif message['cmd_action'] == 'playtts':
+                                logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
+                        
+                                if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
+                                    logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))
+                                    # TTSCast.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'])
+                                    threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()                        
+                                else:
+                                    logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
+                            
+                            elif (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
                                 logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
                                 # Functions.mediaActions(message['googleUUID'], message['value'], message['cmd_action'])
                                 threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], message['value'], message['cmd_action']]).start()
@@ -164,27 +184,6 @@ class Loops:
                                 Config.GCAST_UUID.remove(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(Config.GCAST_UUID))
                                 myCast.castRemove(uuid=str(_uuid))
-                            
-                    elif message['cmd'] == 'playtesttts':
-                        logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
-                        
-                        if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
-                            logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
-                            # TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'])
-                            threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed']]).start()
-                        else:
-                            logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
-                            
-                    elif message['cmd'] == 'playtts':
-                        logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
-                        
-                        if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
-                            logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))
-                            # TTSCast.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'])
-                            threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()
-                        
-                        else:
-                            logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
                             
                     elif message['cmd'] == "scanOn":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
