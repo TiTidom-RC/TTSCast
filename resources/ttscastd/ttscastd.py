@@ -106,7 +106,7 @@ class Loops:
                                 message['cmd_action'], message['value'], message['options'] = Functions.cmdDecoder(message['value'])
                             
                             # Traitement des actions (inclus les CustomCmd)
-                            if message['cmd_action'] == 'playtesttts':
+                            if message['cmd_action'] == 'ttstest':
                                 logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
                         
                                 if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
@@ -116,7 +116,7 @@ class Loops:
                                 else:
                                     logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                             
-                            elif message['cmd_action'] == 'playtts':
+                            elif message['cmd_action'] == 'tts':
                                 logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
                         
                                 if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):

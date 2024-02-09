@@ -188,12 +188,11 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'jeedomtts');  // jeedomtts | gtranslatetts | gcloudtts | voicersstts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
-        $value = array('cmd' => 'playtesttts', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
         self::sendToDaemon($value);
     }
 
     public static function playTTS($gHome=null, $message=null, $options=null) {
-        # $ttsText = htmlspecialchars($message);
         $ttsText = $message;
         $ttsGoogleUUID = $gHome;
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
@@ -203,7 +202,7 @@ class ttscast extends eqLogic
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsOptions = $options;
-        $value = array('cmd' => 'playtts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
+        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
         self::sendToDaemon($value);
     }
 
