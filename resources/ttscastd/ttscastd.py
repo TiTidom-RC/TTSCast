@@ -481,7 +481,7 @@ class TTSCast:
                 ttsOptions = None
             
             _ttsVolume = None
-            _appDing = None
+            _appDing = True
             
             try:
                 if (ttsOptions is not None):
