@@ -630,9 +630,10 @@ class TTSCast:
                 Functions.checkIfDashCast(cast)
             
                 volumeBeforePlay = cast.status.volume_level
-                if (volumeForPlay is not None):
-                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
-                    cast.set_volume(volume=volumeForPlay / 100)
+                cast.set_volume(volume=0)
+                # if (volumeForPlay is not None):
+                #     logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                #     cast.set_volume(volume=volumeForPlay / 100)
                 
                 urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -645,6 +646,10 @@ class TTSCast:
                     "thumb": urlThumb
                 }
                 quick_play.quick_play(cast, app_name, app_data)
+                
+                if (volumeForPlay is not None):
+                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                    cast.set_volume(volume=volumeForPlay / 100)
                 
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
                 
