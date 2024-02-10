@@ -205,8 +205,9 @@ class ttscast extends eqLogic
         $_appDisableDing = config::byKey('appDisableDing', 'ttscast', false);
         if ($_appDisableDing) {
             $options['ding'] = false;
+            log::add('ttscast', 'debug', '[PlayTTS] Options Ding :: ' . $options['ding']);
         }
-        log::add('ttscast', 'debug', '[PlayTTS] ArrayOptions :: ' . json_encode($options));
+        log::add('ttscast', 'debug', '[PlayTTS] Options Array :: ' . json_encode($options));
         $ttsOptions = $options;
 
         $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
