@@ -489,6 +489,8 @@ class TTSCast:
             except ValueError as e:
                 logging.debug('[DAEMON][TTS] Options mal formatées (Json KO) :: %s', e)
             
+            _appDing = False if Config.appDisableDing else _appDing
+            
             if ttsEngine == "gcloudtts":
                 logging.debug('[DAEMON][TTS] TTSEngine = gcloudtts')
                 logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
@@ -805,6 +807,8 @@ class Functions:
                     except ValueError as e:
                         logging.debug('[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: %s', e)
                     
+                    _appDing = False if Config.appDisableDing else _appDing
+                    
                     volumeBeforePlay = cast.status.volume_level
                     if not _appDing:
                         cast.set_volume(volume=0)
@@ -896,7 +900,9 @@ class Functions:
                                     logging.debug('[DAEMON][controllerActions] Radios :: Options :: %s', str(options_json))
                             except ValueError as e:
                                 logging.debug('[DAEMON][controllerActions] Radios :: Options mal formatées (Json KO) :: %s', e)
-                        
+
+                            _appDing = False if Config.appDisableDing else _appDing
+                            
                             volumeBeforePlay = cast.status.volume_level
                             if not _appDing:
                                 cast.set_volume(volume=0)
@@ -961,6 +967,8 @@ class Functions:
                         except ValueError as e:
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Options mal formatées (Json KO) :: %s', e)
 
+                        _appDing = False if Config.appDisableDing else _appDing
+                        
                         volumeBeforePlay = cast.status.volume_level
                         if not _appDing:
                             cast.set_volume(volume=0)
@@ -1466,6 +1474,7 @@ parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
 parser.add_argument("--voicerssapikey", help="Voice RSS ApiKey", type=str)
 parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
 parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
+parser.add_argument("--appdisableding", help="App Disable Ding Parameter", type=bool)
 parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 
@@ -1484,6 +1493,8 @@ if args.gcloudapikey:
     Config.gCloudApiKey = args.gcloudapikey
 if args.voicerssapikey:
     Config.apiRSSKey = args.voicerssapikey
+if args.appdisableding:
+    Config.appDisableDing = args.appdisableding
 if args.pid:
     Config.pidFile = args.pid
 if args.cyclefactor:
@@ -1514,6 +1525,8 @@ logging.info('[DAEMON][MAIN] ApiKey: %s', "***")
 logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', Config.gCloudApiKey)
 logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', "***")
+logging.info('[DAEMON][MAIN] App Disable Ding Parameter: %s', str(Config.appDisableDing))
+
 logging.info('[DAEMON][MAIN] CallBack: %s', Config.callBack)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', Config.ttsWebSrvCache)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvMedia: %s', Config.ttsWebSrvMedia)

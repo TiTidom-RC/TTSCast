@@ -103,6 +103,7 @@ class ttscast extends eqLogic
         $cmd .= ' --apittskey ' . jeedom::getApiKey("apitts");
         $cmd .= ' --gcloudapikey ' . config::byKey('gCloudAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --voicerssapikey ' . config::byKey('voiceRSSAPIKey', __CLASS__, 'noKey');
+        $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, false);
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         log::add(__CLASS__, 'info', 'Lancement du démon');
         $result = exec($cmd . ' >> ' . log::getPathToLog('ttscast_daemon') . ' 2>&1 &');
@@ -202,7 +203,7 @@ class ttscast extends eqLogic
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         
-        log::add('ttscast', 'debug', '[PlayTTS] Options Before Array :: ' . $options);
+        /* log::add('ttscast', 'debug', '[PlayTTS] Options Before Array :: ' . $options);
 
         $_appDisableDing = config::byKey('appDisableDing', 'ttscast', false);
         if ($_appDisableDing) {
@@ -217,7 +218,8 @@ class ttscast extends eqLogic
         }
         else {
             $ttsOptions = $options;
-        }
+        } */
+        $ttsOptions = $options;
         log::add('ttscast', 'debug', '[PlayTTS] ttsOptions After Array :: ' . $ttsOptions);
         
         $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
