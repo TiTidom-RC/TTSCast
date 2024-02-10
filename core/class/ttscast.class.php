@@ -94,7 +94,7 @@ class ttscast extends eqLogic
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55111');
         $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1');
         $cmd .= ' --callback ' . network::getNetworkAccess('internal', 'http:127.0.0.1:port:comp') . '/plugins/ttscast/core/php/jeettscast.php'; // chemin du callback
-        if (config::byKey('ttsUseExtAddr', 'ttscast')==1) {
+        if (config::byKey('ttsUseExtAddr', 'ttscast') == 1) {
             $cmd .= ' --ttsweb ' . network::getNetworkAccess('external');
         } else {
             $cmd .= ' --ttsweb ' . network::getNetworkAccess('internal');
@@ -103,6 +103,7 @@ class ttscast extends eqLogic
         $cmd .= ' --apittskey ' . jeedom::getApiKey("apitts");
         $cmd .= ' --gcloudapikey ' . config::byKey('gCloudAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --voicerssapikey ' . config::byKey('voiceRSSAPIKey', __CLASS__, 'noKey');
+        $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, false);
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         log::add(__CLASS__, 'info', 'Lancement du démon');
         $result = exec($cmd . ' >> ' . log::getPathToLog('ttscast_daemon') . ' 2>&1 &');
@@ -144,11 +145,11 @@ class ttscast extends eqLogic
             $params['apikey'] = jeedom::getApiKey(__CLASS__);
             $payLoad = json_encode($params);
             $socket = socket_create(AF_INET, SOCK_STREAM, 0);
-            socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55111')); // TODO Port du plugin à modifier
+            socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55111'));
             socket_write($socket, $payLoad, strlen($payLoad));
             socket_close($socket);
         } catch (Exception $e) {
-            log::add('ttscast', 'debug', '[sendToDaemon] ERROR :: ' . $e->getMessage());
+            log::add('ttscast', 'error', '[sendToDaemon] Exception :: ' . $e->getMessage());
             return false;
         }
     }
@@ -201,7 +202,26 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
+        
+        /* log::add('ttscast', 'debug', '[PlayTTS] Options Before Array :: ' . $options);
+
+        $_appDisableDing = config::byKey('appDisableDing', 'ttscast', false);
+        if ($_appDisableDing) {
+            if ($options == null) {
+                $_resOptions = array();
+            } else {
+                $_resOptions = json_decode("{" . $options . "}", true);
+            }
+            $_resOptions['ding'] = false;
+            log::add('ttscast', 'debug', '[PlayTTS] _res Ding :: ' . json_encode($_resOptions['ding']));
+            $ttsOptions = substr(json_encode($_resOptions), 1, -1);
+        }
+        else {
+            $ttsOptions = $options;
+        } */
         $ttsOptions = $options;
+        log::add('ttscast', 'debug', '[PlayTTS] ttsOptions After Array :: ' . $ttsOptions);
+        
         $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
         self::sendToDaemon($value);
     }

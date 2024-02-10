@@ -37,6 +37,7 @@ if (!isConnect()) {
             <legend><i class="fas fa-university"></i> {{Démon}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Port Socket Interne}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{[ATTENTION] Ne changez ce paramètre qu'en cas de nécessité. (Défaut = 55111)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -45,6 +46,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
 	            <label class="col-lg-3 control-label">{{Fréquence des cycles}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Facteur multiplicateur des cycles du démon (Défaut = 1)}}"></i></sup>
                 </label>
 	            <div class="col-lg-2">
@@ -87,6 +89,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-voicersstts">
                 <label class="col-lg-3 control-label">{{Clé API (Voice RSS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://www.voicerss.org/personel/">{{SITE}}</a>
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Rentrer votre clé API Voice RSS, récupérable sur leur site, dans votre profil'}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -95,6 +98,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Clé API (gCloud TTS)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton 'Ajouter Clé (JSON)'}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -272,6 +276,7 @@ if (!isConnect()) {
             <legend><i class="fas fa-list-alt"></i> {{Options}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{URL Jeedom Externe}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Utilise l'URL externe de Jeedom pour la lecture des fichiers TTS plutôt que l'URL interne (Recommandé = décoché)}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
@@ -296,6 +301,15 @@ if (!isConnect()) {
                 </div>
                 <div class="col-lg-1">
                     <a class="btn btn-warning customclass-purgettscache"><i class="fas fa-trash-alt"></i> {{Vider le Cache}}</a>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Désactiver le "ding" des commandes}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Désactive (globalement) le 'ding' au lancement d'une commande sur un Google Home}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="appDisableDing" />
                 </div>
             </div>
             <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, Sounds, Custom Sounds)}}</legend>

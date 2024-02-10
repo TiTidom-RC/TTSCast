@@ -73,6 +73,8 @@ class Config:
     configFolder = 'core/config'
     configFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), configFolder))
     
+    appDisableDing = False
+    
     logLevel = "error"
     socketPort = 55111
     socketHost = 'localhost'
