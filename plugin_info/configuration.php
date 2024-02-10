@@ -74,7 +74,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-lang">
                 <label class="col-lg-3 control-label">{{Langue TTS}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Langue à utiliser avec l'API Google Translate ou Jeedom TTS (Il n'est pas possible choisir une voix, seulement une langue)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Langue à utiliser avec l'API Google Translate ou Jeedom TTS (Il n'est pas possible de choisir une voix, seulement une langue)}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsLang">
