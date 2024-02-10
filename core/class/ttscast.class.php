@@ -144,11 +144,11 @@ class ttscast extends eqLogic
             $params['apikey'] = jeedom::getApiKey(__CLASS__);
             $payLoad = json_encode($params);
             $socket = socket_create(AF_INET, SOCK_STREAM, 0);
-            socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55111')); // TODO Port du plugin à modifier
+            socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55111'));
             socket_write($socket, $payLoad, strlen($payLoad));
             socket_close($socket);
         } catch (Exception $e) {
-            log::add('ttscast', 'debug', '[sendToDaemon] ERROR :: ' . $e->getMessage());
+            log::add('ttscast', 'error', '[sendToDaemon] Exception :: ' . $e->getMessage());
             return false;
         }
     }
@@ -201,7 +201,13 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
+        
+        $_appDisableDing = config::byKey('appDisableDing', 'ttscast', false);
+        if ($_appDisableDing) {
+            $options['ding'] = false;
+        }
         $ttsOptions = $options;
+
         $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
         self::sendToDaemon($value);
     }
