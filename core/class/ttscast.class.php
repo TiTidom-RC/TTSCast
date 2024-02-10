@@ -214,7 +214,7 @@ class ttscast extends eqLogic
             log::add('ttscast', 'debug', '[PlayTTS] _res Ding :: ' . $_res['ding']);
             $ttsOptions = json_encode($_res);
         }
-        log::add('ttscast', 'debug', '[PlayTTS] ttsOptions Array :: ' . json_encode($ttsOptions));
+        log::add('ttscast', 'debug', '[PlayTTS] ttsOptions Array :: ' . $ttsOptions);
         
 
         $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
