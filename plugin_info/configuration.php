@@ -38,7 +38,7 @@ if (!isConnect()) {
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Port Socket Interne}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{[ATTENTION] Ne changez ce paramètre qu'en cas de nécessité. (Défaut = 55111)}}"></i></sup>
-                    <sup><i class="fas fa-exclamation-circle logoSecondary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-exclamation-circle logoPrimary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input class="configKey form-control" data-l1key="socketport" placeholder="55111" />
@@ -47,7 +47,7 @@ if (!isConnect()) {
             <div class="form-group">
 	            <label class="col-lg-3 control-label">{{Fréquence des cycles}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Facteur multiplicateur des cycles du démon (Défaut = 1)}}"></i></sup>
-                    <sup><i class="fas fa-exclamation-circle logoSecondary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-exclamation-circle logoPrimary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                 </label>
 	            <div class="col-lg-2">
 			        <select class="configKey form-control" data-l1key="cyclefactor">
@@ -90,7 +90,7 @@ if (!isConnect()) {
             <div class="form-group customform-voicersstts">
                 <label class="col-lg-3 control-label">{{Clé API (Voice RSS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://www.voicerss.org/personel/">{{SITE}}</a>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Rentrer votre clé API Voice RSS, récupérable sur leur site, dans votre profil'}}"></i></sup>
-                    <sup><i class="fas fa-exclamation-circle logoSecondary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-exclamation-circle logoPrimary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control custominput-voicerssapikey" type="text" data-l1key="voiceRSSAPIKey" />
@@ -99,7 +99,7 @@ if (!isConnect()) {
             <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Clé API (gCloud TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton 'Ajouter Clé (JSON)'}}"></i></sup>
-                    <sup><i class="fas fa-exclamation-circle logoSecondary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-exclamation-circle logoPrimary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control custominput-apikey" type="text" data-l1key="gCloudAPIKey" readonly />
@@ -277,7 +277,7 @@ if (!isConnect()) {
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{URL Jeedom Externe}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Utilise l'URL externe de Jeedom pour la lecture des fichiers TTS plutôt que l'URL interne (Recommandé = décoché)}}"></i></sup>
-                    <sup><i class="fas fa-exclamation-circle logoSecondary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-exclamation-circle logoPrimary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
                     <input type="checkbox" class="configKey customform-address" data-l1key="ttsUseExtAddr" />
@@ -306,7 +306,7 @@ if (!isConnect()) {
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Désactiver le "Ding" au lancement des commandes}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Cocher cette option pour Désactiver le 'Ding' au lancement d'une commande sur un Google Home. Cela désactivera ce son sur l'ensemble des commandes. (Ce son est Actif par défaut)}}"></i></sup>
-                    <sup><i class="fas fa-exclamation-circle logoSecondary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-exclamation-circle logoPrimary tooltips" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="appDisableDing" />
