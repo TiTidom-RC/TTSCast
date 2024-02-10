@@ -298,6 +298,14 @@ if (!isConnect()) {
                     <a class="btn btn-warning customclass-purgettscache"><i class="fas fa-trash-alt"></i> {{Vider le Cache}}</a>
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Désactiver le "Ding" au lancement des commandes}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Cocher cette option pour Désactiver le 'Ding' au lancement d'une commande sur un Google Home. Cela désactivera ce son sur l'ensemble des commandes. (Ce son est Actif par défaut)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="appDisableDing" />
+                </div>
+            </div>
             <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, Sounds, Custom Sounds)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Radio}}
