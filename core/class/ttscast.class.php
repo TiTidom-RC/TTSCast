@@ -201,14 +201,15 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
-        
+        $ttsOptions = $options;
+
         $_appDisableDing = config::byKey('appDisableDing', 'ttscast', false);
         if ($_appDisableDing) {
-            $options['ding'] = false;
-            log::add('ttscast', 'debug', '[PlayTTS] Options Ding :: ' . $options['ding']);
+            $ttsOptions['ding'] = false;
+            log::add('ttscast', 'debug', '[PlayTTS] ttsOptions Ding :: ' . $ttsOptions['ding']);
         }
-        log::add('ttscast', 'debug', '[PlayTTS] Options Array :: ' . json_encode($options));
-        $ttsOptions = $options;
+        log::add('ttscast', 'debug', '[PlayTTS] Options Array :: ' . json_encode($ttsOptions));
+        
 
         $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
         self::sendToDaemon($value);
