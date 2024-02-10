@@ -306,7 +306,7 @@ if (!isConnect()) {
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Désactiver le "Ding" au lancement des commandes}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le Démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Cocher cette option pour Désactiver le 'Ding' au lancement d'une commande sur un Google Home. Cela désactivera ce son sur l'ensemble des commandes. (Ce son est Actif par défaut)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Désactive (globalement) le 'Ding' au lancement d'une commande sur un Google Home}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="appDisableDing" />
