@@ -27,7 +27,7 @@ if (!isConnect()) {
         <div>
             <legend><i class="fas fa-info"></i> {{Plugin}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Version}}
+                <label class="col-lg-4 control-label">{{Version}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Version du plugin à indiquer sur Community}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -36,7 +36,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-university"></i> {{Démon}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Port Socket Interne}}
+                <label class="col-lg-4 control-label">{{Port Socket Interne}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{[ATTENTION] Ne changez ce paramètre qu'en cas de nécessité. (Défaut = 55111)}}"></i></sup>
                 </label>
@@ -45,7 +45,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-	            <label class="col-lg-3 control-label">{{Fréquence des cycles}}
+	            <label class="col-lg-4 control-label">{{Fréquence des cycles}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Facteur multiplicateur des cycles du démon (Défaut = 1)}}"></i></sup>
                 </label>
@@ -60,7 +60,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fab fa-chromecast"></i> {{TTS (Text To Speech)}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Moteur TTS}}
+                <label class="col-lg-4 control-label">{{Moteur TTS}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Moteur TTS à utiliser pour la synthèse vocale}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -73,7 +73,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-lang">
-                <label class="col-lg-3 control-label">{{Langue TTS}}
+                <label class="col-lg-4 control-label">{{Langue TTS}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue à utiliser avec l'API Google Translate ou Jeedom TTS (Il n'est pas possible choisir une voix, seulement une langue)}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
@@ -88,7 +88,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-voicersstts">
-                <label class="col-lg-3 control-label">{{Clé API (Voice RSS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://www.voicerss.org/personel/">{{SITE}}</a>
+                <label class="col-lg-4 control-label">{{Clé API (Voice RSS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://www.voicerss.org/personel/">{{SITE}}</a>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Rentrer votre clé API Voice RSS, récupérable sur leur site, dans votre profil'}}"></i></sup>
                 </label>
@@ -97,7 +97,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Clé API (gCloud TTS)}}
+                <label class="col-lg-4 control-label">{{Clé API (gCloud TTS)}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton 'Ajouter Clé (JSON)'}}"></i></sup>
                 </label>
@@ -112,7 +112,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-voicersstts">
-                <label class="col-lg-3 control-label">{{Langue/Voix TTS (Voice RSS TTS)}}
+                <label class="col-lg-4 control-label">{{Langue/Voix TTS (Voice RSS TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Voice RSS TTS}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -132,7 +132,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-voicersstts">
-                <label class="col-lg-3 control-label">{{Vitesse de Dictée (Voice RSS TTS)}}
+                <label class="col-lg-4 control-label">{{Vitesse de Dictée (Voice RSS TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Valeur par défaut = Normal (0)}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
@@ -162,7 +162,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Langue/Voix TTS (gCloud TTS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>
+                <label class="col-lg-4 control-label">{{Langue/Voix TTS (gCloud TTS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Google Cloud TTS}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -242,7 +242,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Vitesse de Dictée (gCloud TTS)}}
+                <label class="col-lg-4 control-label">{{Vitesse de Dictée (gCloud TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Valeur par défaut = Normal (1.0)}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
@@ -260,7 +260,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Tester la Synthèse Vocale (TTS)}}
+                <label class="col-lg-4 control-label">{{Tester la Synthèse Vocale (TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -275,7 +275,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-list-alt"></i> {{Options}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{URL Jeedom Externe}}
+                <label class="col-lg-4 control-label">{{URL Jeedom Externe}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Utilise l'URL externe de Jeedom pour la lecture des fichiers TTS plutôt que l'URL interne (Recommandé = décoché)}}"></i></sup>
                 </label>
@@ -285,7 +285,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Ne PAS utiliser le cache}}
+                <label class="col-lg-4 control-label">{{Ne PAS utiliser le cache}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Génère les fichiers TTS à chaque demande. Il est vivement recommandé de ne PAS cocher cette case, sauf pour faire des tests}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -293,7 +293,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Durée de conservation du cache (jours)}}
+                <label class="col-lg-4 control-label">{{Durée de conservation du cache (jours)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Le cache des fichiers TTS générés sera purgé automatiquement tous les X (0 à 90) jours via le cron daily}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -304,7 +304,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Désactiver le "Ding" au lancement des commandes}}
+                <label class="col-lg-4 control-label">{{Désactiver le "Ding" au lancement des commandes}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-danger-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Désactive (globalement) le 'Ding' au lancement d'une commande sur un Google Home}}"></i></sup>
                 </label>
@@ -314,7 +314,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, Sounds, Custom Sounds)}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Radio}}
+                <label class="col-lg-4 control-label">{{Mettre à jour les listes :: Radio}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des radios de vos équipements. ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -322,7 +322,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Sound}}
+                <label class="col-lg-4 control-label">{{Mettre à jour les listes :: Sound}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons (.mp3). ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -330,7 +330,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Custom Sound}}
+                <label class="col-lg-4 control-label">{{Mettre à jour les listes :: Custom Sound}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons personnalisés (.mp3). ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -338,7 +338,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Ajouter un fichier :: Custom Sound}}
+                <label class="col-lg-4 control-label">{{Ajouter un fichier :: Custom Sound}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Télécharge un fichier (.mp3) pour l'ajouter au répertoire des Custom Sounds}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
