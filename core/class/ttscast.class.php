@@ -94,7 +94,7 @@ class ttscast extends eqLogic
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55111');
         $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1');
         $cmd .= ' --callback ' . network::getNetworkAccess('internal', 'http:127.0.0.1:port:comp') . '/plugins/ttscast/core/php/jeettscast.php'; // chemin du callback
-        if (config::byKey('ttsUseExtAddr', 'ttscast')==1) {
+        if (config::byKey('ttsUseExtAddr', 'ttscast') == 1) {
             $cmd .= ' --ttsweb ' . network::getNetworkAccess('external');
         } else {
             $cmd .= ' --ttsweb ' . network::getNetworkAccess('internal');
