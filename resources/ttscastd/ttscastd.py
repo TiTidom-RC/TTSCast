@@ -1024,7 +1024,7 @@ class Functions:
                 return True
                 
             except Exception as e:
-                logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
+                logging.error('[DAEMON][controllerActions] Exception on controllerActions (%s) :: %s', _googleUUID, e)
                 logging.debug(traceback.format_exc())
                 
                 # Libération de la mémoire
@@ -1086,7 +1086,7 @@ class Functions:
                 chromecasts = None
                 return True
             except Exception as e:
-                logging.error('[DAEMON][mediaActions] Exception on mediaActions :: %s', e)
+                logging.error('[DAEMON][mediaActions] Exception on mediaActions (%s) :: %s', _googleUUID, e)
                 logging.debug(traceback.format_exc())
                 
                 # Libération de la mémoire
