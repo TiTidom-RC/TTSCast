@@ -1247,15 +1247,13 @@ class myCast:
 
     def castListeners(chromecast=None, uuid=None):
         """ Connect and Add Listener for Chromecast """
-        """ if not chromecast:
-            chromecasts =  [cast for cast in Config.NETCAST_DEVICES if str(cast.uuid) == uuid]
-            
-            if not chromecasts:
+        if not chromecast:
+            if uuid in Config.NETCAST_DEVICES:
+                chromecast = Config.NETCAST_DEVICES[uuid]
+                logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
+            else:
                 logging.debug('[DAEMON][NETCAST][CastListeners] Aucun Chromecast avec cet UUID :: %s', uuid)
                 return False
-            chromecast = chromecasts[0] """
-        
-        logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
     
         if uuid not in Config.LISTENER_CAST:
             Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
