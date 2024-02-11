@@ -1487,7 +1487,10 @@ if args.gcloudapikey:
 if args.voicerssapikey:
     Config.apiRSSKey = args.voicerssapikey
 if args.appdisableding:
-    Config.appDisableDing = bool(args.appdisableding)
+    if (args.appdisableding == '0'):
+        Config.appDisableDing = False
+    else:
+        Config.appDisableDing = True
 if args.pid:
     Config.pidFile = args.pid
 if args.cyclefactor:
