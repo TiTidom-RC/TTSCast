@@ -207,7 +207,7 @@ class Loops:
         try:
             # Thread pour le browser (pychromecast)
             Config.NETCAST_ZCONF = zeroconf.Zeroconf()
-            Config.NETCAST_BROWSER = pychromecast.get_chromecasts(tries=3, retry_wait=10, timeout=60, blocking=False, callback=myCast.castCallBack, zeroconf_instance=Config.NETCAST_ZCONF, known_hosts=Config.KNOWN_HOSTS)
+            Config.NETCAST_BROWSER = pychromecast.get_chromecasts(tries=None, retry_wait=5, timeout=30, blocking=False, callback=myCast.castCallBack, zeroconf_instance=Config.NETCAST_ZCONF, known_hosts=Config.KNOWN_HOSTS)
 
             logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
 
