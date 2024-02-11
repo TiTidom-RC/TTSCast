@@ -1145,6 +1145,10 @@ class Functions:
                             castIsMuted = cast.status.volume_muted
                             castAppId = cast.status.app_id
                             castStatusText = cast.status.status_text
+                            if cast.socket_client.is_connected:
+                                castIsOnline = '1'
+                            else:
+                                castIsOnline = '0'
                             
                             mediaLastUpdated = None
                             if (cast.media_controller.status.last_updated is not None):
@@ -1179,7 +1183,7 @@ class Functions:
                                 'stream_type': mediaStreamType,
                                 'last_updated': mediaLastUpdated,
                                 'schedule': 1,
-                                'online': '1'
+                                'online': castIsOnline
                             }
 
                             # Envoi vers Jeedom
@@ -1358,7 +1362,11 @@ class myCast:
             try:
                 castVolumeLevel = int(status.volume_level * 100)
                 castAppDisplayName = status.display_name
-            
+                if self.cast.socket_client.is_connected:
+                    castIsOnline = '1'
+                else:
+                    castIsOnline = '0'
+                
                 data = {
                     'uuid': str(self.cast.uuid),
                     'is_stand_by': status.is_stand_by,
@@ -1369,7 +1377,7 @@ class myCast:
                     'status_text': status.status_text,
                     'realtime': 1,
                     'status_type': 'cast',
-                    'online': '1'
+                    'online': castIsOnline
                 }
 
                 # Envoi vers Jeedom
@@ -1394,6 +1402,11 @@ class myCast:
                     last_updated_local = last_updated.astimezone(tz=None)
                     mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
                 
+                if self.cast.socket_client.is_connected:
+                    castIsOnline = '1'
+                else:
+                    castIsOnline = '0'
+                
                 data = {
                     'uuid': str(self.cast.uuid),
                     'player_state': status.player_state,
@@ -1405,7 +1418,7 @@ class myCast:
                     'last_updated': mediaLastUpdated,
                     'realtime': 1,
                     'status_type': 'media',
-                    'online': '1'
+                    'online': castIsOnline
                 }
 
                 # Envoi vers Jeedom
