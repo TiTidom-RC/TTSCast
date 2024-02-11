@@ -159,7 +159,7 @@ class Loops:
                             if _uuid not in Config.GCAST_UUID:
                                 Config.GCAST_UUID.append(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
-                                myCast.castListeners(uuid=str(_uuid))
+                                myCast.castListeners(uuid=_uuid)
                                 
                     elif message['cmd'] == "removecast":
                         if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
@@ -621,7 +621,7 @@ class TTSCast:
             chromecasts = None
             cast = None
             try:
-                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.name) == googleName]
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES.values() if mycast.name == googleName]
                 if not chromecasts:
                     logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
                     return False
@@ -688,15 +688,15 @@ class TTSCast:
         elif googleUUID != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
             
-            chromecasts = None
             cast = None
             try:
-                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.uuid) == googleUUID]
-                if not chromecasts:
+                _uuid = UUID(googleUUID)
+                if _uuid in Config.NETCAST_DEVICES:
+                    cast = Config.NETCAST_DEVICES[_uuid]
+                    logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
+                else:
                     logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID nom :: %s', googleUUID)
                     return False
-                cast = chromecasts[0]
-                logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
@@ -745,7 +745,6 @@ class TTSCast:
                 
                 # Libération de la mémoire
                 cast = None
-                chromecasts = None
                 return True
             except Exception as e:
                 logging.debug('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
@@ -753,7 +752,6 @@ class TTSCast:
                 
                 # Libération de la mémoire
                 cast = None
-                chromecasts = None
                 return False
         else:
             logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome + GoogleUUID manquants)')
@@ -775,15 +773,15 @@ class Functions:
     
     def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _options=''):
         if _googleUUID != 'UNKOWN':
-            chromecasts = None
             cast = None
             try:
-                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.uuid) == _googleUUID]
-                if not chromecasts:
+                _uuid = UUID(_googleUUID)
+                if (_uuid in Config.NETCAST_DEVICES):
+                    cast = Config.NETCAST_DEVICES[_uuid]    
+                    logging.debug('[DAEMON][controllerActions] Chromecast trouvé, lancement des actions')
+                else:
                     logging.debug('[DAEMON][controllerActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
                     return False
-                cast = chromecasts[0]
-                logging.debug('[DAEMON][controllerActions] Chromecast trouvé, lancement des actions')
                 
                 if (_controller == 'youtube'):
                     logging.debug('[DAEMON][controllerActions] YouTube Id @ UUID :: %s @ %s', _value, _googleUUID)
@@ -835,7 +833,6 @@ class Functions:
                     
                     # Libération de la mémoire
                     cast = None
-                    chromecasts = None
                     return True
                 
                 elif (_controller == 'dashcast'):
@@ -874,7 +871,6 @@ class Functions:
                     # Libération de la mémoire
                     player = None
                     cast = None
-                    chromecasts = None
                     return True
                 
                 elif (_controller == 'radios'):
@@ -1037,12 +1033,13 @@ class Functions:
             chromecasts = None
             cast = None
             try:
-                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if str(mycast.uuid) == _googleUUID]
-                if not chromecasts:
+                _uuid = UUID(_googleUUID)
+                if (_uuid in Config.NETCAST_DEVICES):
+                    cast = Config.NETCAST_DEVICES[_uuid]
+                    logging.debug('[DAEMON][mediaActions] Chromecast trouvé, lancement des actions')
+                else:
                     logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
                     return False
-                cast = chromecasts[0]
-                logging.debug('[DAEMON][mediaActions] Chromecast trouvé, lancement des actions')
                 
                 if (_mode in ('volumeset', 'volumeup', 'volumedown')):
                     castVolumeLevel = None
@@ -1083,7 +1080,6 @@ class Functions:
                     
                 # Libération de la mémoire
                 cast = None
-                chromecasts = None
                 return True
             except Exception as e:
                 logging.error('[DAEMON][mediaActions] Exception on mediaActions (%s) :: %s', _googleUUID, e)
@@ -1091,7 +1087,6 @@ class Functions:
                 
                 # Libération de la mémoire
                 cast = None
-                chromecasts = None
                 return False
     
     def scanChromeCast(_mode='UNKOWN'):
@@ -1110,7 +1105,7 @@ class Functions:
                 logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...') """
                 
                 logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(Config.NETCAST_DEVICES))
-                for device in Config.NETCAST_DEVICES:
+                for device in Config.NETCAST_DEVICES.values():
                     logging.debug('[DAEMON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.cast_info.friendly_name, device.cast_info.model_name, device.cast_info.host, device.cast_info.port, device.uuid)
                     data = {
                         'friendly_name': device.cast_info.friendly_name,
@@ -1134,7 +1129,7 @@ class Functions:
                 
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(_gcast_names))
                 
-                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.name in _gcast_names]
+                chromecasts = [mycast for mycast in Config.NETCAST_DEVICES.values() if mycast.name in _gcast_names]
                 logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb NetCast vs JeeCast :: %s vs %s', len(Config.NETCAST_DEVICES), len(chromecasts))
                 
                 for cast in chromecasts: 
@@ -1262,13 +1257,13 @@ class myCast:
         
         logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
     
-        if (uuid not in Config.LISTENER_CAST):
+        if uuid not in Config.LISTENER_CAST:
             Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
             chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
         else:
             logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Status Listener already active', str(chromecast.name))
             
-        if (uuid not in Config.LISTENER_MEDIA):
+        if uuid not in Config.LISTENER_MEDIA:
             Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
             chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
         else:
@@ -1305,19 +1300,18 @@ class myCast:
         """ Service CallBack de découverte des Google Cast """
 
         if chromecast is not None:
-            if not any(mycast.uuid == chromecast.uuid for mycast in Config.NETCAST_DEVICES):
+            if chromecast.uuid not in Config.NETCAST_DEVICES:
                 Config.NETCAST_DEVICES[chromecast.uuid] = chromecast
                 logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Added to NETCAST_DEVICES', str(chromecast.name))
+                logging.debug('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: %s', len(Config.NETCAST_DEVICES))
             else:
                 logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
-            logging.debug('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: %s', len(Config.NETCAST_DEVICES))
             
             chromecast.wait(timeout=30)
             logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
              
             if chromecast.uuid in Config.GCAST_UUID:
                 uuid = chromecast.uuid
-                # myCast.castConnectAndListen(chromecast=chromecast, uuid=uuid)
                 myCast.castListeners(chromecast=chromecast, uuid=uuid)
                 
     class MyCastListener(pychromecast.discovery.AbstractCastListener):
@@ -1328,7 +1322,7 @@ class myCast:
             # print(f"Found cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
             logging.debug('[DAEMON][NETCAST][Add_Cast] Found Cast Device (Name/UUID) :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
             # TODO Action lorsqu'un GoogleCast est ajouté
-            if uuid in Config.NETCAST_DEVICES is not None:
+            """ if uuid in Config.NETCAST_DEVICES:
                 chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == uuid]
             else:
                 chromecasts = None
@@ -1336,7 +1330,7 @@ class myCast:
                 Config.NETCAST_DEVICES.append(pychromecast.get_chromecast_from_cast_info(Config.NETCAST_BROWSER.services[uuid], Config.NETCAST_ZCONF, 1, 10, 30))
                 logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES Append :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
             else:
-                logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES :: Device déjà présent')
+                logging.debug('[DAEMON][NETCAST][Add_Cast] NETCAST_DEVICES :: Device déjà présent') """
             # TODO Config.NETCAST_DEVICES add device ?
 
         def remove_cast(self, uuid, _service, cast_info):
