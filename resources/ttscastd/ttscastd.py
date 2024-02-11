@@ -1467,7 +1467,7 @@ parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
 parser.add_argument("--voicerssapikey", help="Voice RSS ApiKey", type=str)
 parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
 parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
-parser.add_argument("--appdisableding", help="App Disable Ding Parameter", type=bool)
+parser.add_argument("--appdisableding", help="App Disable Ding Parameter", type=str)
 parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 
@@ -1487,7 +1487,7 @@ if args.gcloudapikey:
 if args.voicerssapikey:
     Config.apiRSSKey = args.voicerssapikey
 if args.appdisableding:
-    Config.appDisableDing = args.appdisableding
+    Config.appDisableDing = bool(args.appdisableding)
 if args.pid:
     Config.pidFile = args.pid
 if args.cyclefactor:
