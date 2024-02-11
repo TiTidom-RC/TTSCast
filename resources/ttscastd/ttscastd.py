@@ -1145,6 +1145,10 @@ class Functions:
                             castIsMuted = cast.status.volume_muted
                             castAppId = cast.status.app_id
                             castStatusText = cast.status.status_text
+                            if cast.socket_client.is_connected:
+                                castIsOnline = '1'
+                            else:
+                                castIsOnline = '0'
                             
                             mediaLastUpdated = None
                             if (cast.media_controller.status.last_updated is not None):
@@ -1179,7 +1183,7 @@ class Functions:
                                 'stream_type': mediaStreamType,
                                 'last_updated': mediaLastUpdated,
                                 'schedule': 1,
-                                'online': '1'
+                                'online': castIsOnline
                             }
 
                             # Envoi vers Jeedom
