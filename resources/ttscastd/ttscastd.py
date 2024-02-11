@@ -176,7 +176,7 @@ class Loops:
                             if _uuid in Config.GCAST_UUID:
                                 Config.GCAST_UUID.remove(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(Config.GCAST_UUID))
-                                myCast.castRemove(uuid=str(_uuid))
+                                myCast.castRemove(uuid=_uuid)
                             
                     elif message['cmd'] == "scanOn":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
@@ -1250,15 +1250,15 @@ class Functions:
 
 class myCast:
 
-    def castListeners(chromecast=None, uuid=''):
+    def castListeners(chromecast=None, uuid=None):
         """ Connect and Add Listener for Chromecast """
-        if not chromecast:
-            chromecasts = [cast for cast in Config.NETCAST_DEVICES if str(cast.uuid) == uuid]
+        """ if not chromecast:
+            chromecasts =  [cast for cast in Config.NETCAST_DEVICES if str(cast.uuid) == uuid]
             
             if not chromecasts:
                 logging.debug('[DAEMON][NETCAST][CastListeners] Aucun Chromecast avec cet UUID :: %s', uuid)
                 return False
-            chromecast = chromecasts[0]
+            chromecast = chromecasts[0] """
         
         logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
     
@@ -1274,15 +1274,15 @@ class myCast:
         else:
             logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Media Listener already active', str(chromecast.name))
                        
-    def castRemove(chromecast=None, uuid=''):
+    def castRemove(chromecast=None, uuid=None):
         """ Remove Listener and Connection for Chromecast """
+        
         if not chromecast:
-            chromecasts = [cast for cast in Config.NETCAST_DEVICES if str(cast.uuid) == uuid]
-            
-            if not chromecasts:
+            if uuid in Config.NETCAST_DEVICES:
+                chromecast = Config.NETCAST_DEVICES[uuid]
+            else:
                 logging.debug('[DAEMON][NETCAST][CastRemove] Aucun Chromecast avec cet UUID :: %s', uuid)
                 return False
-            chromecast = chromecasts[0]
     
         if (uuid in Config.LISTENER_CAST):
             chromecast.register_status_listener(None)
@@ -1306,7 +1306,7 @@ class myCast:
 
         if chromecast is not None:
             if not any(mycast.uuid == chromecast.uuid for mycast in Config.NETCAST_DEVICES):
-                Config.NETCAST_DEVICES.append(chromecast)
+                Config.NETCAST_DEVICES[chromecast.uuid] = chromecast
                 logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Added to NETCAST_DEVICES', str(chromecast.name))
             else:
                 logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
@@ -1316,9 +1316,9 @@ class myCast:
             logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
              
             if chromecast.uuid in Config.GCAST_UUID:
-                uuid = str(chromecast.uuid)
+                uuid = chromecast.uuid
                 # myCast.castConnectAndListen(chromecast=chromecast, uuid=uuid)
-                myCast.castListeners(uuid=uuid)
+                myCast.castListeners(chromecast=chromecast, uuid=uuid)
                 
     class MyCastListener(pychromecast.discovery.AbstractCastListener):
         """Listener for discovering chromecasts."""
@@ -1328,7 +1328,7 @@ class myCast:
             # print(f"Found cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
             logging.debug('[DAEMON][NETCAST][Add_Cast] Found Cast Device (Name/UUID) :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
             # TODO Action lorsqu'un GoogleCast est ajouté
-            if Config.NETCAST_DEVICES is not None:
+            if uuid in Config.NETCAST_DEVICES is not None:
                 chromecasts = [mycast for mycast in Config.NETCAST_DEVICES if mycast.uuid == uuid]
             else:
                 chromecasts = None
