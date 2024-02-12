@@ -1140,6 +1140,51 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
+        $cmd = $this->getCmd(null, 'duration');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Durée', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('duration');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        $cmd = $this->getCmd(null, 'current_time');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Time', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('current_time');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        $cmd = $this->getCmd(null, 'image');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Image', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('image');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
         $cmd = $this->getCmd(null, 'content_type');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
@@ -1238,7 +1283,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'radios');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Radio', __FILE__));
+            $cmd->setName(__('Radios', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('radios');
             $cmd->setType('action');
@@ -1255,7 +1300,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'sounds');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Sound', __FILE__));
+            $cmd->setName(__('Sounds', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('sounds');
             $cmd->setType('action');
@@ -1272,7 +1317,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'customsounds');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Custom Sound', __FILE__));
+            $cmd->setName(__('Custom Sounds', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('customsounds');
             $cmd->setType('action');
@@ -1280,6 +1325,22 @@ class ttscast extends eqLogic
             $customSoundList = $this->getCustomSoundList();
             $cmd->setConfiguration('listValue', $customSoundList);
 	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        $cmd = $this->getCmd(null, 'media');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media');
+            $cmd->setType('action');
+            $cmd->setSubType('message');
+            $cmd->setIsVisible(1);
+            $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "Media"));
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {

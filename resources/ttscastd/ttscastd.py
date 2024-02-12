@@ -1187,7 +1187,7 @@ class Functions:
                                 'artist': mediaArtist,
                                 'duration': mediaDuration,
                                 'current_time': mediaCurrentTime,
-                                'images': mediaImages,
+                                'image': mediaImages,
                                 'album_name': mediaAlbumName,
                                 'content_type': mediaContentType,
                                 'stream_type': mediaStreamType,
