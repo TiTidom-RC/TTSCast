@@ -1166,9 +1166,9 @@ class Functions:
                             mediaCurrentTime = cast.media_controller.current_time
                             
                             if cast.media_controller.status.images:
-                                mediaImages = cast.media_controller.status.images[0].url
+                                mediaImage = cast.media_controller.status.images[0].url
                             else:
-                                mediaImages = []
+                                mediaImage = []
                             mediaContentType = cast.media_controller.status.content_type
                             mediaStreamType = cast.media_controller.status.stream_type
                             
@@ -1187,7 +1187,7 @@ class Functions:
                                 'artist': mediaArtist,
                                 'duration': mediaDuration,
                                 'current_time': mediaCurrentTime,
-                                'image': mediaImages,
+                                'image': mediaImage,
                                 'album_name': mediaAlbumName,
                                 'content_type': mediaContentType,
                                 'stream_type': mediaStreamType,
@@ -1426,9 +1426,9 @@ class myCast:
                 mediaDuration = status.duration
                 
                 if status.images:
-                    mediaImages = status.images[0].url
+                    mediaImage = status.images[0].url
                 else:
-                    mediaImages = []
+                    mediaImage = []
                     
                 mediaContentType = status.content_type
                 mediaStreamType = status.stream_type
@@ -1441,7 +1441,7 @@ class myCast:
                     'artist': mediaArtist,
                     'duration': mediaDuration,
                     'current_time': mediaCurrentTime,
-                    'images': mediaImages,
+                    'image': mediaImage,
                     'album_name': mediaAlbumName,
                     'content_type': mediaContentType,
                     'stream_type': mediaStreamType,
