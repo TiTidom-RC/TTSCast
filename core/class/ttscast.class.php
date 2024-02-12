@@ -141,7 +141,8 @@ class ttscast extends eqLogic
         try {
             $deamon_info = self::deamon_info();
             if ($deamon_info['state'] != 'ok') {
-                throw new Exception("Le démon n'est pas démarré");
+                throw new Exception("[SendToDaemon] Le démon n'est pas démarré");
+                return false;
             }
             $params['apikey'] = jeedom::getApiKey(__CLASS__);
             $payLoad = json_encode($params);
