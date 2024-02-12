@@ -152,11 +152,11 @@ class ttscast extends eqLogic
             socket_close($socket);
         } catch (Exception $e) {
             log::add('ttscast', 'error', '[sendToDaemon] Exception :: ' . $e->getMessage());
-            event::add('jeedom::alert', array(
+            /* event::add('jeedom::alert', array(
                 'level' => 'warning',
                 'page' => 'ttscast',
                 'message' => __('[sendToDaemon] Exception :: ' . $e->getMessage(), __FILE__),
-            ));
+            )); */
             return false;
         }
     }
