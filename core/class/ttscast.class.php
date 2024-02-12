@@ -1355,7 +1355,7 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('customcmd');
             $cmd->setType('action');
             $cmd->setSubType('message');    
-	        $cmd->setIsVisible(1);
+	        $cmd->setIsVisible(0);
             $cmd->setDisplay('parameters', array("title_disable" => "1", "title_placeholder" => "Options", "message_placeholder" => "Custom Cmd"));
             $cmd->setOrder($orderCmd++);
             $cmd->save();
