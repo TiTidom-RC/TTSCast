@@ -1197,6 +1197,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('image');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setTemplate('dashboard', 'ttscast::TTSCast-Image');
+            $cmd->setTemplate('mobile', 'ttscast::TTSCast-Image');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
