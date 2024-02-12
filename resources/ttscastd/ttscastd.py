@@ -1163,12 +1163,13 @@ class Functions:
                             mediaArtist = cast.media_controller.status.artist
                             mediaAlbumName = cast.media_controller.status.album_name
                             mediaDuration = cast.media_controller.status.duration
-                            mediaCurrentTime = cast.media_controller.current_time
+                            mediaCurrentTime = cast.media_controller.status.current_time
                             
                             if cast.media_controller.status.images:
                                 mediaImage = cast.media_controller.status.images[0].url
                             else:
                                 mediaImage = []
+                            
                             mediaContentType = cast.media_controller.status.content_type
                             mediaStreamType = cast.media_controller.status.stream_type
                             
@@ -1424,6 +1425,7 @@ class myCast:
                 mediaArtist = status.artist
                 mediaAlbumName = status.album_name
                 mediaDuration = status.duration
+                mediaCurrentTime = status.current_time
                 
                 if status.images:
                     mediaImage = status.images[0].url
@@ -1432,7 +1434,6 @@ class myCast:
                     
                 mediaContentType = status.content_type
                 mediaStreamType = status.stream_type
-                mediaCurrentTime = status.current_time
 
                 data = {
                     'uuid': str(self.cast.uuid),
