@@ -1189,23 +1189,6 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
-        $cmd = $this->getCmd(null, 'image');
-        if (!is_object($cmd)) {
-	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Cast Media Image', __FILE__));
-            $cmd->setEqLogic_id($this->getId());
-	        $cmd->setLogicalId('image');
-            $cmd->setType('info');
-            $cmd->setSubType('string');
-            $cmd->setTemplate('dashboard', 'ttscast::TTSCast-Image');
-            $cmd->setTemplate('mobile', 'ttscast::TTSCast-Image');
-	        $cmd->setIsVisible(1);
-            $cmd->setOrder($orderCmd++);
-            $cmd->save();
-        } else {
-            $orderCmd++;
-        }
-
         $cmd = $this->getCmd(null, 'content_type');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
@@ -1244,6 +1227,23 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('last_updated');
             $cmd->setType('info');
             $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        $cmd = $this->getCmd(null, 'image');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Image', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('image');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setTemplate('dashboard', 'ttscast::TTSCast-Image');
+            $cmd->setTemplate('mobile', 'ttscast::TTSCast-Image');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
