@@ -1168,7 +1168,7 @@ class Functions:
                             if cast.media_controller.status.images:
                                 mediaImage = cast.media_controller.status.images[0].url
                             else:
-                                mediaImage = []
+                                mediaImage = ""
                             
                             mediaContentType = cast.media_controller.status.content_type
                             mediaStreamType = cast.media_controller.status.stream_type
@@ -1430,7 +1430,7 @@ class myCast:
                 if status.images:
                     mediaImage = status.images[0].url
                 else:
-                    mediaImage = []
+                    mediaImage = ""
                     
                 mediaContentType = status.content_type
                 mediaStreamType = status.stream_type
