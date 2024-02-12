@@ -151,6 +151,11 @@ class ttscast extends eqLogic
             socket_close($socket);
         } catch (Exception $e) {
             log::add('ttscast', 'error', '[sendToDaemon] Exception :: ' . $e->getMessage());
+            event::add('jeedom::alert', array(
+                'level' => 'warning',
+                'page' => 'ttscast',
+                'message' => __('[sendToDaemon] Exception :: ' . $e->getMessage(), __FILE__),
+            ));
             return false;
         }
     }
@@ -455,6 +460,7 @@ class ttscast extends eqLogic
 
     public static function sendOnStartCastToDaemon()
     {
+        log::add('ttscast', 'info', '[SendOnStart] Envoi Equipements TTSCast Actifs');
         $i = 0;
         while ($i < 10) {
             $deamon_info = self::deamon_info();
@@ -465,7 +471,7 @@ class ttscast extends eqLogic
             $i++;
         }
         if ($i >= 10) {
-            log::add('ttscast', 'error', '[Cast][SendOnStart] Démon non lancé :: KO');
+            log::add('ttscast', 'error', '[SendOnStart] Démon non lancé (>10s) :: KO');
             return false;
         }
         foreach(self::byType('ttscast') as $eqLogic) {
