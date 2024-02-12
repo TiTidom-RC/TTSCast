@@ -1162,6 +1162,13 @@ class Functions:
                             mediaTitle = cast.media_controller.status.title
                             mediaArtist = cast.media_controller.status.artist
                             mediaAlbumName = cast.media_controller.status.album_name
+                            mediaDuration = cast.media_controller.status.duration
+                            mediaCurrentTime = cast.media_controller.current_time
+                            
+                            if cast.media_controller.status.images:
+                                mediaImages = cast.media_controller.status.images[0].url
+                            else:
+                                mediaImages = []
                             mediaContentType = cast.media_controller.status.content_type
                             mediaStreamType = cast.media_controller.status.stream_type
                             
@@ -1178,6 +1185,9 @@ class Functions:
                                 'player_state': mediaPlayerState,
                                 'title': mediaTitle,
                                 'artist': mediaArtist,
+                                'duration': mediaDuration,
+                                'current_time': mediaCurrentTime,
+                                'images': mediaImages,
                                 'album_name': mediaAlbumName,
                                 'content_type': mediaContentType,
                                 'stream_type': mediaStreamType,
@@ -1401,20 +1411,40 @@ class myCast:
                     last_updated = status.last_updated.replace(tzinfo=datetime.timezone.utc)
                     last_updated_local = last_updated.astimezone(tz=None)
                     mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
+                else:
+                    mediaLastUpdated = "N/A"
                 
                 if self.cast.socket_client.is_connected:
                     castIsOnline = '1'
                 else:
                     castIsOnline = '0'
                 
+                mediaPlayerState = status.player_state
+                mediaTitle = status.title
+                mediaArtist = status.artist
+                mediaAlbumName = status.album_name
+                mediaDuration = status.duration
+                
+                if status.images:
+                    mediaImages = status.images[0].url
+                else:
+                    mediaImages = []
+                    
+                mediaContentType = status.content_type
+                mediaStreamType = status.stream_type
+                mediaCurrentTime = status.current_time
+
                 data = {
                     'uuid': str(self.cast.uuid),
-                    'player_state': status.player_state,
-                    'title': status.title,
-                    'artist': status.artist,
-                    'album_name': status.album_name,
-                    'content_type': status.content_type,
-                    'stream_type': status.stream_type,
+                    'player_state': mediaPlayerState,
+                    'title': mediaTitle,
+                    'artist': mediaArtist,
+                    'duration': mediaDuration,
+                    'current_time': mediaCurrentTime,
+                    'images': mediaImages,
+                    'album_name': mediaAlbumName,
+                    'content_type': mediaContentType,
+                    'stream_type': mediaStreamType,
                     'last_updated': mediaLastUpdated,
                     'realtime': 1,
                     'status_type': 'media',
