@@ -141,8 +141,7 @@ class ttscast extends eqLogic
         try {
             $deamon_info = self::deamon_info();
             if ($deamon_info['state'] != 'ok') {
-                throw new Exception("Le démon TTSCast n'est pas démarré :: KO");
-                return false;
+                throw new Exception("Le Démon n'est pas démarré !");
             }
             $params['apikey'] = jeedom::getApiKey(__CLASS__);
             $payLoad = json_encode($params);
@@ -151,7 +150,7 @@ class ttscast extends eqLogic
             socket_write($socket, $payLoad, strlen($payLoad));
             socket_close($socket);
         } catch (Exception $e) {
-            log::add('ttscast', 'error', '[sendToDaemon] Exception :: ' . $e->getMessage());
+            log::add('ttscast', 'error', '[SOCKET][SendToDaemon] Exception :: ' . $e->getMessage());
             /* event::add('jeedom::alert', array(
                 'level' => 'warning',
                 'page' => 'ttscast',
