@@ -455,6 +455,19 @@ class ttscast extends eqLogic
 
     public static function sendOnStartCastToDaemon()
     {
+        $i = 0;
+        while ($i < 10) {
+            $deamon_info = self::deamon_info();
+            if ($deamon_info['state'] == 'ok') {
+                break;
+            }
+            sleep(1);
+            $i++;
+        }
+        if ($i >= 10) {
+            log::add('ttscast', 'error', '[Cast][SendOnStart] Démon non lancé :: KO');
+            return false;
+        }
         foreach(self::byType('ttscast') as $eqLogic) {
             if ($eqLogic->getIsEnable()) {
                 $eqLogic->enableCastToDaemon();
