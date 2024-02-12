@@ -1143,7 +1143,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'duration');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Cast Media Durée', __FILE__));
+            $cmd->setName(__('Cast Media Duration', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('duration');
             $cmd->setType('info');
@@ -1158,7 +1158,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'current_time');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Cast Media Time', __FILE__));
+            $cmd->setName(__('Cast Media CurrentTime', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('current_time');
             $cmd->setType('info');
