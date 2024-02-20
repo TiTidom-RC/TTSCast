@@ -70,7 +70,7 @@ class Config:
     imagesFolder = 'data/images'
     imagesFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), imagesFolder))
 
-    configFolder = 'core/config'
+    configFolder = 'data/config'
     configFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), configFolder))
     
     appDisableDing = False

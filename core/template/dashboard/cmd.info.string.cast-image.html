@@ -1,5 +1,7 @@
-<div class="cmd cmd-widget" data-type="info" data-subtype="string" data-template="default" data-cmd_id="#id#"
-    data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#">
+<div class="cmd cmd-widget" data-type="info" data-subtype="string" data-template="default" data-cmd_id="#id#" data-cmd_uid="#uid#" data-version="#version#" data-eqLogic_id="#eqLogic_id#">
+    <div class="title #hide_name#">
+        <div class="cmdName">#name_display#</div>
+    </div>
     <div class="content">
         <img src="" style="height:200px;width:200px;" />
     </div>
@@ -15,9 +17,9 @@
                     jeedom.cmd.displayDuration(_options.valueDate, cmd.querySelector('.timeCmd'), '#time#')
                 }
                 if (_options.value != '') {
-                    cmd.querySelector('.content img').src = './plugins/ttscast/core/ajax/ttscast.img.proxy.php?img=' + btoa(_options.value)
+                    cmd.querySelector('.content img').src = './plugins/ttscast/core/php/ttscast.img.proxy.php?img=' + btoa(_options.value)
                 } else {
-                    cmd.querySelector('.content img').src = './plugins/ttscast/data/images/tts.png'
+                    cmd.querySelector('.content img').src = './plugins/ttscast/data/images/ttscast-200.png'
                 }
 
             }

@@ -66,7 +66,7 @@ try {
             throw new Exception(__('[UPLOAD][APIKEY] Le fichier est trop gros (max. 10Ko)', __FILE__));
         }
       
-        $filepath = __DIR__ . "/../../core/config/{$_FILES['fileAPIKey']['name']}";
+        $filepath = __DIR__ . "/../../data/config/{$_FILES['fileAPIKey']['name']}";
         log::add('ttscast', 'debug', "[UPLOAD][APIKEY] filepath: {$filepath}");
         file_put_contents($filepath, file_get_contents($_FILES['fileAPIKey']['tmp_name']));
         if (!file_exists($filepath)) {
@@ -77,7 +77,7 @@ try {
 	}
 
     if (init('action') == 'resetAPIKey') {
-        $filepath = __DIR__ . "/../../core/config/" . init('filename');
+        $filepath = __DIR__ . "/../../data/config/" . init('filename');
         if (!file_exists($filepath)) {
             throw new Exception('[RESET][APIKEY] Fichier introuvable : ' . $filepath);
         }    
