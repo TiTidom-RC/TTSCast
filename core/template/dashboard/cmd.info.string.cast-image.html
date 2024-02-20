@@ -14,9 +14,9 @@
             if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
                 cmd.querySelector('.content').setAttribute('title', '{{Date de valeur}} : ' + _options.valueDate + '<br>{{Date de collecte}} : ' + _options.collectDate)
                 if ('#time#' == 'duration' || '#time#' == 'date') {
-                    jeedom.cmd.displayDuration(_options.valueDate, cmd.querySelector('.timeCmd'), '#time#')
+                    jeedom.cmd.displayDuration(_options.valueDate, cmd.find('.timeCmd'), '#time#')
                 } else {
-                    cmd.querySelector('.timeCmd').parent().remove()
+                    cmd.find('.timeCmd').parent().remove()
                 }
 
                 if (_options.value != '') {
