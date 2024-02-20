@@ -5,9 +5,7 @@
     <div class="content">
         <img src="./plugins/ttscast/data/images/ttscast-200.png" style="height:200px;width:200px;" />
     </div>
-    <div class="value">
-        <span class="timeCmd label label-default #history#" data-type="info"></span>
-    </div>
+    <div class="timeCmd label label-default #history#" data-type="info"></div>
     <template>
         <div>time : duration|date ({{Affiche durée ou date de la valeur}})</div>
     </template>
@@ -16,9 +14,7 @@
             if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
                 cmd.querySelector('.content').setAttribute('title', '{{Date de valeur}} : ' + _options.valueDate + '<br>{{Date de collecte}} : ' + _options.collectDate)
                 if ('#time#' == 'duration' || '#time#' == 'date') {
-                    jeedom.cmd.displayDuration(_options.valueDate, cmd.find('.timeCmd'), '#time#')
-                } else {
-                    cmd.find('.timeCmd').parent().remove()
+                    jeedom.cmd.displayDuration(_options.valueDate, cmd.querySelector('.timeCmd'), '#time#')
                 }
 
                 if (_options.value != '') {
