@@ -672,9 +672,9 @@ class TTSCast:
                 while True:
                     if media_player_state != cast.media_controller.status.player_state:
                         media_player_state = cast.media_controller.status.player_state
-                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED']:
+                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
                             break
-                        if media_player_state in ['PLAYING', 'PAUSED']:
+                        if media_player_state in ['PLAYING']:
                             media_has_played = True
                             logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
                     time.sleep(0.1)
@@ -757,9 +757,9 @@ class TTSCast:
                 while True:
                     if media_player_state != cast.media_controller.status.player_state:
                         media_player_state = cast.media_controller.status.player_state
-                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED']:
+                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
                             break
-                        if media_player_state in ['PLAYING', 'PAUSED']:
+                        if media_player_state in ['PLAYING']:
                             media_has_played = True
                             logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
                     time.sleep(0.1)
@@ -1041,9 +1041,9 @@ class Functions:
                         while True:
                             if media_player_state != cast.media_controller.status.player_state:
                                 media_player_state = cast.media_controller.status.player_state
-                                if media_has_played and media_player_state not in ['PLAYING', 'PAUSED']:
+                                if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
                                     break
-                                if media_player_state in ['PLAYING', 'PAUSED']:
+                                if media_player_state in ['PLAYING']:
                                     media_has_played = True
                                     logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound en cours :: %s', str(cast.media_controller.status))
                             time.sleep(0.1)
