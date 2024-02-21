@@ -1287,12 +1287,12 @@ class Functions:
                     try:
                         if (cast.status is not None and cast.media_controller.status is not None):
                             castVolumeLevel = int(cast.status.volume_level * 100)
-                            castAppDisplayName = cast.status.display_name
+                            castAppDisplayName = cast.status.display_name if cast.status.display_name is not None else "N/A"
                             
                             castIsStandBy = cast.status.is_stand_by
                             castIsMuted = cast.status.volume_muted
-                            castAppId = cast.status.app_id
-                            castStatusText = cast.status.status_text
+                            castAppId = cast.status.app_id if cast.status.app_id is not None else "N/A"
+                            castStatusText = cast.status.status_text if cast.status.status_text is not None else "N/A"
                             if cast.socket_client.is_connected:
                                 castIsOnline = '1'
                             else:
@@ -1306,10 +1306,10 @@ class Functions:
                             else:
                                 mediaLastUpdated = "N/A"
                             
-                            mediaPlayerState = cast.media_controller.status.player_state
-                            mediaTitle = cast.media_controller.status.title
-                            mediaArtist = cast.media_controller.status.artist
-                            mediaAlbumName = cast.media_controller.status.album_name
+                            mediaPlayerState = cast.media_controller.status.player_state if cast.media_controller.status.player_state is not None else "N/A"
+                            mediaTitle = cast.media_controller.status.title if cast.media_controller.status.title is not None else "N/A"
+                            mediaArtist = cast.media_controller.status.artist if cast.media_controller.status.artist is not None else "N/A"
+                            mediaAlbumName = cast.media_controller.status.album_name if cast.media_controller.status.album_name is not None else "N/A"
                             mediaDuration = cast.media_controller.status.duration
                             mediaCurrentTime = cast.media_controller.status.current_time
                             
@@ -1318,8 +1318,8 @@ class Functions:
                             else:
                                 mediaImage = ""
                             
-                            mediaContentType = cast.media_controller.status.content_type
-                            mediaStreamType = cast.media_controller.status.stream_type
+                            mediaContentType = cast.media_controller.status.content_type if cast.media_controller.status.content_type is not None else "N/A"
+                            mediaStreamType = cast.media_controller.status.stream_type if cast.media_controller.status.stream_type is not None else "N/A"
                             
                             data = {
                                 'uuid': str(cast.uuid),
