@@ -34,11 +34,17 @@ class ttscast extends eqLogic
     /*
      * Permet de crypter/décrypter automatiquement des champs de configuration du plugin
      * Exemple : "param1" & "param2" seront cryptés mais pas "param3"
-    public static $_encryptConfigKey = array('param1', 'param2');
-    */
+     */
+    public static $_encryptConfigKey = array('voiceRSSAPIKey');    
 
     /* ************************ Methodes statiques : Démon & Dépendances *************************** */
 
+    public static function backupExclude() {
+		return [
+			'resources/venv'
+		];
+	}
+    
     public static function dependancy_install() {
         log::remove(__CLASS__ . '_update');
         return array('script' => __DIR__ . '/../../resources/install_#stype#.sh ' . jeedom::getTmpFolder(__CLASS__) . '/dependency', 'log' => log::getPathToLog(__CLASS__ . '_update'));
@@ -141,7 +147,7 @@ class ttscast extends eqLogic
         try {
             $deamon_info = self::deamon_info();
             if ($deamon_info['state'] != 'ok') {
-                throw new Exception("Le démon n'est pas démarré");
+                throw new Exception("Le Démon n'est pas démarré !");
             }
             $params['apikey'] = jeedom::getApiKey(__CLASS__);
             $payLoad = json_encode($params);
@@ -150,7 +156,12 @@ class ttscast extends eqLogic
             socket_write($socket, $payLoad, strlen($payLoad));
             socket_close($socket);
         } catch (Exception $e) {
-            log::add('ttscast', 'error', '[sendToDaemon] Exception :: ' . $e->getMessage());
+            log::add('ttscast', 'error', '[SOCKET][SendToDaemon] Exception :: ' . $e->getMessage());
+            /* event::add('jeedom::alert', array(
+                'level' => 'warning',
+                'page' => 'ttscast',
+                'message' => __('[sendToDaemon] Exception :: ' . $e->getMessage(), __FILE__),
+            )); */
             return false;
         }
     }
@@ -255,7 +266,7 @@ class ttscast extends eqLogic
                 $resAction = $data['action'];
             }
             if (array_key_exists('value', $data)) {
-                if (in_array($resAction, ["radios", "sounds", "customsounds"])) {
+                if (in_array($resAction, ["radios", "customradios", "sounds", "customsounds"])) {
                     $resCmd['select'] = $data['value'];
                 }
                 elseif (in_array($resAction, ["volumeset"])) {
@@ -287,6 +298,9 @@ class ttscast extends eqLogic
             }
             if (array_key_exists('ding', $data)) {
                 $resOptions['ding'] = $data['ding'];
+            }
+            if (array_key_exists('type', $data)) {
+                $resOptions['type'] = $data['type'];
             }
 
             $resCmd['title'] = substr(json_encode($resOptions), 1, -1);
@@ -455,6 +469,20 @@ class ttscast extends eqLogic
 
     public static function sendOnStartCastToDaemon()
     {
+        log::add('ttscast', 'info', '[SendOnStart] Envoi Equipements TTSCast Actifs');
+        $i = 0;
+        while ($i < 10) {
+            $deamon_info = self::deamon_info();
+            if ($deamon_info['state'] == 'ok') {
+                break;
+            }
+            sleep(1);
+            $i++;
+        }
+        if ($i >= 10) {
+            log::add('ttscast', 'error', '[SendOnStart] Démon non lancé (>10s) :: KO');
+            return false;
+        }
         foreach(self::byType('ttscast') as $eqLogic) {
             if ($eqLogic->getIsEnable()) {
                 $eqLogic->enableCastToDaemon();
@@ -523,6 +551,37 @@ class ttscast extends eqLogic
         return $radiosReturn;
     }
 
+    public function getCustomRadioList()
+    {
+        $customRadiosReturn = '';
+        try {
+            if (!file_exists(dirname(__FILE__) . '/../../data/radios/custom/radios.json')) {
+                log::add('ttscast', 'warning', '[getCustomRadioList] Custom Radios :: No Custom File');
+                return $customRadiosReturn;
+            }
+            $customRadiosJson = json_decode(file_get_contents(dirname(__FILE__) . "/../../data/radios/custom/radios.json"), true);
+            if (!is_array($customRadiosJson)) {
+                log::add('ttscast', 'error', '[getCustomRadioList] Impossible de décoder le fichier radios.json :: KO');
+                return $customRadiosReturn;
+            }
+
+            $customRadiosArray = array();
+            foreach ($customRadiosJson as $radioId => $radioData) {
+                $customRadiosArray[$radioId] = $radioData['title'];
+            }
+            ksort($customRadiosArray);
+
+            foreach ($customRadiosArray as $radioId => $radioTitle) {
+                $customRadiosReturn .= $radioId . '|' . $radioTitle . ';';
+            }
+            $customRadiosReturn = trim($customRadiosReturn, ";");
+
+        } catch (Exception $e) {
+            log::add('ttscast', 'error', '[getCustomRadioList] Custom Radios Listing ERROR :: ' . $e->getMessage());
+        }
+        return $customRadiosReturn;
+    }
+
     public function getSoundList()
     {
         $filesReturn = '';
@@ -575,6 +634,23 @@ class ttscast extends eqLogic
             log::add('ttscast', 'info', '[updateRadioList] Radio List Update :: OK ');
         } catch (Exception $e) {
             log::add('ttscast', 'error', '[updateRadioList] Radio Update ERROR :: ' . $e->getMessage());
+        }
+    }
+
+    public static function updateCustomRadioList()
+    {
+        try {
+            foreach(self::byType('ttscast') as $eqLogic) {
+                $cmd = $eqLogic->getCmd(null, 'customradios');
+                if (is_object($cmd)) {
+                    $customRadioList = $eqLogic->getCustomRadioList();
+                    $cmd->setConfiguration('listValue', $customRadioList);
+                    $cmd->save();
+                }
+            }
+            log::add('ttscast', 'info', '[updateCustomRadioList] CustomRadio List Update :: OK ');
+        } catch (Exception $e) {
+            log::add('ttscast', 'error', '[updateCustomRadioList] CustomRadio Update ERROR :: ' . $e->getMessage());
         }
     }
 
@@ -1140,6 +1216,36 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
+        $cmd = $this->getCmd(null, 'duration');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Duration', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('duration');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        $cmd = $this->getCmd(null, 'current_time');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media CurrentTime', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('current_time');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
         $cmd = $this->getCmd(null, 'content_type');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
@@ -1178,6 +1284,23 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('last_updated');
             $cmd->setType('info');
             $cmd->setSubType('string');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        $cmd = $this->getCmd(null, 'image');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Media Image', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('image');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setTemplate('dashboard', 'ttscast::cast-image');
+            $cmd->setTemplate('mobile', 'ttscast::cast-image');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1235,10 +1358,26 @@ class ttscast extends eqLogic
             }
         }
 
+        $cmd = $this->getCmd(null, 'media');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Media', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('media');
+            $cmd->setType('action');
+            $cmd->setSubType('message');
+            $cmd->setIsVisible(1);
+            $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "Media"));
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
         $cmd = $this->getCmd(null, 'radios');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Radio', __FILE__));
+            $cmd->setName(__('Radios', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('radios');
             $cmd->setType('action');
@@ -1252,10 +1391,27 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
+        $cmd = $this->getCmd(null, 'customradios');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Custom Radios', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('customradios');
+            $cmd->setType('action');
+            $cmd->setSubType('select');
+            $customRadioList = $this->getCustomRadioList();
+            $cmd->setConfiguration('listValue', $customRadioList);
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
         $cmd = $this->getCmd(null, 'sounds');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Sound', __FILE__));
+            $cmd->setName(__('Sounds', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('sounds');
             $cmd->setType('action');
@@ -1272,7 +1428,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'customsounds');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
-            $cmd->setName(__('Custom Sound', __FILE__));
+            $cmd->setName(__('Custom Sounds', __FILE__));
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('customsounds');
             $cmd->setType('action');
@@ -1294,7 +1450,7 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('customcmd');
             $cmd->setType('action');
             $cmd->setSubType('message');    
-	        $cmd->setIsVisible(1);
+	        $cmd->setIsVisible(0);
             $cmd->setDisplay('parameters', array("title_disable" => "1", "title_placeholder" => "Options", "message_placeholder" => "Custom Cmd"));
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1399,7 +1555,7 @@ class ttscastCmd extends cmd
                 if (isset($googleUUID)) {
                     ttscast::actionGCast($googleUUID, $logicalId);
                 }
-            } elseif (in_array($logicalId, ["youtube", "dashcast"])) {
+            } elseif (in_array($logicalId, ["youtube", "dashcast", "media"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
@@ -1409,7 +1565,7 @@ class ttscastCmd extends cmd
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
                 }                
-            } elseif (in_array($logicalId, ["radios", "sounds", "customsounds"])) {
+            } elseif (in_array($logicalId, ["radios", "customradios", "sounds", "customsounds"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['select'])) {

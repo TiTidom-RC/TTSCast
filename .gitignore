@@ -1,4 +1,4 @@
-core/config/*.json
+data/config/*.json
 .project
 .DS_Store
 Thumbs.db
