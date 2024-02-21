@@ -27,6 +27,7 @@ class Config:
     NETCAST_ZCONF = None
     LISTENER_CAST = {}
     LISTENER_MEDIA = {}
+    LISTENER_CONNECT = {}
 
     IS_ENDING = False
 

@@ -53,6 +53,7 @@ try:
     from pychromecast import quick_play
     from pychromecast.controllers.media import MediaStatusListener
     from pychromecast.controllers.receiver import CastStatusListener
+    from pychromecast.socket_client import ConnectionStatusListener
     from pychromecast.controllers import dashcast
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
@@ -1436,6 +1437,12 @@ class myCast:
             chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
         else:
             logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Media Listener already active', str(chromecast.name))
+            
+        if uuid not in Config.LISTENER_CONNECT:
+            Config.LISTENER_CONNECT[uuid] = myCast.MyConnectionStatusListener(chromecast.name, chromecast)
+            chromecast.register_connection_listener(Config.LISTENER_CONNECT[uuid])
+        else:
+            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Connect Listener already active', str(chromecast.name))
                        
     def castRemove(chromecast=None, uuid=None):
         """ Remove Listener and Connection for Chromecast """
@@ -1448,13 +1455,19 @@ class myCast:
                 return False
     
         if (uuid in Config.LISTENER_CAST):
-            chromecast.register_status_listener(None)
+            # chromecast.register_status_listener(None)
             del Config.LISTENER_CAST[uuid]
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Status Listener already deleted', str(chromecast.name))
             
         if (uuid in Config.LISTENER_MEDIA):
-            chromecast.media_controller.register_status_listener(None)
+            # chromecast.media_controller.register_status_listener(None)
+            del Config.LISTENER_MEDIA[uuid]
+        else:
+            logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
+        
+        if (uuid in Config.LISTENER_CONNECT):
+            # chromecast.register_connection_listener(None)
             del Config.LISTENER_MEDIA[uuid]
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
@@ -1615,6 +1628,48 @@ class myCast:
 
         def load_media_failed(self, item, error_code):
             logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(item) + ' with code :: ' + str(error_code))
+
+    class MyConnectionStatusListener(ConnectionStatusListener):
+        """ConnectionStatusListener"""
+
+        def __init__(self, name, cast):
+            self.name = name
+            self.cast = cast
+
+        def new_connection_status(self, status) -> None:
+            """Updated connection status."""
+            
+            logging.debug('[DAEMON][NETCAST][New_Connect_Status] ' + self.name + ' :: STATUS Connect change :: ' + str(status))
+            try:
+                # The socket connection is being setup
+                CONNECTION_STATUS_CONNECTING = "CONNECTING"
+                # The socket connection was complete
+                CONNECTION_STATUS_CONNECTED = "CONNECTED"
+                # The socket connection has been disconnected
+                CONNECTION_STATUS_DISCONNECTED = "DISCONNECTED"
+                # Connecting to socket failed (after a CONNECTION_STATUS_CONNECTING)
+                CONNECTION_STATUS_FAILED = "FAILED"
+                # Failed to resolve service name
+                CONNECTION_STATUS_FAILED_RESOLVE = "FAILED_RESOLVE"
+                # The socket connection was lost and needs to be retried
+                CONNECTION_STATUS_LOST = "LOST"
+                
+                if status.status in [CONNECTION_STATUS_CONNECTED, CONNECTION_STATUS_CONNECTING]:
+                    castIsOnline = '1'
+                else:
+                    castIsOnline = '0'
+                
+                data = {
+                    'uuid': str(self.cast.uuid),
+                    'realtime': 1,
+                    'online': castIsOnline
+                }
+
+                # Envoi vers Jeedom
+                Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][New_Connect_Status] Exception :: %s', e)
+                logging.debug(traceback.format_exc())
 
 # ----------------------------------------------------------------------------
 
