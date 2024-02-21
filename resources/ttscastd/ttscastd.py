@@ -1108,27 +1108,38 @@ class Functions:
                             cast.set_volume(volume=_volume / 100)
                         
                         media = _value
-                        if _mediaType is not None:
-                            mediaType = _mediaType
-                        else:
-                            mediaType = None
                         mediaThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                         mediaTitle = _value
                         mediaSubTitle = "[Jeedom] TTSCast Media"
-                            
+                        
                         app_name = "bubbleupnp"
-                        app_data = {
-                            "media_id": media,
-                            "media_type": mediaType,
-                            "title": mediaTitle,
-                            "thumb": mediaThumb,
-                            "metadata": {
+                        
+                        if _mediaType is not None:
+                            app_data = {
+                                "media_id": media,
+                                "media_type": _mediaType,
                                 "title": mediaTitle,
-                                "subtitle": mediaSubTitle,
-                                "images": [{"url": mediaThumb}]
-                            },
-                            "stream_type": "BUFFERED"
-                        }
+                                "thumb": mediaThumb,
+                                "metadata": {
+                                    "title": mediaTitle,
+                                    "subtitle": mediaSubTitle,
+                                    "images": [{"url": mediaThumb}]
+                                },
+                                "stream_type": "BUFFERED"
+                            }
+                        else:
+                            app_data = {
+                                "media_id": media,
+                                "title": mediaTitle,
+                                "thumb": mediaThumb,
+                                "metadata": {
+                                    "title": mediaTitle,
+                                    "subtitle": mediaSubTitle,
+                                    "images": [{"url": mediaThumb}]
+                                },
+                                "stream_type": "BUFFERED"
+                            }
+                            
                         quick_play.quick_play(cast, app_name, app_data)
                             
                         if (not _appDing and _volume is not None):
