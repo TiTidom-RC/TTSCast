@@ -556,7 +556,7 @@ class ttscast extends eqLogic
         $customRadiosReturn = '';
         try {
             if (!file_exists(dirname(__FILE__) . '/../../data/radios/custom/radios.json')) {
-                log::add('ttscast', 'error', '[getCustomRadioList] Custom Radios File Missing :: KO');
+                log::add('ttscast', 'warning', '[getCustomRadioList] Custom Radios :: No Custom File');
                 return $customRadiosReturn;
             }
             $customRadiosJson = json_decode(file_get_contents(dirname(__FILE__) . "/../../data/radios/custom/radios.json"), true);
