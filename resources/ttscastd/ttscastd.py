@@ -1029,8 +1029,9 @@ class Functions:
                         logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: FilePath :: %s', soundURL)
 
                         soundThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
-                        soundTitle = _value
-                        soundSubTitle = "[Jeedom] TTSCast Sound"
+                        soundAlbumName = "Jeedom"
+                        soundTitle = "TTSCast Sound"
+                        soundArtist = _value
 
                         app_name = "default_media_receiver"
                         # app_name = "bubbleupnp"
@@ -1040,8 +1041,10 @@ class Functions:
                             "title": soundTitle,
                             "thumb": soundThumb,
                             "metadata": {
+                                "metadataType": 3,
                                 "title": soundTitle,
-                                "subtitle": soundSubTitle,
+                                "artist": soundArtist,
+                                "albumName": soundAlbumName,
                                 "images": [{"url": soundThumb}]
                             }
                         }
