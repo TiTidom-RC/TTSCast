@@ -958,7 +958,8 @@ class Functions:
                                     radioThumb = radio['image']
                                 radioUrl = radio['location']
                                 radioTitle = radio['title']
-                                radioSubTitle = "[Jeedom] TTSCast Radio"
+                                radioArtist = "TTSCast Radio"
+                                radioAlbumName = "Jeedom"
                                 
                                 app_name = "default_media_receiver"
                                 app_data = {
@@ -967,8 +968,10 @@ class Functions:
                                     "title": radioTitle,
                                     "thumb": radioThumb,
                                     "metadata": {
+                                        "metadataType": 3,
                                         "title": radioTitle,
-                                        "subtitle": radioSubTitle,
+                                        "artist": radioArtist,
+                                        "albumName": radioAlbumName,
                                         "images": [{"url": radioThumb}]
                                     },
                                     "stream_type": "LIVE"
