@@ -360,11 +360,6 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Download et/ou Upload d'un fichier (.json) pour mettre à jour la liste des Custom Radios}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-warning" target="_blank" href="../../data/radios/custom/radios.json" download>
-                        <i class="fas fa-file-download"></i> {{Download Custom Radios}}
-                    </a>
-                </div>
-                <div class="col-lg-1">
                     <a class="btn btn-info btn-file">
                         <i class="fas fa-file-upload"></i> {{Ajouter des Custom Radios (.json)}}<input class="pluginAction" data-action="uploadCustomRadios" type="file" name="fileCustomRadios" style="display: inline-block;" accept=".json" />
                     </a>
