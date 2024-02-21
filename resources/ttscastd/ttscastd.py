@@ -1540,6 +1540,8 @@ class myCast:
             try:
                 castVolumeLevel = int(status.volume_level * 100)
                 castAppDisplayName = status.display_name if status.display_name is not None else "N/A"
+                castAppId = status.app_id if status.app_id is not None else "N/A"
+                castStatusText = status.status_text if status.status_text is not None else "N/A"
                 """ if self.cast.socket_client.is_connected:
                     castIsOnline = '1'
                 else:
@@ -1551,8 +1553,8 @@ class myCast:
                     'volume_level': castVolumeLevel,
                     'volume_muted': status.volume_muted,
                     'display_name': castAppDisplayName,
-                    'app_id': status.app_id,
-                    'status_text': status.status_text,
+                    'app_id': castAppId,
+                    'status_text': castStatusText,
                     'realtime': 1,
                     'status_type': 'cast'
                 }
