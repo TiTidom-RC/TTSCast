@@ -339,11 +339,26 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Ajouter un fichier :: Custom Sound}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Télécharge un fichier (.mp3) pour l'ajouter au répertoire des Custom Sounds}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Upload un fichier (.mp3) pour l'ajouter au répertoire des Custom Sounds}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <a class="btn btn-primary btn-file">
                         <i class="fas fa-file-upload"></i> {{Ajouter un Custom Sound (.mp3)}}<input class="pluginAction" data-action="uploadCustomSound" type="file" name="fileCustomSound" style="display: inline-block;" accept=".mp3" />
+                    </a>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Ajouter une radio :: Custom Radio}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Download et/ou Upload d'un fichier (.json) pour mettre à jour la liste des Custom Radios}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <a class="btn btn-secondary" href="../../data/radios/custom/customradios.json" download>
+                        <i class="fas fa-file-download"></i> {{Télécharger le Fichier Custom Radio (.json)}}
+                    </a>
+                </div>
+                <div class="col-lg-1">
+                    <a class="btn btn-primary btn-file">
+                        <i class="fas fa-file-upload"></i> {{Ajouter un Fichier Custom Radio (.json)}}<input class="pluginAction" data-action="uploadCustomRadio" type="file" name="fileCustomRadio" style="display: inline-block;" accept=".json" />
                     </a>
                 </div>
             </div>
