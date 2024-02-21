@@ -1539,7 +1539,7 @@ class myCast:
             logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast change :: ' + str(status))
             try:
                 castVolumeLevel = int(status.volume_level * 100)
-                castAppDisplayName = status.display_name
+                castAppDisplayName = status.display_name if status.display_name is not None else "N/A"
                 """ if self.cast.socket_client.is_connected:
                     castIsOnline = '1'
                 else:
@@ -1586,10 +1586,10 @@ class myCast:
                 else:
                     castIsOnline = '0' """
                 
-                mediaPlayerState = status.player_state
-                mediaTitle = status.title
-                mediaArtist = status.artist
-                mediaAlbumName = status.album_name
+                mediaPlayerState = status.player_state if status.player_state is not None else "N/A"
+                mediaTitle = status.title if status.title is not None else "N/A"
+                mediaArtist = status.artist if status.artist is not None else "N/A"
+                mediaAlbumName = status.album_name if status.album_name is not None else "N/A"
                 mediaDuration = status.duration
                 mediaCurrentTime = status.current_time
                 
@@ -1598,8 +1598,8 @@ class myCast:
                 else:
                     mediaImage = ""
                     
-                mediaContentType = status.content_type
-                mediaStreamType = status.stream_type
+                mediaContentType = status.content_type if status.content_type is not None else "N/A"
+                mediaStreamType = status.stream_type if status.stream_type is not None else "N/A"
 
                 data = {
                     'uuid': str(self.cast.uuid),
