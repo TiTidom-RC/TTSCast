@@ -352,8 +352,8 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Download et/ou Upload d'un fichier (.json) pour mettre à jour la liste des Custom Radios}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-secondary" href="../../data/radios/custom/customradios.json" download>
-                        <i class="fas fa-file-download"></i> {{Télécharger le Fichier Custom Radio (.json)}}
+                    <a class="btn btn-info" target="_blank" href="../../data/radios/custom/radios.json" download>
+                        <i class="fas fa-file-download"></i> {{Télécharger les Custom Radio (.json)}}
                     </a>
                 </div>
                 <div class="col-lg-1">

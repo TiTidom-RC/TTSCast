@@ -1,0 +1,12 @@
+{
+   "radio_example1":{
+      "location":"https://radios.example.com/radioexample.mp3",
+      "title":"Radio Example 1",
+      "image":"https://radios.example.com/logo1.png"
+   },
+   "radio_example2":{
+      "location":"https://radios.example.com/radioexample2.mp3",
+      "title":"Radio Example 2",
+      "image":"https://radios.example.com/logo2.png"
+   }
+}
