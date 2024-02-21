@@ -1113,21 +1113,19 @@ class Functions:
                         else:
                             mediaType = "video/mp4"
                         mediaThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
-                        mediaTitle = _value
+                        mediaTitle = "Media UPNP"
                         mediaSubTitle = "[Jeedom] TTSCast Media"
                         
                         app_name = "bubbleupnp"
                         app_data = {
                             "media_id": media,
                             "media_type": mediaType,
-                            "title": mediaTitle,
-                            "thumb": mediaThumb,
+                            "stream_type": "BUFFERED",
                             "metadata": {
                                 "title": mediaTitle,
                                 "subtitle": mediaSubTitle,
                                 "images": [{"url": mediaThumb}]
-                            },
-                            "stream_type": "BUFFERED"
+                            }
                         }
                         
                         quick_play.quick_play(cast, app_name, app_data)
