@@ -27,7 +27,7 @@ try {
      En V3 : indiquer l'argument 'true' pour contrôler le token d'accès Jeedom
      En V4 : autoriser l'exécution d'une méthode 'action' en GET en indiquant le(s) nom(s) de(s) action(s) dans un tableau en argument
     */
-    ajax::init(array('uploadAPIKey', 'uploadCustomSound'));
+    ajax::init(array('uploadAPIKey', 'uploadCustomSound', 'uploadCustomRadios'));
 
     if (init('action') == 'testExternalAddress') {
         ajax::success(ttscast::testExternalAddress(init('value')));
@@ -43,6 +43,10 @@ try {
 
     if (init('action') == 'updateRadios') {
 		ajax::success(ttscast::updateRadioList());
+	}
+
+    if (init('action') == 'updateCustomRadios') {
+		ajax::success(ttscast::updateCustomRadioList());
 	}
 
     if (init('action') == 'updateSounds') {
@@ -113,8 +117,31 @@ try {
             throw new Exception(__('[UPLOAD][CustomSound] Impossible de sauvegarder le fichier', __FILE__));
         }
         log::add('ttscast', 'info', "[UPLOAD][CustomSound] Upload OK :: {$_FILES['fileCustomSound']['name']}");
-        # ttscast::updateCustomSoundList();
         ajax::success("{$_FILES['fileCustomSound']['name']}");
+	}
+
+    if (init('action') == 'uploadCustomRadios') {
+        if (!isset($_FILES['fileCustomRadios'])) {
+            throw new Exception(__('[UPLOAD][CustomRadios] Aucun fichier trouvé. Vérifiez le paramètre PHP (post size limit)', __FILE__));
+        }
+        log::add('ttscast', 'debug', "[UPLOAD][CustomRadios] filename: {$_FILES['fileCustomRadios']['name']}");
+        $extension = strtolower(strrchr($_FILES['fileCustomRadios']['name'], '.'));
+        if (!in_array($extension, array('.json'))) {
+            throw new Exception('[UPLOAD][CustomRadios] Extension de fichier non valide (autorisé .json) : ' . $extension);
+        }
+      
+        if (filesize($_FILES['fileCustomRadios']['tmp_name']) > 500000) {
+            throw new Exception(__('[UPLOAD][CustomRadios] Le fichier est trop gros (max. 500Ko)', __FILE__));
+        }
+
+        $filepath = __DIR__ . "/../../data/radios/custom/radios.json";
+        log::add('ttscast', 'debug', "[UPLOAD][CustomRadios] filepath: {$filepath}");
+        file_put_contents($filepath, file_get_contents($_FILES['fileCustomRadios']['tmp_name']));
+        if (!file_exists($filepath)) {
+            throw new Exception(__('[UPLOAD][CustomRadios] Impossible de sauvegarder le fichier', __FILE__));
+        }
+        log::add('ttscast', 'info', "[UPLOAD][CustomRadios] Upload OK :: {$_FILES['fileCustomRadios']['name']}");
+        ajax::success("{$_FILES['fileCustomRadios']['name']}");
 	}
 
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));

@@ -312,9 +312,9 @@ if (!isConnect()) {
                     <input type="checkbox" class="configKey" data-l1key="appDisableDing" />
                 </div>
             </div>
-            <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, Sounds, Custom Sounds)}}</legend>
+            <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, CustomRadios, Sounds, Custom Sounds)}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Radio}}
+                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Radios}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des radios de vos équipements. ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -322,7 +322,15 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Sound}}
+                <label class="col-lg-3 control-label">{{Mise à jour des listes :: Custom Radios}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des custom radios de vos équipements. ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <a class="btn btn-warning customclass-updatecustomradios"><i class="fas fa-sync"></i> {{MàJ Custom Radios}}</a>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Mise à jour des listes :: Sounds}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons (.mp3). ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -330,7 +338,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Custom Sound}}
+                <label class="col-lg-3 control-label">{{Mise à jour des listes :: Custom Sounds}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des sons personnalisés (.mp3). ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -342,23 +350,23 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Upload un fichier (.mp3) pour l'ajouter au répertoire des Custom Sounds}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-primary btn-file">
+                    <a class="btn btn-info btn-file">
                         <i class="fas fa-file-upload"></i> {{Ajouter un Custom Sound (.mp3)}}<input class="pluginAction" data-action="uploadCustomSound" type="file" name="fileCustomSound" style="display: inline-block;" accept=".mp3" />
                     </a>
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Ajouter une radio :: Custom Radio}}
+                <label class="col-lg-3 control-label">{{Ajouter un fichier :: Custom Radios}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Download et/ou Upload d'un fichier (.json) pour mettre à jour la liste des Custom Radios}}"></i></sup>
                 </label>
-                <div class="col-lg-1">
-                    <a class="btn btn-info" target="_blank" href="../../data/radios/custom/radios.json" download>
-                        <i class="fas fa-file-download"></i> {{Télécharger les Custom Radio (.json)}}
+                <div class="col-lg-2">
+                    <a class="btn btn-warning" target="_blank" href="../../data/radios/custom/radios.json" download>
+                        <i class="fas fa-file-download"></i> {{Download Custom Radios}}
                     </a>
                 </div>
-                <div class="col-lg-1">
-                    <a class="btn btn-primary btn-file">
-                        <i class="fas fa-file-upload"></i> {{Ajouter un Fichier Custom Radio (.json)}}<input class="pluginAction" data-action="uploadCustomRadio" type="file" name="fileCustomRadio" style="display: inline-block;" accept=".json" />
+                <div class="col-lg-2">
+                    <a class="btn btn-info btn-file">
+                        <i class="fas fa-file-upload"></i> {{Ajouter des Custom Radios (.json)}}<input class="pluginAction" data-action="uploadCustomRadios" type="file" name="fileCustomRadios" style="display: inline-block;" accept=".json" />
                     </a>
                 </div>
             </div>
@@ -484,6 +492,24 @@ if (!isConnect()) {
         });
     });
 
+    $('.pluginAction[data-action=uploadCustomRadios]').on('click', function () {
+        $(this).fileupload({
+            replaceFileInput: false,
+            url: 'plugins/ttscast/core/ajax/ttscast.ajax.php?action=uploadCustomRadios',
+            dataType: 'json',
+            done: function (e, data) {
+                if (data.result.state != 'ok') {
+                    $('#div_alert').showAlert({ message: data.result.result, level: 'danger' });
+                    return;
+                }
+                $('#div_alert').showAlert({
+                    message: '{{Upload Custom Radios (OK) :: }}' + data.result.result,
+                    level: 'success'
+                });
+            }
+        });
+    });
+
     $('.customclass-purgettscache').on('click', function() {
         $.ajax({
             type: "POST",
@@ -531,7 +557,34 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: '{{Demande de mise à jour des listes :: Radio :: envoyée (voir les logs ttscast)}}',
+                    message: '{{Demande de mise à jour des listes :: Radios :: envoyée (voir les logs ttscast)}}',
+                    level: 'success'
+                });
+            }
+        });
+    });
+
+    $('.customclass-updatecustomradios').on('click', function() {
+        $.ajax({
+            type: "POST",
+            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
+            data: {
+                action: "updateCustomRadios"
+            },
+            dataType: 'json',
+            error: function(request, status, error) {
+                handleAjaxError(request, status, error);
+            },
+            success: function(data) {
+                if (data.state != 'ok') {
+                    $('#div_alert').showAlert({
+                        message: data.result,
+                        level: 'danger'
+                    });
+                    return;
+                }
+                $('#div_alert').showAlert({
+                    message: '{{Demande de mise à jour des listes :: CustomRadios :: envoyée (voir les logs ttscast)}}',
                     level: 'success'
                 });
             }
@@ -558,7 +611,7 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: '{{Demande de mise à jour des listes :: Sound :: envoyée (voir les logs ttscast)}}',
+                    message: '{{Demande de mise à jour des listes :: Sounds :: envoyée (voir les logs ttscast)}}',
                     level: 'success'
                 });
             }
@@ -585,7 +638,7 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: '{{Demande de mise à jour des listes :: Custom Sound :: envoyée (voir les logs ttscast)}}',
+                    message: '{{Demande de mise à jour des listes :: Custom Sounds :: envoyée (voir les logs ttscast)}}',
                     level: 'success'
                 });
             }

@@ -131,7 +131,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], '', message['cmd_action']]).start()
                                 
-                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'sounds', 'customsounds')):
+                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'customradios', 'sounds', 'customsounds')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options']]).start()
                                 
@@ -909,8 +909,8 @@ class Functions:
                     cast = None
                     return True
                 
-                elif (_controller == 'radios'):
-                    logging.debug('[DAEMON][controllerActions] Radio Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+                elif (_controller in ['radios', 'customradios']):
+                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
                     
                     if _value == '':
                         cast.quit_app()
@@ -919,8 +919,13 @@ class Functions:
                         # Si DashCast alors sortir de l'appli avant sinon cela plante
                         Functions.checkIfDashCast(cast)
                         
-                        if not os.path.isfile(Config.radiosFilePath):
-                            logging.error('[DAEMON][controllerActions] Radios JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
+                        if (_controller == 'customradios'):
+                            _RadiosFilePath = Config.customRadiosFilePath
+                        else:
+                            _RadiosFilePath = Config.radiosFilePath
+                        
+                        if not os.path.isfile(_RadiosFilePath):
+                            logging.error('[DAEMON][controllerActions] Radio/CustomRadio JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
                         else:
                             _volume = None
                             _appDing = True
@@ -929,9 +934,9 @@ class Functions:
                                     options_json = json.loads("{" + _options + "}")
                                     _volume = options_json['volume'] if 'volume' in options_json else None
                                     _appDing = options_json['ding'] if 'ding' in options_json else True
-                                    logging.debug('[DAEMON][controllerActions] Radios :: Options :: %s', str(options_json))
+                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options :: %s', str(options_json))
                             except ValueError as e:
-                                logging.debug('[DAEMON][controllerActions] Radios :: Options mal formatées (Json KO) :: %s', e)
+                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options mal formatées (Json KO) :: %s', e)
 
                             _appDing = False if Config.appDisableDing else _appDing
                             
@@ -939,10 +944,10 @@ class Functions:
                             if not _appDing:
                                 cast.set_volume(volume=0)
                             elif (_volume is not None):
-                                logging.debug('[DAEMON][controllerActions] Radios :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
                                 cast.set_volume(volume=_volume / 100)
                             
-                            f = open(Config.radiosFilePath, "r")
+                            f = open(_RadiosFilePath, "r")
                             radiosArray = json.loads(f.read())
                             
                             if _value in radiosArray:
@@ -971,14 +976,14 @@ class Functions:
                                 quick_play.quick_play(cast, app_name, app_data)
                                 
                                 if (not _appDing and _volume is not None):
-                                    logging.debug('[DAEMON][controllerActions] Radios :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
                                     cast.set_volume(volume=_volume / 100)
                                 elif (not _appDing):
                                     cast.set_volume(volume=volumeBeforePlay)
                                 
                                 cast.media_controller.block_until_active()
                                 
-                                logging.debug('[DAEMON][controllerActions] Diffusion Radio lancée :: %s', str(cast.media_controller.status))
+                                logging.debug('[DAEMON][controllerActions] Diffusion Radio/CustomRadio lancée :: %s', str(cast.media_controller.status))
                     
                 elif (_controller in ['sounds', 'customsounds']):
                     logging.debug('[DAEMON][controllerActions] Sound/CustomSound Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
