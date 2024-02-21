@@ -1110,6 +1110,8 @@ class Functions:
                         media = _value
                         if _mediaType is not None:
                             mediaType = _mediaType
+                        else:
+                            mediaType = None
                         mediaThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                         mediaTitle = _value
                         mediaSubTitle = "[Jeedom] TTSCast Media"
