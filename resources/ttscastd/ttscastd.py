@@ -663,7 +663,9 @@ class TTSCast:
                     cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
                     cast.set_volume(volume=volumeBeforePlay)
-                    
+                
+                cast.media_controller.block_until_active()
+                
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
                 
                 media_player_state = None
@@ -749,6 +751,8 @@ class TTSCast:
                 elif (not appDing):
                     cast.set_volume(volume=volumeBeforePlay)
                 
+                cast.media_controller.block_until_active()
+                    
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
                 media_player_state = None
@@ -858,6 +862,8 @@ class Functions:
                         cast.set_volume(volume=_volume / 100)
                     elif (not _appDing):
                         cast.set_volume(volume=volumeBeforePlay)
+                    
+                    cast.media_controller.block_until_active()
                     
                     logging.debug('[DAEMON][controllerActions] YouTube :: Diffusion lancée :: %s', str(cast.media_controller.status))
                     
@@ -970,6 +976,8 @@ class Functions:
                                 elif (not _appDing):
                                     cast.set_volume(volume=volumeBeforePlay)
                                 
+                                cast.media_controller.block_until_active()
+                                
                                 logging.debug('[DAEMON][controllerActions] Diffusion Radio lancée :: %s', str(cast.media_controller.status))
                     
                 elif (_controller in ['sounds', 'customsounds']):
@@ -1032,6 +1040,8 @@ class Functions:
                             cast.set_volume(volume=_volume / 100)
                         elif (not _appDing):
                             cast.set_volume(volume=volumeBeforePlay)
+                        
+                        cast.media_controller.block_until_active()
                         
                         logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound lancée :: %s', str(cast.media_controller.status))
                         
