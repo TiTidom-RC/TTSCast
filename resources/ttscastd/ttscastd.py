@@ -1540,10 +1540,10 @@ class myCast:
             try:
                 castVolumeLevel = int(status.volume_level * 100)
                 castAppDisplayName = status.display_name
-                if self.cast.socket_client.is_connected:
+                """ if self.cast.socket_client.is_connected:
                     castIsOnline = '1'
                 else:
-                    castIsOnline = '0'
+                    castIsOnline = '0' """
                 
                 data = {
                     'uuid': str(self.cast.uuid),
@@ -1554,8 +1554,7 @@ class myCast:
                     'app_id': status.app_id,
                     'status_text': status.status_text,
                     'realtime': 1,
-                    'status_type': 'cast',
-                    'online': castIsOnline
+                    'status_type': 'cast'
                 }
 
                 # Envoi vers Jeedom
@@ -1582,10 +1581,10 @@ class myCast:
                 else:
                     mediaLastUpdated = "N/A"
                 
-                if self.cast.socket_client.is_connected:
+                """ if self.cast.socket_client.is_connected:
                     castIsOnline = '1'
                 else:
-                    castIsOnline = '0'
+                    castIsOnline = '0' """
                 
                 mediaPlayerState = status.player_state
                 mediaTitle = status.title
@@ -1615,8 +1614,7 @@ class myCast:
                     'stream_type': mediaStreamType,
                     'last_updated': mediaLastUpdated,
                     'realtime': 1,
-                    'status_type': 'media',
-                    'online': castIsOnline
+                    'status_type': 'media'
                 }
 
                 # Envoi vers Jeedom
@@ -1642,7 +1640,7 @@ class myCast:
             logging.debug('[DAEMON][NETCAST][New_Connect_Status] ' + self.name + ' :: STATUS Connect change :: ' + str(status))
             try:
                 # The socket connection is being setup
-                CONNECTION_STATUS_CONNECTING = "CONNECTING"
+                # CONNECTION_STATUS_CONNECTING = "CONNECTING"
                 # The socket connection was complete
                 CONNECTION_STATUS_CONNECTED = "CONNECTED"
                 # The socket connection has been disconnected
@@ -1654,7 +1652,7 @@ class myCast:
                 # The socket connection was lost and needs to be retried
                 # CONNECTION_STATUS_LOST = "LOST"
                 
-                if status.status in [CONNECTION_STATUS_CONNECTED, CONNECTION_STATUS_CONNECTING]:
+                if status.status in [CONNECTION_STATUS_CONNECTED]:
                     castIsOnline = '1'
                 else:
                     castIsOnline = '0'
