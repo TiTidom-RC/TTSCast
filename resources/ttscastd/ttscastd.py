@@ -1107,30 +1107,33 @@ class Functions:
                             logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
                             cast.set_volume(volume=_volume / 100)
                         
-                        media = _value
                         if _mediaType is not None:
                             mediaType = _mediaType
                             if mediaType == "video/mp4":
                                 metadataType = 1  # type METADATA_TYPE_MOVIE (Title + SubTitle only)
+                                mediaStreamType = "LIVE"
                             elif mediaType == "audio/mp3":
                                 metadataType = 3  # type METADATA_TYPE_MUSICTRACK ()
+                                mediaStreamType = "BUFFERED"
                             else:
                                 metadataType = 0  # type METADATA_TYPE_GENERIC
+                                mediaStreamType = "BUFFERED"
                         else:
                             mediaType = "video/mp4"
                             metadataType = 1  # type METADATA_TYPE_MOVIE
-                            
+                        
+                        media = _value    
                         mediaImage = urljoin(Config.ttsWebSrvImages, "tts.png")
                         mediaTitle = "TTSCast Media"
                         mediaSubTitle = _value
-                        mediaAlbumName = _value
-                        mediaArtist = "Jeedom"
+                        mediaAlbumName = "Jeedom"
+                        mediaArtist = _value
                         
                         app_name = "bubbleupnp"
                         app_data = {
                             "media_id": media,
                             "media_type": mediaType,
-                            "stream_type": "BUFFERED",
+                            "stream_type": mediaStreamType,
                             "metadata": {
                                 "metadataType": metadataType,
                                 "title": mediaTitle,
