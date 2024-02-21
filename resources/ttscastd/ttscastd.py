@@ -1110,11 +1110,21 @@ class Functions:
                         media = _value
                         if _mediaType is not None:
                             mediaType = _mediaType
+                            if mediaType == "video/mp4":
+                                metadataType = 1  # type METADATA_TYPE_MOVIE (Title + SubTitle only)
+                            elif mediaType == "audio/mp3":
+                                metadataType = 3  # type METADATA_TYPE_MUSICTRACK ()
+                            else:
+                                metadataType = 0  # type METADATA_TYPE_GENERIC
                         else:
                             mediaType = "video/mp4"
-                        mediaThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
-                        mediaTitle = "[Jeedom] TTSCast Media"
+                            metadataType = 1  # type METADATA_TYPE_MOVIE
+                            
+                        mediaImage = urljoin(Config.ttsWebSrvImages, "tts.png")
+                        mediaTitle = "TTSCast Media"
                         mediaSubTitle = _value
+                        mediaAlbumName = _value
+                        mediaArtist = "Jeedom"
                         
                         app_name = "bubbleupnp"
                         app_data = {
@@ -1122,9 +1132,12 @@ class Functions:
                             "media_type": mediaType,
                             "stream_type": "BUFFERED",
                             "metadata": {
+                                "metadataType": metadataType,
                                 "title": mediaTitle,
                                 "subtitle": mediaSubTitle,
-                                "images": [{"url": mediaThumb}]
+                                "artist": mediaArtist,
+                                "albumName": mediaAlbumName,
+                                "images": [{"url": mediaImage}]
                             }
                         }
                         
