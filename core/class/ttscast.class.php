@@ -1552,7 +1552,7 @@ class ttscastCmd extends cmd
                 if (isset($googleUUID)) {
                     ttscast::actionGCast($googleUUID, $logicalId);
                 }
-            } elseif (in_array($logicalId, ["youtube", "dashcast"])) {
+            } elseif (in_array($logicalId, ["youtube", "dashcast", "media"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {

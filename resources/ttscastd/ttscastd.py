@@ -27,7 +27,7 @@ import threading
 import datetime
 import requests
 
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urljoin, urlencode, urlparse
 from uuid import UUID
 
 # Import pour Jeedom
@@ -131,7 +131,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], '', message['cmd_action']]).start()
                                 
-                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'customradios', 'sounds', 'customsounds')):
+                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'customradios', 'sounds', 'customsounds', 'media')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options']]).start()
                                 
@@ -985,6 +985,10 @@ class Functions:
                                 
                                 logging.debug('[DAEMON][controllerActions] Diffusion Radio/CustomRadio lancée :: %s', str(cast.media_controller.status))
                     
+                    # Libération de la mémoire
+                    cast = None
+                    return True
+                    
                 elif (_controller in ['sounds', 'customsounds']):
                     logging.debug('[DAEMON][controllerActions] Sound/CustomSound Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
                     
@@ -1066,10 +1070,78 @@ class Functions:
                         cast.quit_app()
                         if (_volume is not None):
                             cast.set_volume(volume=volumeBeforePlay)
+                    
+                    # Libération de la mémoire
+                    cast = None
+                    return True
                 
-                # Libération de la mémoire
-                cast = None
-                return True
+                elif (_controller in ['media']):
+                    logging.debug('[DAEMON][controllerActions] Media Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+                    
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
+                    
+                    if not Functions.isURL(_value):
+                        logging.error('[DAEMON][controllerActions] Media ERROR (not URL) :: %s @ %s', _value, _googleUUID)
+                    else:
+                        _volume = None
+                        _appDing = True
+                        _mediaType = None
+                        try:
+                            if (_options is not None):
+                                options_json = json.loads("{" + _options + "}")
+                                _volume = options_json['volume'] if 'volume' in options_json else None
+                                _appDing = options_json['ding'] if 'ding' in options_json else True
+                                _mediaType = options_json['type'] if 'type' in options_json else None
+                                
+                                logging.debug('[DAEMON][controllerActions] Media :: Options :: %s', str(options_json))
+                        except ValueError as e:
+                            logging.debug('[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: %s', e)
+
+                        _appDing = False if Config.appDisableDing else _appDing
+                        
+                        volumeBeforePlay = cast.status.volume_level
+                        if not _appDing:
+                            cast.set_volume(volume=0)
+                        elif (_volume is not None):
+                            logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                            cast.set_volume(volume=_volume / 100)
+                        
+                        media = _value
+                        if _mediaType is not None:
+                            mediaType = _mediaType
+                        mediaThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
+                        mediaTitle = _value
+                        mediaSubTitle = "[Jeedom] TTSCast Media"
+                            
+                        app_name = "bubbleupnp"
+                        app_data = {
+                            "media_id": media,
+                            "media_type": mediaType,
+                            "title": mediaTitle,
+                            "thumb": mediaThumb,
+                            "metadata": {
+                                "title": mediaTitle,
+                                "subtitle": mediaSubTitle,
+                                "images": [{"url": mediaThumb}]
+                            },
+                            "stream_type": "BUFFERED"
+                        }
+                        quick_play.quick_play(cast, app_name, app_data)
+                            
+                        if (not _appDing and _volume is not None):
+                            logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                            cast.set_volume(volume=_volume / 100)
+                        elif (not _appDing):
+                            cast.set_volume(volume=volumeBeforePlay)
+                        
+                        cast.media_controller.block_until_active()
+                        
+                        logging.debug('[DAEMON][controllerActions] Diffusion Media lancée :: %s', str(cast.media_controller.status))
+                
+                    # Libération de la mémoire
+                    cast = None
+                    return True
                 
             except Exception as e:
                 logging.error('[DAEMON][controllerActions] Exception on controllerActions (%s) :: %s', _googleUUID, e)
@@ -1311,6 +1383,13 @@ class Functions:
                 logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on files age :: %s', e)
                 logging.debug(traceback.format_exc())
 
+    def isURL(url):
+        try:
+            result = urlparse(url)
+            return all([result.scheme, result.netloc, result.path])
+        except:
+            return False
+        
 class myCast:
 
     def castListeners(chromecast=None, uuid=None):
