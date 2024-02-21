@@ -27,7 +27,7 @@ import threading
 import datetime
 import requests
 
-from urllib.parse import urljoin, urlencode
+from urllib.parse import urljoin, urlencode, urlparse
 from uuid import UUID
 
 # Import pour Jeedom
@@ -53,6 +53,7 @@ try:
     from pychromecast import quick_play
     from pychromecast.controllers.media import MediaStatusListener
     from pychromecast.controllers.receiver import CastStatusListener
+    from pychromecast.socket_client import ConnectionStatusListener
     from pychromecast.controllers import dashcast
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
@@ -131,7 +132,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], '', message['cmd_action']]).start()
                                 
-                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'sounds', 'customsounds')):
+                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'customradios', 'sounds', 'customsounds', 'media')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options']]).start()
                                 
@@ -621,6 +622,8 @@ class TTSCast:
             
             chromecasts = None
             cast = None
+            volumeBeforePlay = None
+            
             try:
                 chromecasts = [mycast for mycast in Config.NETCAST_DEVICES.values() if mycast.name == googleName]
                 if not chromecasts:
@@ -635,10 +638,9 @@ class TTSCast:
                 volumeBeforePlay = cast.status.volume_level
                 if not appDing:
                     cast.set_volume(volume=0)
-                else:
-                    if (volumeForPlay is not None):
-                        logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
-                        cast.set_volume(volume=volumeForPlay / 100)
+                elif volumeForPlay is not None:
+                    logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
+                    cast.set_volume(volume=volumeForPlay / 100)
                 
                 urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -657,20 +659,32 @@ class TTSCast:
                 }
                 quick_play.quick_play(cast, app_name, app_data)
                 
-                if (volumeForPlay is not None):
-                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                if (not appDing and volumeForPlay is not None):
+                    logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
                     cast.set_volume(volume=volumeBeforePlay)
-                    
+                
+                cast.media_controller.block_until_active()
+                
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
                 
-                while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
-                    time.sleep(1)
-                    logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
+                media_player_state = None
+                media_has_played = False
+                
+                while True:
+                    if media_player_state != cast.media_controller.status.player_state:
+                        media_player_state = cast.media_controller.status.player_state
+                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
+                            break
+                        if media_player_state in ['PLAYING']:
+                            media_has_played = True
+                            logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
+                    time.sleep(0.1)
                 
                 cast.quit_app()
-                if (volumeForPlay is not None):
+                
+                if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
@@ -681,6 +695,9 @@ class TTSCast:
                 logging.debug('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
                 logging.debug(traceback.format_exc())
                 
+                if volumeBeforePlay is not None:
+                    cast.set_volume(volume=volumeBeforePlay)
+                
                 # Libération de la mémoire
                 cast = None
                 chromecasts = None
@@ -690,6 +707,8 @@ class TTSCast:
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
             
             cast = None
+            volumeBeforePlay = None
+            
             try:
                 _uuid = UUID(googleUUID)
                 if _uuid in Config.NETCAST_DEVICES:
@@ -705,10 +724,9 @@ class TTSCast:
                 volumeBeforePlay = cast.status.volume_level
                 if not appDing:
                     cast.set_volume(volume=0)
-                else:
-                    if (volumeForPlay is not None):
-                        logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
-                        cast.set_volume(volume=volumeForPlay / 100)
+                elif volumeForPlay is not None:
+                    logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
+                    cast.set_volume(volume=volumeForPlay / 100)
             
                 urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -728,20 +746,32 @@ class TTSCast:
                 
                 quick_play.quick_play(cast, app_name, app_data)
                 
-                if (volumeForPlay is not None):
-                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                if (not appDing and volumeForPlay is not None):
+                    logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
                     cast.set_volume(volume=volumeBeforePlay)
                 
+                cast.media_controller.block_until_active()
+                    
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
-                while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
-                    time.sleep(1)
-                    logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
+                media_player_state = None
+                media_has_played = False
+            
+                while True:
+                    if media_player_state != cast.media_controller.status.player_state:
+                        media_player_state = cast.media_controller.status.player_state
+                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
+                            break
+                        if media_player_state in ['PLAYING']:
+                            media_has_played = True
+                            logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
+                    time.sleep(0.1)
             
                 cast.quit_app()
-                if (volumeForPlay is not None):
+                
+                if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
@@ -750,6 +780,9 @@ class TTSCast:
             except Exception as e:
                 logging.debug('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
                 logging.debug(traceback.format_exc())
+                
+                if volumeBeforePlay is not None:
+                    cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
                 cast = None
@@ -775,6 +808,8 @@ class Functions:
     def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _options=''):
         if _googleUUID != 'UNKOWN':
             cast = None
+            volumeBeforePlay = None
+            
             try:
                 _uuid = UUID(_googleUUID)
                 if (_uuid in Config.NETCAST_DEVICES):
@@ -811,10 +846,9 @@ class Functions:
                     volumeBeforePlay = cast.status.volume_level
                     if not _appDing:
                         cast.set_volume(volume=0)
-                    else:
-                        if (_volume is not None):
-                            logging.debug('[DAEMON][controllerActions] YouTube :: Volume avant lecture :: %s', str(volumeBeforePlay))
-                            cast.set_volume(volume=_volume / 100)
+                    elif (_volume is not None):
+                        logging.debug('[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                        cast.set_volume(volume=_volume / 100)
 
                     app_name = "youtube"
                     app_data = {
@@ -824,11 +858,13 @@ class Functions:
                     }
                     quick_play.quick_play(cast, app_name, app_data)
                     
-                    if (_volume is not None):
-                        logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                    if (not _appDing and _volume is not None):
+                        logging.debug('[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
                         cast.set_volume(volume=_volume / 100)
                     elif (not _appDing):
                         cast.set_volume(volume=volumeBeforePlay)
+                    
+                    cast.media_controller.block_until_active()
                     
                     logging.debug('[DAEMON][controllerActions] YouTube :: Diffusion lancée :: %s', str(cast.media_controller.status))
                     
@@ -874,8 +910,8 @@ class Functions:
                     cast = None
                     return True
                 
-                elif (_controller == 'radios'):
-                    logging.debug('[DAEMON][controllerActions] Radio Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+                elif (_controller in ['radios', 'customradios']):
+                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
                     
                     if _value == '':
                         cast.quit_app()
@@ -884,8 +920,13 @@ class Functions:
                         # Si DashCast alors sortir de l'appli avant sinon cela plante
                         Functions.checkIfDashCast(cast)
                         
-                        if not os.path.isfile(Config.radiosFilePath):
-                            logging.error('[DAEMON][controllerActions] Radios JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
+                        if (_controller == 'customradios'):
+                            _RadiosFilePath = Config.customRadiosFilePath
+                        else:
+                            _RadiosFilePath = Config.radiosFilePath
+                        
+                        if not os.path.isfile(_RadiosFilePath):
+                            logging.error('[DAEMON][controllerActions] Radio/CustomRadio JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
                         else:
                             _volume = None
                             _appDing = True
@@ -894,21 +935,20 @@ class Functions:
                                     options_json = json.loads("{" + _options + "}")
                                     _volume = options_json['volume'] if 'volume' in options_json else None
                                     _appDing = options_json['ding'] if 'ding' in options_json else True
-                                    logging.debug('[DAEMON][controllerActions] Radios :: Options :: %s', str(options_json))
+                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options :: %s', str(options_json))
                             except ValueError as e:
-                                logging.debug('[DAEMON][controllerActions] Radios :: Options mal formatées (Json KO) :: %s', e)
+                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options mal formatées (Json KO) :: %s', e)
 
                             _appDing = False if Config.appDisableDing else _appDing
                             
                             volumeBeforePlay = cast.status.volume_level
                             if not _appDing:
                                 cast.set_volume(volume=0)
-                            else:
-                                if (_volume is not None):
-                                    logging.debug('[DAEMON][controllerActions] Radios :: Volume avant lecture :: %s', str(volumeBeforePlay))
-                                    cast.set_volume(volume=_volume / 100)
+                            elif (_volume is not None):
+                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                                cast.set_volume(volume=_volume / 100)
                             
-                            f = open(Config.radiosFilePath, "r")
+                            f = open(_RadiosFilePath, "r")
                             radiosArray = json.loads(f.read())
                             
                             if _value in radiosArray:
@@ -919,7 +959,8 @@ class Functions:
                                     radioThumb = radio['image']
                                 radioUrl = radio['location']
                                 radioTitle = radio['title']
-                                radioSubTitle = "[Jeedom] TTSCast Radio"
+                                radioArtist = "TTSCast Radio"
+                                radioAlbumName = "Jeedom"
                                 
                                 app_name = "default_media_receiver"
                                 app_data = {
@@ -928,20 +969,29 @@ class Functions:
                                     "title": radioTitle,
                                     "thumb": radioThumb,
                                     "metadata": {
+                                        "metadataType": 3,
                                         "title": radioTitle,
-                                        "subtitle": radioSubTitle,
+                                        "artist": radioArtist,
+                                        "albumName": radioAlbumName,
                                         "images": [{"url": radioThumb}]
                                     },
                                     "stream_type": "LIVE"
                                 }
                                 quick_play.quick_play(cast, app_name, app_data)
-                                if (_volume is not None):
-                                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                                
+                                if (not _appDing and _volume is not None):
+                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
                                     cast.set_volume(volume=_volume / 100)
                                 elif (not _appDing):
                                     cast.set_volume(volume=volumeBeforePlay)
                                 
-                                logging.debug('[DAEMON][controllerActions] Diffusion Radio lancée :: %s', str(cast.media_controller.status))
+                                cast.media_controller.block_until_active()
+                                
+                                logging.debug('[DAEMON][controllerActions] Diffusion Radio/CustomRadio lancée :: %s', str(cast.media_controller.status))
+                    
+                    # Libération de la mémoire
+                    cast = None
+                    return True
                     
                 elif (_controller in ['sounds', 'customsounds']):
                     logging.debug('[DAEMON][controllerActions] Sound/CustomSound Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
@@ -969,10 +1019,9 @@ class Functions:
                         volumeBeforePlay = cast.status.volume_level
                         if not _appDing:
                             cast.set_volume(volume=0)
-                        else:
-                            if (_volume is not None):
-                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume avant lecture :: %s', str(volumeBeforePlay))
-                                cast.set_volume(volume=_volume / 100)
+                        elif (_volume is not None):
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                            cast.set_volume(volume=_volume / 100)
                         
                         if (_controller == 'customsounds'):
                             soundURL = urljoin(Config.ttsWebSrvMedia, 'custom/' + _value)
@@ -981,8 +1030,9 @@ class Functions:
                         logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: FilePath :: %s', soundURL)
 
                         soundThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
-                        soundTitle = _value
-                        soundSubTitle = "[Jeedom] TTSCast Sound"
+                        soundAlbumName = "Jeedom"
+                        soundTitle = "TTSCast Sound"
+                        soundArtist = _value
 
                         app_name = "default_media_receiver"
                         # app_name = "bubbleupnp"
@@ -992,46 +1042,144 @@ class Functions:
                             "title": soundTitle,
                             "thumb": soundThumb,
                             "metadata": {
+                                "metadataType": 3,
                                 "title": soundTitle,
-                                "subtitle": soundSubTitle,
+                                "artist": soundArtist,
+                                "albumName": soundAlbumName,
                                 "images": [{"url": soundThumb}]
                             }
                         }
                         quick_play.quick_play(cast, app_name, app_data)
                         
-                        if (_volume is not None):
-                            logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                        if (not _appDing and _volume is not None):
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
                             cast.set_volume(volume=_volume / 100)
                         elif (not _appDing):
                             cast.set_volume(volume=volumeBeforePlay)
                         
+                        cast.media_controller.block_until_active()
+                        
                         logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound lancée :: %s', str(cast.media_controller.status))
                         
-                        while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
-                            time.sleep(1)
-                            logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound en cours :: %s', str(cast.media_controller.status))
+                        media_player_state = None
+                        media_has_played = False
+	
+                        while True:
+                            if media_player_state != cast.media_controller.status.player_state:
+                                media_player_state = cast.media_controller.status.player_state
+                                if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
+                                    break
+                                if media_player_state in ['PLAYING']:
+                                    media_has_played = True
+                                    logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound en cours :: %s', str(cast.media_controller.status))
+                            time.sleep(0.1)
             
                         cast.quit_app()
                         if (_volume is not None):
                             cast.set_volume(volume=volumeBeforePlay)
+                    
+                    # Libération de la mémoire
+                    cast = None
+                    return True
                 
-                # Libération de la mémoire
-                cast = None
-                chromecasts = None
-                return True
+                elif (_controller in ['media']):
+                    logging.debug('[DAEMON][controllerActions] Media Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+                    
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
+                    
+                    if not Functions.isURL(_value):
+                        logging.error('[DAEMON][controllerActions] Media ERROR (not URL) :: %s @ %s', _value, _googleUUID)
+                    else:
+                        _volume = None
+                        _appDing = True
+                        _mediaType = None
+                        try:
+                            if (_options is not None):
+                                options_json = json.loads("{" + _options + "}")
+                                _volume = options_json['volume'] if 'volume' in options_json else None
+                                _appDing = options_json['ding'] if 'ding' in options_json else True
+                                _mediaType = options_json['type'] if 'type' in options_json else None
+                                
+                                logging.debug('[DAEMON][controllerActions] Media :: Options :: %s', str(options_json))
+                        except ValueError as e:
+                            logging.debug('[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: %s', e)
+
+                        _appDing = False if Config.appDisableDing else _appDing
+                        
+                        volumeBeforePlay = cast.status.volume_level
+                        if not _appDing:
+                            cast.set_volume(volume=0)
+                        elif (_volume is not None):
+                            logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                            cast.set_volume(volume=_volume / 100)
+                        
+                        if _mediaType is not None:
+                            mediaType = _mediaType
+                            if mediaType == "video/mp4":
+                                metadataType = 1  # type METADATA_TYPE_MOVIE (Title + SubTitle only)
+                                mediaStreamType = "BUFFERED"
+                            elif mediaType == "audio/mp3":
+                                metadataType = 3  # type METADATA_TYPE_MUSICTRACK ()
+                                mediaStreamType = "BUFFERED"
+                            else:
+                                metadataType = 0  # type METADATA_TYPE_GENERIC
+                                mediaStreamType = "BUFFERED"
+                        else:
+                            mediaType = "video/mp4"
+                            metadataType = 1  # type METADATA_TYPE_MOVIE
+                        
+                        media = _value    
+                        mediaImage = urljoin(Config.ttsWebSrvImages, "tts.png")
+                        mediaTitle = "TTSCast Media"
+                        mediaSubTitle = _value
+                        mediaAlbumName = "Jeedom"
+                        mediaArtist = _value
+                        
+                        app_name = "bubbleupnp"
+                        app_data = {
+                            "media_id": media,
+                            "media_type": mediaType,
+                            "stream_type": mediaStreamType,
+                            "metadata": {
+                                "metadataType": metadataType,
+                                "title": mediaTitle,
+                                "subtitle": mediaSubTitle,
+                                "artist": mediaArtist,
+                                "albumName": mediaAlbumName,
+                                "images": [{"url": mediaImage}]
+                            }
+                        }
+                        
+                        quick_play.quick_play(cast, app_name, app_data)
+                            
+                        if (not _appDing and _volume is not None):
+                            logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                            cast.set_volume(volume=_volume / 100)
+                        elif (not _appDing):
+                            cast.set_volume(volume=volumeBeforePlay)
+                        
+                        cast.media_controller.block_until_active()
+                        
+                        logging.debug('[DAEMON][controllerActions] Diffusion Media lancée :: %s', str(cast.media_controller.status))
+                
+                    # Libération de la mémoire
+                    cast = None
+                    return True
                 
             except Exception as e:
                 logging.error('[DAEMON][controllerActions] Exception on controllerActions (%s) :: %s', _googleUUID, e)
                 logging.debug(traceback.format_exc())
                 
+                if volumeBeforePlay is not None:
+                    cast.set_volume(volume=volumeBeforePlay)
+                
                 # Libération de la mémoire
                 cast = None
-                chromecasts = None
                 return False
     
     def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
         if _googleUUID != 'UNKOWN':
-            chromecasts = None
             cast = None
             try:
                 _uuid = UUID(_googleUUID)
@@ -1139,12 +1287,12 @@ class Functions:
                     try:
                         if (cast.status is not None and cast.media_controller.status is not None):
                             castVolumeLevel = int(cast.status.volume_level * 100)
-                            castAppDisplayName = cast.status.display_name
+                            castAppDisplayName = cast.status.display_name if cast.status.display_name is not None else "N/A"
                             
                             castIsStandBy = cast.status.is_stand_by
                             castIsMuted = cast.status.volume_muted
-                            castAppId = cast.status.app_id
-                            castStatusText = cast.status.status_text
+                            castAppId = cast.status.app_id if cast.status.app_id is not None else "N/A"
+                            castStatusText = cast.status.status_text if cast.status.status_text is not None else "N/A"
                             if cast.socket_client.is_connected:
                                 castIsOnline = '1'
                             else:
@@ -1158,12 +1306,20 @@ class Functions:
                             else:
                                 mediaLastUpdated = "N/A"
                             
-                            mediaPlayerState = cast.media_controller.status.player_state
-                            mediaTitle = cast.media_controller.status.title
-                            mediaArtist = cast.media_controller.status.artist
-                            mediaAlbumName = cast.media_controller.status.album_name
-                            mediaContentType = cast.media_controller.status.content_type
-                            mediaStreamType = cast.media_controller.status.stream_type
+                            mediaPlayerState = cast.media_controller.status.player_state if cast.media_controller.status.player_state is not None else "N/A"
+                            mediaTitle = cast.media_controller.status.title if cast.media_controller.status.title is not None else "N/A"
+                            mediaArtist = cast.media_controller.status.artist if cast.media_controller.status.artist is not None else "N/A"
+                            mediaAlbumName = cast.media_controller.status.album_name if cast.media_controller.status.album_name is not None else "N/A"
+                            mediaDuration = cast.media_controller.status.duration
+                            mediaCurrentTime = cast.media_controller.status.current_time
+                            
+                            if cast.media_controller.status.images:
+                                mediaImage = cast.media_controller.status.images[0].url
+                            else:
+                                mediaImage = ""
+                            
+                            mediaContentType = cast.media_controller.status.content_type if cast.media_controller.status.content_type is not None else "N/A"
+                            mediaStreamType = cast.media_controller.status.stream_type if cast.media_controller.status.stream_type is not None else "N/A"
                             
                             data = {
                                 'uuid': str(cast.uuid),
@@ -1178,6 +1334,9 @@ class Functions:
                                 'player_state': mediaPlayerState,
                                 'title': mediaTitle,
                                 'artist': mediaArtist,
+                                'duration': mediaDuration,
+                                'current_time': mediaCurrentTime,
+                                'image': mediaImage,
                                 'album_name': mediaAlbumName,
                                 'content_type': mediaContentType,
                                 'stream_type': mediaStreamType,
@@ -1248,6 +1407,13 @@ class Functions:
                 logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on files age :: %s', e)
                 logging.debug(traceback.format_exc())
 
+    def isURL(url):
+        try:
+            result = urlparse(url)
+            return all([result.scheme, result.netloc, result.path])
+        except:
+            return False
+        
 class myCast:
 
     def castListeners(chromecast=None, uuid=None):
@@ -1271,6 +1437,12 @@ class myCast:
             chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
         else:
             logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Media Listener already active', str(chromecast.name))
+            
+        if uuid not in Config.LISTENER_CONNECT:
+            Config.LISTENER_CONNECT[uuid] = myCast.MyConnectionStatusListener(chromecast.name, chromecast)
+            chromecast.register_connection_listener(Config.LISTENER_CONNECT[uuid])
+        else:
+            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Connect Listener already active', str(chromecast.name))
                        
     def castRemove(chromecast=None, uuid=None):
         """ Remove Listener and Connection for Chromecast """
@@ -1283,13 +1455,19 @@ class myCast:
                 return False
     
         if (uuid in Config.LISTENER_CAST):
-            chromecast.register_status_listener(None)
+            # chromecast.register_status_listener(None)
             del Config.LISTENER_CAST[uuid]
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Status Listener already deleted', str(chromecast.name))
             
         if (uuid in Config.LISTENER_MEDIA):
-            chromecast.media_controller.register_status_listener(None)
+            # chromecast.media_controller.register_status_listener(None)
+            del Config.LISTENER_MEDIA[uuid]
+        else:
+            logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
+        
+        if (uuid in Config.LISTENER_CONNECT):
+            # chromecast.register_connection_listener(None)
             del Config.LISTENER_MEDIA[uuid]
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
@@ -1361,11 +1539,13 @@ class myCast:
             logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast change :: ' + str(status))
             try:
                 castVolumeLevel = int(status.volume_level * 100)
-                castAppDisplayName = status.display_name
-                if self.cast.socket_client.is_connected:
+                castAppDisplayName = status.display_name if status.display_name is not None else "N/A"
+                castAppId = status.app_id if status.app_id is not None else "N/A"
+                castStatusText = status.status_text if status.status_text is not None else "N/A"
+                """ if self.cast.socket_client.is_connected:
                     castIsOnline = '1'
                 else:
-                    castIsOnline = '0'
+                    castIsOnline = '0' """
                 
                 data = {
                     'uuid': str(self.cast.uuid),
@@ -1373,11 +1553,10 @@ class myCast:
                     'volume_level': castVolumeLevel,
                     'volume_muted': status.volume_muted,
                     'display_name': castAppDisplayName,
-                    'app_id': status.app_id,
-                    'status_text': status.status_text,
+                    'app_id': castAppId,
+                    'status_text': castStatusText,
                     'realtime': 1,
-                    'status_type': 'cast',
-                    'online': castIsOnline
+                    'status_type': 'cast'
                 }
 
                 # Envoi vers Jeedom
@@ -1401,24 +1580,43 @@ class myCast:
                     last_updated = status.last_updated.replace(tzinfo=datetime.timezone.utc)
                     last_updated_local = last_updated.astimezone(tz=None)
                     mediaLastUpdated = last_updated_local.strftime("%d/%m/%Y - %H:%M:%S")
+                else:
+                    mediaLastUpdated = "N/A"
                 
-                if self.cast.socket_client.is_connected:
+                """ if self.cast.socket_client.is_connected:
                     castIsOnline = '1'
                 else:
-                    castIsOnline = '0'
+                    castIsOnline = '0' """
                 
+                mediaPlayerState = status.player_state if status.player_state is not None else "N/A"
+                mediaTitle = status.title if status.title is not None else "N/A"
+                mediaArtist = status.artist if status.artist is not None else "N/A"
+                mediaAlbumName = status.album_name if status.album_name is not None else "N/A"
+                mediaDuration = status.duration
+                mediaCurrentTime = status.current_time
+                
+                if status.images:
+                    mediaImage = status.images[0].url
+                else:
+                    mediaImage = ""
+                    
+                mediaContentType = status.content_type if status.content_type is not None else "N/A"
+                mediaStreamType = status.stream_type if status.stream_type is not None else "N/A"
+
                 data = {
                     'uuid': str(self.cast.uuid),
-                    'player_state': status.player_state,
-                    'title': status.title,
-                    'artist': status.artist,
-                    'album_name': status.album_name,
-                    'content_type': status.content_type,
-                    'stream_type': status.stream_type,
+                    'player_state': mediaPlayerState,
+                    'title': mediaTitle,
+                    'artist': mediaArtist,
+                    'duration': mediaDuration,
+                    'current_time': mediaCurrentTime,
+                    'image': mediaImage,
+                    'album_name': mediaAlbumName,
+                    'content_type': mediaContentType,
+                    'stream_type': mediaStreamType,
                     'last_updated': mediaLastUpdated,
                     'realtime': 1,
-                    'status_type': 'media',
-                    'online': castIsOnline
+                    'status_type': 'media'
                 }
 
                 # Envoi vers Jeedom
@@ -1430,6 +1628,49 @@ class myCast:
 
         def load_media_failed(self, item, error_code):
             logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(item) + ' with code :: ' + str(error_code))
+
+    class MyConnectionStatusListener(ConnectionStatusListener):
+        """ConnectionStatusListener"""
+
+        def __init__(self, name, cast):
+            self.name = name
+            self.cast = cast
+
+        def new_connection_status(self, status) -> None:
+            """Updated connection status."""
+            
+            logging.debug('[DAEMON][NETCAST][New_Connect_Status] ' + self.name + ' :: STATUS Connect change :: ' + str(status))
+            try:
+                # The socket connection is being setup
+                # CONNECTION_STATUS_CONNECTING = "CONNECTING"
+                # The socket connection was complete
+                CONNECTION_STATUS_CONNECTED = "CONNECTED"
+                # The socket connection has been disconnected
+                # CONNECTION_STATUS_DISCONNECTED = "DISCONNECTED"
+                # Connecting to socket failed (after a CONNECTION_STATUS_CONNECTING)
+                # CONNECTION_STATUS_FAILED = "FAILED"
+                # Failed to resolve service name
+                # CONNECTION_STATUS_FAILED_RESOLVE = "FAILED_RESOLVE"
+                # The socket connection was lost and needs to be retried
+                # CONNECTION_STATUS_LOST = "LOST"
+                
+                if status.status in [CONNECTION_STATUS_CONNECTED]:
+                    castIsOnline = '1'
+                else:
+                    castIsOnline = '0'
+                
+                data = {
+                    'uuid': str(self.cast.uuid),
+                    'realtime': 1,
+                    'status_type': 'connect',
+                    'online': castIsOnline
+                }
+
+                # Envoi vers Jeedom
+                Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][New_Connect_Status] Exception :: %s', e)
+                logging.debug(traceback.format_exc())
 
 # ----------------------------------------------------------------------------
 

@@ -27,6 +27,7 @@ class Config:
     NETCAST_ZCONF = None
     LISTENER_CAST = {}
     LISTENER_MEDIA = {}
+    LISTENER_CONNECT = {}
 
     IS_ENDING = False
 
@@ -51,6 +52,7 @@ class Config:
     ttsCacheFolderTmp = os.path.join('/tmp/jeedom/', 'ttscast_cache')
     
     radiosFilePath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/radios/radios.json'))
+    customRadiosFilePath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/radios/custom/radios.json'))
     # soundsPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/media'))
     # soundsCustomPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/media/custom'))
     
@@ -70,7 +72,7 @@ class Config:
     imagesFolder = 'data/images'
     imagesFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), imagesFolder))
 
-    configFolder = 'core/config'
+    configFolder = 'data/config'
     configFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), configFolder))
     
     appDisableDing = False
