@@ -1111,7 +1111,7 @@ class Functions:
                             mediaType = _mediaType
                             if mediaType == "video/mp4":
                                 metadataType = 1  # type METADATA_TYPE_MOVIE (Title + SubTitle only)
-                                mediaStreamType = "LIVE"
+                                mediaStreamType = "BUFFERED"
                             elif mediaType == "audio/mp3":
                                 metadataType = 3  # type METADATA_TYPE_MUSICTRACK ()
                                 mediaStreamType = "BUFFERED"
