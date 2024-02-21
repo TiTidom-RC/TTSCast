@@ -24,6 +24,11 @@
       "title":"Radio Classique",
       "image":"https://www.radioclassique.fr/wp-content/themes/radioclassique/favicons/apple-touch-icon.png"
    },
+   "radio_contact":{
+      "location":"https://radiocontact.ice.infomaniak.ch/radiocontact-mp3-192.mp3",
+      "title":"Radio Contact",
+      "image":"https://www.radiocontact.be/app/themes/radiocontact-new/static/assets/images/logo.png"
+   },
    "fip":{
       "location":"http://direct.fipradio.fr/live/fip-midfi.mp3",
       "title":"FIP",

@@ -34,11 +34,17 @@ class ttscast extends eqLogic
     /*
      * Permet de crypter/décrypter automatiquement des champs de configuration du plugin
      * Exemple : "param1" & "param2" seront cryptés mais pas "param3"
-    public static $_encryptConfigKey = array('param1', 'param2');
-    */
+     */
+    public static $_encryptConfigKey = array('voiceRSSAPIKey');    
 
     /* ************************ Methodes statiques : Démon & Dépendances *************************** */
 
+    public static function backupExclude() {
+		return [
+			'resources/venv'
+		];
+	}
+    
     public static function dependancy_install() {
         log::remove(__CLASS__ . '_update');
         return array('script' => __DIR__ . '/../../resources/install_#stype#.sh ' . jeedom::getTmpFolder(__CLASS__) . '/dependency', 'log' => log::getPathToLog(__CLASS__ . '_update'));
