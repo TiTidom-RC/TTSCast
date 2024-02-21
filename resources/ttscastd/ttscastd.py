@@ -1113,8 +1113,8 @@ class Functions:
                         else:
                             mediaType = "video/mp4"
                         mediaThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
-                        mediaTitle = "Media UPNP"
-                        mediaSubTitle = "[Jeedom] TTSCast Media"
+                        mediaTitle = "[Jeedom] TTSCast Media"
+                        mediaSubTitle = _value
                         
                         app_name = "bubbleupnp"
                         app_data = {
