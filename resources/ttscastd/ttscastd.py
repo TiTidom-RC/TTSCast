@@ -1646,13 +1646,13 @@ class myCast:
                 # The socket connection was complete
                 CONNECTION_STATUS_CONNECTED = "CONNECTED"
                 # The socket connection has been disconnected
-                CONNECTION_STATUS_DISCONNECTED = "DISCONNECTED"
+                # CONNECTION_STATUS_DISCONNECTED = "DISCONNECTED"
                 # Connecting to socket failed (after a CONNECTION_STATUS_CONNECTING)
-                CONNECTION_STATUS_FAILED = "FAILED"
+                # CONNECTION_STATUS_FAILED = "FAILED"
                 # Failed to resolve service name
-                CONNECTION_STATUS_FAILED_RESOLVE = "FAILED_RESOLVE"
+                # CONNECTION_STATUS_FAILED_RESOLVE = "FAILED_RESOLVE"
                 # The socket connection was lost and needs to be retried
-                CONNECTION_STATUS_LOST = "LOST"
+                # CONNECTION_STATUS_LOST = "LOST"
                 
                 if status.status in [CONNECTION_STATUS_CONNECTED, CONNECTION_STATUS_CONNECTING]:
                     castIsOnline = '1'
@@ -1662,6 +1662,7 @@ class myCast:
                 data = {
                     'uuid': str(self.cast.uuid),
                     'realtime': 1,
+                    'status_type': 'connect',
                     'online': castIsOnline
                 }
 
