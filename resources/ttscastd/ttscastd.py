@@ -621,6 +621,8 @@ class TTSCast:
             
             chromecasts = None
             cast = None
+            volumeBeforePlay = None
+            
             try:
                 chromecasts = [mycast for mycast in Config.NETCAST_DEVICES.values() if mycast.name == googleName]
                 if not chromecasts:
@@ -635,10 +637,9 @@ class TTSCast:
                 volumeBeforePlay = cast.status.volume_level
                 if not appDing:
                     cast.set_volume(volume=0)
-                else:
-                    if (volumeForPlay is not None):
-                        logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
-                        cast.set_volume(volume=volumeForPlay / 100)
+                elif volumeForPlay is not None:
+                    logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
+                    cast.set_volume(volume=volumeForPlay / 100)
                 
                 urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -657,20 +658,30 @@ class TTSCast:
                 }
                 quick_play.quick_play(cast, app_name, app_data)
                 
-                if (volumeForPlay is not None):
-                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                if (not appDing and volumeForPlay is not None):
+                    logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
                     cast.set_volume(volume=volumeBeforePlay)
                     
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
                 
-                while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
-                    time.sleep(1)
-                    logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
+                media_player_state = None
+                media_has_played = False
+                
+                while True:
+                    if media_player_state != cast.media_controller.status.player_state:
+                        media_player_state = cast.media_controller.status.player_state
+                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED']:
+                            break
+                        if media_player_state in ['PLAYING', 'PAUSED']:
+                            media_has_played = True
+                            logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
+                    time.sleep(0.1)
                 
                 cast.quit_app()
-                if (volumeForPlay is not None):
+                
+                if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
@@ -681,6 +692,9 @@ class TTSCast:
                 logging.debug('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
                 logging.debug(traceback.format_exc())
                 
+                if volumeBeforePlay is not None:
+                    cast.set_volume(volume=volumeBeforePlay)
+                
                 # Libération de la mémoire
                 cast = None
                 chromecasts = None
@@ -690,6 +704,8 @@ class TTSCast:
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
             
             cast = None
+            volumeBeforePlay = None
+            
             try:
                 _uuid = UUID(googleUUID)
                 if _uuid in Config.NETCAST_DEVICES:
@@ -705,10 +721,9 @@ class TTSCast:
                 volumeBeforePlay = cast.status.volume_level
                 if not appDing:
                     cast.set_volume(volume=0)
-                else:
-                    if (volumeForPlay is not None):
-                        logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
-                        cast.set_volume(volume=volumeForPlay / 100)
+                elif volumeForPlay is not None:
+                    logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
+                    cast.set_volume(volume=volumeForPlay / 100)
             
                 urlThumb = urljoin(Config.ttsWebSrvImages, "tts.png")
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -728,20 +743,30 @@ class TTSCast:
                 
                 quick_play.quick_play(cast, app_name, app_data)
                 
-                if (volumeForPlay is not None):
-                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                if (not appDing and volumeForPlay is not None):
+                    logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
-                while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
-                    time.sleep(1)
-                    logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
+                media_player_state = None
+                media_has_played = False
+            
+                while True:
+                    if media_player_state != cast.media_controller.status.player_state:
+                        media_player_state = cast.media_controller.status.player_state
+                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED']:
+                            break
+                        if media_player_state in ['PLAYING', 'PAUSED']:
+                            media_has_played = True
+                            logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
+                    time.sleep(0.1)
             
                 cast.quit_app()
-                if (volumeForPlay is not None):
+                
+                if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
@@ -750,6 +775,9 @@ class TTSCast:
             except Exception as e:
                 logging.debug('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
                 logging.debug(traceback.format_exc())
+                
+                if volumeBeforePlay is not None:
+                    cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
                 cast = None
@@ -775,6 +803,8 @@ class Functions:
     def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _options=''):
         if _googleUUID != 'UNKOWN':
             cast = None
+            volumeBeforePlay = None
+            
             try:
                 _uuid = UUID(_googleUUID)
                 if (_uuid in Config.NETCAST_DEVICES):
@@ -811,10 +841,9 @@ class Functions:
                     volumeBeforePlay = cast.status.volume_level
                     if not _appDing:
                         cast.set_volume(volume=0)
-                    else:
-                        if (_volume is not None):
-                            logging.debug('[DAEMON][controllerActions] YouTube :: Volume avant lecture :: %s', str(volumeBeforePlay))
-                            cast.set_volume(volume=_volume / 100)
+                    elif (_volume is not None):
+                        logging.debug('[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                        cast.set_volume(volume=_volume / 100)
 
                     app_name = "youtube"
                     app_data = {
@@ -824,8 +853,8 @@ class Functions:
                     }
                     quick_play.quick_play(cast, app_name, app_data)
                     
-                    if (_volume is not None):
-                        logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                    if (not _appDing and _volume is not None):
+                        logging.debug('[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
                         cast.set_volume(volume=_volume / 100)
                     elif (not _appDing):
                         cast.set_volume(volume=volumeBeforePlay)
@@ -903,10 +932,9 @@ class Functions:
                             volumeBeforePlay = cast.status.volume_level
                             if not _appDing:
                                 cast.set_volume(volume=0)
-                            else:
-                                if (_volume is not None):
-                                    logging.debug('[DAEMON][controllerActions] Radios :: Volume avant lecture :: %s', str(volumeBeforePlay))
-                                    cast.set_volume(volume=_volume / 100)
+                            elif (_volume is not None):
+                                logging.debug('[DAEMON][controllerActions] Radios :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                                cast.set_volume(volume=_volume / 100)
                             
                             f = open(Config.radiosFilePath, "r")
                             radiosArray = json.loads(f.read())
@@ -935,8 +963,9 @@ class Functions:
                                     "stream_type": "LIVE"
                                 }
                                 quick_play.quick_play(cast, app_name, app_data)
-                                if (_volume is not None):
-                                    logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                                
+                                if (not _appDing and _volume is not None):
+                                    logging.debug('[DAEMON][controllerActions] Radios :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
                                     cast.set_volume(volume=_volume / 100)
                                 elif (not _appDing):
                                     cast.set_volume(volume=volumeBeforePlay)
@@ -969,10 +998,9 @@ class Functions:
                         volumeBeforePlay = cast.status.volume_level
                         if not _appDing:
                             cast.set_volume(volume=0)
-                        else:
-                            if (_volume is not None):
-                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume avant lecture :: %s', str(volumeBeforePlay))
-                                cast.set_volume(volume=_volume / 100)
+                        elif (_volume is not None):
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                            cast.set_volume(volume=_volume / 100)
                         
                         if (_controller == 'customsounds'):
                             soundURL = urljoin(Config.ttsWebSrvMedia, 'custom/' + _value)
@@ -999,17 +1027,26 @@ class Functions:
                         }
                         quick_play.quick_play(cast, app_name, app_data)
                         
-                        if (_volume is not None):
-                            logging.debug('[DAEMON][Cast] Volume avant lecture :: %s', str(volumeBeforePlay))
+                        if (not _appDing and _volume is not None):
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
                             cast.set_volume(volume=_volume / 100)
                         elif (not _appDing):
                             cast.set_volume(volume=volumeBeforePlay)
                         
                         logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound lancée :: %s', str(cast.media_controller.status))
                         
-                        while cast.media_controller.status.player_state in ['PLAYING', 'PAUSED']:
-                            time.sleep(1)
-                            logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound en cours :: %s', str(cast.media_controller.status))
+                        media_player_state = None
+                        media_has_played = False
+	
+                        while True:
+                            if media_player_state != cast.media_controller.status.player_state:
+                                media_player_state = cast.media_controller.status.player_state
+                                if media_has_played and media_player_state not in ['PLAYING', 'PAUSED']:
+                                    break
+                                if media_player_state in ['PLAYING', 'PAUSED']:
+                                    media_has_played = True
+                                    logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound en cours :: %s', str(cast.media_controller.status))
+                            time.sleep(0.1)
             
                         cast.quit_app()
                         if (_volume is not None):
@@ -1017,21 +1054,21 @@ class Functions:
                 
                 # Libération de la mémoire
                 cast = None
-                chromecasts = None
                 return True
                 
             except Exception as e:
                 logging.error('[DAEMON][controllerActions] Exception on controllerActions (%s) :: %s', _googleUUID, e)
                 logging.debug(traceback.format_exc())
                 
+                if volumeBeforePlay is not None:
+                    cast.set_volume(volume=volumeBeforePlay)
+                
                 # Libération de la mémoire
                 cast = None
-                chromecasts = None
                 return False
     
     def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
         if _googleUUID != 'UNKOWN':
-            chromecasts = None
             cast = None
             try:
                 _uuid = UUID(_googleUUID)
