@@ -266,7 +266,7 @@ class ttscast extends eqLogic
                 $resAction = $data['action'];
             }
             if (array_key_exists('value', $data)) {
-                if (in_array($resAction, ["radios", "sounds", "customsounds"])) {
+                if (in_array($resAction, ["radios", "customradios", "sounds", "customsounds"])) {
                     $resCmd['select'] = $data['value'];
                 }
                 elseif (in_array($resAction, ["volumeset"])) {
@@ -298,6 +298,9 @@ class ttscast extends eqLogic
             }
             if (array_key_exists('ding', $data)) {
                 $resOptions['ding'] = $data['ding'];
+            }
+            if (array_key_exists('type', $data)) {
+                $resOptions['type'] = $data['type'];
             }
 
             $resCmd['title'] = substr(json_encode($resOptions), 1, -1);

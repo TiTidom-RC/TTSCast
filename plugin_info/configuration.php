@@ -314,7 +314,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, CustomRadios, Sounds, Custom Sounds)}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Mettre à jour les listes :: Radios}}
+                <label class="col-lg-3 control-label">{{Mise à jour des listes :: Radios}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Met à jour la liste des radios de vos équipements. ATTENTION : cela peut avoir un impact sur vos scénarios !}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
