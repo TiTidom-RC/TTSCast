@@ -357,7 +357,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Ajouter un fichier :: Custom Radios}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Download et/ou Upload d'un fichier (.json) pour mettre à jour la liste des Custom Radios}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Upload d'un fichier (.json) pour mettre à jour la liste des Custom Radios}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <a class="btn btn-info btn-file">
