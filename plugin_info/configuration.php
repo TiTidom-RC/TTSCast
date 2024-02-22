@@ -304,7 +304,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Désactiver le "ding" des commandes}}
+                <label class="col-lg-3 control-label">{{Désactiver le 'ding' des commandes}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Désactive (globalement) le 'ding' au lancement d'une commande sur un Google Home}}"></i></sup>
                 </label>
