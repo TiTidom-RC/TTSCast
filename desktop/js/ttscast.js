@@ -137,7 +137,7 @@ $('body').on('ttscast::scanState', function (_event, _options) {
       $('.customclass-scanState').removeClass('logoPrimary').addClass('logoSecondary');
       $('.customicon-scanState').addClass('icon_red');
       $('.customtext-scanState').text('{{Stop Scan}}');
-      $('#div_alert').showAlert({message: '{{Mode Scan ACTIF pour 60 secondes. (Cliquez sur \'Stop Scan\' pour l\'arrêter avant)}}', level: 'warning'});
+      $('#div_alert').showAlert({message: '{{Mode SCAN actif pendant 60 secondes. (Cliquez sur STOP SCAN pour arrêter la découverte des équipements)}}', level: 'warning'});
     }
   } else {    
     if ($('.customclass-scanState').attr('data-scanState') == "scanOff") {

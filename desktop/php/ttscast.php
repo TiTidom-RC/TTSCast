@@ -56,7 +56,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
         <legend><i class="fas fa-volume-down"></i> {{Mes TTSCasts}}</legend>
         <?php
         if (count($eqLogics) == 0) {
-            echo '<br><div class="text-center" style="font-size:1.2em;font-weight:bold;">{{Aucun équipement ttscast trouvé, cliquer sur "Ajouter" pour commencer}}</div>';
+            echo '<br><div class="text-center" style="font-size:1.2em;font-weight:bold;">{{Aucun équipement ttscast trouvé, cliquer sur Ajouter pour commencer}}</div>';
         } else {
             // Champ de recherche
             echo '<div class="input-group" style="margin:5px;">';
@@ -201,23 +201,6 @@ $eqLogics = eqLogic::byType($plugin->getId());
                                 <label class="col-sm-4 control-label">{{Dernier Scan}}</label>
                                 <div class="col-sm-6">
                                     <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="lastscan" readonly>
-                                </div>
-                            </div>
-                            <!-- Exemple de champ de saisie du cron d'auto-actualisation avec assistant -->
-                            <!-- La fonction cron de la classe du plugin doit contenir le code prévu pour que ce champ soit fonctionnel -->
-                            <div class="form-group">
-                                <label class="col-sm-4 control-label">{{Auto-actualisation}}
-                                    <sup><i class="fas fa-question-circle tooltips" title="{{Fréquence de rafraîchissement des commandes infos de l'équipement}}"></i></sup>
-                                </label>
-                                <div class="col-sm-6">
-                                    <div class="input-group">
-                                        <input type="text" class="eqLogicAttr form-control roundedLeft" data-l1key="configuration" data-l2key="autorefresh" placeholder="{{Cliquer sur ? pour afficher l'assistant cron}}">
-                                        <span class="input-group-btn">
-                                            <a class="btn btn-default cursor jeeHelper roundedRight" data-helper="cron" title="Assistant cron">
-                                                <i class="fas fa-question-circle"></i>
-                                            </a>
-                                        </span>
-                                    </div>
                                 </div>
                             </div>
                         </div>

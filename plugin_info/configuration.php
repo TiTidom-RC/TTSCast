@@ -90,7 +90,7 @@ if (!isConnect()) {
             <div class="form-group customform-voicersstts">
                 <label class="col-lg-3 control-label">{{Clé API (Voice RSS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://www.voicerss.org/personel/">{{SITE}}</a>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Rentrer votre clé API Voice RSS, récupérable sur leur site, dans votre profil'}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Rentrer votre clé API Voice RSS, récupérable sur leur site, dans votre profil}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control custominput-voicerssapikey" type="text" data-l1key="voiceRSSAPIKey" />
@@ -304,7 +304,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Désactiver le "ding" des commandes}}
+                <label class="col-lg-3 control-label">{{Désactiver le 'ding' des commandes}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Désactive (globalement) le 'ding' au lancement d'une commande sur un Google Home}}"></i></sup>
                 </label>
@@ -357,7 +357,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Ajouter un fichier :: Custom Radios}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Download et/ou Upload d'un fichier (.json) pour mettre à jour la liste des Custom Radios}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Upload d'un fichier (.json) pour mettre à jour la liste des Custom Radios}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <a class="btn btn-info btn-file">
