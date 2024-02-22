@@ -59,7 +59,7 @@ function ttscast_install() {
             $plugin = plugin::byId('ttscast');
             $plugin->dependancy_install();
         } catch (\Throwable $th) {
-            message::add('ttscast', __('Une erreur est survenue à la mise à jour automatique des dépendances. Vérifiez les logs et relancez l\'installation des dépendances manuellement', __FILE__));
+            message::add('ttscast', __('Une erreur est survenue à la mise à jour automatique des dépendances. Vérifiez les logs et relancez les dépendances manuellement', __FILE__));
         }
     }
 }
@@ -105,7 +105,7 @@ function ttscast_update() {
             $plugin = plugin::byId('ttscast');
             $plugin->dependancy_install();
         } catch (\Throwable $th) {
-            message::add('ttscast', __('Une erreur est survenue à la mise à jour automatique des dépendances. Vérifiez les logs et relancez l\'installation des dépendances manuellement', __FILE__));
+            message::add('ttscast', __('Une erreur est survenue à la mise à jour automatique des dépendances. Vérifiez les logs et relancez les dépendances manuellement', __FILE__));
         }
     }
 }
