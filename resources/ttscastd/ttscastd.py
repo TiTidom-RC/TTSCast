@@ -1427,20 +1427,32 @@ class myCast:
                 return False
     
         if uuid not in Config.LISTENER_CAST:
-            Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
-            chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
+            try:
+                Config.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
+                chromecast.register_status_listener(Config.LISTENER_CAST[uuid])
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][CastListeners][CastStatus] Exception (%s) :: %s', str(chromecast.name), e)
+                logging.debug(traceback.format_exc())
         else:
             logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Status Listener already active', str(chromecast.name))
             
         if uuid not in Config.LISTENER_MEDIA:
-            Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
-            chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
+            try:
+                Config.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
+                chromecast.media_controller.register_status_listener(Config.LISTENER_MEDIA[uuid])
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][CastListeners][MediaStatus] Exception (%s) :: %s', str(chromecast.name), e)
+                logging.debug(traceback.format_exc())
         else:
             logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Media Listener already active', str(chromecast.name))
             
         if uuid not in Config.LISTENER_CONNECT:
-            Config.LISTENER_CONNECT[uuid] = myCast.MyConnectionStatusListener(chromecast.name, chromecast)
-            chromecast.register_connection_listener(Config.LISTENER_CONNECT[uuid])
+            try:
+                Config.LISTENER_CONNECT[uuid] = myCast.MyConnectionStatusListener(chromecast.name, chromecast)
+                chromecast.register_connection_listener(Config.LISTENER_CONNECT[uuid])
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][CastListeners][ConnectStatus] Exception (%s) :: %s', str(chromecast.name), e)
+                logging.debug(traceback.format_exc())
         else:
             logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Connect Listener already active', str(chromecast.name))
                        
@@ -1455,22 +1467,34 @@ class myCast:
                 return False
     
         if (uuid in Config.LISTENER_CAST):
-            # chromecast.register_status_listener(None)
-            del Config.LISTENER_CAST[uuid]
+            try:
+                # chromecast.register_status_listener(None)
+                del Config.LISTENER_CAST[uuid]
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][CastRemove][Cast] Exception (%s) :: %s', str(chromecast.name), e)
+                logging.debug(traceback.format_exc())
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Status Listener already deleted', str(chromecast.name))
             
         if (uuid in Config.LISTENER_MEDIA):
-            # chromecast.media_controller.register_status_listener(None)
-            del Config.LISTENER_MEDIA[uuid]
+            try:
+                # chromecast.media_controller.register_status_listener(None)
+                del Config.LISTENER_MEDIA[uuid]
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][CastRemove][Media] Exception (%s) :: %s', str(chromecast.name), e)
+                logging.debug(traceback.format_exc())
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
         
         if (uuid in Config.LISTENER_CONNECT):
-            # chromecast.register_connection_listener(None)
-            del Config.LISTENER_MEDIA[uuid]
+            try:
+                # chromecast.register_connection_listener(None)
+                del Config.LISTENER_CONNECT[uuid]
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][CastRemove][Connect] Exception (%s) :: %s', str(chromecast.name), e)
+                logging.debug(traceback.format_exc())
         else:
-            logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
+            logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Connect Listener already deleted', str(chromecast.name))
         
         logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Listeners Removed', str(chromecast.name))
 
