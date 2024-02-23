@@ -69,7 +69,6 @@
 		"[ATTENTION] Ne changez ce paramètre qu'en cas de nécessité. (Défaut = 55111)": "[ATTENTION] Only change this setting if necessary. (Default = 55111)",
 		"Fréquence des cycles": "Cycles Frequency",
 		"Facteur multiplicateur des cycles du démon (Défaut = x1)": "Daemon Cycle Multiplier Factor (Default = x1)",
-		"Rapide ++++ (x0)": "Faster ++++ (x0)",
 		"Rapide +++ (x0.1)": "Faster +++ (x0.1)",
 		"Rapide ++ (x0.25)": "Faster ++ (x0.25)",
 		"Rapide + (x0.5)": "Faster + (x0.5)",

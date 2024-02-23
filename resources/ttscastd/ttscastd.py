@@ -1783,15 +1783,18 @@ if args.ttsweb:
 
 jeedom_utils.set_log_level(Config.logLevel)
 
-if Config.cycleFactor < 1.0:
-    logging.warning('[DAEMON][MAIN][CYCLE] CycleFactor < 1.0 => Main à 1.0 / Comm à 0.5')
-    Config.cycleMain = 1.0
+if Config.cycleFactor == 0:
+    Config.cycleMain = 2.0
     Config.cycleComm = 0.5
+    Config.cycleEvent = 0.5
+elif Config.cycleFactor < 0.5:
+    Config.cycleMain = 1.0
+    Config.cycleComm = 0.25
+    Config.cycleEvent = float(Config.cycleEvent * Config.cycleFactor)
 else:
     Config.cycleMain = float(Config.cycleMain * Config.cycleFactor)
-    Config.cycleComm = float(Config.cycleComm * Config.cycleFactor)    
-
-Config.cycleEvent = float(Config.cycleEvent * Config.cycleFactor)
+    Config.cycleComm = float(Config.cycleComm * Config.cycleFactor)
+    Config.cycleEvent = float(Config.cycleEvent * Config.cycleFactor)  
 
 logging.info('[DAEMON][MAIN] Start Daemon')
 logging.info('[DAEMON][MAIN] Plugin Version: %s', Config.pluginVersion)
@@ -1799,6 +1802,12 @@ logging.info('[DAEMON][MAIN] Log level: %s', Config.logLevel)
 logging.info('[DAEMON][MAIN] Socket port: %s', Config.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', Config.socketHost)
 logging.info('[DAEMON][MAIN] CycleFactor: %s', Config.cycleFactor)
+
+if Config.cycleFactor == 0:
+    logging.warning('[DAEMON][MAIN][CYCLE] CycleFactor à 0 => Main à 2.0 / Comm à 0.5 / Event à 0.5')
+elif Config.cycleFactor < 0.5:
+    logging.warning('[DAEMON][MAIN][CYCLE] CycleFactor < 0.5 => Main à 1.0 / Comm à 0.25')
+
 logging.info('[DAEMON][MAIN] CycleMain: %s', Config.cycleMain)
 logging.info('[DAEMON][MAIN] CycleComm: %s', Config.cycleComm)
 logging.info('[DAEMON][MAIN] CycleEvent: %s', Config.cycleEvent)

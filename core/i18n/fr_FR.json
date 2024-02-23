@@ -69,7 +69,6 @@
 		"[ATTENTION] Ne changez ce paramètre qu'en cas de nécessité. (Défaut = 55111)": "[ATTENTION] Ne changez ce paramètre qu'en cas de nécessité. (Défaut = 55111)",
 		"Fréquence des cycles": "Fréquence des cycles",
 		"Facteur multiplicateur des cycles du démon (Défaut = x1)": "Facteur multiplicateur des cycles du démon (Défaut = x1)",
-		"Rapide ++++ (x0)": "Rapide ++++ (x0)",
 		"Rapide +++ (x0.1)": "Rapide +++ (x0.1)",
 		"Rapide ++ (x0.25)": "Rapide ++ (x0.25)",
 		"Rapide + (x0.5)": "Rapide + (x0.5)",

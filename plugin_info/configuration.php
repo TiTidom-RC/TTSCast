@@ -51,7 +51,6 @@ if (!isConnect()) {
                 </label>
 	            <div class="col-lg-2">
 			        <select class="configKey form-control" data-l1key="cyclefactor">
-                        <option value="0.0">{{Rapide ++++ (x0)}}</option>    
                         <option value="0.1">{{Rapide +++ (x0.1)}}</option>
                         <option value="0.25">{{Rapide ++ (x0.25)}}</option>
                         <option value="0.5">{{Rapide + (x0.5)}}</option>

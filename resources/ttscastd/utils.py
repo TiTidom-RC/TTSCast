@@ -87,10 +87,10 @@ class Config:
     pluginVersion = ''
     callBack = ''
     
-    cycleFactor = 1
+    cycleFactor = 1.0
     cycleEvent = 0.5  # cycle de la boucle des events
     cycleComm = 0.5  # cycle de la boucle des comm Jeedom
-    cycleMain = 2  # cycle de la boucle MainLoop et par héritage du socket read
+    cycleMain = 2.0  # cycle de la boucle MainLoop et par héritage du socket read
     
 class Comm:
     sendToJeedom = ''
