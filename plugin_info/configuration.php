@@ -47,14 +47,18 @@ if (!isConnect()) {
             <div class="form-group">
 	            <label class="col-lg-3 control-label">{{Fréquence des cycles}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Facteur multiplicateur des cycles du démon (Défaut = 1)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Facteur multiplicateur des cycles du démon (Défaut = x1)}}"></i></sup>
                 </label>
 	            <div class="col-lg-2">
 			        <select class="configKey form-control" data-l1key="cyclefactor">
-				        <option value="0.5">{{Plus Rapide - 0.5}}</option>
-			            <option value="1" selected>{{Normal - 1 (Recommandé)}}</option>
-			            <option value="2">{{Plus Lent - 2}}</option>
-			            <option value="3">{{Encore Plus Lent - 3}}</option>
+                        <option value="0.0">{{Rapide ++++ (x0)}}</option>    
+                        <option value="0.1">{{Rapide +++ (x0.1)}}</option>
+                        <option value="0.25">{{Rapide ++ (x0.25)}}</option>
+                        <option value="0.5">{{Rapide + (x0.5)}}</option>
+			            <option value="1.0" selected>{{Normal (x1)}}</option>
+			            <option value="1.5">{{Lent - (x1.5)}}</option>
+                        <option value="2.0">{{Lent -- (x2)}}</option>
+			            <option value="3.0">{{Lent --- (x3)}}</option>
 			        </select>
 	            </div>
             </div>

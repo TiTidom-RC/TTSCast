@@ -1783,17 +1783,25 @@ if args.ttsweb:
 
 jeedom_utils.set_log_level(Config.logLevel)
 
-if (Config.cycleFactor == 0):
-    Config.cycleFactor = 1
-Config.cycleEvent = float(Config.cycleEvent * Config.cycleFactor)
-Config.cycleMain = float(Config.cycleMain * Config.cycleFactor)
+if Config.cycleFactor < 1.0:
+    logging.warning('[DAEMON][MAIN][CYCLE] CycleFactor < 1.0 => Main à 1.0 / Comm à 0.5')
+    Config.cycleMain = 1.0
+    Config.cycleComm = 0.5
+else:
+    Config.cycleMain = float(Config.cycleMain * Config.cycleFactor)
+    Config.cycleComm = float(Config.cycleComm * Config.cycleFactor)    
 
-logging.info('[DAEMON][MAIN] Start ttscastd')
+Config.cycleEvent = float(Config.cycleEvent * Config.cycleFactor)
+
+logging.info('[DAEMON][MAIN] Start Daemon')
 logging.info('[DAEMON][MAIN] Plugin Version: %s', Config.pluginVersion)
 logging.info('[DAEMON][MAIN] Log level: %s', Config.logLevel)
 logging.info('[DAEMON][MAIN] Socket port: %s', Config.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', Config.socketHost)
 logging.info('[DAEMON][MAIN] CycleFactor: %s', Config.cycleFactor)
+logging.info('[DAEMON][MAIN] CycleMain: %s', Config.cycleMain)
+logging.info('[DAEMON][MAIN] CycleComm: %s', Config.cycleComm)
+logging.info('[DAEMON][MAIN] CycleEvent: %s', Config.cycleEvent)
 logging.info('[DAEMON][MAIN] PID file: %s', Config.pidFile)
 logging.info('[DAEMON][MAIN] ApiKey: %s', "***")
 logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***")
@@ -1812,7 +1820,7 @@ signal.signal(signal.SIGTERM, handler)
 
 try:
     jeedom_utils.write_pid(str(Config.pidFile))
-    Comm.sendToJeedom = jeedom_com(apikey=Config.apiKey, url=Config.callBack, cycle=Config.cycleEvent)
+    Comm.sendToJeedom = jeedom_com(apikey=Config.apiKey, url=Config.callBack, cycle=Config.cycleComm)
     if not Comm.sendToJeedom.test():
         logging.error('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication ERROR (Daemon to Jeedom)')
         shutdown()

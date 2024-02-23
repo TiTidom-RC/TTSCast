@@ -89,6 +89,7 @@ class Config:
     
     cycleFactor = 1
     cycleEvent = 0.5  # cycle de la boucle des events
+    cycleComm = 0.5  # cycle de la boucle des comm Jeedom
     cycleMain = 2  # cycle de la boucle MainLoop et par héritage du socket read
     
 class Comm:
