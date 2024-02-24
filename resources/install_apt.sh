@@ -67,7 +67,7 @@ log "*****************************"
 $VENV_DIR/bin/python3 -m pip install --upgrade pip wheel | log
 echo 70 > ${PROGRESS_FILE}
 # $VENV_DIR/bin/python3 -m pip install -r requirements.txt | log
-$VENV_DIR/bin/python3 -m pip install PyChromecast==14.0.0 google-cloud-texttospeech==2.16.1 gTTS==2.5.1 pydub==0.25.1 | log
+$VENV_DIR/bin/python3 -m pip install PyChromecast==13.1.0 google-cloud-texttospeech==2.16.1 gTTS==2.5.1 pydub==0.25.1 | log
 
 echo 100 > ${PROGRESS_FILE}
 log "****************"
