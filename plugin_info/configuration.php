@@ -371,14 +371,23 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="gCloudTTSSpeed">
-                        <option value="0.8">{{Lent (0.8)}}</option>
+                        <option value="0.5">{{Lent ---- (0.5)}}</option>    
+                        <option value="0.6">{{Lent --- (0.6)}}</option>
+                        <option value="0.7">{{Lent -- (0.7)}}</option>
+                        <option value="0.8">{{Lent - (0.8)}}</option>
+                        <option value="0.85">{{Normal --- (0.85)}}</option>
+                        <option value="0.9">{{Normal -- (0.9)}}</option>
+                        <option value="0.95">{{Normal - (0.95)}}</option>
                         <option value="1.0" selected>{{Normal (1.0)}}</option>
-                        <option value="1.2">{{Normal + (1.2)}}</option>
-                        <option value="1.25">{{Normal ++ (1.25)}}</option>
-                        <option value="1.3">{{Rapide (1.3)}}</option>
-                        <option value="1.4">{{Rapide + (1.4)}}</option>
-                        <option value="1.6">{{Rapide ++ (1.6)}}</option>
-                        <option value="1.8">{{Rapide +++ (1.8)}}</option>
+                        <option value="1.05">{{Normal + (1.05)}}</option>
+                        <option value="1.1">{{Normal ++ (1.1)}}</option>
+                        <option value="1.15">{{Normal +++ (1.15)}}</option>
+                        <option value="1.2">{{Rapide + (1.2)}}</option>
+                        <option value="1.25">{{Rapide ++ (1.25)}}</option>
+                        <option value="1.3">{{Rapide +++ (1.3)}}</option>
+                        <option value="1.4">{{Rapide ++++ (1.4)}}</option>
+                        <option value="1.5">{{Rapide +++++ (1.5)}}</option>
+                        <option value="1.6">{{Rapide ++++++ (1.6)}}</option>
                     </select>
                 </div>
             </div>
