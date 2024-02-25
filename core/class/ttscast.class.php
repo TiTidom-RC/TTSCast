@@ -41,7 +41,8 @@ class ttscast extends eqLogic
 
     public static function backupExclude() {
 		return [
-			'resources/venv'
+			'resources/venv', 
+            'resources/.pyenv'
 		];
 	}
     
