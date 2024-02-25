@@ -69,10 +69,10 @@ if [ "$versionPython" -lt 11 ]; then
 	log "*********************************************"
 	log "* Compile and Install Python 3.11.8 (with PyEnv) *"
 	log "*********************************************"
-	${BASE_DIR}/.pyenv/pyenv install 3.11.8 | log
+	${BASE_DIR}/.pyenv/bin/pyenv install 3.11.8 | log
 	log "Python 3.11.8 installation : done"
 fi
-echo 60 > ${PROGRESS_FILE}
+echo 55 > ${PROGRESS_FILE}
 log "**************************"
 log "* Create Python3.11 venv *"
 log "**************************"
@@ -81,14 +81,14 @@ if [ "$versionPython" -ge 11 ]; then
 else
 	${BASE_DIR}/.pyenv/versions/3.11.8/bin/python3 -m venv $VENV_DIR --upgrade-deps | log
 fi 
-echo 80 > ${PROGRESS_FILE}
+echo 70 > ${PROGRESS_FILE}
 log "Python3.11 venv : done"
 
 log "*****************************"
 log "* Install Python3 libraries *"
 log "*****************************"
 $VENV_DIR/bin/python3 -m pip install --upgrade pip wheel | log
-echo 82 > ${PROGRESS_FILE}
+echo 75 > ${PROGRESS_FILE}
 # $VENV_DIR/bin/python3 -m pip install -r requirements.txt | log
 $VENV_DIR/bin/python3 -m pip install PyChromecast==14.0.0 google-cloud-texttospeech==2.16.1 gTTS==2.5.1 pydub==0.25.1 | log
 
