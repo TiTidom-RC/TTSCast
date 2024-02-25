@@ -76,7 +76,7 @@ echo 60 > ${PROGRESS_FILE}
 log "**************************"
 log "* Create Python3.11 venv *"
 log "**************************"
-elif [ "$versionPython" -ge 11 ]; then
+if [ "$versionPython" -ge 11 ]; then
 	python3 -m venv $VENV_DIR --upgrade-deps | log 
 else
 	${BASE_DIR}/.pyenv/versions/3.11.8/bin/python3 -m venv $VENV_DIR --upgrade-deps | log
