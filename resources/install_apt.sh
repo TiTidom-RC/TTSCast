@@ -72,7 +72,7 @@ if [ "$versionPython" -lt 11 ]; then
 	log "*********************************************"
 	log "* Compile and Install Python 3.11.8 (with PyEnv) *"
 	log "*********************************************"
-	${BASE_DIR}/.pyenv/bin/pyenv install 3.11.8 | log
+	PYENV_ROOT="${BASE_DIR}/.pyenv" ${BASE_DIR}/.pyenv/bin/pyenv install 3.11.8 | log
 	log "Python 3.11.8 installation : done"
 fi
 echo 55 > ${PROGRESS_FILE}
