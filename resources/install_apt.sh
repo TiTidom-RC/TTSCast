@@ -63,6 +63,9 @@ if [ "$versionPython" -lt 11 ]; then
 	log "*********************************"
 	log "* Install PyEnv (Python < 3.11) *"
 	log "*********************************"
+	if [ -d ${BASE_DIR}/.pyenv ]; then
+		rm -rf ${BASE_DIR}/.pyenv
+	fi
 	curl https://pyenv.run | PYENV_ROOT="${BASE_DIR}/.pyenv" bash | log
 	log "PyEnv installation : done"
 	echo 40 > ${PROGRESS_FILE}
