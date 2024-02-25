@@ -1708,7 +1708,7 @@ def shutdown():
     logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
     try:
         for chromecast in Config.NETCAST_DEVICES.values():
-            chromecast.disconnect(timeout=5, blocking=False)
+            chromecast.disconnect(timeout=0)
         logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
         Config.NETCAST_BROWSER.stop_discovery()
         logging.info("[DAEMON] Shutdown :: Browser Stop :: OK")
