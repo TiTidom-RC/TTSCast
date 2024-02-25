@@ -39,26 +39,26 @@ log "****************************"
 apt-get -y -s -V upgrade | log
 echo 20 > ${PROGRESS_FILE}
 log "***************************************"
-log "* Install apt-get packages for Python *"
+log "* Install apt-get packages for Python3 *"
 log "***************************************"
 apt-get install -y python3 python3-requests python3-pip python3-setuptools python3-dev python3-venv | log
 echo 30 > ${PROGRESS_FILE}
-log "******************"
-log "* Python Version *"
-log "******************"
+log "***************************"
+log "* Check Python3.x Version *"
+log "***************************"
 versionPython=$(python3 --version | awk -F'[ ,.]' ' { print $3} ')
 [[ -z "$versionPython" ]] && versionPython=0
 if [ "$versionPython" -eq 0 ]; then 
-	log "Python3 :: VERSION ERROR :: NOT FOUND"
+	log "Python3.x :: VERSION ERROR :: NOT FOUND"
 	exit 1
 else
-	log "Python3 Version :: 3.$versionPython"
+	log "Python3.x Version :: 3.$versionPython"
 fi
 echo 35 > ${PROGRESS_FILE}
-log "*******************************************************"
-log "* Install apt-get packages for PyEnv if Python < 3.11 *"
-log "*******************************************************"
 if [ "$versionPython" -lt 11 ]; then 
+	log "******************************************************"
+	log "* Install apt-get packages for PyEnv (Python < 3.11) *"
+	log "******************************************************"
 	apt-get install -y build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev curl libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev | log
 	log "*********************************"
 	log "* Install PyEnv (Python < 3.11) *"
@@ -67,7 +67,7 @@ if [ "$versionPython" -lt 11 ]; then
 	log "PyEnv installation : done"
 	echo 40 > ${PROGRESS_FILE}
 	log "*********************************************"
-	log "* Compile and Install Python 3.11.8 (PyEnv) *"
+	log "* Compile and Install Python 3.11.8 (with PyEnv) *"
 	log "*********************************************"
 	${BASE_DIR}/.pyenv/pyenv install 3.11.8 | log
 	log "Python 3.11.8 installation : done"
