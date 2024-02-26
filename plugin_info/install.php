@@ -30,7 +30,7 @@ function ttscast_install() {
         config::save('socketport', '55111', 'ttscast');
     }
     if (config::byKey('cyclefactor', 'ttscast') == '') {
-        config::save('cyclefactor', '1', 'ttscast');
+        config::save('cyclefactor', '1.0', 'ttscast');
     }
     if (config::byKey('ttsEngine', 'ttscast') == '') {
         config::save('ttsEngine', 'jeedomtts', 'ttscast');
@@ -76,7 +76,7 @@ function ttscast_update() {
         config::save('socketport', '55111', 'ttscast');
     }
     if (config::byKey('cyclefactor', 'ttscast') == '') {
-        config::save('cyclefactor', '1', 'ttscast');
+        config::save('cyclefactor', '1.0', 'ttscast');
     }
     if (config::byKey('ttsEngine', 'ttscast') == '') {
         config::save('ttsEngine', 'jeedomtts', 'ttscast');
