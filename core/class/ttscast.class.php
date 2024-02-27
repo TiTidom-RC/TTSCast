@@ -23,6 +23,7 @@ class ttscast extends eqLogic
     /* ************************** Variables Globales ****************************** */
 
     const PYTHON3_PATH = __DIR__ . '/../../resources/venv/bin/python3';
+    const PYENV_PATH = __DIR__ . '../../resources/.pyenv/bin/pyenv';
 
     /* ************************** Attributs ****************************** */
 
@@ -62,7 +63,7 @@ class ttscast extends eqLogic
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==14.0.0|google-cloud-texttospeech==2.16.1|gTTS==2.5.1|pydub==0.25.1"') < 4) {
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==14.0.0|google-cloud-texttospeech==2.16.2|gTTS==2.5.1|pydub==0.25.1"') < 4) {
                 $return['state'] = 'nok';
             } else {
                 $return['state'] = 'ok';
@@ -92,6 +93,14 @@ class ttscast extends eqLogic
         $deamon_info = self::deamon_info();
         if ($deamon_info['launchable'] != 'ok') {
             throw new Exception(__('Veuillez vérifier la configuration', __FILE__));
+        }
+
+        try {
+            self::getPyEnvVersion();
+            self::getPythonVersion();
+        }
+        catch (Exception $e) {
+            log::add('ttscast', 'error', '[DAEMON][START][PyVersions] Exception :: ' . $e->getMessage());
         }
 
         $path = realpath(__DIR__ . '/../../resources/ttscastd');
@@ -336,6 +345,42 @@ class ttscast extends eqLogic
         }
         log::add('ttscast', 'info', '[VERSION] PluginVersion :: ' . $pluginVersion);
         return $pluginVersion;
+    }
+
+    public static function getPythonVersion() {
+        $pythonVersion = '0.0.0';
+        try {
+            if (file_exists(self::PYTHON3_PATH)) {
+               $pythonVersion = exec(system::getCmdSudo() . self::PYTHON3_PATH . " --version | awk '{ print $2 }'");
+               config::save('pythonVersion', $pythonVersion, 'ttscast');
+            }
+            else {
+                log::add('ttscast', 'error', '[Python-Version] Python File :: KO');
+            }
+        }
+        catch (\Exception $e) {
+            log::add('ttscast', 'error', '[Python-Version] Exception :: ' . $e->getMessage());
+        }
+        log::add('ttscast', 'info', '[Python-Version] PythonVersion :: ' . $pythonVersion);
+        return $pythonVersion;
+    }
+
+    public static function getPyEnvVersion() {
+        $pyenvVersion = '0.0.0';
+        try {
+            if (file_exists(self::PYENV_PATH)) {
+               $pyenvVersion = exec(system::getCmdSudo() . self::PYENV_PATH . " --version | awk '{ print $2 }'");
+               config::save('pyenvVersion', $pyenvVersion, 'ttscast');
+            }
+            else {
+                log::add('ttscast', 'error', '[PyEnv-Version] PyEnv File :: KO');
+            }
+        }
+        catch (\Exception $e) {
+            log::add('ttscast', 'error', '[PyEnv-Version] Exception :: ' . $e->getMessage());
+        }
+        log::add('ttscast', 'info', '[PyEnv-Version] PyEnvVersion :: ' . $pyenvVersion);
+        return $pyenvVersion;
     }
 
     public static function changeScanState($_scanState)
