@@ -1,4 +1,6 @@
 #!/bin/bash
+[ `whoami` = www-data ] || exec sudo -u www-data $0 $1
+
 PROGRESS_FILE=/tmp/jeedom/ttscast/dependency
 if [ ! -z $1 ]; then
 	PROGRESS_FILE=$1
