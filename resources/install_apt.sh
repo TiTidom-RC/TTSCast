@@ -64,16 +64,16 @@ if [ "$versionPython" -lt 11 ]; then
 	log "* Install PyEnv (Python < 3.11) *"
 	log "*********************************"
 	if [ -d ${BASE_DIR}/pyenv ]; then
-		sudo -u www-data PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv update | log
+		PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv update | log
 	else
-		curl https://pyenv.run | sudo -u www-data PYENV_ROOT="${BASE_DIR}/pyenv" bash | log
+		curl https://pyenv.run | PYENV_ROOT="${BASE_DIR}/pyenv" bash | log
 	fi
 	log "PyEnv installation / update : done"
 	echo 40 > ${PROGRESS_FILE}
 	log "*********************************************"
 	log "* Compile and Install Python 3.11.8 (with PyEnv) *"
 	log "*********************************************"
-	sudo -u www-data PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv install -s 3.11.8 | log
+	PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv install -s 3.11.8 | log
 	log "Python 3.11.8 installation : done"
 fi
 echo 55 > ${PROGRESS_FILE}
