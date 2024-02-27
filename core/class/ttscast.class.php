@@ -327,23 +327,23 @@ class ttscast extends eqLogic
         $pluginVersion = '0.0.0';
         try {
             if (!file_exists(dirname(__FILE__) . '/../../plugin_info/info.json')) {
-                log::add('ttscast', 'warning', '[VERSION] fichier info.json manquant');
+                log::add('ttscast', 'warning', '[Plugin-Version] fichier info.json manquant');
             }
             $data = json_decode(file_get_contents(dirname(__FILE__) . '/../../plugin_info/info.json'), true);
             if (!is_array($data)) {
-                log::add('ttscast', 'warning', '[VERSION] Impossible de décoder le fichier info.json');
+                log::add('ttscast', 'warning', '[Plugin-Version] Impossible de décoder le fichier info.json');
             }
             try {
                 $pluginVersion = $data['pluginVersion'];
                 // $pluginVersion .= " (" . update::byLogicalId('ttscast')->getLocalVersion() . ")";
             } catch (\Exception $e) {
-                log::add('ttscast', 'warning', '[VERSION] Impossible de récupérer la version du plugin');
+                log::add('ttscast', 'warning', '[Plugin-Version] Impossible de récupérer la version du plugin');
             }
         }
         catch (\Exception $e) {
-            log::add('ttscast', 'debug', '[VERSION] Get ERROR :: ' . $e->getMessage());
+            log::add('ttscast', 'debug', '[Plugin-Version] Get ERROR :: ' . $e->getMessage());
         }
-        log::add('ttscast', 'info', '[VERSION] PluginVersion :: ' . $pluginVersion);
+        log::add('ttscast', 'info', '[Plugin-Version] PluginVersion :: ' . $pluginVersion);
         return $pluginVersion;
     }
 
