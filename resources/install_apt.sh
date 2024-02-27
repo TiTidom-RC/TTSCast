@@ -1,6 +1,4 @@
 #!/bin/bash
-[ `whoami` = www-data ] || exec sudo -u www-data $0 $1
-
 PROGRESS_FILE=/tmp/jeedom/ttscast/dependency
 if [ ! -z $1 ]; then
 	PROGRESS_FILE=$1
@@ -8,6 +6,7 @@ fi
 
 BASE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 VENV_DIR=$BASE_DIR/venv
+PYENV_DIR=$BASE_DIR/pyenv
 
 function log(){
 	if [ -n "$1" ]
@@ -31,19 +30,19 @@ log "******************"
 echo 2 > ${PROGRESS_FILE}
 export DEBIAN_FRONTEND=noninteractive
 echo 3 > ${PROGRESS_FILE}
-sudo apt-get clean | log
+apt-get clean | log
 echo 5 > ${PROGRESS_FILE}
-sudo apt-get update | log
+apt-get update | log
 echo 10 > ${PROGRESS_FILE}
 log "****************************"
 log "* Simulate apt-get upgrade *"
 log "****************************"
-sudo apt-get -y -s -V upgrade | log
+apt-get -y -s -V upgrade | log
 echo 20 > ${PROGRESS_FILE}
 log "***************************************"
 log "* Install apt-get packages for Python3 *"
 log "***************************************"
-sudo apt-get install -y python3 python3-requests python3-pip python3-setuptools python3-dev python3-venv | log
+apt-get install -y python3 python3-requests python3-pip python3-setuptools python3-dev python3-venv | log
 echo 30 > ${PROGRESS_FILE}
 log "***************************"
 log "* Check Python3.x Version *"
@@ -61,11 +60,12 @@ if [ "$versionPython" -lt 11 ]; then
 	log "******************************************************"
 	log "* Install apt-get packages for PyEnv (Python < 3.11) *"
 	log "******************************************************"
-	sudo apt-get install -y git build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev curl libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev | log
+	apt-get install -y git build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev curl libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev | log
 	log "*********************************"
 	log "* Install PyEnv (Python < 3.11) *"
 	log "*********************************"
 	if [ -d ${BASE_DIR}/pyenv ]; then
+		chown -R root:root ${BASE_DIR}/pyenv
 		PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv update | log
 	else
 		curl https://pyenv.run | PYENV_ROOT="${BASE_DIR}/pyenv" bash | log
