@@ -73,6 +73,7 @@ if [ "$versionPython" -lt 11 ]; then
 		git reset --hard
 		cd ${BASE_DIR}/pyenv/plugins/pyenv-virtualenv
 		git reset --hard
+		cd ${BASE_DIR}
 		PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv update | log
 	else
 		curl https://pyenv.run | PYENV_ROOT="${BASE_DIR}/pyenv" bash | log
