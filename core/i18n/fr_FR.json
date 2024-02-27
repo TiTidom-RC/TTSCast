@@ -62,7 +62,11 @@
 	"plugins\/ttscast\/plugin_info\/configuration.php": {
 		"Plugin": "Plugin",
 		"Version": "Version",
-		"Version du plugin à indiquer sur Community": "Version du plugin à indiquer sur Community",
+		"Version Python": "Version Python",
+		"Version PyEnv": "Version PyEnv",
+		"Version du Plugin (A indiquer sur Community)": "Version du plugin (à indiquer sur Community)",
+		"Version de PyEnv utilisée par le Plugin (A indiquer sur Community)": "Version de PyEnv utilisée par le Plugin (A indiquer sur Community)",
+		"Version de Python utilisée par le Plugin (A indiquer sur Community)": "Version de Python utilisée par le Plugin (A indiquer sur Community)",
 		"Démon": "Démon",
 		"Port Socket Interne": "Port Socket Interne",
 		"Le démon devra être redémarré après la modification de ce paramètre": "Le démon devra être redémarré après la modification de ce paramètre",
