@@ -65,7 +65,7 @@ if [ "$versionPython" -lt 11 ]; then
 	log "* Install PyEnv (Python < 3.11) *"
 	log "*********************************"
 	if [ -d ${BASE_DIR}/pyenv ]; then
-		chown -R root:root ${BASE_DIR}/pyenv
+		chown -Rh root:root ${BASE_DIR}/pyenv
 		PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv update | log
 	else
 		curl https://pyenv.run | PYENV_ROOT="${BASE_DIR}/pyenv" bash | log
