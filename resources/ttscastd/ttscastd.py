@@ -1650,8 +1650,8 @@ class myCast:
                 logging.error('[DAEMON][NETCAST][New_Media_Status] Exception :: %s', e)
                 logging.debug(traceback.format_exc())
 
-        def load_media_failed(self, item, error_code):
-            logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(item) + ' with code :: ' + str(error_code))
+        def load_media_failed(self, queue_item_id, error_code):
+            logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(queue_item_id) + ' with code :: ' + str(error_code))
 
     class MyConnectionStatusListener(ConnectionStatusListener):
         """ConnectionStatusListener"""
@@ -1708,7 +1708,7 @@ def shutdown():
     logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
     try:
         for chromecast in Config.NETCAST_DEVICES.values():
-            chromecast.disconnect(timeout=0)
+            chromecast.disconnect(timeout=5)
         logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
         Config.NETCAST_BROWSER.stop_discovery()
         logging.info("[DAEMON] Shutdown :: Browser Stop :: OK")
