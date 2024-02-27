@@ -65,6 +65,7 @@ if [ "$versionPython" -lt 11 ]; then
 	log "* Install PyEnv (Python < 3.11) *"
 	log "*********************************"
 	if [ -d ${BASE_DIR}/pyenv ]; then
+		chown -Rh root:root ${BASE_DIR}/pyenv | log
 		cd ${BASE_DIR}/pyenv && git reset --hard | log
 		cd ${BASE_DIR}/pyenv/plugins/pyenv-doctor && git reset --hard | log
 		cd ${BASE_DIR}/pyenv/plugins/pyenv-update && git reset --hard | log
