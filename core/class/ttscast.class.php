@@ -23,7 +23,7 @@ class ttscast extends eqLogic
     /* ************************** Variables Globales ****************************** */
 
     const PYTHON3_PATH = __DIR__ . '/../../resources/venv/bin/python3';
-    const PYENV_PATH = __DIR__ . '/../../resources/.pyenv/bin/pyenv';
+    const PYENV_PATH = __DIR__ . '/../../resources/pyenv/bin/pyenv';
 
     /* ************************** Attributs ****************************** */
 
@@ -43,7 +43,7 @@ class ttscast extends eqLogic
     public static function backupExclude() {
 		return [
 			'resources/venv', 
-            'resources/.pyenv'
+            'resources/pyenv'
 		];
 	}
     
