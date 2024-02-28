@@ -15,7 +15,7 @@
 	"category" : "multimedia",
 	"hasDependency" : true,
 	"hasOwnDeamon" : true,
-	"maxDependancyInstallTime" : 30,
+	"maxDependancyInstallTime" : 60,
 	"changelog": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/changelog",
     "documentation": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/index",
     "changelog_beta": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/beta/changelog",
