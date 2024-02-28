@@ -734,6 +734,28 @@ class ttscast extends eqLogic
         }
     }
 
+    public function cleanupFileName($name)
+    {
+        $name = trim(strtolower($name));
+        $name = sanitizeAccent($name);
+        $name = str_replace(' ', '_', $name);
+        $name = preg_replace('/[^a-z0-9_-]/i', '', $name);
+        return $name;
+    }
+
+    public function getImage()
+    {
+        $model = $this->getConfiguration('model_name');
+        if ($model != '') {
+            $model = ttscast::cleanupFileName($model);
+            if (file_exists(__DIR__ . "/../../data/images/models/{$model}.png")) {
+                return "plugins/ttscast/data/images/models/{$model}.png";
+            }
+            log::add(__CLASS__, 'info', "[GetImage] No Image available for {$model}");
+        }
+        return parent::getImage();
+    }
+
     /* ************************ Methodes static : JEEDOM *************************** */
 
     /*
