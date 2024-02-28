@@ -90,7 +90,12 @@ log "**************************"
 if [ "$versionPython" -ge 11 ]; then
 	python3 -m venv --clear --upgrade-deps $VENV_DIR | log 
 else
-	${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps $VENV_DIR | log
+	vPythonVenv=$($VENV_DIR/bin/python3 --version | awk -F'[ ,.]' ' { print $3} ')
+	if [ "$vPythonVenv" -ge 11 ]; then
+		${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv --upgrade-deps $VENV_DIR | log
+	else
+		${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps $VENV_DIR | log
+	fi
 fi 
 echo 70 > ${PROGRESS_FILE}
 log "Python3.11 venv : done"
