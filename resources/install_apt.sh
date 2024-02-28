@@ -88,9 +88,9 @@ log "**************************"
 log "* Create Python3.11 venv *"
 log "**************************"
 if [ "$versionPython" -ge 11 ]; then
-	python3 -m venv $VENV_DIR --upgrade --upgrade-deps | log 
+	python3 -m venv --clear --upgrade-deps $VENV_DIR | log 
 else
-	${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv $VENV_DIR --upgrade --upgrade-deps | log
+	${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps $VENV_DIR | log
 fi 
 echo 70 > ${PROGRESS_FILE}
 log "Python3.11 venv : done"
