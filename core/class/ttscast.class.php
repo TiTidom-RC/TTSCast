@@ -1401,7 +1401,7 @@ class ttscast extends eqLogic
             $cmd->setSubType('select');
             $customRadioList = $this->getCustomRadioList();
             $cmd->setConfiguration('listValue', $customRadioList);
-	        $cmd->setIsVisible(1);
+	        $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
@@ -1435,7 +1435,7 @@ class ttscast extends eqLogic
             $cmd->setSubType('select');
             $customSoundList = $this->getCustomSoundList();
             $cmd->setConfiguration('listValue', $customSoundList);
-	        $cmd->setIsVisible(1);
+	        $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
@@ -1575,7 +1575,10 @@ class ttscastCmd extends cmd
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
                 }                
-            } else {
+            } elseif (in_array($logicalId, ["refresh", "refreshcast"])) {
+                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+            }
+            else {
                 throw new Exception(__('Commande Action non implémentée actuellement', __FILE__));    
             }
 		} else {
