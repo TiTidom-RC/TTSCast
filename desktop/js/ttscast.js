@@ -124,8 +124,6 @@ $('body').on('ttscast::newdevice', function (_event, _option) {
   } else if (_option && _option['friendly_name'] && _option['newone'] == '0') {
     $('#div_alert').showAlert({message: "[SCAN] TTSCast MAJ :: " + _option['friendly_name'], level: 'warning'});
   }
-
-  
 });
 
 $('body').on('ttscast::scanState', function (_event, _options) {

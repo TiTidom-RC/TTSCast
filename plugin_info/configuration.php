@@ -28,10 +28,26 @@ if (!isConnect()) {
             <legend><i class="fas fa-info"></i> {{Plugin}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Version}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Version du plugin à indiquer sur Community}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Version du Plugin (A indiquer sur Community)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input class="configKey form-control" data-l1key="pluginVersion" readonly />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Version PyEnv}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Version de PyEnv utilisée par le Plugin (A indiquer sur Community)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" data-l1key="pyenvVersion" readonly />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Version Python}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Version de Python utilisée par le Plugin (A indiquer sur Community)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" data-l1key="pythonVersion" readonly />
                 </div>
             </div>
             <legend><i class="fas fa-university"></i> {{Démon}}</legend>

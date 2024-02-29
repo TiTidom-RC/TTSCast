@@ -26,6 +26,12 @@ function ttscast_install() {
     message::removeAll('ttscast');
     message::add('ttscast', 'Installation du plugin TTS Cast (Version : ' . $pluginVersion . ')', null, null);
 
+    if (config::byKey('pythonVersion', 'ttscast') == '') {
+        config::save('pythonVersion', '?.?.?', 'ttscast');
+    }
+    if (config::byKey('pyenvVersion', 'ttscast') == '') {
+        config::save('pyenvVersion', '?.?.?', 'ttscast');
+    }
     if (config::byKey('socketport', 'ttscast') == '') {
         config::save('socketport', '55111', 'ttscast');
     }
@@ -72,6 +78,12 @@ function ttscast_update() {
     message::removeAll('ttscast');
     message::add('ttscast', 'Mise à jour du plugin TTS Cast (Version : ' . $pluginVersion . ')', null, null);
 
+    if (config::byKey('pythonVersion', 'ttscast') == '') {
+        config::save('pythonVersion', '?.?.?', 'ttscast');
+    }
+    if (config::byKey('pyenvVersion', 'ttscast') == '') {
+        config::save('pyenvVersion', '?.?.?', 'ttscast');
+    }
     if (config::byKey('socketport', 'ttscast') == '') {
         config::save('socketport', '55111', 'ttscast');
     }
