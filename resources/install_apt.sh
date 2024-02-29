@@ -77,9 +77,13 @@ if [ "$versionPython" -lt 11 ]; then
 	fi
 	log "PyEnv installation / update : done"
 	echo 40 > ${PROGRESS_FILE}
-	log "*********************************************"
+	log "**************************************************"
 	log "* Compile and Install Python 3.11.8 (with PyEnv) *"
-	log "*********************************************"
+	log "**************************************************"
+	log "*                                                *"
+	log "* ATTENTION : Cette phase de l'installation      *"
+	log "* peut être longue et durer jusqu'à 15 minutes.  *"
+	log "**************************************************"
 	PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv install -s 3.11.8 | log
 	log "Python 3.11.8 installation : done"
 fi
