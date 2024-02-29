@@ -1512,8 +1512,12 @@ class myCast:
             else:
                 logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
             
-            chromecast.wait(timeout=30)
-            logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
+            try:
+                chromecast.wait(timeout=30)
+                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][CastCallBack] Chromecast Exception (%s) :: %s', str(chromecast.name), e)
+                logging.debug(traceback.format_exc())
              
             if chromecast.uuid in Config.GCAST_UUID:
                 uuid = chromecast.uuid
@@ -1650,8 +1654,8 @@ class myCast:
                 logging.error('[DAEMON][NETCAST][New_Media_Status] Exception :: %s', e)
                 logging.debug(traceback.format_exc())
 
-        def load_media_failed(self, item, error_code):
-            logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(item) + ' with code :: ' + str(error_code))
+        def load_media_failed(self, queue_item_id, error_code):
+            logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(queue_item_id) + ' with code :: ' + str(error_code))
 
     class MyConnectionStatusListener(ConnectionStatusListener):
         """ConnectionStatusListener"""
@@ -1708,7 +1712,7 @@ def shutdown():
     logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
     try:
         for chromecast in Config.NETCAST_DEVICES.values():
-            chromecast.disconnect(timeout=5, blocking=False)
+            chromecast.disconnect(timeout=5)
         logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
         Config.NETCAST_BROWSER.stop_discovery()
         logging.info("[DAEMON] Shutdown :: Browser Stop :: OK")
