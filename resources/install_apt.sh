@@ -82,7 +82,7 @@ if [ "$versionPython" -lt 11 ]; then
 	log "**************************************************"
 	log "*                                                *"
 	log "* ATTENTION : Cette phase de l'installation      *"
-	log "* peut être longue et durer jusqu'à 15 minutes.  *"
+	log "* peut être longue et durer jusqu'à 20 minutes.  *"
 	log "**************************************************"
 	PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv install -s 3.11.8 | log
 	log "Python 3.11.8 installation : done"
@@ -110,7 +110,6 @@ log "* Install Python3 libraries *"
 log "*****************************"
 $VENV_DIR/bin/python3 -m pip install --upgrade pip wheel | log
 echo 75 > ${PROGRESS_FILE}
-# $VENV_DIR/bin/python3 -m pip install -r requirements.txt | log
 $VENV_DIR/bin/python3 -m pip install PyChromecast==14.0.0 google-cloud-texttospeech==2.16.2 gTTS==2.5.1 pydub==0.25.1 | log
 
 echo 100 > ${PROGRESS_FILE}
