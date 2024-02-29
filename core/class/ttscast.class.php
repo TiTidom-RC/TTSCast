@@ -738,8 +738,8 @@ class ttscast extends eqLogic
     {
         $name = trim(strtolower($name));
         $name = sanitizeAccent($name);
-        $name = str_replace(' ', '_', $name);
-        $name = preg_replace('/[^a-z0-9_-]/i', '', $name);
+        $name = str_replace([' ', '-'], '_', $name);
+        $name = preg_replace('/[^a-z0-9_]/i', '', $name);
         return $name;
     }
 
