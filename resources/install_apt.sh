@@ -92,10 +92,15 @@ log "**************************"
 log "* Create Python3.11 venv *"
 log "**************************"
 if [ "$versionPython" -ge 11 ]; then
-	python3 -m venv --clear --upgrade-deps $VENV_DIR | log 
+	python3 -m venv --upgrade-deps $VENV_DIR | log 
 else
 	vPythonVenv=$($VENV_DIR/bin/python3 --version 2>/dev/null | awk -F'[ ,.]' '{print $3}')
 	[[ -z "$vPythonVenv" ]] && vPythonVenv=0
+	if [ "$vPythonVenv" -eq 0 ]; then 
+		log "Python3 (Venv) Version :: None"
+	else
+		log "Python3 (Venv) Version :: 3.$vPythonVenv"
+	fi
 	if [ "$vPythonVenv" -ge 11 ]; then
 		${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv --upgrade-deps $VENV_DIR | log
 	else
