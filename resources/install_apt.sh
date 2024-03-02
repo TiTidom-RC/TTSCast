@@ -81,8 +81,9 @@ if [ "$versionPython" -lt 11 ]; then
 	log "* Compile and Install Python 3.11.8 (with PyEnv) *"
 	log "**************************************************"
 	log "*                                                *"
-	log "* ATTENTION : Cette phase de l'installation      *"
-	log "* peut être longue et durer jusqu'à 20 minutes.  *"
+	log "* ATTENTION : Cette phase de l'installation peut *"
+	log "* être longue et durer de 4 minutes (Config +++) *"
+	log "* à plus de 40 minutes sur des petites config !  *" 
 	log "**************************************************"
 	PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv install -s 3.11.8 | log
 	log "Python 3.11.8 installation : done"
