@@ -5,8 +5,8 @@ if [ ! -z $1 ]; then
 fi
 
 BASE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-VENV_DIR=$BASE_DIR/venv
-PYENV_DIR=$BASE_DIR/pyenv
+VENV_DIR=${BASE_DIR}/venv
+PYENV_DIR=${BASE_DIR}/pyenv
 
 function log(){
 	if [ -n "$1" ]
@@ -20,7 +20,7 @@ function log(){
 	fi
 }
 
-cd $BASE_DIR
+cd ${BASE_DIR}
 
 touch ${PROGRESS_FILE}
 echo 0 > ${PROGRESS_FILE}
@@ -53,7 +53,7 @@ if [ "$versionPython" -eq 0 ]; then
 	log "Python3.x :: VERSION ERROR :: NOT FOUND"
 	exit 1
 else
-	log "Python3.x Version :: 3.$versionPython"
+	log "Python3.x Version :: 3.${versionPython}"
 fi
 echo 35 > ${PROGRESS_FILE}
 if [ "$versionPython" -lt 11 ]; then 
@@ -82,7 +82,7 @@ if [ "$versionPython" -lt 11 ]; then
 	log "**************************************************"
 	log "*                                                *"
 	log "* ATTENTION : Cette phase de l'installation peut *"
-	log "* être longue et durer de 4 minutes (Config +++) *"
+	log "* être longue et durer de 2 minutes (Config ++)  *"
 	log "* à plus de 40 minutes sur des petites config !  *" 
 	log "**************************************************"
 	PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv install -s 3.11.8 | log
@@ -93,19 +93,19 @@ log "**************************"
 log "* Create Python3.11 venv *"
 log "**************************"
 if [ "$versionPython" -ge 11 ]; then
-	python3 -m venv --upgrade-deps $VENV_DIR | log 
+	python3 -m venv --upgrade-deps ${VENV_DIR} | log 
 else
-	vPythonVenv=$($VENV_DIR/bin/python3 --version 2>/dev/null | awk -F'[ ,.]' '{print $3}')
+	vPythonVenv=$(${VENV_DIR}/bin/python3 --version 2>/dev/null | awk -F'[ ,.]' '{print $3}')
 	[[ -z "$vPythonVenv" ]] && vPythonVenv=0
 	if [ "$vPythonVenv" -eq 0 ]; then 
 		log "Python3 (Venv) Version :: None"
 	else
-		log "Python3 (Venv) Version :: 3.$vPythonVenv"
+		log "Python3 (Venv) Version :: 3.${vPythonVenv}"
 	fi
 	if [ "$vPythonVenv" -ge 11 ]; then
-		${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv --upgrade-deps $VENV_DIR | log
+		${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv --upgrade-deps ${VENV_DIR} | log
 	else
-		${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps $VENV_DIR | log
+		${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 	fi
 fi 
 echo 70 > ${PROGRESS_FILE}
@@ -114,9 +114,9 @@ log "Python3.11 venv : done"
 log "*****************************"
 log "* Install Python3 libraries *"
 log "*****************************"
-$VENV_DIR/bin/python3 -m pip install --upgrade pip wheel | log
+${VENV_DIR}/bin/python3 -m pip install --upgrade pip wheel | log
 echo 75 > ${PROGRESS_FILE}
-$VENV_DIR/bin/python3 -m pip install PyChromecast==14.0.0 google-cloud-texttospeech==2.16.2 gTTS==2.5.1 pydub==0.25.1 | log
+${VENV_DIR}/bin/python3 -m pip install PyChromecast==14.0.0 google-cloud-texttospeech==2.16.2 gTTS==2.5.1 pydub==0.25.1 | log
 
 echo 100 > ${PROGRESS_FILE}
 log "****************"
