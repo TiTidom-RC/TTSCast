@@ -93,12 +93,9 @@ try {
     if (init('action') == 'resetTVCertKey') {
         $certfilepath = __DIR__ . "/../../data/config/ttscast-cert.pem";
         $keyfilepath = __DIR__ . "/../../data/config/ttscast-key.pem";
-        if (!file_exists($certfilepath)) {
-            throw new Exception('[RESET][TVCertKey] Fichier introuvable : ' . $certfilepath);
-        }    
-        if (!file_exists($keyfilepath)) {
-            throw new Exception('[RESET][TVCertKey] Fichier introuvable : ' . $keyfilepath);
-        }    
+        if (!file_exists($certfilepath) || !file_exists($keyfilepath)) {
+            throw new Exception('[RESET][TVCertKey] Fichier(s) introuvable(s) :: ' . $certfilepath . ' / ' . $keyfilepath);
+        }
         log::add('ttscast', 'debug', "[RESET][TVCertKey] Cert / Key filepath :: {$certfilepath} / {$keyfilepath}");
         unlink($certfilepath);
         unlink($keyfilepath);
