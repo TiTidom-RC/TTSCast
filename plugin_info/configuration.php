@@ -600,7 +600,7 @@ if (!isConnect()) {
                     $('#div_alert').showAlert({ message: data.result, level: 'danger' });
                     return;
                 }
-                $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
+                $('#div_alert').showAlert({ message: '{{Reset Clé API (OK)}} :: ' + data.result, level: 'success' });
             }
         });
     });
@@ -616,7 +616,7 @@ if (!isConnect()) {
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: '{{Upload Clé API (OK) :: }}' + data.result.result,
+                    message: '{{Upload Clé API (OK)}} :: ' + data.result.result,
                     level: 'success'
                 });
                 $('.custominput-apikey').val(data.result.result);
