@@ -2,8 +2,10 @@
     <div class="title #hide_name#">
         <div class="cmdName">#name_display#</div>
     </div>
-    <div class="content">
-        <img src="./plugins/ttscast/data/images/ttscast-200.png" style="height:200px;width:200px;" />
+    <div class="content-sm">
+        <span class="imgCmd">
+            <img src="./plugins/ttscast/data/images/ttscast-200.png" style="height:200px;width:200px;" />
+        </span>
     </div>
     <div class="timeCmd label label-default #history#" data-type="info"></div>
     <template>
@@ -12,17 +14,16 @@
     <script>
         jeedom.cmd.addUpdateFunction('#id#', function (_options) {
             if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
-                cmd.querySelector('.content').setAttribute('title', '{{Date de valeur}} : ' + _options.valueDate + '<br>{{Date de collecte}} : ' + _options.collectDate)
+                cmd.querySelector('.content-sm').setAttribute('title', '{{Date de valeur}} : ' + _options.valueDate + '<br>{{Date de collecte}} : ' + _options.collectDate)
                 if ('#time#' == 'duration' || '#time#' == 'date') {
                     jeedom.cmd.displayDuration(_options.valueDate, cmd.querySelector('.timeCmd'), '#time#')
                 }
 
                 if (_options.value != '') {
-                    cmd.querySelector('.content img').src = './plugins/ttscast/core/php/ttscast.img.proxy.php?img=' + btoa(_options.value)
+                    cmd.querySelector('.content-sm img').src = './plugins/ttscast/core/php/ttscast.img.proxy.php?img=' + btoa(_options.value)
                 } else {
-                    cmd.querySelector('.content img').src = './plugins/ttscast/data/images/ttscast-200.png'
+                    cmd.querySelector('.content-sm img').src = './plugins/ttscast/data/images/ttscast-200.png'
                 }
-
             }
         })
 
