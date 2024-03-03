@@ -78,6 +78,8 @@ class Config:
     appDisableDing = False
     remoteTV = False
     
+    pairingCode = ''
+    
     logLevel = "error"
     socketPort = 55111
     socketHost = 'localhost'

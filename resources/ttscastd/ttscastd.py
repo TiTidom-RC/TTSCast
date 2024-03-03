@@ -1713,6 +1713,169 @@ class myCast:
                 logging.error('[DAEMON][NETCAST][New_Connect_Status] Exception :: %s', e)
                 logging.debug(traceback.format_exc())
 
+class MyRemoteTV:
+    def __init__(self, zconf, host) -> None:
+        self.zc = AsyncZeroconf()
+        self.host = host
+        self.services = ["_androidtvremote2._tcp.local."]
+    
+    async def bindKeyboard(remote: AndroidTVRemote) -> None:
+        key_mappings = {
+            "up": "DPAD_UP",
+            "down": "DPAD_DOWN",
+            "left": "DPAD_LEFT",
+            "right": "DPAD_RIGHT",
+            "ok": "DPAD_CENTER",
+            "play_pause": "MEDIA_PLAY_PAUSE",
+            "home": "HOME",
+            "back": "BACK",
+            "power": "POWER",
+            "channel_up": "CHANNEL_UP",
+            "channel_down": "CHANNEL_DOWN"
+        }
+        
+        def transmit_keys() -> asyncio.Queue:
+            queue: asyncio.Queue = asyncio.Queue()
+            loop = asyncio.get_event_loop()
+            
+            def key_press(key=None) -> None:
+                loop.call_soon_threadsafe(queue.put_nowait, key)
+            
+            # listener pour lancer key_press    
+            return queue
+        
+        key_queue = transmit_keys()
+        while True:
+            key = await key_queue.get()
+            if key in key_mappings:
+                remote.send_key_command(key_mappings[key])
+            if hasattr(key, "char"):
+                if key.char == "q":
+                    remote.disconnect()
+                    return
+                elif key.char == "t":
+                    remote.send_key_command("TV")
+                elif key.char == "m":
+                    remote.send_key_command("MUTE")
+                elif key.char == "+":
+                    remote.send_key_command("VOLUME_UP")
+                elif key.char == "-":
+                    remote.send_key_command("VOLUME_DOWN")
+                elif key.char in ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"]:
+                    remote.send_key_command(key.char)
+                elif key.char == "y":
+                    remote.send_launch_app_command("https://www.youtube.com")
+                elif key.char == "n":
+                    remote.send_launch_app_command("https://www.netflix.com/title")
+                elif key.char == "d":
+                    remote.send_launch_app_command("https://www.disneyplus.com")
+                elif key.char == "a":
+                    remote.send_launch_app_command("https://app.primevideo.com")
+                       
+    async def hostFromZeroconf(self, timeout: float) -> str:
+        def _async_on_service_state_change(zeroconf: Zeroconf, service_type: str, name: str, state_change: ServiceStateChange) -> None:
+            if state_change is not ServiceStateChange.Added:
+                return
+            _ = asyncio.ensure_future(async_display_service_info(zeroconf, service_type, name))
+    
+        async def async_display_service_info(zeroconf: Zeroconf, service_type: str, name: str) -> None:
+            info = AsyncServiceInfo(service_type, name)
+            await info.async_request(zeroconf, 3000)
+            if info:
+                addresses = [
+                    "%s:%d" % (addr, int(info.port))
+                    for addr in info.parsed_scoped_addresses()
+                ]
+                logging.info("  Name: %s" % name)
+                logging.info("  Addresses: %s" % ", ".join(addresses))
+                if info.properties:
+                    logging.info("  Properties:")
+                    for key, value in info.properties.items():
+                        logging.info("    %s: %s", key, value)
+                else:
+                    logging.info("  No properties")
+            else:
+                logging.info("  No info")
+        
+        logging.info("Browsing {self.services} service(s) for {timeout} seconds, press Ctrl-C to exit...")
+        browser = AsyncServiceBrowser(self.zc.zeroconf, self.services, handlers=[_async_on_service_state_change])
+        await asyncio.sleep(timeout)
+
+        await browser.async_cancel()
+        await self.zc.async_close()
+
+        return "192.168.2.59"
+    
+    async def pairTV(remote: AndroidTVRemote) -> None:
+        try:
+            name, mac = await remote.async_get_name_and_mac()
+        except CannotConnect as e:
+            logging.error('[DAEMON][REMOTETV][PAIR] Exception :: %s', e)
+            logging.debug(traceback.format_exc())
+        await remote.async_start_pairing()
+        while True:
+            await asyncio.sleep(1)
+            pairingCode = Config.pairingCode
+            try:
+                return await remote.async_finish_pairing(pairing_code=pairingCode)
+            except InvalidAuth as e:
+                logging.error('[DAEMON][REMOTETV][PAIR] Invalid Pairing Code. Error :: %s', e)
+                continue
+            except ConnectionClosed as e:
+                logging.error('[DAEMON][REMOTETV][PAIR] Initialize Pair Again. Error :: %s', e)
+                return await MyRemoteTV.pairTV(remote)
+    
+    async def remoteTVLoop(self) -> None:
+        _certTV = os.path.join(Config.configFullPath, 'ttscast-cert.pem')
+        _keyTV = os.path.join(Config.configFullPath, 'ttscast-key.pem')
+        _clientName = 'TTSCast TV Remote'
+        _scanTimeout = 30
+        _host = self.host or await MyRemoteTV.hostFromZeroconf(_scanTimeout)
+        
+        remote = AndroidTVRemote(_clientName, _certTV, _keyTV, _host)
+
+        if await remote.async_generate_cert_if_missing():
+            logging.info('[DAEMON][REMOTETV][LOOP] Generate New Certificate')
+            await MyRemoteTV.pairTV(remote)
+        
+        while True:
+            try:
+                await remote.async_connect()
+                break
+            except InvalidAuth as e:
+                logging.error('[DAEMON][REMOTETV][CONNECT] Need to Pair Again. Error :: %s', e)
+                await MyRemoteTV.pairTV(remote)
+            except (CannotConnect, ConnectionClosed) as e:
+                logging.error('[DAEMON][REMOTETV][CONNECT] Cannot Connect, exiting. Error :: %s', e)
+                return
+        
+        remote.keep_reconnecting()
+        
+        logging.info('[DAEMON][REMOTETV] Device_Info :: %s', remote.device_info)
+        logging.info('[DAEMON][REMOTETV] Is_On ? :: %s', remote.device_info)
+        logging.info('[DAEMON][REMOTETV] Current_App :: %s', remote.device_info)
+        logging.info('[DAEMON][REMOTETV] Volume_Info :: %s', remote.device_info)
+        
+        def is_on_updated(is_on: bool) -> None:
+            logging.info('[DAEMON][REMOTETV] Notified that Is_On :: %s', is_on)
+        
+        def current_app_updated(current_app: str) -> None:
+            logging.info('[DAEMON][REMOTETV] Notified that Current_App :: %s', current_app)
+        
+        def volume_info_updated(volume_info: dict[str, str | bool]) -> None:
+            logging.info('[DAEMON][REMOTETV] Notified that Volume_Info :: %s', volume_info)
+        
+        def is_available_updated(is_available: bool) -> None:
+            logging.info('[DAEMON][REMOTETV] Notified that Is_Available :: %s', is_available)
+            
+        remote.add_is_available_updated_callback(is_on_updated)
+        remote.add_current_app_updated_callback(current_app_updated)
+        remote.add_volume_info_updated_callback(volume_info_updated)
+        remote.add_is_available_updated_callback(is_available_updated)
+        
+        await MyRemoteTV.bindKeyboard(remote)
+        
+        
 # ----------------------------------------------------------------------------
 
 def handler(signum=None, frame=None):
@@ -1840,6 +2003,7 @@ logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', Config.gCloudApiKey)
 logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', "***")
 logging.info('[DAEMON][MAIN] App Disable Ding Parameter: %s', str(Config.appDisableDing))
+logging.info('[DAEMON][MAIN] Remote TV Parameter: %s', str(Config.remoteTV))
 
 logging.info('[DAEMON][MAIN] CallBack: %s', Config.callBack)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', Config.ttsWebSrvCache)
