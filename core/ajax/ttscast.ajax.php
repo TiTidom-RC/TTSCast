@@ -94,12 +94,12 @@ try {
         $certfilepath = __DIR__ . "/../../data/config/ttscast-cert.pem";
         $keyfilepath = __DIR__ . "/../../data/config/ttscast-key.pem";
         if (!file_exists($certfilepath) || !file_exists($keyfilepath)) {
-            throw new Exception('[RESET][TVCertKey] Fichier(s) introuvable(s) :: \n' . $certfilepath . '\n' . $keyfilepath);
+            throw new Exception('[RESET][TVCertKey] Fichier(s) introuvable(s) :: <br />' . $certfilepath . '<br />' . $keyfilepath);
         }
         log::add('ttscast', 'debug', "[RESET][TVCertKey] Cert / Key filepath :: {$certfilepath} / {$keyfilepath}");
         unlink($certfilepath);
         unlink($keyfilepath);
-        ajax::success("{$certfilepath}\n{$keyfilepath}");
+        ajax::success("{$certfilepath}<br />{$keyfilepath}");
     }
 
     if (init('action') == 'changeScanState') {
