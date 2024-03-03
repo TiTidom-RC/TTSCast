@@ -423,7 +423,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Effacer le certificat et la clé générés au premier appairage à un équipement}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-danger customclass-resettvcertkey"><i class="fas fa-trash-alt"></i> {{Effacer Cert/Key}}</a>
+                    <a class="btn btn-danger btn-xs customclass-resettvcertkey"><i class="fas fa-trash-alt"></i> {{Effacer Cert/Key}}</a>
                 </div>
             </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
