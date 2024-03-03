@@ -99,7 +99,7 @@ try {
         log::add('ttscast', 'debug', "[RESET][TVCertKey] Cert / Key filepath :: {$certfilepath} / {$keyfilepath}");
         unlink($certfilepath);
         unlink($keyfilepath);
-        ajax::success("{$certfilepath} / {$keyfilepath}");
+        ajax::success("{$certfilepath} :: {$keyfilepath}");
     }
 
     if (init('action') == 'changeScanState') {
