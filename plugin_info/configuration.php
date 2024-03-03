@@ -423,7 +423,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Effacer le certificat et la clé générés au premier appairage à un équipement}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <a class="btn btn-danger customclass-resetcertkey"><i class="fas fa-trash-alt"></i> {{Effacer Cert/Key}}</a>
+                    <a class="btn btn-danger customclass-resettvcertkey"><i class="fas fa-trash-alt"></i> {{Effacer Cert/Key}}</a>
                 </div>
             </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
@@ -637,6 +637,27 @@ if (!isConnect()) {
         });
     });
 
+    $('.customclass-resettvcertkey').on('click', function () {
+        $.ajax({
+            type: "POST",
+            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
+            data: {
+                action: "resetTVCertKey"
+            },
+            dataType: 'json',
+            error: function (request, status, error) {
+                handleAjaxError(request, status, error);
+            },
+            success: function (data) {
+                if (data.state != 'ok') {
+                    $('#div_alert').showAlert({ message: '{{Reset Clé API (KO)}} :: ' + data.result, level: 'danger' });
+                    return;
+                }
+                $('#div_alert').showAlert({ message: '{{Reset Clé API (OK)}} :: ' + data.result, level: 'success' });
+            }
+        });
+    });
+
     $('.pluginAction[data-action=uploadCustomSound]').on('click', function () {
         $(this).fileupload({
             replaceFileInput: false,
@@ -644,11 +665,11 @@ if (!isConnect()) {
             dataType: 'json',
             done: function (e, data) {
                 if (data.result.state != 'ok') {
-                    $('#div_alert').showAlert({ message: data.result.result, level: 'danger' });
+                    $('#div_alert').showAlert({ message: '{{Upload Custom Sound (KO)}} :: ' + data.result.result, level: 'danger' });
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: '{{Upload Custom Sound (OK) :: }}' + data.result.result,
+                    message: '{{Upload Custom Sound (OK)}} :: ' + data.result.result,
                     level: 'success'
                 });
             }
@@ -662,11 +683,11 @@ if (!isConnect()) {
             dataType: 'json',
             done: function (e, data) {
                 if (data.result.state != 'ok') {
-                    $('#div_alert').showAlert({ message: data.result.result, level: 'danger' });
+                    $('#div_alert').showAlert({ message: '{{Upload Custom Radios (KO)}} :: ' + data.result.result, level: 'danger' });
                     return;
                 }
                 $('#div_alert').showAlert({
-                    message: '{{Upload Custom Radios (OK) :: }}' + data.result.result,
+                    message: '{{Upload Custom Radios (OK)}} :: ' + data.result.result,
                     level: 'success'
                 });
             }
