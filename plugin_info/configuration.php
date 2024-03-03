@@ -407,6 +407,16 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
+            <legend><i class="fas fa-tv"></i> {{Remote TV (Télécommande)}}</legend>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Activer la Remote TV}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Activer la prise en charge de la télécommande pour les équipements supportés}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <input type="checkbox" class="configKey customform-remotetv" data-l1key="remoteTV" />
+                </div>
+            </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Tester la Synthèse Vocale (TTS)}}

@@ -24,6 +24,7 @@ import signal
 import json
 import argparse
 import threading
+import asyncio
 import datetime
 import requests
 
@@ -64,6 +65,15 @@ try:
     from gtts import gTTS
 except ImportError as e: 
     print("[DAEMON][IMPORT] Error: importing module gTTS ::", e)
+    sys.exit(1)
+
+# Import RemoteTV (androidtvremote2)
+try:
+    from zeroconf import ServiceStateChange, Zeroconf
+    from zeroconf.asyncio import AsyncServiceBrowser, AsyncServiceInfo, AsyncZeroconf
+    from androidtvremote2 import AndroidTVRemote, CannotConnect, ConnectionClosed, InvalidAuth
+except ImportError as e: 
+    print("[DAEMON][IMPORT] Error: importing module RemoteTV ::", e)
     sys.exit(1)
 
 # Import pyDub (Audio changing)
