@@ -650,10 +650,10 @@ if (!isConnect()) {
             },
             success: function (data) {
                 if (data.state != 'ok') {
-                    $('#div_alert').showAlert({ message: '{{Reset Clé API (KO)}} :: ' + data.result, level: 'danger' });
+                    $('#div_alert').showAlert({ message: data.result, level: 'danger' });
                     return;
                 }
-                $('#div_alert').showAlert({ message: '{{Reset Clé API (OK)}} :: ' + data.result, level: 'success' });
+                $('#div_alert').showAlert({ message: '{{Reset TV Cert (OK)}} :: ' + data.result, level: 'success' });
             }
         });
     });
@@ -665,7 +665,7 @@ if (!isConnect()) {
             dataType: 'json',
             done: function (e, data) {
                 if (data.result.state != 'ok') {
-                    $('#div_alert').showAlert({ message: '{{Upload Custom Sound (KO)}} :: ' + data.result.result, level: 'danger' });
+                    $('#div_alert').showAlert({ message: data.result.result, level: 'danger' });
                     return;
                 }
                 $('#div_alert').showAlert({
@@ -683,7 +683,7 @@ if (!isConnect()) {
             dataType: 'json',
             done: function (e, data) {
                 if (data.result.state != 'ok') {
-                    $('#div_alert').showAlert({ message: '{{Upload Custom Radios (KO)}} :: ' + data.result.result, level: 'danger' });
+                    $('#div_alert').showAlert({ message: data.result.result, level: 'danger' });
                     return;
                 }
                 $('#div_alert').showAlert({
