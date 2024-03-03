@@ -417,6 +417,15 @@ if (!isConnect()) {
                     <input type="checkbox" class="configKey customform-remotetv" data-l1key="remoteTV" />
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Effacer le Certificat / Clé}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Effacer le certificat et la clé générés au premier appairage à un équipement}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <a class="btn btn-danger customclass-resetcertkey"><i class="fas fa-trash-alt"></i> {{Effacer Cert/Key}}</a>
+                </div>
+            </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Tester la Synthèse Vocale (TTS)}}

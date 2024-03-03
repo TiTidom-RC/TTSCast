@@ -1763,6 +1763,7 @@ parser.add_argument("--voicerssapikey", help="Voice RSS ApiKey", type=str)
 parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
 parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
 parser.add_argument("--appdisableding", help="App Disable Ding Parameter", type=str)
+parser.add_argument("--remotetv", help="Remote TV Parameter", type=str)
 parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 
@@ -1786,6 +1787,11 @@ if args.appdisableding:
         Config.appDisableDing = False
     else:
         Config.appDisableDing = True
+if args.remotetv:
+    if (args.remotetv == '0'):
+        Config.remoteTV = False
+    else:
+        Config.remoteTV = True
 if args.pid:
     Config.pidFile = args.pid
 if args.cyclefactor:

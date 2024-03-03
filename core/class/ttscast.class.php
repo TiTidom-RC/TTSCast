@@ -108,7 +108,7 @@ class ttscast extends eqLogic
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
         $cmd .= ' --pluginversion ' . config::byKey('pluginVersion', __CLASS__, '0.0.0');
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55111');
-        $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1');
+        $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1.0');
         $cmd .= ' --callback ' . network::getNetworkAccess('internal', 'http:127.0.0.1:port:comp') . '/plugins/ttscast/core/php/jeettscast.php'; // chemin du callback
         if (config::byKey('ttsUseExtAddr', 'ttscast') == 1) {
             $cmd .= ' --ttsweb ' . network::getNetworkAccess('external');
@@ -120,8 +120,8 @@ class ttscast extends eqLogic
         $cmd .= ' --gcloudapikey ' . config::byKey('gCloudAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --voicerssapikey ' . config::byKey('voiceRSSAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, '0');
+        $cmd .= ' --remotetv ' . config::byKey('remoteTV', __CLASS__, '0');
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
-        # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
         log::add(__CLASS__, 'info', 'Lancement du démon');
         $result = exec($cmd . ' >> ' . log::getPathToLog('ttscast_daemon') . ' 2>&1 &');
         $i = 0;
