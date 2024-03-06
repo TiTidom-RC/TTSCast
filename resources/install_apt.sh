@@ -116,7 +116,7 @@ log "* Install Python3 libraries *"
 log "*****************************"
 ${VENV_DIR}/bin/python3 -m pip install --upgrade pip wheel | log
 echo 75 > ${PROGRESS_FILE}
-${VENV_DIR}/bin/python3 -m pip install PyChromecast==14.0.0 google-cloud-texttospeech==2.16.2 gTTS==2.5.1 pydub==0.25.1 | log
+${VENV_DIR}/bin/python3 -m pip install PyChromecast==14.0.0 google-cloud-texttospeech==2.16.2 gTTS==2.5.1 | log
 
 echo 100 > ${PROGRESS_FILE}
 log "****************"
