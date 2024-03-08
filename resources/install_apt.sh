@@ -38,11 +38,13 @@ log "****************************"
 log "* Simulate apt-get upgrade *"
 log "****************************"
 apt-get -y -s -V upgrade | log
+log "** Upgrade Simulation : Done **"
 echo 20 > ${PROGRESS_FILE}
 log "***************************************"
 log "* Install apt-get packages for Python3 *"
 log "***************************************"
 apt-get install -y python3 python3-requests python3-pip python3-setuptools python3-dev python3-venv | log
+log "** Install packages for Python3 : Done **"
 echo 30 > ${PROGRESS_FILE}
 log "***************************"
 log "* Check Python3.x Version *"
@@ -55,12 +57,14 @@ if [ "$versionPython" -eq 0 ]; then
 else
 	log "Python3.x Version :: 3.${versionPython}"
 fi
+log "** Check Python3 Version : Done **"
 echo 35 > ${PROGRESS_FILE}
 if [ "$versionPython" -lt 11 ]; then 
 	log "******************************************************"
 	log "* Install apt-get packages for PyEnv (Python < 3.11) *"
 	log "******************************************************"
 	apt-get install -y git build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev curl libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev | log
+	log "** Install packages for PyEnv : Done **"
 	log "*********************************"
 	log "* Install PyEnv (Python < 3.11) *"
 	log "*********************************"
@@ -75,7 +79,7 @@ if [ "$versionPython" -lt 11 ]; then
 	else
 		curl https://pyenv.run | PYENV_ROOT="${BASE_DIR}/pyenv" bash | log
 	fi
-	log "PyEnv installation / update : done"
+	log "** PyEnv Installation / Update : Done **"
 	echo 40 > ${PROGRESS_FILE}
 	log "**************************************************"
 	log "* Compile and Install Python 3.11.8 (with PyEnv) *"
@@ -86,7 +90,7 @@ if [ "$versionPython" -lt 11 ]; then
 	log "* à plus de 40 minutes sur des petites config !  *" 
 	log "**************************************************"
 	PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv install -s 3.11.8 | log
-	log "Python 3.11.8 installation : done"
+	log "** Python 3.11.8 Installation : Done **"
 fi
 echo 55 > ${PROGRESS_FILE}
 log "**************************"
@@ -107,17 +111,29 @@ else
 	else
 		${BASE_DIR}/pyenv/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 	fi
-fi 
+fi
+log "** Create Python3.11 Venv : Done **" 
 echo 70 > ${PROGRESS_FILE}
-log "Python3.11 venv : done"
-
 log "*****************************"
 log "* Install Python3 libraries *"
 log "*****************************"
 ${VENV_DIR}/bin/python3 -m pip install --upgrade pip wheel | log
+log "** Install Pip / Wheel : Done **"
 echo 75 > ${PROGRESS_FILE}
 ${VENV_DIR}/bin/python3 -m pip install PyChromecast==14.0.0 google-cloud-texttospeech==2.16.2 gTTS==2.5.1 | log
-
+log "** Install Python3 librairies : Done **"
+echo 95 > ${PROGRESS_FILE}
+log "*****************************"
+log "* Set Owner on Directories  *"
+log "*****************************"
+if [ -d ${BASE_DIR}/pyenv ]; then
+		chown -Rh www-data:www-data ${BASE_DIR}/pyenv | log
+		log "** Set Owner for PyEnv Dir : Done **"
+fi
+if [ -d ${BASE_DIR}/venv ]; then
+		chown -Rh www-data:www-data ${BASE_DIR}/venv | log
+		log "** Set Owner for Venv Dir : Done **"
+fi
 echo 100 > ${PROGRESS_FILE}
 log "****************"
 log "* Install DONE *"
