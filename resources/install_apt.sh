@@ -68,6 +68,11 @@ if [ "$versionPython" -lt 11 ]; then
 	log "*********************************"
 	log "* Install PyEnv (Python < 3.11) *"
 	log "*********************************"
+	if [ -v PYENV_ROOT ]; then
+		log "** PYENV_ROOT (already set) :: ${PYENV_ROOT} **"
+	else
+		log "** PYENV_ROOT (not set) :: OK **"
+	fi
 	if [ -d ${BASE_DIR}/pyenv ]; then
 		chown -Rh root:root ${BASE_DIR}/pyenv | log
 		cd ${BASE_DIR}/pyenv && git reset --hard | log
