@@ -355,13 +355,13 @@ class ttscast extends eqLogic
                config::save('pythonVersion', $pythonVersion, 'ttscast');
             }
             else {
-                log::add('ttscast', 'error', '[Python-Version] Python File :: KO');
+                log::add('ttscast', 'error', '[Python-Version] Python File (venv) :: KO');
             }
         }
         catch (\Exception $e) {
             log::add('ttscast', 'error', '[Python-Version] Exception :: ' . $e->getMessage());
         }
-        log::add('ttscast', 'info', '[Python-Version] PythonVersion :: ' . $pythonVersion);
+        log::add('ttscast', 'info', '[Python-Version] PythonVersion (venv) :: ' . $pythonVersion);
         return $pythonVersion;
     }
 
@@ -371,6 +371,13 @@ class ttscast extends eqLogic
             if (file_exists(self::PYENV_PATH)) {
                $pyenvVersion = exec(system::getCmdSudo() . self::PYENV_PATH . " --version | awk '{ print $2 }'");
                config::save('pyenvVersion', $pyenvVersion, 'ttscast');
+            }
+            elseif (file_exists(self::PYTHON3_PATH)) {
+                $pythonPyEnvInUse = (exec(system::getCmdSudo() . 'dirname $(readlink ' . self::PYTHON3_PATH . ') | grep -Ewc "resources/pyenv"') == 1) ? true : false;
+                if (!$pythonPyEnvInUse) {
+                    $pyenvVersion = "-";
+                    config::save('pyenvVersion', $pyenvVersion, 'ttscast');
+                }
             }
             else {
                 log::add('ttscast', 'error', '[PyEnv-Version] PyEnv File :: KO');

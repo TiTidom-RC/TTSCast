@@ -96,6 +96,11 @@ if [ "$versionPython" -lt 11 ]; then
 	log "**************************************************"
 	PYENV_ROOT="${BASE_DIR}/pyenv" ${BASE_DIR}/pyenv/bin/pyenv install -s 3.11.8 | log
 	log "** Python 3.11.8 Installation : Done **"
+else
+	log "*********************"
+	log "* PyEnv Environment *"
+	log "*********************"
+	log "** PyEnv not required (Python >= 3.11) **"
 fi
 echo 55 > ${PROGRESS_FILE}
 log "**************************"
