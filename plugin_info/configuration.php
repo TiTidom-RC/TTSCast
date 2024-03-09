@@ -27,7 +27,7 @@ if (!isConnect()) {
         <div>
             <legend><i class="fas fa-info"></i> {{Plugin}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Version}}
+                <label class="col-lg-3 control-label">{{Version Plugin}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Version du Plugin (A indiquer sur Community)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
