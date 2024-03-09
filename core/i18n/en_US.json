@@ -61,8 +61,8 @@
 	},
 	"plugins\/ttscast\/plugin_info\/configuration.php": {
 		"Plugin": "Plugin",
-		"Version": "Version",
-		"Version PyEnv": "Version PyEnv",
+		"Version Plugin": "Plugin Version",
+		"Version PyEnv": "PyEnv Version",
 		"Version Python": "Python Version",
 		"Version du Plugin (A indiquer sur Community)": "Plugin version (To give on Community)",
 		"Version de PyEnv utilisée par le Plugin (A indiquer sur Community)": "PyEnv Version used by the Plugin (To give on Community)",
