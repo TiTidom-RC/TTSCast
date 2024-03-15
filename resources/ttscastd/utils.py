@@ -40,7 +40,7 @@ class Config:
     ScanSchedule = 60
     ScanLastTime = int(time.time())
     
-    HeartbeatFrequency = 300
+    HeartbeatFrequency = 600
     HeartbeatLastTime = int(time.time())
     
     ResourcesLastUsed = 0
