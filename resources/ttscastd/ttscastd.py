@@ -240,7 +240,7 @@ class Loops:
                             logging.debug('[DAEMON][SCANNER][SCHEDULE][CALL] GCAST Names :: %s', str(Config.GCAST_NAMES))
                             threading.Thread(target=Functions.scanChromeCast, args=('ScheduleMode',)).start()
                     else:
-                        logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING ! ')
+                        logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING !')
                     # Pause Cycle
                     time.sleep(cycle)
                 except Exception as e:

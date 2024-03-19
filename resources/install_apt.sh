@@ -40,9 +40,9 @@ log "****************************"
 apt-get -y -s -V upgrade | log
 log "** Upgrade Simulation : Done **"
 echo 20 > ${PROGRESS_FILE}
-log "***************************************"
+log "****************************************"
 log "* Install apt-get packages for Python3 *"
-log "***************************************"
+log "****************************************"
 apt-get install -y python3 python3-requests python3-pip python3-setuptools python3-dev python3-venv | log
 log "** Install packages for Python3 : Done **"
 echo 30 > ${PROGRESS_FILE}
@@ -133,9 +133,9 @@ echo 75 > ${PROGRESS_FILE}
 ${VENV_DIR}/bin/python3 -m pip install PyChromecast==14.0.0 google-cloud-texttospeech==2.16.2 gTTS==2.5.1 | log
 log "** Install Python3 librairies : Done **"
 echo 95 > ${PROGRESS_FILE}
-log "*****************************"
-log "* Set Owner on Directories  *"
-log "*****************************"
+log "****************************"
+log "* Set Owner on Directories *"
+log "****************************"
 if [ -d ${BASE_DIR}/pyenv ]; then
 		chown -Rh www-data:www-data ${BASE_DIR}/pyenv | log
 		log "** Set Owner for PyEnv Dir : Done **"
