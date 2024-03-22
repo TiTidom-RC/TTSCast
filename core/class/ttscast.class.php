@@ -23,7 +23,7 @@ class ttscast extends eqLogic
     /* ************************** Variables Globales ****************************** */
 
     const PYTHON3_PATH = __DIR__ . '/../../resources/venv/bin/python3';
-    const PYENV_PATH = __DIR__ . '/../../resources/pyenv/bin/pyenv';
+    const PYENV_PATH = '/opt/pyenv/bin/pyenv';
 
     /* ************************** Attributs ****************************** */
 
@@ -373,7 +373,7 @@ class ttscast extends eqLogic
                config::save('pyenvVersion', $pyenvVersion, 'ttscast');
             }
             elseif (file_exists(self::PYTHON3_PATH)) {
-                $pythonPyEnvInUse = (exec(system::getCmdSudo() . 'dirname $(readlink ' . self::PYTHON3_PATH . ') | grep -Ewc "resources/pyenv"') == 1) ? true : false;
+                $pythonPyEnvInUse = (exec(system::getCmdSudo() . 'dirname $(readlink ' . self::PYTHON3_PATH . ') | grep -Ewc "opt/pyenv"') == 1) ? true : false;
                 if (!$pythonPyEnvInUse) {
                     $pyenvVersion = "-";
                     config::save('pyenvVersion', $pyenvVersion, 'ttscast');
