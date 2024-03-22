@@ -172,7 +172,7 @@ log "****************************"
 log "* Set Owner on Directories *"
 log "****************************"
 if [ -d ${VENV_DIR} ]; then
-	chown -Rh www-data:www-data ${BASE_DIR}/venv | log
+	chown -Rh www-data:www-data ${VENV_DIR} | log
 	log "** Set Owner for Venv Dir :: Done **"
 fi
 echo 100 > ${PROGRESS_FILE}
