@@ -143,17 +143,17 @@ else
 		log "Python3 (Venv) Version :: 3.${vPythonVenv}"
 	fi
 	if [ "$vPythonVenv" -ge 11 ]; then
-		log "Latest Python version installed with PyEnv :: $(${PYENV_DIR}/bin/pyenv latest -q 3.11)"
+		log "Latest Python version installed with PyEnv :: $(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)"
 		if [ "$VenvToUpdate" -eq 1 ]; then
-			# ${PYENV_DIR}/versions/$(${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
+			# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 			${PYENV_DIR}/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 		else
-			# ${PYENV_DIR}/versions/$(${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --upgrade-deps ${VENV_DIR} | log
+			# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --upgrade-deps ${VENV_DIR} | log
 			${PYENV_DIR}/versions/3.11.8/bin/python3 -m venv --upgrade-deps ${VENV_DIR} | log
 		fi
 	else
-		log "Latest Python version installed with PyEnv :: $(${PYENV_DIR}/bin/pyenv latest -q 3.11)"
-		# # ${PYENV_DIR}/versions/$(${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
+		log "Latest Python version installed with PyEnv :: $(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)"
+		# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 		${PYENV_DIR}/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 	fi
 fi
