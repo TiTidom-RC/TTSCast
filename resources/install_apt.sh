@@ -41,10 +41,10 @@ log "***********************"
 if [ -d ${PYENV_OLDDIR} ]; then
 	log "** PyEnv Old Directory (Exists) :: ${PYENV_OLDDIR} **"
 	rm -rf ${PYENV_OLDDIR}
-	$VenvToUpdate = 1
+	VenvToUpdate=1
 else
 	log "** PyEnv Old Directory (Not exists) :: ${PYENV_OLDDIR} **"
-	$VenvToUpdate = 0
+	VenvToUpdate=0
 fi
 log "** Check Old PyEnv :: Done **"
 log "******************"
