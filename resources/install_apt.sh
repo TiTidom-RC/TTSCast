@@ -127,7 +127,7 @@ log "**************************"
 log "* Create Python3.11 venv *"
 log "**************************"
 if [ "$versionPython" -ge 11 ]; then
-	if ["$VenvToUpdate" -eq 1 ]; then
+	if ["${VenvToUpdate}" -eq 1 ]; then
 		python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log 
 	else
 		python3 -m venv --upgrade-deps ${VENV_DIR} | log 
@@ -142,7 +142,7 @@ else
 	fi
 	if [ "$vPythonVenv" -ge 11 ]; then
 		log "Latest Python version installed with PyEnv :: $(${PYENV_DIR}/bin/pyenv latest -q 3.11)"
-		if ["$VenvToUpdate" -eq 1 ]; then
+		if ["${VenvToUpdate}" -eq 1 ]; then
 			# ${PYENV_DIR}/versions/$(${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 			${PYENV_DIR}/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 		else
