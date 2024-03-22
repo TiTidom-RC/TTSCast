@@ -23,7 +23,7 @@ class ttscast extends eqLogic
     /* ************************** Variables Globales ****************************** */
 
     const PYTHON3_PATH = __DIR__ . '/../../resources/venv/bin/python3';
-    const PYENV_PATH = __DIR__ . '/../../resources/pyenv/bin/pyenv';
+    const PYENV_PATH = '/opt/pyenv/bin/pyenv';
 
     /* ************************** Attributs ****************************** */
 
@@ -63,7 +63,7 @@ class ttscast extends eqLogic
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==14.0.0|google-cloud-texttospeech==2.16.2|gTTS==2.5.1"') < 3) {
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==14.0.1|google-cloud-texttospeech==2.16.3|gTTS==2.5.1"') < 3) {
                 $return['state'] = 'nok';
             } else {
                 $return['state'] = 'ok';
@@ -373,7 +373,7 @@ class ttscast extends eqLogic
                config::save('pyenvVersion', $pyenvVersion, 'ttscast');
             }
             elseif (file_exists(self::PYTHON3_PATH)) {
-                $pythonPyEnvInUse = (exec(system::getCmdSudo() . 'dirname $(readlink ' . self::PYTHON3_PATH . ') | grep -Ewc "resources/pyenv"') == 1) ? true : false;
+                $pythonPyEnvInUse = (exec(system::getCmdSudo() . 'dirname $(readlink ' . self::PYTHON3_PATH . ') | grep -Ewc "opt/pyenv"') == 1) ? true : false;
                 if (!$pythonPyEnvInUse) {
                     $pyenvVersion = "-";
                     config::save('pyenvVersion', $pyenvVersion, 'ttscast');
