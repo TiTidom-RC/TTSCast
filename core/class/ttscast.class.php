@@ -63,7 +63,7 @@ class ttscast extends eqLogic
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==14.0.0|google-cloud-texttospeech==2.16.2|gTTS==2.5.1"') < 3) {
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==14.0.1|google-cloud-texttospeech==2.16.3|gTTS==2.5.1"') < 3) {
                 $return['state'] = 'nok';
             } else {
                 $return['state'] = 'ok';
