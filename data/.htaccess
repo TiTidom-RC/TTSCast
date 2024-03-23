@@ -1,6 +1,6 @@
 Options +FollowSymLinks
 Order allow,deny
-<Files ~ "\.(mp3|png)$">
+<Files ~ "\.(mp3|png|json)$">
    allow from all
 </Files>
 Deny from all
