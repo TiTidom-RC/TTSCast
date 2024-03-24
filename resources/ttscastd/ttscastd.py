@@ -1293,7 +1293,7 @@ class Functions:
                             castAppDisplayName = cast.status.display_name if cast.status.display_name is not None else "N/A"
                             
                             castIsIdle = cast.is_idle
-                            castIsStandBy = cast.status.is_stand_by
+                            castIsStandBy = '1' if cast.status.is_stand_by else '0'
                             castIsMuted = cast.status.volume_muted
                             castAppId = cast.status.app_id if cast.status.app_id is not None else "N/A"
                             castStatusText = cast.status.status_text if cast.status.status_text is not None else "N/A"
@@ -1575,6 +1575,7 @@ class myCast:
                 castAppDisplayName = status.display_name if status.display_name is not None else "N/A"
                 castAppId = status.app_id if status.app_id is not None else "N/A"
                 castStatusText = status.status_text if status.status_text is not None else "N/A"
+                castIsStandBy = '1' if status.is_stand_by else '0'
                 """ if self.cast.socket_client.is_connected:
                     castIsOnline = '1'
                 else:
@@ -1582,7 +1583,7 @@ class myCast:
                 
                 data = {
                     'uuid': str(self.cast.uuid),
-                    'is_stand_by': status.is_stand_by,
+                    'is_stand_by': castIsStandBy,
                     'is_idle': self.cast.is_idle,
                     'volume_level': castVolumeLevel,
                     'volume_muted': status.volume_muted,
