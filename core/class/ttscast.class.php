@@ -916,6 +916,36 @@ class ttscast extends eqLogic
         } else {
             $orderCmd++;
         }
+        
+        $cmd = $this->getCmd(null, 'is_idle');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Idle', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('is_idle');
+            $cmd->setType('info');
+            $cmd->setSubType('binary');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        $cmd = $this->getCmd(null, 'is_stand_by');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Stand By', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('is_stand_by');
+            $cmd->setType('info');
+            $cmd->setSubType('binary');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
 
         $cmd = $this->getCmd(null, 'volume_level');
         if (!is_object($cmd)) {

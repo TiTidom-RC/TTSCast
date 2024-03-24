@@ -1292,6 +1292,7 @@ class Functions:
                             castVolumeLevel = int(cast.status.volume_level * 100)
                             castAppDisplayName = cast.status.display_name if cast.status.display_name is not None else "N/A"
                             
+                            castIsIdle = cast.is_idle
                             castIsStandBy = cast.status.is_stand_by
                             castIsMuted = cast.status.volume_muted
                             castAppId = cast.status.app_id if cast.status.app_id is not None else "N/A"
@@ -1331,6 +1332,7 @@ class Functions:
                                 'volume_level': castVolumeLevel,
                                 'display_name': castAppDisplayName,
                                 'is_stand_by': castIsStandBy,
+                                'is_idle': castIsIdle,
                                 'volume_muted': castIsMuted,
                                 'app_id': castAppId,
                                 'status_text': castStatusText,
@@ -1581,6 +1583,7 @@ class myCast:
                 data = {
                     'uuid': str(self.cast.uuid),
                     'is_stand_by': status.is_stand_by,
+                    'is_idle': self.cast.id_idle,
                     'volume_level': castVolumeLevel,
                     'volume_muted': status.volume_muted,
                     'display_name': castAppDisplayName,
