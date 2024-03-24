@@ -917,7 +917,7 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
         
-        $cmd = $this->getCmd(null, 'is_idle');
+        /* $cmd = $this->getCmd(null, 'is_idle');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
             $cmd->setName(__('Idle', __FILE__));
@@ -945,7 +945,7 @@ class ttscast extends eqLogic
             $cmd->save();
         } else {
             $orderCmd++;
-        }
+        } */
 
         $cmd = $this->getCmd(null, 'volume_level');
         if (!is_object($cmd)) {
