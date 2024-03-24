@@ -1583,7 +1583,7 @@ class myCast:
                 data = {
                     'uuid': str(self.cast.uuid),
                     'is_stand_by': status.is_stand_by,
-                    'is_idle': self.cast.id_idle,
+                    'is_idle': self.cast.is_idle,
                     'volume_level': castVolumeLevel,
                     'volume_muted': status.volume_muted,
                     'display_name': castAppDisplayName,
