@@ -31,7 +31,7 @@ log "*******************"
 if [ -d ${PYENV_DIR} ]; then
 	log "** PyEnv Directory (Exists) :: ${PYENV_DIR} **"
 else
-	log "** PyEnv Directory (Not exists) :: ${PYENV_DIR} **"
+	log "** PyEnv Directory (Does not exist) :: ${PYENV_DIR} **"
 fi
 log "** Check PyEnv :: Done **"
 echo 1 > ${PROGRESS_FILE}
@@ -44,7 +44,7 @@ if [ -d ${PYENV_OLDDIR} ]; then
 	VenvToUpdate=1
 	log "** Venv Update :: Needed **"
 else
-	log "** PyEnv Old Directory (Not exists) :: ${PYENV_OLDDIR} **"
+	log "** PyEnv Old Directory (Does not exist) :: ${PYENV_OLDDIR} **"
 	VenvToUpdate=0
 	log "** Venv Update :: Not Needed **"
 fi
