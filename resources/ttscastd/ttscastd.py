@@ -1292,7 +1292,6 @@ class Functions:
                             castVolumeLevel = int(cast.status.volume_level * 100)
                             castAppDisplayName = cast.status.display_name if cast.status.display_name is not None else "N/A"
                             
-                            castIsIdle = '1' if cast.is_idle else '0'
                             castIsStandBy = '1' if cast.status.is_stand_by else '0'
                             castIsMuted = cast.status.volume_muted
                             castAppId = cast.status.app_id if cast.status.app_id is not None else "N/A"
@@ -1310,6 +1309,7 @@ class Functions:
                             else:
                                 mediaLastUpdated = "N/A"
                             
+                            mediaIsIdle = '1' if cast.media_controller.status.player_is_idle else '0'
                             mediaPlayerState = cast.media_controller.status.player_state if cast.media_controller.status.player_state is not None else "N/A"
                             mediaTitle = cast.media_controller.status.title if cast.media_controller.status.title is not None else "N/A"
                             mediaArtist = cast.media_controller.status.artist if cast.media_controller.status.artist is not None else "N/A"
@@ -1332,7 +1332,7 @@ class Functions:
                                 'volume_level': castVolumeLevel,
                                 'display_name': castAppDisplayName,
                                 'is_stand_by': castIsStandBy,
-                                'is_idle': castIsIdle,
+                                'is_idle': mediaIsIdle,
                                 'volume_muted': castIsMuted,
                                 'app_id': castAppId,
                                 'status_text': castStatusText,
