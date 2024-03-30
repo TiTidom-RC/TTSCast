@@ -797,7 +797,7 @@ class Functions:
     """ Class Functions """
     
     def checkIfDashCast(chromecast=None):
-        if chromecast is not None and (not chromecast.is_idle or chromecast.status.app_id == '84912283'):  # DashCast = '84912283'
+        if chromecast is not None and (chromecast.status.app_id == '84912283'):  # DashCast = '84912283'
             logging.debug('[DAEMON][checkIfDashCast] QuitDashCastApp')
             chromecast.quit_app()
             t = 5
@@ -891,7 +891,7 @@ class Functions:
                     except ValueError as e:
                         logging.debug('[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: %s', e)
                     
-                    if not cast.is_idle or ('quit_app' in options_json and options_json['quit_app']):
+                    if ('quit_app' in options_json and options_json['quit_app']):
                         logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
                         cast.quit_app()
                         t = 5

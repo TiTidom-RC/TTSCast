@@ -925,7 +925,7 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('is_idle');
             $cmd->setType('info');
             $cmd->setSubType('binary');
-	        $cmd->setIsVisible(1);
+	        $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
