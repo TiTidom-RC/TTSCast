@@ -1576,12 +1576,10 @@ class myCast:
                 castAppId = status.app_id if status.app_id is not None else "N/A"
                 castStatusText = status.status_text if status.status_text is not None else "N/A"
                 castIsStandBy = '1' if status.is_stand_by else '0'
-                castIsIdle = '1' if self.cast.is_idle else '0'
                 
                 data = {
                     'uuid': str(self.cast.uuid),
                     'is_stand_by': castIsStandBy,
-                    'is_idle': castIsIdle,
                     'volume_level': castVolumeLevel,
                     'volume_muted': status.volume_muted,
                     'display_name': castAppDisplayName,
@@ -1620,6 +1618,8 @@ class myCast:
                 else:
                     castIsOnline = '0' """
                 
+                mediaIsIdle = '1' if status.player_is_idle else '0'
+                
                 mediaPlayerState = status.player_state if status.player_state is not None else "N/A"
                 mediaTitle = status.title if status.title is not None else "N/A"
                 mediaArtist = status.artist if status.artist is not None else "N/A"
@@ -1638,6 +1638,7 @@ class myCast:
                 data = {
                     'uuid': str(self.cast.uuid),
                     'player_state': mediaPlayerState,
+                    'is_idle': mediaIsIdle,
                     'title': mediaTitle,
                     'artist': mediaArtist,
                     'duration': mediaDuration,
