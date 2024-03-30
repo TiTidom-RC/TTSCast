@@ -1309,7 +1309,7 @@ class Functions:
                             else:
                                 mediaLastUpdated = "N/A"
                             
-                            mediaIsIdle = '1' if cast.media_controller.status.player_is_idle else '0'
+                            mediaIsIdle = '1' if cast.media_controller.status.player_is_idle or cast.media_controller.status.player_state == 'UNKNOWN' else '0'
                             mediaIsBusy = '1' if cast.media_controller.status.player_is_playing or cast.media_controller.status.player_is_paused else '0'
                             mediaPlayerState = cast.media_controller.status.player_state if cast.media_controller.status.player_state is not None else "N/A"
                             mediaTitle = cast.media_controller.status.title if cast.media_controller.status.title is not None else "N/A"
@@ -1620,7 +1620,7 @@ class myCast:
                 else:
                     castIsOnline = '0' """
                 
-                mediaIsIdle = '1' if status.player_is_idle else '0'
+                mediaIsIdle = '1' if status.player_is_idle or status.player_state == 'UNKNOWN' else '0'
                 mediaIsBusy = '1' if status.player_is_playing or status.player_is_paused else '0'
                 
                 mediaPlayerState = status.player_state if status.player_state is not None else "N/A"
