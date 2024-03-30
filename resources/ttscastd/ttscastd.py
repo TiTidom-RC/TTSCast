@@ -797,7 +797,7 @@ class Functions:
     """ Class Functions """
     
     def checkIfDashCast(chromecast=None):
-        if chromecast is not None and (not chromecast.is_idle or chromecast.status.app_id == '84912283'):  # DashCast = '84912283'
+        if chromecast is not None and (chromecast.status.app_id == '84912283'):  # DashCast = '84912283'
             logging.debug('[DAEMON][checkIfDashCast] QuitDashCastApp')
             chromecast.quit_app()
             t = 5
@@ -891,7 +891,7 @@ class Functions:
                     except ValueError as e:
                         logging.debug('[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: %s', e)
                     
-                    if not cast.is_idle or ('quit_app' in options_json and options_json['quit_app']):
+                    if ('quit_app' in options_json and options_json['quit_app']):
                         logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
                         cast.quit_app()
                         t = 5
@@ -1292,7 +1292,7 @@ class Functions:
                             castVolumeLevel = int(cast.status.volume_level * 100)
                             castAppDisplayName = cast.status.display_name if cast.status.display_name is not None else "N/A"
                             
-                            castIsStandBy = cast.status.is_stand_by
+                            castIsStandBy = '1' if cast.status.is_stand_by else '0'
                             castIsMuted = cast.status.volume_muted
                             castAppId = cast.status.app_id if cast.status.app_id is not None else "N/A"
                             castStatusText = cast.status.status_text if cast.status.status_text is not None else "N/A"
@@ -1309,6 +1309,8 @@ class Functions:
                             else:
                                 mediaLastUpdated = "N/A"
                             
+                            mediaIsIdle = '1' if cast.media_controller.status.player_is_idle or cast.media_controller.status.player_state == 'UNKNOWN' else '0'
+                            mediaIsBusy = '1' if cast.media_controller.status.player_is_playing or cast.media_controller.status.player_is_paused else '0'
                             mediaPlayerState = cast.media_controller.status.player_state if cast.media_controller.status.player_state is not None else "N/A"
                             mediaTitle = cast.media_controller.status.title if cast.media_controller.status.title is not None else "N/A"
                             mediaArtist = cast.media_controller.status.artist if cast.media_controller.status.artist is not None else "N/A"
@@ -1331,6 +1333,8 @@ class Functions:
                                 'volume_level': castVolumeLevel,
                                 'display_name': castAppDisplayName,
                                 'is_stand_by': castIsStandBy,
+                                'is_idle': mediaIsIdle,
+                                'is_busy': mediaIsBusy,
                                 'volume_muted': castIsMuted,
                                 'app_id': castAppId,
                                 'status_text': castStatusText,
@@ -1573,14 +1577,11 @@ class myCast:
                 castAppDisplayName = status.display_name if status.display_name is not None else "N/A"
                 castAppId = status.app_id if status.app_id is not None else "N/A"
                 castStatusText = status.status_text if status.status_text is not None else "N/A"
-                """ if self.cast.socket_client.is_connected:
-                    castIsOnline = '1'
-                else:
-                    castIsOnline = '0' """
+                castIsStandBy = '1' if status.is_stand_by else '0'
                 
                 data = {
                     'uuid': str(self.cast.uuid),
-                    'is_stand_by': status.is_stand_by,
+                    'is_stand_by': castIsStandBy,
                     'volume_level': castVolumeLevel,
                     'volume_muted': status.volume_muted,
                     'display_name': castAppDisplayName,
@@ -1619,6 +1620,9 @@ class myCast:
                 else:
                     castIsOnline = '0' """
                 
+                mediaIsIdle = '1' if status.player_is_idle or status.player_state == 'UNKNOWN' else '0'
+                mediaIsBusy = '1' if status.player_is_playing or status.player_is_paused else '0'
+                
                 mediaPlayerState = status.player_state if status.player_state is not None else "N/A"
                 mediaTitle = status.title if status.title is not None else "N/A"
                 mediaArtist = status.artist if status.artist is not None else "N/A"
@@ -1637,6 +1641,8 @@ class myCast:
                 data = {
                     'uuid': str(self.cast.uuid),
                     'player_state': mediaPlayerState,
+                    'is_idle': mediaIsIdle,
+                    'is_busy': mediaIsBusy,
                     'title': mediaTitle,
                     'artist': mediaArtist,
                     'duration': mediaDuration,
