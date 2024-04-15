@@ -1194,6 +1194,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('lastschedule');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1209,6 +1211,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('lastschedulets');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1224,6 +1228,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('player_state');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1239,6 +1245,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('display_name');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1254,6 +1262,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('app_id');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1269,6 +1279,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('status_text');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1284,6 +1296,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('title');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1299,6 +1313,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('artist');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1314,6 +1330,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('album_name');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1329,7 +1347,9 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('duration');
             $cmd->setType('info');
             $cmd->setSubType('string');
-	        $cmd->setIsVisible(1);
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
+	        $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
@@ -1344,7 +1364,9 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('current_time');
             $cmd->setType('info');
             $cmd->setSubType('string');
-	        $cmd->setIsVisible(1);
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
+	        $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
@@ -1359,6 +1381,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('content_type');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1374,6 +1398,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('stream_type');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1389,6 +1415,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('last_updated');
             $cmd->setType('info');
             $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1406,6 +1434,10 @@ class ttscast extends eqLogic
             $cmd->setSubType('string');
             $cmd->setTemplate('dashboard', 'ttscast::cast-image');
             $cmd->setTemplate('mobile', 'ttscast::cast-image');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
+            $cmd->setDisplay('showNameOndashboard', '0');
+            $cmd->setDisplay('showNameOnmobile', '0');
 	        $cmd->setIsVisible(1);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1438,7 +1470,7 @@ class ttscast extends eqLogic
                 $cmd->setLogicalId('youtube');
                 $cmd->setType('action');
                 $cmd->setSubType('message');
-                $cmd->setIsVisible(1);
+                $cmd->setIsVisible(0);
                 $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "Vidéo Id"));
                 $cmd->setOrder($orderCmd++);
                 $cmd->save();
@@ -1454,7 +1486,7 @@ class ttscast extends eqLogic
                 $cmd->setLogicalId('dashcast');
                 $cmd->setType('action');
                 $cmd->setSubType('message');
-                $cmd->setIsVisible(1);
+                $cmd->setIsVisible(0);
                 $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "Page Web (URL)"));
                 $cmd->setOrder($orderCmd++);
                 $cmd->save();
@@ -1471,7 +1503,7 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('media');
             $cmd->setType('action');
             $cmd->setSubType('message');
-            $cmd->setIsVisible(1);
+            $cmd->setIsVisible(0);
             $cmd->setDisplay('parameters', array("title_placeholder" => "Options", "message_placeholder" => "Media"));
             $cmd->setOrder($orderCmd++);
             $cmd->save();
@@ -1487,6 +1519,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('radios');
             $cmd->setType('action');
             $cmd->setSubType('select');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
             $radioList = $this->getRadioList();
             $cmd->setConfiguration('listValue', $radioList);
 	        $cmd->setIsVisible(1);
@@ -1504,6 +1538,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('customradios');
             $cmd->setType('action');
             $cmd->setSubType('select');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
             $customRadioList = $this->getCustomRadioList();
             $cmd->setConfiguration('listValue', $customRadioList);
 	        $cmd->setIsVisible(0);
@@ -1521,6 +1557,8 @@ class ttscast extends eqLogic
 	        $cmd->setLogicalId('sounds');
             $cmd->setType('action');
             $cmd->setSubType('select');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
             $soundList = $this->getSoundList();
             $cmd->setConfiguration('listValue', $soundList);
 	        $cmd->setIsVisible(1);
@@ -1554,7 +1592,9 @@ class ttscast extends eqLogic
             $cmd->setEqLogic_id($this->getId());
 	        $cmd->setLogicalId('customcmd');
             $cmd->setType('action');
-            $cmd->setSubType('message');    
+            $cmd->setSubType('message');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
 	        $cmd->setIsVisible(0);
             $cmd->setDisplay('parameters', array("title_disable" => "1", "title_placeholder" => "Options", "message_placeholder" => "Custom Cmd"));
             $cmd->setOrder($orderCmd++);
