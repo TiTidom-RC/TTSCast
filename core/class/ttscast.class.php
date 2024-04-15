@@ -1015,8 +1015,8 @@ class ttscast extends eqLogic
             $cmd->setDisplay('icon', '<i class="fas fa-volume-mute"></i>');
             $cmd->setValue($mute_cmd_id);
 	        $cmd->setIsVisible(1);
-            $cmd->setTemplate('dashboard', 'template::toggle');
-            $cmd->setTemplate('mobile', 'template::toggle');
+            $cmd->setTemplate('dashboard', 'core::toggle');
+            $cmd->setTemplate('mobile', 'core::toggle');
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
@@ -1034,8 +1034,8 @@ class ttscast extends eqLogic
             $cmd->setDisplay('icon', '<i class="fas fa-volume-off"></i>');
             $cmd->setValue($mute_cmd_id);
 	        $cmd->setIsVisible(1);
-            $cmd->setTemplate('dashboard', 'template::toggle');
-            $cmd->setTemplate('mobile', 'template::toggle');
+            $cmd->setTemplate('dashboard', 'core::toggle');
+            $cmd->setTemplate('mobile', 'core::toggle');
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
