@@ -77,6 +77,7 @@ class Config:
     
     appDisableDing = False
     cmdWaitTimeout = 60
+    cmdWaitQueue = 0
     
     logLevel = "error"
     socketPort = 55111

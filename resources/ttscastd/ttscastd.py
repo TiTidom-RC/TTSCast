@@ -495,6 +495,13 @@ class TTSCast:
             
             _appDing = False if Config.appDisableDing else _appDing
             
+            # Gestion de la cmdWaitQueue
+            if _cmdWait is not None:
+                Config.cmdWaitQueue += 2 ** int(_cmdWait)
+                logging.debug('[DAEMON][TTS][QUEUE] WaitQueue :: %s', str(Config.cmdWaitQueue))
+            else:
+                Config.cmdWaitQueue = 0
+            
             if ttsEngine == "gcloudtts":
                 logging.debug('[DAEMON][TTS] TTSEngine = gcloudtts')
                 logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
@@ -636,6 +643,13 @@ class TTSCast:
             
                 # Wait if option defined
                 if cmdWait is not None:
+                    logging.debug('[DAEMON][Cast] Cmd Wait :: Wait for Queue (%s)', googleUUID)
+                    queue_start_time = int(time.time())
+                    while Config.cmdWaitQueue % (2 ** int(cmdWait)) != 0:
+                        if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= wait_current_time):
+                            logging.debug('[DAEMON][Cast] Cmd Wait :: Queue Timeout (%s)', googleUUID)
+                            break
+                        time.sleep(0.1)
                     logging.debug('[DAEMON][Cast] Cmd Wait :: Start (%s)', googleUUID)
                     wait_start_time = int(time.time())
                     wait_media_player_state = None
@@ -711,6 +725,10 @@ class TTSCast:
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     cast.set_volume(volume=volumeBeforePlay)
                 
+                # Mise à jour de la WaitQueue
+                if cmdWait is not None:
+                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
+                
                 # Libération de la mémoire
                 cast = None
                 chromecasts = None
@@ -721,6 +739,10 @@ class TTSCast:
                 
                 if volumeBeforePlay is not None:
                     cast.set_volume(volume=volumeBeforePlay)
+                
+                # Mise à jour de la WaitQueue
+                if cmdWait is not None:
+                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
                 
                 # Libération de la mémoire
                 cast = None
@@ -744,6 +766,13 @@ class TTSCast:
                 
                 # Wait if option defined
                 if cmdWait is not None:
+                    logging.debug('[DAEMON][Cast] Cmd Wait :: Wait for Queue (%s)', googleUUID)
+                    queue_start_time = int(time.time())
+                    while Config.cmdWaitQueue % (2 ** int(cmdWait)) != 0:
+                        if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= wait_current_time):
+                            logging.debug('[DAEMON][Cast] Cmd Wait :: Queue Timeout (%s)', googleUUID)
+                            break
+                        time.sleep(0.1)
                     logging.debug('[DAEMON][Cast] Cmd Wait :: Start (%s)', googleUUID)
                     wait_start_time = int(time.time())
                     wait_media_player_state = None
@@ -820,6 +849,10 @@ class TTSCast:
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     cast.set_volume(volume=volumeBeforePlay)
                 
+                # Mise à jour de la WaitQueue
+                if cmdWait is not None:
+                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
+                
                 # Libération de la mémoire
                 cast = None
                 return True
@@ -829,6 +862,10 @@ class TTSCast:
                 
                 if volumeBeforePlay is not None:
                     cast.set_volume(volume=volumeBeforePlay)
+                
+                # Mise à jour de la WaitQueue
+                if cmdWait is not None:
+                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
                 
                 # Libération de la mémoire
                 cast = None
