@@ -162,6 +162,9 @@ class Loops:
                                 Config.GCAST_UUID.append(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
                                 myCast.castListeners(uuid=_uuid)
+                            
+                            if message['uuid'] not in Config.cmdWaitQueue:
+                                Config.cmdWaitQueue[message['uuid']] = 0
                                 
                     elif message['cmd'] == "removecast":
                         if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
@@ -179,6 +182,9 @@ class Loops:
                                 Config.GCAST_UUID.remove(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(Config.GCAST_UUID))
                                 myCast.castRemove(uuid=_uuid)
+                            
+                            if message['uuid'] in Config.cmdWaitQueue:
+                                del Config.cmdWaitQueue[message['uuid']]
                             
                     elif message['cmd'] == "scanOn":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
