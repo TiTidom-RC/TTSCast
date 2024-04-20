@@ -1054,7 +1054,7 @@ class Functions:
                         if _cmdWait is not None:
                             if _googleUUID in Config.cmdWaitQueue:
                                 Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
-                            else
+                            else:
                                 Config.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: WaitQueue :: %s', str(Config.cmdWaitQueue[_googleUUID]))
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait Queue :: Start (%s)', _googleUUID)
