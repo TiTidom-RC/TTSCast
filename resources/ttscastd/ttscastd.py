@@ -162,6 +162,10 @@ class Loops:
                                 Config.GCAST_UUID.append(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(Config.GCAST_UUID))
                                 myCast.castListeners(uuid=_uuid)
+                            
+                            if message['uuid'] not in Config.cmdWaitQueue:
+                                Config.cmdWaitQueue[message['uuid']] = 0
+                                logging.debug('[DAEMON][SOCKET] Add Wait Queue for Device :: %s', message['uuid'])
                                 
                     elif message['cmd'] == "removecast":
                         if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
@@ -179,6 +183,10 @@ class Loops:
                                 Config.GCAST_UUID.remove(_uuid)
                                 logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(Config.GCAST_UUID))
                                 myCast.castRemove(uuid=_uuid)
+                            
+                            if message['uuid'] in Config.cmdWaitQueue:
+                                del Config.cmdWaitQueue[message['uuid']]
+                                logging.debug('[DAEMON][SOCKET] Remove Wait Queue for Device :: %s', message['uuid'])
                             
                     elif message['cmd'] == "scanOn":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
@@ -497,10 +505,13 @@ class TTSCast:
             
             # Gestion de la cmdWaitQueue
             if _cmdWait is not None:
-                Config.cmdWaitQueue += 2 ** int(_cmdWait)
-                logging.debug('[DAEMON][TTS][QUEUE] WaitQueue :: %s', str(Config.cmdWaitQueue))
+                if ttsGoogleUUID in Config.cmdWaitQueue:
+                    Config.cmdWaitQueue[ttsGoogleUUID] += 2 ** int(_cmdWait)
+                else:
+                    Config.cmdWaitQueue[ttsGoogleUUID] = 2 ** int(_cmdWait)
+                logging.debug('[DAEMON][TTS][QUEUE] WaitQueue :: %s (%s)', str(Config.cmdWaitQueue[ttsGoogleUUID]), ttsGoogleUUID)
             else:
-                Config.cmdWaitQueue = 0
+                Config.cmdWaitQueue[ttsGoogleUUID] = 0
             
             if ttsEngine == "gcloudtts":
                 logging.debug('[DAEMON][TTS] TTSEngine = gcloudtts')
@@ -640,18 +651,6 @@ class TTSCast:
                     return False
                 cast = chromecasts[0]
                 logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
-            
-                # Wait if option defined
-                if cmdWait is not None:
-                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Start (%s)', googleUUID)
-                    queue_start_time = int(time.time())
-                    while Config.cmdWaitQueue % (2 ** int(cmdWait)) != 0:
-                        queue_current_time = int(time.time())
-                        if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
-                            logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Timeout (%s)', googleUUID)
-                            break
-                        time.sleep(0.1)
-                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: End (%s)', googleUUID)
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
@@ -709,10 +708,6 @@ class TTSCast:
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     cast.set_volume(volume=volumeBeforePlay)
                 
-                # Mise à jour de la WaitQueue
-                if cmdWait is not None:
-                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
-                
                 # Libération de la mémoire
                 cast = None
                 chromecasts = None
@@ -723,10 +718,6 @@ class TTSCast:
                 
                 if volumeBeforePlay is not None:
                     cast.set_volume(volume=volumeBeforePlay)
-                
-                # Mise à jour de la WaitQueue
-                if cmdWait is not None:
-                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
                 
                 # Libération de la mémoire
                 cast = None
@@ -752,7 +743,7 @@ class TTSCast:
                 if cmdWait is not None:
                     logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Start (%s)', googleUUID)
                     queue_start_time = int(time.time())
-                    while Config.cmdWaitQueue % (2 ** int(cmdWait)) != 0:
+                    while Config.cmdWaitQueue[googleUUID] % (2 ** int(cmdWait)) != 0:
                         queue_current_time = int(time.time())
                         if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
                             logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Timeout (%s)', googleUUID)
@@ -819,7 +810,7 @@ class TTSCast:
                 
                 # Mise à jour de la WaitQueue
                 if cmdWait is not None:
-                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
+                    Config.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
                 
                 # Libération de la mémoire
                 cast = None
@@ -833,7 +824,7 @@ class TTSCast:
                 
                 # Mise à jour de la WaitQueue
                 if cmdWait is not None:
-                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
+                    Config.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
                 
                 # Libération de la mémoire
                 cast = None
@@ -1069,11 +1060,14 @@ class Functions:
 
                         # WaitQueue if option defined
                         if _cmdWait is not None:
-                            Config.cmdWaitQueue += 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: WaitQueue :: %s', str(Config.cmdWaitQueue))
+                            if _googleUUID in Config.cmdWaitQueue:
+                                Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
+                            else:
+                                Config.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: WaitQueue :: %s', str(Config.cmdWaitQueue[_googleUUID]))
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait Queue :: Start (%s)', _googleUUID)
                             queue_start_time = int(time.time())
-                            while Config.cmdWaitQueue % (2 ** int(_cmdWait)) != 0:
+                            while Config.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
                                 queue_current_time = int(time.time())
                                 if (queue_start_time + (Config.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
                                     logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait Queue :: Timeout (%s)', _googleUUID)
@@ -1081,7 +1075,7 @@ class Functions:
                                 time.sleep(0.1)
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait Queue :: End (%s)', _googleUUID)
                         else:
-                            Config.cmdWaitQueue = 0
+                            Config.cmdWaitQueue[_googleUUID] = 0
                         
                         # Si DashCast alors sortir de l'appli avant sinon cela plante
                         Functions.checkIfDashCast(cast)
@@ -1151,7 +1145,7 @@ class Functions:
                     
                         # Mise à jour de la WaitQueue
                         if _cmdWait is not None:
-                            Config.cmdWaitQueue -= 2 ** int(_cmdWait)
+                            Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
                     
                     # Libération de la mémoire
                     cast = None
