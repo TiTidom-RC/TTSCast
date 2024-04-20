@@ -76,6 +76,7 @@ class Config:
     configFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), configFolder))
     
     appDisableDing = False
+    cmdWaitTimeout = 60
     
     logLevel = "error"
     socketPort = 55111
