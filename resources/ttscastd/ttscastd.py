@@ -165,6 +165,7 @@ class Loops:
                             
                             if message['uuid'] not in Config.cmdWaitQueue:
                                 Config.cmdWaitQueue[message['uuid']] = 0
+                                logging.debug('[DAEMON][SOCKET] Add Wait Queue for Device :: %s', message['uuid'])
                                 
                     elif message['cmd'] == "removecast":
                         if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
@@ -185,6 +186,7 @@ class Loops:
                             
                             if message['uuid'] in Config.cmdWaitQueue:
                                 del Config.cmdWaitQueue[message['uuid']]
+                                logging.debug('[DAEMON][SOCKET] Remove Wait Queue for Device :: %s', message['uuid'])
                             
                     elif message['cmd'] == "scanOn":
                         logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
