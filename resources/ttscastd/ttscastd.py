@@ -769,7 +769,8 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Cmd Wait :: Wait for Queue (%s)', googleUUID)
                     queue_start_time = int(time.time())
                     while Config.cmdWaitQueue % (2 ** int(cmdWait)) != 0:
-                        if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= wait_current_time):
+                        queue_current_time = int(time.time())
+                        if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
                             logging.debug('[DAEMON][Cast] Cmd Wait :: Queue Timeout (%s)', googleUUID)
                             break
                         time.sleep(0.1)
