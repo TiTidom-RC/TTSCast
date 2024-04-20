@@ -310,6 +310,9 @@ class ttscast extends eqLogic
             if (array_key_exists('ding', $data)) {
                 $resOptions['ding'] = $data['ding'];
             }
+            if (array_key_exists('wait', $data)) {
+                $resOptions['wait'] = $data['wait'];
+            }
             if (array_key_exists('type', $data)) {
                 $resOptions['type'] = $data['type'];
             }

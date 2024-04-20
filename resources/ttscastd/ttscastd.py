@@ -643,32 +643,15 @@ class TTSCast:
             
                 # Wait if option defined
                 if cmdWait is not None:
-                    logging.debug('[DAEMON][Cast] Cmd Wait :: Wait for Queue (%s)', googleUUID)
+                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Start (%s)', googleUUID)
                     queue_start_time = int(time.time())
                     while Config.cmdWaitQueue % (2 ** int(cmdWait)) != 0:
                         queue_current_time = int(time.time())
                         if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
-                            logging.debug('[DAEMON][Cast] Cmd Wait :: Queue Timeout (%s)', googleUUID)
+                            logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Timeout (%s)', googleUUID)
                             break
                         time.sleep(0.1)
-                    """ logging.debug('[DAEMON][Cast] Cmd Wait :: Start (%s)', googleUUID)
-                    wait_start_time = int(time.time())
-                    wait_media_player_state = None
-                    wait_media_has_played = False
-                
-                    while True:
-                        if wait_media_player_state != cast.media_controller.status.player_state:
-                            wait_media_player_state = cast.media_controller.status.player_state
-                            if wait_media_has_played and wait_media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING', 'IDLE']:
-                                break
-                            if wait_media_player_state in ['PLAYING']:
-                                wait_media_has_played = True
-                        wait_current_time = int(time.time())
-                        if ((wait_start_time + Config.cmdWaitTimeout) <= wait_current_time) or ((wait_start_time + int(cmdWait)) <= wait_current_time):
-                            logging.debug('[DAEMON][Cast] Cmd Wait :: Timeout (%s)', googleName)
-                            break
-                        time.sleep(0.1) """
-                    logging.debug('[DAEMON][Cast] Cmd Wait :: End (%s)', googleUUID)
+                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: End (%s)', googleUUID)
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
@@ -765,34 +748,17 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID nom :: %s', googleUUID)
                     return False
                 
-                # Wait if option defined
+                # WaitQueue if option defined
                 if cmdWait is not None:
-                    logging.debug('[DAEMON][Cast] Cmd Wait :: Wait for Queue (%s)', googleUUID)
+                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Start (%s)', googleUUID)
                     queue_start_time = int(time.time())
                     while Config.cmdWaitQueue % (2 ** int(cmdWait)) != 0:
                         queue_current_time = int(time.time())
                         if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
-                            logging.debug('[DAEMON][Cast] Cmd Wait :: Queue Timeout (%s)', googleUUID)
+                            logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Timeout (%s)', googleUUID)
                             break
                         time.sleep(0.1)
-                    """ logging.debug('[DAEMON][Cast] Cmd Wait :: Start (%s)', googleUUID)
-                    wait_start_time = int(time.time())
-                    wait_media_player_state = None
-                    wait_media_has_played = False
-                
-                    while True:
-                        if wait_media_player_state != cast.media_controller.status.player_state:
-                            wait_media_player_state = cast.media_controller.status.player_state
-                            if wait_media_has_played and wait_media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING', 'IDLE']:
-                                break
-                            if wait_media_player_state in ['PLAYING']:
-                                wait_media_has_played = True
-                        wait_current_time = int(time.time())
-                        if ((wait_start_time + Config.cmdWaitTimeout) <= wait_current_time) or ((wait_start_time + int(cmdWait)) <= wait_current_time):
-                            logging.debug('[DAEMON][Cast] Cmd Wait :: Timeout (%s)', googleUUID)
-                            break
-                        time.sleep(0.1) """
-                    logging.debug('[DAEMON][Cast] Cmd Wait :: End (%s)', googleUUID)
+                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: End (%s)', googleUUID)
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
@@ -907,14 +873,10 @@ class Functions:
                 if (_controller == 'youtube'):
                     logging.debug('[DAEMON][controllerActions] YouTube Id @ UUID :: %s @ %s', _value, _googleUUID)
                     
-                    # Si DashCast alors sortir de l'appli avant sinon cela plante
-                    Functions.checkIfDashCast(cast)
-                    
                     _playlist = None
                     _enqueue = False
                     _volume = None
                     _appDing = True
-                    _cmdWait = None
                     
                     try:
                         if (_options is not None):
@@ -923,33 +885,14 @@ class Functions:
                             _enqueue = options_json['enqueue'] if 'enqueue' in options_json else False
                             _volume = options_json['volume'] if 'volume' in options_json else None
                             _appDing = options_json['ding'] if 'ding' in options_json else True
-                            _cmdWait = options_json['wait'] if 'wait' in options_json else None
                             logging.debug('[DAEMON][controllerActions] YouTube :: Options :: %s', str(options_json))
                     except ValueError as e:
                         logging.debug('[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: %s', e)
                     
                     _appDing = False if Config.appDisableDing else _appDing
                     
-                    # Wait if option defined
-                    if _cmdWait is not None:
-                        logging.debug('[DAEMON][controllerActions] Youtube :: Cmd Wait :: Start (%s)', _googleUUID)
-                        wait_start_time = int(time.time())
-                        wait_media_player_state = None
-                        wait_media_has_played = False
-                    
-                        while True:
-                            if wait_media_player_state != cast.media_controller.status.player_state:
-                                wait_media_player_state = cast.media_controller.status.player_state
-                                if wait_media_has_played and wait_media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING', 'IDLE']:
-                                    break
-                                if wait_media_player_state in ['PLAYING']:
-                                    wait_media_has_played = True
-                            wait_current_time = int(time.time())
-                            if ((wait_start_time + Config.cmdWaitTimeout) <= wait_current_time) or ((wait_start_time + int(_cmdWait)) <= wait_current_time):
-                                logging.debug('[DAEMON][controllerActions] Youtube :: Cmd Wait :: Timeout (%s)', _googleUUID)
-                                break
-                            time.sleep(0.1)
-                        logging.debug('[DAEMON][controllerActions] Youtube :: Cmd Wait :: End (%s)', _googleUUID)
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
                     
                     volumeBeforePlay = cast.status.volume_level
                     if not _appDing:
@@ -1025,9 +968,6 @@ class Functions:
                         cast.quit_app()
                         time.sleep(1)
                     else:
-                        # Si DashCast alors sortir de l'appli avant sinon cela plante
-                        Functions.checkIfDashCast(cast)
-                        
                         if (_controller == 'customradios'):
                             _RadiosFilePath = Config.customRadiosFilePath
                         else:
@@ -1048,6 +988,9 @@ class Functions:
                                 logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options mal formatées (Json KO) :: %s', e)
 
                             _appDing = False if Config.appDisableDing else _appDing
+                         
+                            # Si DashCast alors sortir de l'appli avant sinon cela plante
+                            Functions.checkIfDashCast(cast)
                             
                             volumeBeforePlay = cast.status.volume_level
                             if not _appDing:
@@ -1124,26 +1067,21 @@ class Functions:
 
                         _appDing = False if Config.appDisableDing else _appDing
 
-                        # Wait if option defined
+                        # WaitQueue if option defined
                         if _cmdWait is not None:
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait :: Start (%s)', _googleUUID)
-                            wait_start_time = int(time.time())
-                            wait_media_player_state = None
-                            wait_media_has_played = False
-                        
-                            while True:
-                                if wait_media_player_state != cast.media_controller.status.player_state:
-                                    wait_media_player_state = cast.media_controller.status.player_state
-                                    if wait_media_has_played and wait_media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING', 'IDLE']:
-                                        break
-                                    if wait_media_player_state in ['PLAYING']:
-                                        wait_media_has_played = True
-                                wait_current_time = int(time.time())
-                                if ((wait_start_time + Config.cmdWaitTimeout) <= wait_current_time) or ((wait_start_time + int(_cmdWait)) <= wait_current_time):
-                                    logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait :: Timeout (%s)', _googleUUID)
+                            Config.cmdWaitQueue += 2 ** int(_cmdWait)
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: WaitQueue :: %s', str(Config.cmdWaitQueue))
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait Queue :: Start (%s)', _googleUUID)
+                            queue_start_time = int(time.time())
+                            while Config.cmdWaitQueue % (2 ** int(_cmdWait)) != 0:
+                                queue_current_time = int(time.time())
+                                if (queue_start_time + (Config.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
+                                    logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait Queue :: Timeout (%s)', _googleUUID)
                                     break
                                 time.sleep(0.1)
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait :: End (%s)', _googleUUID)
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait Queue :: End (%s)', _googleUUID)
+                        else:
+                            Config.cmdWaitQueue = 0
                         
                         # Si DashCast alors sortir de l'appli avant sinon cela plante
                         Functions.checkIfDashCast(cast)
@@ -1211,6 +1149,10 @@ class Functions:
                         if (_volume is not None):
                             cast.set_volume(volume=volumeBeforePlay)
                     
+                        # Mise à jour de la WaitQueue
+                        if _cmdWait is not None:
+                            Config.cmdWaitQueue -= 2 ** int(_cmdWait)
+                    
                     # Libération de la mémoire
                     cast = None
                     return True
@@ -1223,14 +1165,12 @@ class Functions:
                     else:
                         _volume = None
                         _appDing = True
-                        _cmdWait = None
                         _mediaType = None
                         try:
                             if (_options is not None):
                                 options_json = json.loads("{" + _options + "}")
                                 _volume = options_json['volume'] if 'volume' in options_json else None
                                 _appDing = options_json['ding'] if 'ding' in options_json else True
-                                _cmdWait = options_json['wait'] if 'wait' in options_json else None
                                 _mediaType = options_json['type'] if 'type' in options_json else None
                                 
                                 logging.debug('[DAEMON][controllerActions] Media :: Options :: %s', str(options_json))
@@ -1238,27 +1178,6 @@ class Functions:
                             logging.debug('[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: %s', e)
 
                         _appDing = False if Config.appDisableDing else _appDing
-                        
-                        # Wait if option defined
-                        if _cmdWait is not None:
-                            logging.debug('[DAEMON][controllerActions] Media :: Cmd Wait :: Start (%s)', _googleUUID)
-                            wait_start_time = int(time.time())
-                            wait_media_player_state = None
-                            wait_media_has_played = False
-                        
-                            while True:
-                                if wait_media_player_state != cast.media_controller.status.player_state:
-                                    wait_media_player_state = cast.media_controller.status.player_state
-                                    if wait_media_has_played and wait_media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING', 'IDLE']:
-                                        break
-                                    if wait_media_player_state in ['PLAYING']:
-                                        wait_media_has_played = True
-                                wait_current_time = int(time.time())
-                                if ((wait_start_time + Config.cmdWaitTimeout) <= wait_current_time) or ((wait_start_time + int(_cmdWait)) <= wait_current_time):
-                                    logging.debug('[DAEMON][controllerActions] Media :: Cmd Wait :: Timeout (%s)', _googleUUID)
-                                    break
-                                time.sleep(0.1)
-                            logging.debug('[DAEMON][controllerActions] Media :: Cmd Wait :: End (%s)', _googleUUID)
                         
                         # Si DashCast alors sortir de l'appli avant sinon cela plante
                         Functions.checkIfDashCast(cast)
@@ -1318,7 +1237,7 @@ class Functions:
                         cast.media_controller.block_until_active()
                         
                         logging.debug('[DAEMON][controllerActions] Diffusion Media lancée :: %s', str(cast.media_controller.status))
-                
+                        
                     # Libération de la mémoire
                     cast = None
                     return True
