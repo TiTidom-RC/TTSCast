@@ -463,7 +463,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Timeout de l'option 'Wait' (secondes)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Temps au bout duquel la commande est dans tous les cas exécutée, même si l'équipement Google est encore en cours de lecture (par défaut : 60sec}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Temps (entre 0 et 3600 sec) au bout duquel la commande est dans tous les cas exécutée, même si l'équipement Google est encore en cours de lecture (par défaut : 60sec}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input class="configKey form-control" type="number" data-l1key="cmdWaitTimeout" min="0" max="3600" placeholder="{{Timeout}}" />
