@@ -636,6 +636,7 @@ class TTSCast:
             
                 # Wait if option defined
                 if cmdWait is not None:
+                    logging.debug('[DAEMON][Cast] Cmd Wait :: Start (%s)', googleUUID)
                     wait_start_time = int(time.time())
                     wait_media_player_state = None
                     wait_media_has_played = False
@@ -652,6 +653,7 @@ class TTSCast:
                             logging.debug('[DAEMON][Cast] Cmd Wait :: Timeout (%s)', googleName)
                             break
                         time.sleep(0.1)
+                    logging.debug('[DAEMON][Cast] Cmd Wait :: End (%s)', googleUUID)
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
@@ -742,6 +744,7 @@ class TTSCast:
                 
                 # Wait if option defined
                 if cmdWait is not None:
+                    logging.debug('[DAEMON][Cast] Cmd Wait :: Start (%s)', googleUUID)
                     wait_start_time = int(time.time())
                     wait_media_player_state = None
                     wait_media_has_played = False
@@ -755,9 +758,10 @@ class TTSCast:
                                 wait_media_has_played = True
                         wait_current_time = int(time.time())
                         if ((wait_start_time + Config.cmdWaitTimeout) <= wait_current_time) or ((wait_start_time + int(cmdWait)) <= wait_current_time):
-                            logging.debug('[DAEMON][Cast] Cmd Wait :: Timeout (%s)', googleName)
+                            logging.debug('[DAEMON][Cast] Cmd Wait :: Timeout (%s)', googleUUID)
                             break
                         time.sleep(0.1)
+                    logging.debug('[DAEMON][Cast] Cmd Wait :: End (%s)', googleUUID)
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
@@ -889,6 +893,7 @@ class Functions:
                     
                     # Wait if option defined
                     if _cmdWait is not None:
+                        logging.debug('[DAEMON][controllerActions] Youtube :: Cmd Wait :: Start (%s)', _googleUUID)
                         wait_start_time = int(time.time())
                         wait_media_player_state = None
                         wait_media_has_played = False
@@ -902,9 +907,10 @@ class Functions:
                                     wait_media_has_played = True
                             wait_current_time = int(time.time())
                             if ((wait_start_time + Config.cmdWaitTimeout) <= wait_current_time) or ((wait_start_time + int(_cmdWait)) <= wait_current_time):
-                                logging.debug('[DAEMON][controllerActions]Youtube :: Cmd Wait :: Timeout (%s)', _googleUUID)
+                                logging.debug('[DAEMON][controllerActions] Youtube :: Cmd Wait :: Timeout (%s)', _googleUUID)
                                 break
                             time.sleep(0.1)
+                        logging.debug('[DAEMON][controllerActions] Youtube :: Cmd Wait :: End (%s)', _googleUUID)
                     
                     volumeBeforePlay = cast.status.volume_level
                     if not _appDing:
@@ -1081,6 +1087,7 @@ class Functions:
 
                         # Wait if option defined
                         if _cmdWait is not None:
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait :: Start (%s)', _googleUUID)
                             wait_start_time = int(time.time())
                             wait_media_player_state = None
                             wait_media_has_played = False
@@ -1097,6 +1104,7 @@ class Functions:
                                     logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait :: Timeout (%s)', _googleUUID)
                                     break
                                 time.sleep(0.1)
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait :: End (%s)', _googleUUID)
                         
                         # Si DashCast alors sortir de l'appli avant sinon cela plante
                         Functions.checkIfDashCast(cast)
@@ -1194,6 +1202,7 @@ class Functions:
                         
                         # Wait if option defined
                         if _cmdWait is not None:
+                            logging.debug('[DAEMON][controllerActions] Media :: Cmd Wait :: Start (%s)', _googleUUID)
                             wait_start_time = int(time.time())
                             wait_media_player_state = None
                             wait_media_has_played = False
@@ -1210,6 +1219,7 @@ class Functions:
                                     logging.debug('[DAEMON][controllerActions] Media :: Cmd Wait :: Timeout (%s)', _googleUUID)
                                     break
                                 time.sleep(0.1)
+                            logging.debug('[DAEMON][controllerActions] Media :: Cmd Wait :: End (%s)', _googleUUID)
                         
                         # Si DashCast alors sortir de l'appli avant sinon cela plante
                         Functions.checkIfDashCast(cast)
