@@ -646,11 +646,12 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Cmd Wait :: Wait for Queue (%s)', googleUUID)
                     queue_start_time = int(time.time())
                     while Config.cmdWaitQueue % (2 ** int(cmdWait)) != 0:
-                        if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= wait_current_time):
+                        queue_current_time = int(time.time())
+                        if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
                             logging.debug('[DAEMON][Cast] Cmd Wait :: Queue Timeout (%s)', googleUUID)
                             break
                         time.sleep(0.1)
-                    logging.debug('[DAEMON][Cast] Cmd Wait :: Start (%s)', googleUUID)
+                    """ logging.debug('[DAEMON][Cast] Cmd Wait :: Start (%s)', googleUUID)
                     wait_start_time = int(time.time())
                     wait_media_player_state = None
                     wait_media_has_played = False
@@ -666,7 +667,7 @@ class TTSCast:
                         if ((wait_start_time + Config.cmdWaitTimeout) <= wait_current_time) or ((wait_start_time + int(cmdWait)) <= wait_current_time):
                             logging.debug('[DAEMON][Cast] Cmd Wait :: Timeout (%s)', googleName)
                             break
-                        time.sleep(0.1)
+                        time.sleep(0.1) """
                     logging.debug('[DAEMON][Cast] Cmd Wait :: End (%s)', googleUUID)
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
@@ -774,7 +775,7 @@ class TTSCast:
                             logging.debug('[DAEMON][Cast] Cmd Wait :: Queue Timeout (%s)', googleUUID)
                             break
                         time.sleep(0.1)
-                    logging.debug('[DAEMON][Cast] Cmd Wait :: Start (%s)', googleUUID)
+                    """ logging.debug('[DAEMON][Cast] Cmd Wait :: Start (%s)', googleUUID)
                     wait_start_time = int(time.time())
                     wait_media_player_state = None
                     wait_media_has_played = False
@@ -790,7 +791,7 @@ class TTSCast:
                         if ((wait_start_time + Config.cmdWaitTimeout) <= wait_current_time) or ((wait_start_time + int(cmdWait)) <= wait_current_time):
                             logging.debug('[DAEMON][Cast] Cmd Wait :: Timeout (%s)', googleUUID)
                             break
-                        time.sleep(0.1)
+                        time.sleep(0.1) """
                     logging.debug('[DAEMON][Cast] Cmd Wait :: End (%s)', googleUUID)
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
