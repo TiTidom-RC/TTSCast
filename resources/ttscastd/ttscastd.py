@@ -481,17 +481,26 @@ class TTSCast:
             
             _ttsVolume = None
             _appDing = True
+            _cmdWait = None
             
             try:
                 if (ttsOptions is not None):
                     options_json = json.loads("{" + ttsOptions + "}")
                     _ttsVolume = options_json['volume'] if 'volume' in options_json else None
                     _appDing = options_json['ding'] if 'ding' in options_json else True
+                    _cmdWait = options_json['wait'] if 'wait' in options_json else None
                     logging.debug('[DAEMON][TTS] Options :: %s', str(options_json))
             except ValueError as e:
                 logging.debug('[DAEMON][TTS] Options mal formatées (Json KO) :: %s', e)
             
             _appDing = False if Config.appDisableDing else _appDing
+            
+            # Gestion de la cmdWaitQueue
+            if _cmdWait is not None:
+                Config.cmdWaitQueue += 2 ** int(_cmdWait)
+                logging.debug('[DAEMON][TTS][QUEUE] WaitQueue :: %s', str(Config.cmdWaitQueue))
+            else:
+                Config.cmdWaitQueue = 0
             
             if ttsEngine == "gcloudtts":
                 logging.debug('[DAEMON][TTS] TTSEngine = gcloudtts')
@@ -528,7 +537,7 @@ class TTSCast:
                     
                     urlFileToPlay = urljoin(ttsSrvWeb, filename)
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing)
+                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
                     logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
@@ -558,7 +567,7 @@ class TTSCast:
                 urlFileToPlay = urljoin(ttsSrvWeb, filename)
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
-                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing)
+                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
                 logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             
             elif ttsEngine == "jeedomtts":
@@ -582,7 +591,7 @@ class TTSCast:
                 urlFileToPlay = urljoin(ttsSrvWeb, filename)
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
-                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing)
+                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
                 logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             
             elif ttsEngine == "voicersstts":
@@ -607,7 +616,7 @@ class TTSCast:
                     urlFileToPlay = urljoin(ttsSrvWeb, filename)
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                     
-                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing)
+                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
                     logging.warning('[DAEMON][TTS] Clé API (Voice RSS) invalide :: ' + Config.apiRSSKey)  
@@ -616,7 +625,7 @@ class TTSCast:
             logging.error('[DAEMON][TTS] Exception on TTS :: %s', e)
             logging.debug(traceback.format_exc())
 
-    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True):
+    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleName)
             
@@ -632,6 +641,18 @@ class TTSCast:
                 cast = chromecasts[0]
                 logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
             
+                # Wait if option defined
+                if cmdWait is not None:
+                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Start (%s)', googleUUID)
+                    queue_start_time = int(time.time())
+                    while Config.cmdWaitQueue % (2 ** int(cmdWait)) != 0:
+                        queue_current_time = int(time.time())
+                        if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
+                            logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Timeout (%s)', googleUUID)
+                            break
+                        time.sleep(0.1)
+                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: End (%s)', googleUUID)
+                
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
             
@@ -688,6 +709,10 @@ class TTSCast:
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     cast.set_volume(volume=volumeBeforePlay)
                 
+                # Mise à jour de la WaitQueue
+                if cmdWait is not None:
+                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
+                
                 # Libération de la mémoire
                 cast = None
                 chromecasts = None
@@ -698,6 +723,10 @@ class TTSCast:
                 
                 if volumeBeforePlay is not None:
                     cast.set_volume(volume=volumeBeforePlay)
+                
+                # Mise à jour de la WaitQueue
+                if cmdWait is not None:
+                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
                 
                 # Libération de la mémoire
                 cast = None
@@ -718,6 +747,18 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID nom :: %s', googleUUID)
                     return False
+                
+                # WaitQueue if option defined
+                if cmdWait is not None:
+                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Start (%s)', googleUUID)
+                    queue_start_time = int(time.time())
+                    while Config.cmdWaitQueue % (2 ** int(cmdWait)) != 0:
+                        queue_current_time = int(time.time())
+                        if (queue_start_time + (Config.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
+                            logging.debug('[DAEMON][Cast] Cmd Wait Queue :: Timeout (%s)', googleUUID)
+                            break
+                        time.sleep(0.1)
+                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: End (%s)', googleUUID)
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
@@ -776,6 +817,10 @@ class TTSCast:
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     cast.set_volume(volume=volumeBeforePlay)
                 
+                # Mise à jour de la WaitQueue
+                if cmdWait is not None:
+                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
+                
                 # Libération de la mémoire
                 cast = None
                 return True
@@ -785,6 +830,10 @@ class TTSCast:
                 
                 if volumeBeforePlay is not None:
                     cast.set_volume(volume=volumeBeforePlay)
+                
+                # Mise à jour de la WaitQueue
+                if cmdWait is not None:
+                    Config.cmdWaitQueue -= 2 ** int(cmdWait)
                 
                 # Libération de la mémoire
                 cast = None
@@ -824,9 +873,6 @@ class Functions:
                 if (_controller == 'youtube'):
                     logging.debug('[DAEMON][controllerActions] YouTube Id @ UUID :: %s @ %s', _value, _googleUUID)
                     
-                    # Si DashCast alors sortir de l'appli avant sinon cela plante
-                    Functions.checkIfDashCast(cast)
-                    
                     _playlist = None
                     _enqueue = False
                     _volume = None
@@ -844,6 +890,9 @@ class Functions:
                         logging.debug('[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: %s', e)
                     
                     _appDing = False if Config.appDisableDing else _appDing
+                    
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
                     
                     volumeBeforePlay = cast.status.volume_level
                     if not _appDing:
@@ -919,9 +968,6 @@ class Functions:
                         cast.quit_app()
                         time.sleep(1)
                     else:
-                        # Si DashCast alors sortir de l'appli avant sinon cela plante
-                        Functions.checkIfDashCast(cast)
-                        
                         if (_controller == 'customradios'):
                             _RadiosFilePath = Config.customRadiosFilePath
                         else:
@@ -942,6 +988,9 @@ class Functions:
                                 logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options mal formatées (Json KO) :: %s', e)
 
                             _appDing = False if Config.appDisableDing else _appDing
+                         
+                            # Si DashCast alors sortir de l'appli avant sinon cela plante
+                            Functions.checkIfDashCast(cast)
                             
                             volumeBeforePlay = cast.status.volume_level
                             if not _appDing:
@@ -1002,21 +1051,40 @@ class Functions:
                         cast.quit_app()
                         time.sleep(1)
                     else:
-                        # Si DashCast alors sortir de l'appli avant sinon cela plante
-                        Functions.checkIfDashCast(cast)
-                        
                         _volume = None
                         _appDing = True
+                        _cmdWait = None
+                        
                         try:
                             if (_options is not None):
                                 options_json = json.loads("{" + _options + "}")
                                 _volume = options_json['volume'] if 'volume' in options_json else None
                                 _appDing = options_json['ding'] if 'ding' in options_json else True
+                                _cmdWait = options_json['wait'] if 'wait' in options_json else None
                                 logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Options :: %s', str(options_json))
                         except ValueError as e:
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Options mal formatées (Json KO) :: %s', e)
 
                         _appDing = False if Config.appDisableDing else _appDing
+
+                        # WaitQueue if option defined
+                        if _cmdWait is not None:
+                            Config.cmdWaitQueue += 2 ** int(_cmdWait)
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: WaitQueue :: %s', str(Config.cmdWaitQueue))
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait Queue :: Start (%s)', _googleUUID)
+                            queue_start_time = int(time.time())
+                            while Config.cmdWaitQueue % (2 ** int(_cmdWait)) != 0:
+                                queue_current_time = int(time.time())
+                                if (queue_start_time + (Config.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
+                                    logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait Queue :: Timeout (%s)', _googleUUID)
+                                    break
+                                time.sleep(0.1)
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Cmd Wait Queue :: End (%s)', _googleUUID)
+                        else:
+                            Config.cmdWaitQueue = 0
+                        
+                        # Si DashCast alors sortir de l'appli avant sinon cela plante
+                        Functions.checkIfDashCast(cast)
                         
                         volumeBeforePlay = cast.status.volume_level
                         if not _appDing:
@@ -1081,15 +1149,16 @@ class Functions:
                         if (_volume is not None):
                             cast.set_volume(volume=volumeBeforePlay)
                     
+                        # Mise à jour de la WaitQueue
+                        if _cmdWait is not None:
+                            Config.cmdWaitQueue -= 2 ** int(_cmdWait)
+                    
                     # Libération de la mémoire
                     cast = None
                     return True
                 
                 elif (_controller in ['media']):
                     logging.debug('[DAEMON][controllerActions] Media Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
-                    
-                    # Si DashCast alors sortir de l'appli avant sinon cela plante
-                    Functions.checkIfDashCast(cast)
                     
                     if not Functions.isURL(_value):
                         logging.error('[DAEMON][controllerActions] Media ERROR (not URL) :: %s @ %s', _value, _googleUUID)
@@ -1109,6 +1178,9 @@ class Functions:
                             logging.debug('[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: %s', e)
 
                         _appDing = False if Config.appDisableDing else _appDing
+                        
+                        # Si DashCast alors sortir de l'appli avant sinon cela plante
+                        Functions.checkIfDashCast(cast)
                         
                         volumeBeforePlay = cast.status.volume_level
                         if not _appDing:
@@ -1165,7 +1237,7 @@ class Functions:
                         cast.media_controller.block_until_active()
                         
                         logging.debug('[DAEMON][controllerActions] Diffusion Media lancée :: %s', str(cast.media_controller.status))
-                
+                        
                     # Libération de la mémoire
                     cast = None
                     return True
@@ -1759,6 +1831,7 @@ parser.add_argument("--voicerssapikey", help="Voice RSS ApiKey", type=str)
 parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
 parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
 parser.add_argument("--appdisableding", help="App Disable Ding Parameter", type=str)
+parser.add_argument("--cmdwaittimeout", help="Cmd Wait Timeout Parameter", type=str)
 parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 
@@ -1782,6 +1855,8 @@ if args.appdisableding:
         Config.appDisableDing = False
     else:
         Config.appDisableDing = True
+if args.cmdwaittimeout:
+    Config.cmdWaitTimeout = int(args.cmdwaittimeout)
 if args.pid:
     Config.pidFile = args.pid
 if args.cyclefactor:
@@ -1807,7 +1882,7 @@ elif Config.cycleFactor < 0.5:
 else:
     Config.cycleMain = float(Config.cycleMain * Config.cycleFactor)
     Config.cycleComm = float(Config.cycleComm * Config.cycleFactor)
-    Config.cycleEvent = float(Config.cycleEvent * Config.cycleFactor)  
+    Config.cycleEvent = float(Config.cycleEvent * Config.cycleFactor)
 
 logging.info('[DAEMON][MAIN] Start Daemon')
 logging.info('[DAEMON][MAIN] Plugin Version: %s', Config.pluginVersion)
@@ -1829,8 +1904,8 @@ logging.info('[DAEMON][MAIN] ApiKey: %s', "***")
 logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', Config.gCloudApiKey)
 logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', "***")
-logging.info('[DAEMON][MAIN] App Disable Ding Parameter: %s', str(Config.appDisableDing))
-
+logging.info('[DAEMON][MAIN] App Disable Ding: %s', str(Config.appDisableDing))
+logging.info('[DAEMON][MAIN] Cmd Wait Timeout: %s', str(Config.cmdWaitTimeout))
 logging.info('[DAEMON][MAIN] CallBack: %s', Config.callBack)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', Config.ttsWebSrvCache)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvMedia: %s', Config.ttsWebSrvMedia)

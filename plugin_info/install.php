@@ -56,6 +56,9 @@ function ttscast_install() {
     if (config::byKey('appDisableDing', 'ttscast') == '') {
         config::save('appDisableDing', '0', 'ttscast');
     }
+    if (config::byKey('cmdWaitTimeout', 'ttscast') == '') {
+        config::save('cmdWaitTimeout', '60', 'ttscast');
+    }
 
     $dependencyInfo = ttscast::dependancy_info();
     if (!isset($dependencyInfo['state'])) {
@@ -107,6 +110,9 @@ function ttscast_update() {
     }
     if (config::byKey('appDisableDing', 'ttscast') == '') {
         config::save('appDisableDing', '0', 'ttscast');
+    }
+    if (config::byKey('cmdWaitTimeout', 'ttscast') == '') {
+        config::save('cmdWaitTimeout', '60', 'ttscast');
     }
 
     $dependencyInfo = ttscast::dependancy_info();
