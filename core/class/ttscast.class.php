@@ -434,7 +434,7 @@ class ttscast extends eqLogic
             event::add('jeedom::alert', array(
                 'level' => 'success',
                 'page' => 'ttscast',
-                'message' => __('[SCAN] TTSCast AJOUTE :: ' .$_data['friendly_name'], __FILE__),
+                'message' => __('[SCAN] TTSCast AJOUTE :: ', __FILE__) . $_data['friendly_name'],
             ));
             return $eqLogic;
         }
@@ -451,7 +451,7 @@ class ttscast extends eqLogic
             event::add('jeedom::alert', array(
                 'level' => 'success',
                 'page' => 'ttscast',
-                'message' => __('[SCAN] TTSCast MAJ :: ' .$_data['friendly_name'], __FILE__),
+                'message' => __('[SCAN] TTSCast MAJ :: ', __FILE__) . $_data['friendly_name'],
             ));
             return $newttscast;
         }
