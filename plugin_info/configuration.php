@@ -461,6 +461,14 @@ if (!isConnect()) {
                     <input type="checkbox" class="configKey" data-l1key="appDisableDing" />
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Durée maximale de l'option 'Wait' (secondes)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Temps (entre 0 et 3600 sec) au bout duquel la commande est dans tous les cas exécutée, même si l'équipement Google est encore en cours de lecture (par défaut : 60sec)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" type="number" data-l1key="cmdWaitTimeout" min="0" max="3600" placeholder="{{Timeout}}" />
+                </div>
+            </div>
             <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, CustomRadios, Sounds, Custom Sounds)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Mise à jour des listes :: Radios}}

@@ -120,6 +120,7 @@ class ttscast extends eqLogic
         $cmd .= ' --gcloudapikey ' . config::byKey('gCloudAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --voicerssapikey ' . config::byKey('voiceRSSAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, '0');
+        $cmd .= ' --cmdwaittimeout ' . config::byKey('cmdWaitTimeout', __CLASS__, '60');
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
         log::add(__CLASS__, 'info', 'Lancement du démon');
@@ -308,6 +309,9 @@ class ttscast extends eqLogic
             }
             if (array_key_exists('ding', $data)) {
                 $resOptions['ding'] = $data['ding'];
+            }
+            if (array_key_exists('wait', $data)) {
+                $resOptions['wait'] = $data['wait'];
             }
             if (array_key_exists('type', $data)) {
                 $resOptions['type'] = $data['type'];
