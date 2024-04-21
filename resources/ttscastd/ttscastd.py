@@ -97,7 +97,7 @@ class Loops:
                 try:
                     # TODO ***** Gestion des messages reçus de Jeedom *****
                     if message['cmd'] == 'action':
-                        # Gestion des actions
+                        # TODO ***** Gestion des actions
                         logging.debug('[DAEMON][SOCKET] Action')
                         
                         if 'cmd_action' in message:
