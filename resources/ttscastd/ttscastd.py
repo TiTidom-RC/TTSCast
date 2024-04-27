@@ -1590,7 +1590,7 @@ class myCast:
                 logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][CastCallBack] Chromecast Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
+                # logging.debug(traceback.format_exc())
              
             if chromecast.uuid in Config.GCAST_UUID:
                 uuid = chromecast.uuid
