@@ -97,7 +97,7 @@ class Loops:
                 try:
                     # TODO ***** Gestion des messages reçus de Jeedom *****
                     if message['cmd'] == 'action':
-                        # Gestion des actions
+                        # TODO ***** Gestion des actions
                         logging.debug('[DAEMON][SOCKET] Action')
                         
                         if 'cmd_action' in message:
@@ -1789,9 +1789,11 @@ def shutdown():
         for chromecast in Config.NETCAST_DEVICES.values():
             chromecast.disconnect(timeout=5)
         logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
-        Config.NETCAST_BROWSER.stop_discovery()
+        if Config.NETCAST_BROWSER is not None: 
+            Config.NETCAST_BROWSER.stop_discovery()
         logging.info("[DAEMON] Shutdown :: Browser Stop :: OK")
-        Config.NETCAST_ZCONF.close()
+        if Config.NETCAST_ZCONF is not None: 
+            Config.NETCAST_ZCONF.close()
         logging.info("[DAEMON] Shutdown :: ZeroConf Close :: OK")
     except Exception as e:
         # pass
