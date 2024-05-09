@@ -49,7 +49,21 @@ class ttscast extends eqLogic
     
     public static function dependancy_install() {
         log::remove(__CLASS__ . '_update');
-        return array('script' => __DIR__ . '/../../resources/install_#stype#.sh ' . jeedom::getTmpFolder(__CLASS__) . '/dependency', 'log' => log::getPathToLog(__CLASS__ . '_update'));
+        $script_params = 0;
+        if (config::byKey('debugInstallUpdate', 'ttscast') == '1') {
+            $script_params += 1;
+            config::save('debugInstallUpdate', '0', 'ttscast');
+        }
+        if (config::byKey('debugRestorePyEnv', 'ttscast') == '1') {
+            $script_params += 2;
+            config::save('debugInstallUpdate', '0', 'ttscast');
+        }
+        if (config::byKey('debugRestoreVenv', 'ttscast') == '1') {
+            $script_params += 4;
+            config::save('debugInstallUpdate', '0', 'ttscast');
+        }
+
+        return array('script' => __DIR__ . '/../../resources/install_#stype#.sh ' . jeedom::getTmpFolder(__CLASS__) . '/dependency' . ' ' . $script_params, 'log' => log::getPathToLog(__CLASS__ . '_update'));
     }
 
     public static function dependancy_info() {
