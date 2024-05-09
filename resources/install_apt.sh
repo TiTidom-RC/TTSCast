@@ -5,7 +5,7 @@ if [ ! -z $1 ]; then
 fi
 
 PARAMS=0
-if [ ! -z $2]; then
+if [ ! -z $2 ]; then
 	PARAMS=$2
 fi
 
