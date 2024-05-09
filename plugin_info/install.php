@@ -59,14 +59,14 @@ function ttscast_install() {
     if (config::byKey('cmdWaitTimeout', 'ttscast') == '') {
         config::save('cmdWaitTimeout', '60', 'ttscast');
     }
-    if (config::byKey('debugInstallUpdate', 'ttscast') == '') {
-        config::save('debugInstallUpdate', '0', 'ttscast');
+    if (config::byKey('debugInstallUpdates', 'ttscast') == '') {
+        config::save('debugInstallUpdates', '0', 'ttscast');
     }
     if (config::byKey('debugRestorePyEnv', 'ttscast') == '') {
-        config::save('debugInstallUpdate', '0', 'ttscast');
+        config::save('debugRestorePyEnv', '0', 'ttscast');
     }
     if (config::byKey('debugRestoreVenv', 'ttscast') == '') {
-        config::save('debugInstallUpdate', '0', 'ttscast');
+        config::save('debugRestoreVenv', '0', 'ttscast');
     }
 
     $dependencyInfo = ttscast::dependancy_info();
@@ -123,14 +123,14 @@ function ttscast_update() {
     if (config::byKey('cmdWaitTimeout', 'ttscast') == '') {
         config::save('cmdWaitTimeout', '60', 'ttscast');
     }
-    if (config::byKey('debugInstallUpdate', 'ttscast') == '') {
-        config::save('debugInstallUpdate', '0', 'ttscast');
+    if (config::byKey('debugInstallUpdates', 'ttscast') == '') {
+        config::save('debugInstallUpdates', '0', 'ttscast');
     }
     if (config::byKey('debugRestorePyEnv', 'ttscast') == '') {
-        config::save('debugInstallUpdate', '0', 'ttscast');
+        config::save('debugRestorePyEnv', '0', 'ttscast');
     }
     if (config::byKey('debugRestoreVenv', 'ttscast') == '') {
-        config::save('debugInstallUpdate', '0', 'ttscast');
+        config::save('debugRestoreVenv', '0', 'ttscast');
     }
 
     $dependencyInfo = ttscast::dependancy_info();
