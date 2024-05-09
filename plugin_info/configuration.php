@@ -52,7 +52,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-code"></i> {{Dépendances}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Force les MàJ Systèmes}}
+                <label class="col-lg-3 control-label">{{Force Màj Systèmes}}
                     <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètrere}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer l'installation des mises à jour systèmes}}"></i></sup>
                 </label>
