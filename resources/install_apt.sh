@@ -4,6 +4,13 @@ if [ ! -z $1 ]; then
 	PROGRESS_FILE=$1
 fi
 
+PARAMS=0
+if [ ! -z $2]; then
+	PARAMS=$2
+fi
+
+echo "PARAMS = ${PARAMS}";
+
 BASE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 VENV_DIR=${BASE_DIR}/venv
 PYENV_OLDDIR=${BASE_DIR}/pyenv
