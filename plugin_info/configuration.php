@@ -52,7 +52,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-code"></i> {{Dépendances}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Force Màj Systèmes}}
+                <label class="col-lg-3 control-label">{{Force les mises à jour Systèmes}}
                     <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètrere}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer l'installation des mises à jour systèmes}}"></i></sup>
                 </label>
@@ -61,7 +61,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Force Réinit PyEnv}}
+                <label class="col-lg-3 control-label">{{Force la réinitialisation de PyEnv}}
                     <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètrere}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer la réinitilsation de l'environnement Python utilisé par le plugin}}"></i></sup>
                 </label>
@@ -70,7 +70,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Force Réinit Venv}}
+                <label class="col-lg-3 control-label">{{Force la réinitialisation de Venv}}
                     <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètrere}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer la réinitilsation de l'environnement Venv utilisé par le plugin}}"></i></sup>
                 </label>
