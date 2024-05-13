@@ -142,7 +142,7 @@ if [ "$versionPython" -lt 11 ]; then
 	log "** PyEnv Installation / Update :: Done **"
 	echo 40 > ${PROGRESS_FILE}
 	log "**************************************************"
-	log "* Compile and Install Python 3.11.8 (with PyEnv) *"
+	log "* Compile and Install Python ${PYTHON_VERSION} (with PyEnv) *"
 	log "**************************************************"
 	log "*                                                *"
 	log "* ATTENTION : Cette phase de l'installation peut *"
@@ -150,8 +150,8 @@ if [ "$versionPython" -lt 11 ]; then
 	log "* à plus de 40 minutes sur des petites config !  *" 
 	log "**************************************************"
 	# PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv install -s 3.11 | log
-	PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv install -s 3.11.8 | log
-	log "** Python 3.11.8 Installation :: Done **"
+	PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv install -s ${PYTHON_VERSION} | log
+	log "** Python ${PYTHON_VERSION} Installation :: Done **"
 else
 	log "*********************"
 	log "* PyEnv Environment *"
@@ -180,15 +180,15 @@ else
 		log "Latest Python version installed with PyEnv :: $(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)"
 		if [ "$VenvToUpdate" -eq 1 ]; then
 			# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
-			${PYENV_DIR}/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
+			${PYENV_DIR}/versions/${PYTHON_VERSION}/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 		else
 			# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --upgrade-deps ${VENV_DIR} | log
-			${PYENV_DIR}/versions/3.11.8/bin/python3 -m venv --upgrade-deps ${VENV_DIR} | log
+			${PYENV_DIR}/versions/${PYTHON_VERSION}/bin/python3 -m venv --upgrade-deps ${VENV_DIR} | log
 		fi
 	else
 		log "Latest Python version installed with PyEnv :: $(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)"
 		# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
-		${PYENV_DIR}/versions/3.11.8/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
+		${PYENV_DIR}/versions/${PYTHON_VERSION}/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 	fi
 fi
 log "** Create Python3.11 Venv :: Done **" 
