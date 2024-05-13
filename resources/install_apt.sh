@@ -95,11 +95,20 @@ echo 5 > ${PROGRESS_FILE}
 apt-get update | log
 log "** Update apt-get :: Done **"
 echo 10 > ${PROGRESS_FILE}
-log "****************************"
-log "* Simulate apt-get upgrade *"
-log "****************************"
-apt-get -y -s -V upgrade | log
-log "** Upgrade Simulation :: Done **"
+if [ "$FORCE_INST_UPDATES" -eq 1 ]; then
+	log "*************************"
+	log "* Force apt-get upgrade *"
+	log "*************************"
+	apt-get -y -q -V upgrade | log
+	log "** Force Upgrade :: Done **"
+	log "** Reboot is recommanded ! **"
+else
+	log "****************************"
+	log "* Simulate apt-get upgrade *"
+	log "****************************"
+	apt-get -y -s -V upgrade | log
+	log "** Upgrade Simulation :: Done **"
+fi
 echo 20 > ${PROGRESS_FILE}
 log "****************************************"
 log "* Install apt-get packages for Python3 *"
@@ -130,7 +139,7 @@ if [ "$versionPython" -lt 11 ]; then
 	log "* Install PyEnv (Python < 3.11) *"
 	log "*********************************"
 	if [ -v PYENV_ROOT ]; then
-		log "** PYENV_ROOT (already set) :: ${PYENV_ROOT} **"
+		log "** PYENV_ROOT (already set / Warning) :: ${PYENV_ROOT} **"
 	else
 		log "** PYENV_ROOT (not set) :: OK **"
 	fi
