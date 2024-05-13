@@ -4,18 +4,6 @@ if [ ! -z $1 ]; then
 	PROGRESS_FILE=$1
 fi
 
-PARAMS=0
-if [ ! -z $2 ]; then
-	PARAMS=$2
-fi
-
-echo "PARAMS = ${PARAMS}";
-
-BASE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-VENV_DIR=${BASE_DIR}/venv
-PYENV_OLDDIR=${BASE_DIR}/pyenv
-PYENV_DIR=/opt/pyenv
-
 function log(){
 	if [ -n "$1" ]
 	then
@@ -28,10 +16,49 @@ function log(){
 	fi
 }
 
+BASE_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+VENV_DIR=${BASE_DIR}/venv
+PYENV_OLDDIR=${BASE_DIR}/pyenv
+PYENV_DIR=/opt/pyenv
+PYTHON_VERSION=3.11.8
+
+FORCE_INST_UPDATES=0
+FORCE_INIT_PYENV=0
+FORCE_INIT_VENV=0
+
+if [ ! -z $2 ]; then
+	FORCE_INST_UPDATES=$2
+fi
+if [ ! -z $3 ]; then
+	FORCE_INIT_PYENV=$3
+fi
+if [ ! -z $4 ]; then
+	FORCE_INIT_VENV=$4
+fi
+
 cd ${BASE_DIR}
 
 touch ${PROGRESS_FILE}
 echo 0 > ${PROGRESS_FILE}
+log "**********************"
+log "* Check Script Params *"
+log "**********************"
+if [ "$FORCE_INST_UPDATES" -eq 1 ]; then
+	log "** Force System Updates :: YES **"
+else
+	log "** Force System Updates :: NO **"
+fi
+if [ "$FORCE_INIT_PYENV" -eq 1 ]; then
+	log "** Force Reinit PyEnv :: YES **"
+else
+	log "** Force Reinit PyEnv :: NO **"
+fi
+if [ "$FORCE_INIT_VENV" -eq 1 ]; then
+	log "** Force Reinit Venv :: YES **"
+else
+	log "** Force Reinit Venv :: NO **"
+fi
+echo 1 > ${PROGRESS_FILE}
 log "*******************"
 log "* Check PyEnv Dir *"
 log "*******************"
@@ -41,7 +68,7 @@ else
 	log "** PyEnv Directory (None) :: ${PYENV_DIR} **"
 fi
 log "** Check PyEnv :: Done **"
-echo 1 > ${PROGRESS_FILE}
+echo 2 > ${PROGRESS_FILE}
 log "***********************"
 log "* Check Old PyEnv Dir *"
 log "***********************"
