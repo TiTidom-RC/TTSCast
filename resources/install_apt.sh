@@ -50,6 +50,7 @@ else
 fi
 if [ "$FORCE_INIT_PYENV" -eq 1 ]; then
 	log "** Force Reinit PyEnv :: YES **"
+
 else
 	log "** Force Reinit PyEnv :: NO **"
 fi
@@ -74,7 +75,7 @@ log "* Check Old PyEnv Dir *"
 log "***********************"
 if [ -d ${PYENV_OLDDIR} ]; then
 	log "** PyEnv Old Directory (Exists) :: ${PYENV_OLDDIR} **"
-	rm -rf ${PYENV_OLDDIR}
+	rm -rf ${PYENV_OLDDIR} | log
 	VenvToUpdate=1
 	log "** Venv Update :: Needed **"
 else
@@ -145,10 +146,14 @@ if [ "$versionPython" -lt 11 ]; then
 	fi
 	if [ -d ${PYENV_DIR} ]; then
 		PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv update | log
+		if [ "$FORCE_INIT_PYENV" -eq 1 ]; then
+			rm -rf ${PYENV_DIR}/versions/${PYTHON_VERSION} | log
+			log "** PyEnv Cleaning :: ${PYENV_DIR}/versions/${PYTHON_VERSION} :: Done **"
+		fi
 	else
 		curl https://pyenv.run | PYENV_ROOT="${PYENV_DIR}" bash | log
 	fi
-	log "** PyEnv Installation / Update :: Done **"
+	log "** PyEnv Installation / Update / Cleaning :: Done **"
 	echo 40 > ${PROGRESS_FILE}
 	log "**************************************************"
 	log "* Compile and Install Python ${PYTHON_VERSION} (with PyEnv) *"
@@ -172,7 +177,7 @@ log "**************************"
 log "* Create Python3.11 venv *"
 log "**************************"
 if [ "$versionPython" -ge 11 ]; then
-	if [ "$VenvToUpdate" -eq 1 ]; then
+	if [ "$VenvToUpdate" -eq 1 ] || [ "$FORCE_INIT_VENV" -eq 1 ]; then
 		python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log 
 	else
 		python3 -m venv --upgrade-deps ${VENV_DIR} | log 
@@ -187,7 +192,7 @@ else
 	fi
 	if [ "$vPythonVenv" -ge 11 ]; then
 		log "Latest Python version installed with PyEnv :: $(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)"
-		if [ "$VenvToUpdate" -eq 1 ]; then
+		if [ "$VenvToUpdate" -eq 1 ] || [ "$FORCE_INIT_VENV" -eq 1 ]; then
 			# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest -q 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 			${PYENV_DIR}/versions/${PYTHON_VERSION}/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 		else
@@ -200,7 +205,7 @@ else
 		${PYENV_DIR}/versions/${PYTHON_VERSION}/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 	fi
 fi
-log "** Create Python3.11 Venv :: Done **" 
+log "** Create Python3.11 Venv :: Done **"
 echo 70 > ${PROGRESS_FILE}
 log "*****************************"
 log "* Install Python3 libraries *"
