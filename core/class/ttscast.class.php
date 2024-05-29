@@ -49,7 +49,26 @@ class ttscast extends eqLogic
     
     public static function dependancy_install() {
         log::remove(__CLASS__ . '_update');
-        return array('script' => __DIR__ . '/../../resources/install_#stype#.sh ' . jeedom::getTmpFolder(__CLASS__) . '/dependency', 'log' => log::getPathToLog(__CLASS__ . '_update'));
+        
+        // debug options for install script
+        $script_sysUpdates = 0;
+        $script_restorePyEnv = 0;
+        $script_restoreVenv = 0;
+
+        if (config::byKey('debugInstallUpdates', 'ttscast') == '1') {
+            $script_sysUpdates = 1;
+            config::save('debugInstallUpdates', '0', 'ttscast');
+        }
+        if (config::byKey('debugRestorePyEnv', 'ttscast') == '1') {
+            $script_restorePyEnv = 1;
+            config::save('debugRestorePyEnv', '0', 'ttscast');
+        }
+        if (config::byKey('debugRestoreVenv', 'ttscast') == '1') {
+            $script_restoreVenv = 1;
+            config::save('debugRestoreVenv', '0', 'ttscast');
+        }
+
+        return array('script' => __DIR__ . '/../../resources/install_#stype#.sh ' . jeedom::getTmpFolder(__CLASS__) . '/dependency' . ' ' . $script_sysUpdates . ' ' . $script_restorePyEnv . ' ' . $script_restoreVenv, 'log' => log::getPathToLog(__CLASS__ . '_update'));
     }
 
     public static function dependancy_info() {
