@@ -53,7 +53,7 @@ if (!isConnect()) {
             <legend><i class="fas fa-code"></i> {{Dépendances}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Force les mises à jour Systèmes}}
-                    <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètrere}}"></i></sup>    
+                    <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer l'installation des mises à jour systèmes}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
@@ -62,7 +62,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Force la réinitialisation de PyEnv}}
-                    <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètrere}}"></i></sup>    
+                    <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer la réinitilsation de l'environnement Python utilisé par le plugin}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
@@ -71,7 +71,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Force la réinitialisation de Venv}}
-                    <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètrere}}"></i></sup>    
+                    <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer la réinitilsation de l'environnement Venv utilisé par le plugin}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
