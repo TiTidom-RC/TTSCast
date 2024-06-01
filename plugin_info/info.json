@@ -1,7 +1,7 @@
 {
 	"id" : "ttscast",
 	"name" : "TTS Cast",
-	"pluginVersion": "1.3.0",
+	"pluginVersion": "1.3.1",
 	"description" : {
 		"fr_FR": "Plugin pour gérer ses équipements Google, type Google Home, Nest Mini, Nest Hub (Max), Chromecast. Il permet de générer des notifications TTS (Text To Speech) et de les diffuser sur les équipements Google. Il permet également de diffuser des sons (mp3), des vidéos YouTube, une page Web, ou encore une radio en streaming sur ces mêmes équipements.",
 		"en_US": "Plugin to manage Google equipment, such as Google Home, Nest Mini, Nest Hub (Max), Chromecast. It allows you to generate TTS (Text To Speech) notifications and broadcast them to Google devices. It also allows you to broadcast sounds (mp3), YouTube videos, a web page, or even streaming radio on the same equipment.",
