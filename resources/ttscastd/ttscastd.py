@@ -372,7 +372,8 @@ class TTSCast:
                 if not os.path.isfile(filepath):
                     language_code = "-".join(ttsVoiceName.split("-")[:2])
                     logging.debug('[DAEMON][TestTTS] LanguageCode :: %s', language_code)
-                    text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                    # text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                    text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                     audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
 
@@ -534,6 +535,7 @@ class TTSCast:
                     if not os.path.isfile(filepath):
                         language_code = "-".join(ttsVoiceName.split("-")[:2])
                         text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                        # text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
 
