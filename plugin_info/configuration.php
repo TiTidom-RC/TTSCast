@@ -437,7 +437,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
-               <label class="col-lg-3 control-label">{{Tester via la syntaxe SSML (TTS)}}
+               <label class="col-lg-3 control-label">{{Tester avec la syntaxe SSML (TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Ce paramètre est utilisé uniquement pour le test de synthèse vocale (TTS)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
