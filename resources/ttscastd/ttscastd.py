@@ -106,10 +106,10 @@ class Loops:
                             if message['cmd_action'] == 'ttstest':
                                 logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
                         
-                                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
-                                    logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'])
+                                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsSSML')):
+                                    logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'])
                                     # TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'])
-                                    threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed']]).start()
+                                    threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML']]).start()
                                 else:
                                     logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                             
@@ -300,11 +300,13 @@ class TTSCast:
             filecontent = None
         return filecontent
     
-    def voiceRSS(ttsText, ttsLang, ttsSpeed='0'):
+    def voiceRSS(ttsText, ttsLang, ttsSpeed='0', ttsSSML=False):
         filecontent = None
         try:
             ttsLangCode = "-".join(ttsLang.split("-")[:2])
             ttsVoiceName = ttsLang.split("-")[2:][0]
+            ttsUseSSML = 'true' if ttsSSML else 'false'
+            
             logging.debug('[DAEMON][VoiceRSS] LanguageCode / VoiceName :: %s / %s', ttsLangCode, ttsVoiceName)
             
             ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
@@ -318,7 +320,7 @@ class TTSCast:
                 "r": ttsSpeed,
                 "c": 'mp3',
                 "f": '16khz_16bit_mono',
-                "ssml": 'false',
+                "ssml": ttsUseSSML,
                 "b64": 'false'
             }
             
@@ -372,8 +374,8 @@ class TTSCast:
                 if not os.path.isfile(filepath):
                     language_code = "-".join(ttsVoiceName.split("-")[:2])
                     logging.debug('[DAEMON][TestTTS] LanguageCode :: %s', language_code)
-                    # text_input = googleCloudTTS.SynthesisInput(text=ttsText)
-                    text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
+                    text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                    # text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                     audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
 
@@ -491,6 +493,7 @@ class TTSCast:
             _ttsVolume = None
             _appDing = True
             _cmdWait = None
+            _useSSML = False
             
             try:
                 if (ttsOptions is not None):
@@ -498,6 +501,7 @@ class TTSCast:
                     _ttsVolume = options_json['volume'] if 'volume' in options_json else None
                     _appDing = options_json['ding'] if 'ding' in options_json else True
                     _cmdWait = options_json['wait'] if 'wait' in options_json else None
+                    _useSSML = options_json['ssml'] if 'ssml' in options_json else False
                     logging.debug('[DAEMON][TTS] Options :: %s', str(options_json))
             except ValueError as e:
                 logging.debug('[DAEMON][TTS] Options mal formatées (Json KO) :: %s', e)
@@ -534,8 +538,10 @@ class TTSCast:
                     
                     if not os.path.isfile(filepath):
                         language_code = "-".join(ttsVoiceName.split("-")[:2])
-                        text_input = googleCloudTTS.SynthesisInput(text=ttsText)
-                        # text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
+                        if _useSSML:
+                            text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
+                        else:
+                            text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
 
@@ -617,7 +623,7 @@ class TTSCast:
                     logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                     
                     if not os.path.isfile(filepath):
-                        ttsfile = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed)
+                        ttsfile = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
                         if ttsfile is not None:
                             with open(filepath, 'wb') as f:
                                 f.write(ttsfile)
