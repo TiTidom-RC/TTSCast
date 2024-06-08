@@ -440,11 +440,11 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{Tester la Synthèse Vocale (TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)}}"></i></sup>
                 </label>
-                <div class="col-lg-1">
-                    <input type="checkbox" class="configKey" data-l1key="ttsTestSSML">{{SSML}}</input>
-                </div>
                 <div class="col-lg-3">
                     <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Ex: Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
+                </div>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsTestSSML">{{SSML}}</input>
                 </div>
                 <div class="col-lg-2">
                     <input class="configKey form-control" type="text" data-l1key="ttsTestGoogleName" placeholder="{{Ex: Nest Salon}}" />
