@@ -510,6 +510,7 @@ class TTSCast:
                     if _silenceBefore is not None and _useSSML is False:
                         _useSSML = True
                         ttsText = "<speak><break time='" + str(_silenceBefore) + "s'/><p>" + ttsText + "</p></speak>"
+                        logging.debug('[DAEMON][TTS] Ajout de silence (%s) avant le TTS :: %s', str(_silenceBefore), ttsText)
                     elif _silenceBefore is not None and _useSSML is True:
                         logging.error('[DAEMON][TTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande.')
                         return False
