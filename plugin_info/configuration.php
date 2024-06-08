@@ -56,7 +56,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer l'installation des mises à jour systèmes}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="debugInstallUpdates" />
                 </div>
             </div>
@@ -65,7 +65,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer la réinitilsation de l'environnement Python utilisé par le plugin}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="debugRestorePyEnv" />
                 </div>
             </div>
@@ -74,7 +74,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer la réinitilsation de l'environnement Venv utilisé par le plugin}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="debugRestoreVenv" />
                 </div>
             </div>
@@ -437,14 +437,19 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
+               <label class="col-lg-3 control-label">{{Tester avec SSML (TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Utiliser le langage SSML pour le test de Synthèse vocale (TTS)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsTestSSML" />
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Tester la Synthèse Vocale (TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Ex: Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
-                </div>
-                <div class="col-lg-1">
-                    <input type="checkbox" class="configKey" data-l1key="ttsTestSSML">{{SSML}}</input>
                 </div>
                 <div class="col-lg-2">
                     <input class="configKey form-control" type="text" data-l1key="ttsTestGoogleName" placeholder="{{Ex: Nest Salon}}" />

@@ -341,7 +341,7 @@ class TTSCast:
             filecontent = None
         return filecontent
     
-    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0'):
+    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML=False):
         logging.debug('[DAEMON][TestTTS] Param TTSEngine :: %s', ttsEngine)
         
         logging.debug('[DAEMON][TestTTS] Check des répertoires')
@@ -374,8 +374,10 @@ class TTSCast:
                 if not os.path.isfile(filepath):
                     language_code = "-".join(ttsVoiceName.split("-")[:2])
                     logging.debug('[DAEMON][TestTTS] LanguageCode :: %s', language_code)
-                    text_input = googleCloudTTS.SynthesisInput(text=ttsText)
-                    # text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
+                    if ttsSSML:
+                        text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
+                    else:
+                        text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                     audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
 
