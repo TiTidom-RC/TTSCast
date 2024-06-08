@@ -496,6 +496,7 @@ class TTSCast:
             _appDing = True
             _cmdWait = None
             _useSSML = False
+            _silenceBefore = None
             
             try:
                 if (ttsOptions is not None):
@@ -504,6 +505,14 @@ class TTSCast:
                     _appDing = options_json['ding'] if 'ding' in options_json else True
                     _cmdWait = options_json['wait'] if 'wait' in options_json else None
                     _useSSML = options_json['ssml'] if 'ssml' in options_json else False
+                    _silenceBefore = options_json['before'] if 'before' in options_json else None
+                    
+                    if _silenceBefore is not None and _useSSML is False:
+                        _useSSML = True
+                        ttsText = "<speak><break time='" + str(_silenceBefore) + "s'/><p>" + ttsText + "</p></speak>"
+                    else:
+                        logging.error('[DAEMON][TTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande.')
+                        return False
                     
                     logging.debug('[DAEMON][TTS] Options :: %s', str(options_json))
             except ValueError as e:
