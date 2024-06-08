@@ -671,8 +671,8 @@ class TTSCast:
                 app_data = {
                     "media_id": urltoplay,
                     "media_type": "audio/mp3",
-                    # "stream_type": "BUFFERED",
-                    "stream_type": "LIVE",
+                    "stream_type": "BUFFERED",
+                    # "stream_type": "LIVE",
                     "title": "TTSCast",
                     "thumb": urlThumb,
                     "metadata": {
@@ -771,8 +771,8 @@ class TTSCast:
                 app_data = {
                     "media_id": urltoplay, 
                     "media_type": "audio/mp3", 
-                    # "stream_type": "BUFFERED",
-                    "stream_type": "LIVE",
+                    "stream_type": "BUFFERED",
+                    # "stream_type": "LIVE",
                     "title": "TTSCast", 
                     "thumb": urlThumb,
                     "metadata": {
