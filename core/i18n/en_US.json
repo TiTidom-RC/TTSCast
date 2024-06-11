@@ -149,6 +149,8 @@
 		"Rapide +++++ (1.5)": "Fast +++++ (1.5)",
 		"Rapide ++++++ (1.6)": "Fast ++++++ (1.6)",
 		"Tests": "Tests",
+		"Tester avec la syntaxe SSML (TTS)": "Test with SSML syntax (TTS)",
+		"Ce paramètre est utilisé uniquement pour le test de synthèse vocale (TTS)": "This setting is used only for speech synthesis (TTS) testing",
 		"Tester la Synthèse Vocale (TTS)": "Test speech synthesis (TTS)",
 		"Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)": "Save your configuration BEFORE using the button (GENERATE + BROADCAST)",
 		"Ex: Ceci est un message de test pour la synthèse vocale à partir de Jeedom.": "Ex: This is a test message for speech synthesis from Jeedom.",

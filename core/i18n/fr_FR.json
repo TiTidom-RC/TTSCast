@@ -149,6 +149,8 @@
 		"Rapide +++++ (1.5)": "Rapide +++++ (1.5)",
 		"Rapide ++++++ (1.6)": "Rapide ++++++ (1.6)",
 		"Tests": "Tests",
+		"Tester avec la syntaxe SSML (TTS)": "Tester avec la syntaxe SSML (TTS)",
+		"Ce paramètre est utilisé uniquement pour le test de synthèse vocale (TTS)": "Ce paramètre est utilisé uniquement pour le test de synthèse vocale (TTS)",
 		"Tester la Synthèse Vocale (TTS)": "Tester la Synthèse Vocale (TTS)",
 		"Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)": "Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)",
 		"Ex: Ceci est un message de test pour la synthèse vocale à partir de Jeedom.": "Ex: Ceci est un message de test pour la synthèse vocale à partir de Jeedom.",
