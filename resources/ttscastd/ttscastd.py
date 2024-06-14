@@ -890,7 +890,7 @@ class Functions:
             while (chromecast.status.app_id not in [None, 'E8C28D3C']) and t > 0:
                 time.sleep(0.1)
                 t = t - 0.1
-            time.sleep(0.1)
+            # time.sleep(0.1)
             return True
         else:
             return False
