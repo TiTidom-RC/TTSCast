@@ -874,7 +874,7 @@ class Functions:
             logging.debug('[DAEMON][checkIfDashCast] QuitDashCastApp')
             chromecast.quit_app()
             t = 5
-            while chromecast.status.app_id is not None and t > 0:
+            while (chromecast.status.app_id not in [None, 'E8C28D3C']) and t > 0:
                 time.sleep(0.1)
                 t = t - 0.1
             time.sleep(0.5)
@@ -883,11 +883,11 @@ class Functions:
             return False
     
     def forceQuitApp(chromecast=None):
-        if chromecast is not None and chromecast.status.app_id is not None:
+        if chromecast is not None and (chromecast.status.app_id not in [None, 'E8C28D3C']):
             logging.debug('[DAEMON][forceQuitApp] QuitApp')
             chromecast.quit_app()
             t = 5
-            while chromecast.status.app_id is not None and t > 0:
+            while (chromecast.status.app_id not in [None, 'E8C28D3C']) and t > 0:
                 time.sleep(0.1)
                 t = t - 0.1
             # time.sleep(0.5)
