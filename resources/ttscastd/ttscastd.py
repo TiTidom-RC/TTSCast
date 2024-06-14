@@ -883,7 +883,7 @@ class Functions:
             return False
     
     def forceQuitApp(chromecast=None):
-        if chromecast is not None:
+        if chromecast is not None and chromecast.status.app_id is not None:
             logging.debug('[DAEMON][forceQuitApp] QuitApp')
             chromecast.quit_app()
             t = 5
