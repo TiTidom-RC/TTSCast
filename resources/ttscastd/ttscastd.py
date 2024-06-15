@@ -766,7 +766,8 @@ class TTSCast:
                 # Tester le paramètre cmdForce pour forcer à quitter l'appli en cours de lecture
                 if cmdForce:
                     Functions.forceQuitApp(cast)
-                    Config.cmdWaitQueue[googleUUID] = 0
+                    if googleUUID in Config.cmdWaitQueue:
+                        Config.cmdWaitQueue[googleUUID] = 0
                 
                 # WaitQueue if option defined
                 if cmdWait is not None:
@@ -784,7 +785,8 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Cmd Wait Queue :: End (%s)', googleUUID)
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante 
-                Functions.checkIfDashCast(cast)
+                if not cmdForce: 
+                    Functions.checkIfDashCast(cast)
                 
                 volumeBeforePlay = cast.status.volume_level
                 if not appDing:
@@ -936,7 +938,8 @@ class Functions:
                     # Sinon si DashCast alors sortir de l'appli avant sinon cela plante
                     if _cmdForce:
                         Functions.forceQuitApp(cast)
-                        Config.cmdWaitQueue[_googleUUID] = 0
+                        if _googleUUID in Config.cmdWaitQueue:
+                            Config.cmdWaitQueue[_googleUUID] = 0
                     else:
                         Functions.checkIfDashCast(cast)
                     
@@ -1041,7 +1044,8 @@ class Functions:
                             # Sinon si DashCast alors sortir de l'appli avant sinon cela plante
                             if _cmdForce:
                                 Functions.forceQuitApp(cast)
-                                Config.cmdWaitQueue[_googleUUID] = 0
+                                if _googleUUID in Config.cmdWaitQueue:
+                                    Config.cmdWaitQueue[_googleUUID] = 0
                             else:
                                 Functions.checkIfDashCast(cast)
                             
