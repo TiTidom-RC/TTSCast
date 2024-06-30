@@ -360,9 +360,10 @@ class ttscast extends eqLogic
                 log::add('ttscast', 'warning', '[Plugin-Version] fichier info.json manquant');
                 return $pluginVersion;
             }
-            $data = json_decode(file_get_contents(dirname(__FILE__) . '/../../plugin_info/info.json'));
+            $data = json_decode(file_get_contents(dirname(__FILE__) . '/../../plugin_info/info.json'), true);
             if (!is_array($data)) {
                 log::add('ttscast', 'warning', '[Plugin-Version] Impossible de décoder le fichier info.json');
+                return $pluginVersion;
             }
             try {
                 $pluginVersion = $data['pluginVersion'];
@@ -645,7 +646,7 @@ class ttscast extends eqLogic
                 log::add('ttscast', 'error', '[getRadioList] Radios File Missing :: KO');
                 return $radiosReturn;
             }
-            $radiosJson = json_decode(file_get_contents(dirname(__FILE__) . "/../../data/radios/radios.json"));            
+            $radiosJson = json_decode(file_get_contents(dirname(__FILE__) . "/../../data/radios/radios.json"), true);
             if (!is_array($radiosJson)) {
                 log::add('ttscast', 'error', '[getRadioList] Impossible de décoder le fichier radios.json :: KO');
                 return $radiosReturn;
@@ -676,7 +677,7 @@ class ttscast extends eqLogic
                 log::add('ttscast', 'warning', '[getCustomRadioList] Custom Radios :: No Custom File');
                 return $customRadiosReturn;
             }
-            $customRadiosJson = json_decode(file_get_contents(dirname(__FILE__) . "/../../data/radios/custom/radios.json"));
+            $customRadiosJson = json_decode(file_get_contents(dirname(__FILE__) . "/../../data/radios/custom/radios.json"), true);
             if (!is_array($customRadiosJson)) {
                 log::add('ttscast', 'error', '[getCustomRadioList] Impossible de décoder le fichier radios.json :: KO');
                 return $customRadiosReturn;
