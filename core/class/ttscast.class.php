@@ -396,11 +396,11 @@ class ttscast extends eqLogic
                 config::save('pythonDepNum', $pythonDepNum, 'ttscast');
                 return false;
             }
-            $lines = explode('\n', $data);
+            $lines = explode("\n", $data);
             $nonEmptyLines = array_filter($lines, function($line) {
                 return trim($line) !== '';
             });
-            $pythonDepString = join('|', $nonEmptyLines);
+            $pythonDepString = join("|", $nonEmptyLines);
             $pythonDepNum = count($nonEmptyLines);
         }
         catch (\Exception $e) {
