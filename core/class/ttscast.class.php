@@ -400,7 +400,7 @@ class ttscast extends eqLogic
             $nonEmptyLines = array_filter($lines, function($line) {
                 return trim($line) !== '';
             });
-            $pythonDepString = $nonEmptyLines.join('|');
+            $pythonDepString = join('|', $nonEmptyLines);
             $pythonDepNum = count($nonEmptyLines);
         }
         catch (\Exception $e) {
