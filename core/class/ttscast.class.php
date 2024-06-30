@@ -82,7 +82,7 @@ class ttscast extends eqLogic
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "' . config::byKey('pythonDepString', 'ttscast', true) . '"') < config::byKey('pythonDepNum', 'ttscast', 0, true)) {
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "' . config::byKey('pythonDepString', 'ttscast', '', true) . '"') < config::byKey('pythonDepNum', 'ttscast', 0, true)) {
                 $return['state'] = 'nok';
             } else {
                 $return['state'] = 'ok';
