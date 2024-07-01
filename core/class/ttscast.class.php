@@ -406,7 +406,7 @@ class ttscast extends eqLogic
         catch (\Exception $e) {
             log::add('ttscast', 'debug', '[Python-Dep] Get requirements.txt ERROR :: ' . $e->getMessage());
         }
-        log::add('ttscast', 'info', '[Python-Dep] PythonDepString / PythonDepNum :: ' . $pythonDepString . " / " . $pythonDepNum);
+        log::add('ttscast', 'debug', '[Python-Dep] PythonDepString / PythonDepNum :: ' . $pythonDepString . " / " . $pythonDepNum);
         config::save('pythonDepString', $pythonDepString, 'ttscast');
         config::save('pythonDepNum', $pythonDepNum, 'ttscast');
         return true;
