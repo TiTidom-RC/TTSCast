@@ -82,7 +82,7 @@ class ttscast extends eqLogic
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "PyChromecast==14.0.1|google-cloud-texttospeech==2.16.3|gTTS==2.5.1"') < 3) {
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "' . config::byKey('pythonDepString', 'ttscast', '', true) . '"') < config::byKey('pythonDepNum', 'ttscast', 0, true)) {
                 $return['state'] = 'nok';
             } else {
                 $return['state'] = 'ok';
@@ -358,10 +358,12 @@ class ttscast extends eqLogic
         try {
             if (!file_exists(dirname(__FILE__) . '/../../plugin_info/info.json')) {
                 log::add('ttscast', 'warning', '[Plugin-Version] fichier info.json manquant');
+                return $pluginVersion;
             }
             $data = json_decode(file_get_contents(dirname(__FILE__) . '/../../plugin_info/info.json'), true);
             if (!is_array($data)) {
                 log::add('ttscast', 'warning', '[Plugin-Version] Impossible de décoder le fichier info.json');
+                return $pluginVersion;
             }
             try {
                 $pluginVersion = $data['pluginVersion'];
@@ -375,6 +377,39 @@ class ttscast extends eqLogic
         }
         log::add('ttscast', 'info', '[Plugin-Version] PluginVersion :: ' . $pluginVersion);
         return $pluginVersion;
+    }
+
+    public static function getPythonDepFromRequirements() {
+        $pythonDepString = '';
+        $pythonDepNum = 0;
+        try {
+            if (!file_exists(dirname(__FILE__) . '/../../resources/requirements.txt')) {
+                log::add('ttscast', 'error', '[Python-Dep] Fichier requirements.txt manquant');
+                config::save('pythonDepString', $pythonDepString, 'ttscast');
+                config::save('pythonDepNum', $pythonDepNum, 'ttscast');
+                return false;
+            }
+            $data = file_get_contents(dirname(__FILE__) . '/../../resources/requirements.txt');
+            if (!is_string($data)) {
+                log::add('ttscast', 'error', '[Python-Dep] Impossible de lire le fichier requirements.txt');
+                config::save('pythonDepString', $pythonDepString, 'ttscast');
+                config::save('pythonDepNum', $pythonDepNum, 'ttscast');
+                return false;
+            }
+            $lines = explode("\n", $data);
+            $nonEmptyLines = array_filter($lines, function($line) {
+                return trim($line) !== '';
+            });
+            $pythonDepString = join("|", $nonEmptyLines);
+            $pythonDepNum = count($nonEmptyLines);
+        }
+        catch (\Exception $e) {
+            log::add('ttscast', 'debug', '[Python-Dep] Get requirements.txt ERROR :: ' . $e->getMessage());
+        }
+        log::add('ttscast', 'debug', '[Python-Dep] PythonDepString / PythonDepNum :: ' . $pythonDepString . " / " . $pythonDepNum);
+        config::save('pythonDepString', $pythonDepString, 'ttscast');
+        config::save('pythonDepNum', $pythonDepNum, 'ttscast');
+        return true;
     }
 
     public static function getPythonVersion() {
@@ -611,7 +646,7 @@ class ttscast extends eqLogic
                 log::add('ttscast', 'error', '[getRadioList] Radios File Missing :: KO');
                 return $radiosReturn;
             }
-            $radiosJson = json_decode(file_get_contents(dirname(__FILE__) . "/../../data/radios/radios.json"), true);            
+            $radiosJson = json_decode(file_get_contents(dirname(__FILE__) . "/../../data/radios/radios.json"), true);
             if (!is_array($radiosJson)) {
                 log::add('ttscast', 'error', '[getRadioList] Impossible de décoder le fichier radios.json :: KO');
                 return $radiosReturn;

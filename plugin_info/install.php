@@ -26,6 +26,8 @@ function ttscast_install() {
     message::removeAll('ttscast');
     message::add('ttscast', 'Installation du plugin TTS Cast (Version : ' . $pluginVersion . ')', null, null);
 
+    ttscast::getPythonDepFromRequirements();
+
     if (config::byKey('pythonVersion', 'ttscast') == '') {
         config::save('pythonVersion', '?.?.?', 'ttscast');
     }
@@ -89,6 +91,8 @@ function ttscast_update() {
 
     message::removeAll('ttscast');
     message::add('ttscast', 'Mise à jour du plugin TTS Cast (Version : ' . $pluginVersion . ')', null, null);
+
+    ttscast::getPythonDepFromRequirements();
 
     if (config::byKey('pythonVersion', 'ttscast') == '') {
         config::save('pythonVersion', '?.?.?', 'ttscast');
