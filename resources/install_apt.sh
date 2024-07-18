@@ -213,7 +213,7 @@ ${VENV_DIR}/bin/python3 -m pip install --upgrade pip wheel | log
 log "** Install Pip / Wheel :: Done **"
 echo 75 > ${PROGRESS_FILE}
 ${VENV_DIR}/bin/python3 -m pip install -r ${REQUIREMENTS_FILE} | log
-log "** Install Python3 librairies :: Done **"
+log "** Install Python3 libraries :: Done **"
 echo 95 > ${PROGRESS_FILE}
 log "****************************"
 log "* Set Owner on Directories *"
