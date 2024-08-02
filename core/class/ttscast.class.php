@@ -49,16 +49,28 @@ class ttscast extends eqLogic
 
     public static function tts($_filename, $_text) {
         try {
-          
-          // $datas = $request_http->exec();
-          //if(is_json($datas)){
-          //  throw new \Exception(__('Erreur sur la récuperation des données : ',__FILE__).$datas);
-          //}
-          //file_put_contents($_filename, $datas);
+            ttscast::generateTTS($_filename, $_text);
+            
+            $timeout = 10; // Maximum time to wait in seconds
+            $start = time(); // Start time
+            
+            // Wait for the file to be created
+            while (!file_exists($_filename)) {
+                // Check if the maximum timeout has been reached
+                if (time() - $start > $timeout) {
+                    throw new \Exception('Timeout: File not created');
+                }
+                
+                // Sleep for a short period before checking again
+                usleep(100000); // 100 milliseconds
+            }
+            
+            log::add('ttscast', 'debug', '[TTS] File created: ' . $_filename);
+            // File has been created, continue with the rest of the code
         } catch (Exception $e) {
-          log::add('ttscast', 'error', '[TTS] ' . $e->getMessage());
+            log::add('ttscast', 'error', '[TTS] ' . $e->getMessage());
         }
-      }
+    }
     
     public static function dependancy_install() {
         log::remove(__CLASS__ . '_update');
@@ -198,6 +210,7 @@ class ttscast extends eqLogic
             socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55111'));
             socket_write($socket, $payLoad, strlen($payLoad));
             socket_close($socket);
+            return true;
         } catch (Exception $e) {
             log::add('ttscast', 'error', '[SOCKET][SendToDaemon] Exception :: ' . $e->getMessage());
             /* event::add('jeedom::alert', array(
@@ -246,6 +259,23 @@ class ttscast extends eqLogic
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsSSML = config::byKey('ttsTestSSML', 'ttscast', '0');
         $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML);
+        self::sendToDaemon($value);
+    }
+
+    public static function generateTTS($file=null, $message=null, $options=null) {
+        $ttsFile = $file;
+        $ttsText = $message;
+        $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
+        $ttsRSSVoiceName = config::byKey('voiceRSSTTSVoice', 'ttscast', 'fr-fr-Bette');
+        $ttsRSSSpeed = config::byKey('voiceRSSTTSSpeed', 'ttscast', '0');
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
+        $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
+        $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
+
+        $ttsOptions = $options;
+        log::add('ttscast', 'debug', '[generateTTS] ttsOptions After Array :: ' . $ttsOptions);
+        
+        $value = array('cmd' => 'action', 'cmd_action' => 'generatetts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsFile' => $ttsFile, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
         self::sendToDaemon($value);
     }
 
