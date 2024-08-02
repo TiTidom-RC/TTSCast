@@ -49,6 +49,7 @@ class ttscast extends eqLogic
 
     public static function tts($_filename, $_text) {
         try {
+            log::add('ttscast', 'debug', '[generateTTS] TTS API :: ' . $_filename . ' :: ' . $_text);
             if (config::byKey('ttsEngine', 'ttscast', 'gtranslatetts') != 'jeedomtts') {
                 ttscast::generateTTS($_filename, $_text);
             
@@ -67,12 +68,15 @@ class ttscast extends eqLogic
                 }
             
                 log::add('ttscast', 'debug', '[generateTTS] File created: ' . $_filename);
+                return true;
             } else {
                 log::add('ttscast', 'error', '[generateTTS] You can\'t use Jeedom TTS as engine (in the plugin) and call it from Jeedom TTS API !!');
+                return false;
             }
             
         } catch (Exception $e) {
             log::add('ttscast', 'error', '[generateTTS] ' . $e->getMessage());
+            return false;
         }
     }
     
