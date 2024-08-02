@@ -49,26 +49,30 @@ class ttscast extends eqLogic
 
     public static function tts($_filename, $_text) {
         try {
-            ttscast::generateTTS($_filename, $_text);
+            if (config::byKey('ttsEngine', 'ttscast', 'gtranslatetts') != 'jeedomtts') {
+                ttscast::generateTTS($_filename, $_text);
             
-            $timeout = 10; // Maximum time to wait in seconds
-            $start = time(); // Start time
+                $timeout = 30; // Maximum time to wait in seconds
+                $start = time(); // Start time
             
-            // Wait for the file to be created
-            while (!file_exists($_filename)) {
-                // Check if the maximum timeout has been reached
-                if (time() - $start > $timeout) {
-                    throw new \Exception('Timeout: File not created');
-                }
+                // Wait for the file to be created
+                while (!file_exists($_filename)) {
+                    // Check if the maximum timeout has been reached
+                    if (time() - $start > $timeout) {
+                        throw new \Exception('Timeout: File not created');
+                    }
                 
-                // Sleep for a short period before checking again
-                usleep(100000); // 100 milliseconds
+                    // Sleep for a short period before checking again
+                    usleep(500000); // 500 milliseconds
+                }
+            
+                log::add('ttscast', 'debug', '[generateTTS] File created: ' . $_filename);
+            } else {
+                log::add('ttscast', 'error', '[generateTTS] You can\'t use Jeedom TTS as engine (in the plugin) and call it from Jeedom TTS API !!');
             }
             
-            log::add('ttscast', 'debug', '[TTS] File created: ' . $_filename);
-            // File has been created, continue with the rest of the code
         } catch (Exception $e) {
-            log::add('ttscast', 'error', '[TTS] ' . $e->getMessage());
+            log::add('ttscast', 'error', '[generateTTS] ' . $e->getMessage());
         }
     }
     
@@ -254,7 +258,7 @@ class ttscast extends eqLogic
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
         $ttsRSSVoiceName = config::byKey('voiceRSSTTSVoice', 'ttscast', 'fr-fr-Bette');
         $ttsRSSSpeed = config::byKey('voiceRSSTTSSpeed', 'ttscast', '0');
-        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'jeedomtts');  // jeedomtts | gtranslatetts | gcloudtts | voicersstts
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'gtranslatetts');  // jeedomtts | gtranslatetts | gcloudtts | voicersstts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsSSML = config::byKey('ttsTestSSML', 'ttscast', '0');
@@ -268,7 +272,7 @@ class ttscast extends eqLogic
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
         $ttsRSSVoiceName = config::byKey('voiceRSSTTSVoice', 'ttscast', 'fr-fr-Bette');
         $ttsRSSSpeed = config::byKey('voiceRSSTTSSpeed', 'ttscast', '0');
-        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'gtranslatetts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
 
@@ -285,7 +289,7 @@ class ttscast extends eqLogic
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
         $ttsRSSVoiceName = config::byKey('voiceRSSTTSVoice', 'ttscast', 'fr-fr-Bette');
         $ttsRSSSpeed = config::byKey('voiceRSSTTSSpeed', 'ttscast', '0');
-        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'gtranslatetts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         
