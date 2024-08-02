@@ -46,6 +46,19 @@ class ttscast extends eqLogic
             'resources/pyenv'
 		];
 	}
+
+    public static function tts($_filename, $_text) {
+        try {
+          
+          // $datas = $request_http->exec();
+          //if(is_json($datas)){
+          //  throw new \Exception(__('Erreur sur la récuperation des données : ',__FILE__).$datas);
+          //}
+          //file_put_contents($_filename, $datas);
+        } catch (Exception $e) {
+          log::add('ttscast', 'error', '[TTS] ' . $e->getMessage());
+        }
+      }
     
     public static function dependancy_install() {
         log::remove(__CLASS__ . '_update');
