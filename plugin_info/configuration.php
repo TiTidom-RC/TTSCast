@@ -508,7 +508,6 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Timeout de l'API 'GenerateTTS' (secondes)}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>        
                     <sup><i class="fas fa-question-circle tooltips" title="{{Timeout (entre 5 et 300 sec) d'attente de la génération du fichier TTS lors d'un appel via API (par défaut : 30sec)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
