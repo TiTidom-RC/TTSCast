@@ -61,6 +61,9 @@ function ttscast_install() {
     if (config::byKey('cmdWaitTimeout', 'ttscast') == '') {
         config::save('cmdWaitTimeout', '60', 'ttscast');
     }
+    if (config::byKey('ttsGenTimeout', 'ttscast') == '') {
+        config::save('ttsGenTimeout', '30', 'ttscast');
+    }
     if (config::byKey('debugInstallUpdates', 'ttscast') == '') {
         config::save('debugInstallUpdates', '0', 'ttscast');
     }
@@ -126,6 +129,9 @@ function ttscast_update() {
     }
     if (config::byKey('cmdWaitTimeout', 'ttscast') == '') {
         config::save('cmdWaitTimeout', '60', 'ttscast');
+    }
+    if (config::byKey('ttsGenTimeout', 'ttscast') == '') {
+        config::save('ttsGenTimeout', '30', 'ttscast');
     }
     if (config::byKey('debugInstallUpdates', 'ttscast') == '') {
         config::save('debugInstallUpdates', '0', 'ttscast');
