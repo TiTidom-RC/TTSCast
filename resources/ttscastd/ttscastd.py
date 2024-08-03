@@ -437,10 +437,10 @@ class TTSCast:
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
             
             if not os.path.isfile(filepath):
-                ttsfile = TTSCast.jeedomTTS(ttsText, ttsLang)
-                if ttsfile is not None:
+                ttsResult = TTSCast.jeedomTTS(ttsText, ttsLang)
+                if ttsResult is not None:
                     with open(filepath, 'wb') as f:
-                        f.write(ttsfile)
+                        f.write(ttsResult)
                 else:
                     logging.debug('[DAEMON][TestTTS] JeedomTTS Error :: Incorrect Output')
             else:
@@ -461,11 +461,10 @@ class TTSCast:
                 logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
                 
                 if not os.path.isfile(filepath):
-                    
-                    ttsfile = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, True if ttsSSML == '1' else False)
-                    if ttsfile is not None:
+                    ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, True if ttsSSML == '1' else False)
+                    if ttsResult is not None:
                         with open(filepath, 'wb') as f:
-                            f.write(ttsfile)
+                            f.write(ttsResult)
                     else:
                         logging.debug('[DAEMON][TestTTS] VoiceRSS Error :: Incorrect Output')
                 else:
@@ -550,6 +549,7 @@ class TTSCast:
                     try:
                         client = gTTS(ttsText, lang=langToTTS)
                         client.save(filepath)
+                        logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
                     except Exception as e:
                         if os.path.isfile(filepath):
                             try:
@@ -568,10 +568,11 @@ class TTSCast:
                     logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
                     
                     if not os.path.isfile(filepath):
-                        ttsfile = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
-                        if ttsfile is not None:
+                        ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
+                        if ttsResult is not None:
                             with open(filepath, 'wb') as f:
-                                f.write(ttsfile)
+                                f.write(ttsResult)
+                            logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
                         else:
                             logging.debug('[DAEMON][GenerateTTS] VoiceRSS Error :: Incorrect Output')
                     else:
@@ -723,10 +724,10 @@ class TTSCast:
                 logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                 
                 if not os.path.isfile(filepath):
-                    ttsfile = TTSCast.jeedomTTS(ttsText, ttsLang)
-                    if ttsfile is not None:
+                    ttsResult = TTSCast.jeedomTTS(ttsText, ttsLang)
+                    if ttsResult is not None:
                         with open(filepath, 'wb') as f:
-                            f.write(ttsfile)
+                            f.write(ttsResult)
                     else:
                         logging.debug('[DAEMON][TTS] JeedomTTS Error :: Incorrect Output')
                 else:
@@ -748,10 +749,10 @@ class TTSCast:
                     logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                     
                     if not os.path.isfile(filepath):
-                        ttsfile = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
-                        if ttsfile is not None:
+                        ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
+                        if ttsResult is not None:
                             with open(filepath, 'wb') as f:
-                                f.write(ttsfile)
+                                f.write(ttsResult)
                         else:
                             logging.debug('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output')
                     else:
