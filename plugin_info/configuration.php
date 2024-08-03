@@ -506,6 +506,14 @@ if (!isConnect()) {
                     <input class="configKey form-control" type="number" data-l1key="cmdWaitTimeout" min="0" max="3600" placeholder="{{Timeout}}" />
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Timeout de l'API 'GenerateTTS' (secondes)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Timeout (entre 5 et 300 sec) d'attente de la génération du fichier TTS lors d'un appel via API (par défaut : 30sec)}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" type="number" data-l1key="ttsGenTimeout" min="5" max="300" placeholder="{{Timeout}}" />
+                </div>
+            </div>
             <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, CustomRadios, Sounds, Custom Sounds)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Mise à jour des listes :: Radios}}

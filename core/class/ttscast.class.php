@@ -53,7 +53,7 @@ class ttscast extends eqLogic
             if (config::byKey('ttsEngine', 'ttscast', 'gtranslatetts') != 'jeedomtts') {
                 ttscast::generateTTS($_filename, $_text);
             
-                $timeout = 30; // Maximum time to wait in seconds
+                $timeout = config::byKey('ttsGenTimeout', 'ttscast', 30); // Maximum time to wait in seconds
                 $start = time(); // Start time
             
                 // Wait for the file to be created
@@ -64,12 +64,13 @@ class ttscast extends eqLogic
                     }
                 
                     // Sleep for a short period before checking again
-                    usleep(500000); // 500 milliseconds
+                    usleep(250000); // 250 milliseconds
                 }
             
                 log::add('ttscast', 'debug', '[generateTTS] File created: ' . $_filename);
                 return true;
             } else {
+                file_put_contents($_filename, '');
                 log::add('ttscast', 'error', '[generateTTS] You can\'t use Jeedom TTS as engine (in the plugin) and call it from Jeedom TTS API !!');
                 return false;
             }
