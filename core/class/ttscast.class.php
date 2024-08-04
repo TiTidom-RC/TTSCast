@@ -70,7 +70,7 @@ class ttscast extends eqLogic
                 log::add('ttscast', 'debug', '[generateTTS] File created: ' . $_filename);
                 return true;
             } else {
-                file_put_contents($_filename, '');
+                // file_put_contents($_filename, '');
                 log::add('ttscast', 'error', '[generateTTS] You can\'t use Jeedom TTS as engine (in the plugin) and call it from Jeedom TTS API !!');
                 return false;
             }
