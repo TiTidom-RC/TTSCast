@@ -46,6 +46,40 @@ class ttscast extends eqLogic
             'resources/pyenv'
 		];
 	}
+
+    public static function tts($_filename, $_text) {
+        try {
+            log::add('ttscast', 'debug', '[generateTTS] TTS API :: ' . $_filename . ' :: ' . $_text);
+            if (config::byKey('ttsEngine', 'ttscast', 'gtranslatetts') != 'jeedomtts') {
+                ttscast::generateTTS($_filename, $_text);
+            
+                $timeout = config::byKey('ttsGenTimeout', 'ttscast', 30); // Maximum time to wait in seconds
+                $start = time(); // Start time
+            
+                // Wait for the file to be created
+                while (!file_exists($_filename)) {
+                    // Check if the maximum timeout has been reached
+                    if (time() - $start > $timeout) {
+                        throw new \Exception('Timeout: File not created');
+                    }
+                
+                    // Sleep for a short period before checking again
+                    usleep(250000); // 250 milliseconds
+                }
+            
+                log::add('ttscast', 'debug', '[generateTTS] File created: ' . $_filename);
+                return true;
+            } else {
+                // file_put_contents($_filename, '');
+                log::add('ttscast', 'error', '[generateTTS] You can\'t use Jeedom TTS as engine (in the plugin) and call it from Jeedom TTS API !!');
+                return false;
+            }
+            
+        } catch (Exception $e) {
+            log::add('ttscast', 'error', '[generateTTS] ' . $e->getMessage());
+            return false;
+        }
+    }
     
     public static function dependancy_install() {
         log::remove(__CLASS__ . '_update');
@@ -185,6 +219,7 @@ class ttscast extends eqLogic
             socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55111'));
             socket_write($socket, $payLoad, strlen($payLoad));
             socket_close($socket);
+            return true;
         } catch (Exception $e) {
             log::add('ttscast', 'error', '[SOCKET][SendToDaemon] Exception :: ' . $e->getMessage());
             /* event::add('jeedom::alert', array(
@@ -228,11 +263,28 @@ class ttscast extends eqLogic
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
         $ttsRSSVoiceName = config::byKey('voiceRSSTTSVoice', 'ttscast', 'fr-fr-Bette');
         $ttsRSSSpeed = config::byKey('voiceRSSTTSSpeed', 'ttscast', '0');
-        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'jeedomtts');  // jeedomtts | gtranslatetts | gcloudtts | voicersstts
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'gtranslatetts');  // jeedomtts | gtranslatetts | gcloudtts | voicersstts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsSSML = config::byKey('ttsTestSSML', 'ttscast', '0');
         $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML);
+        self::sendToDaemon($value);
+    }
+
+    public static function generateTTS($file=null, $message=null, $options=null) {
+        $ttsFile = $file;
+        $ttsText = $message;
+        $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
+        $ttsRSSVoiceName = config::byKey('voiceRSSTTSVoice', 'ttscast', 'fr-fr-Bette');
+        $ttsRSSSpeed = config::byKey('voiceRSSTTSSpeed', 'ttscast', '0');
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'gtranslatetts');  // jeedomtts | gtranslatetts | gcloudtts
+        $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
+        $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
+
+        $ttsOptions = $options;
+        log::add('ttscast', 'debug', '[generateTTS] ttsOptions After Array :: ' . $ttsOptions);
+        
+        $value = array('cmd' => 'action', 'cmd_action' => 'generatetts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsFile' => $ttsFile, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
         self::sendToDaemon($value);
     }
 
@@ -242,7 +294,7 @@ class ttscast extends eqLogic
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
         $ttsRSSVoiceName = config::byKey('voiceRSSTTSVoice', 'ttscast', 'fr-fr-Bette');
         $ttsRSSSpeed = config::byKey('voiceRSSTTSSpeed', 'ttscast', '0');
-        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'picotts');  // jeedomtts | gtranslatetts | gcloudtts
+        $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'gtranslatetts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         

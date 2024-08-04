@@ -108,7 +108,6 @@ class Loops:
                         
                                 if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsSSML')):
                                     logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'])
-                                    # TTSCast.generateTestTTS(message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'])
                                     threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML']]).start()
                                 else:
                                     logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
@@ -117,15 +116,22 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
                         
                                 if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
-                                    logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))
-                                    # TTSCast.getTTS(message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'])
+                                    logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))                                    
                                     threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()
                                 else:
                                     logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
+                                    
+                            elif message['cmd_action'] == 'generatetts':
+                                logging.debug('[DAEMON][SOCKET] Generate TTS as Jeedom Engine')
+                                
+                                if all(keys in message for keys in ('ttsText', 'ttsFile', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
+                                    logging.debug('[DAEMON][SOCKET] GenerateTTS :: %s', str(message))
+                                    threading.Thread(target=TTSCast.generateTTS, args=[message['ttsText'], message['ttsFile'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()
+                                else:
+                                    logging.debug('[DAEMON][SOCKET] GenerateTTS :: Il manque des données pour traiter la commande.')
                             
                             elif (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
                                 logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
-                                # Functions.mediaActions(message['googleUUID'], message['value'], message['cmd_action'])
                                 threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], message['value'], message['cmd_action']]).start()
                             
                             elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
@@ -431,10 +437,10 @@ class TTSCast:
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
             
             if not os.path.isfile(filepath):
-                ttsfile = TTSCast.jeedomTTS(ttsText, ttsLang)
-                if ttsfile is not None:
+                ttsResult = TTSCast.jeedomTTS(ttsText, ttsLang)
+                if ttsResult is not None:
                     with open(filepath, 'wb') as f:
-                        f.write(ttsfile)
+                        f.write(ttsResult)
                 else:
                     logging.debug('[DAEMON][TestTTS] JeedomTTS Error :: Incorrect Output')
             else:
@@ -455,11 +461,10 @@ class TTSCast:
                 logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
                 
                 if not os.path.isfile(filepath):
-                    
-                    ttsfile = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, True if ttsSSML == '1' else False)
-                    if ttsfile is not None:
+                    ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, True if ttsSSML == '1' else False)
+                    if ttsResult is not None:
                         with open(filepath, 'wb') as f:
-                            f.write(ttsfile)
+                            f.write(ttsResult)
                     else:
                         logging.debug('[DAEMON][TestTTS] VoiceRSS Error :: Incorrect Output')
                 else:
@@ -472,6 +477,112 @@ class TTSCast:
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Voice RSS) invalide :: ' + Config.apiRSSKey)
+
+    def generateTTS(ttsText, ttsFile, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None):
+        try:
+            if not ttsOptions:
+                ttsOptions = None
+            
+            _useSSML = False
+            _silenceBefore = None
+            
+            try:
+                if (ttsOptions is not None):
+                    options_json = json.loads("{" + ttsOptions + "}")
+                    _useSSML = options_json['ssml'] if 'ssml' in options_json else False
+                    _silenceBefore = options_json['before'] if 'before' in options_json else None
+                    
+                    if _silenceBefore is not None and _useSSML is False:
+                        _useSSML = True
+                        ttsText = "<speak><break time='" + str(_silenceBefore) + "' /><p>" + ttsText + "</p></speak>"
+                        logging.debug('[DAEMON][GenerateTTS] Ajout de %s de silence avant le TTS :: %s', str(_silenceBefore), ttsText)
+                    elif _silenceBefore is not None and _useSSML is True:
+                        logging.error('[DAEMON][GenerateTTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande.')
+                        return False
+                    
+                    logging.debug('[DAEMON][GenerateTTS] Options :: %s', str(options_json))
+            except ValueError as e:
+                logging.debug('[DAEMON][GenerateTTS] Options mal formatées (Json KO) :: %s', e)
+            
+            if ttsEngine == "gcloudtts":
+                logging.debug('[DAEMON][GenerateTTS] TTSEngine = gcloudtts')
+                logging.debug('[DAEMON][GenerateTTS] Import de la clé API :: *** ')
+                if Config.gCloudApiKey != 'noKey':
+                    gKey = os.path.join(Config.configFullPath, Config.gCloudApiKey)
+                    if os.path.exists(gKey):
+                        credentials = service_account.Credentials.from_service_account_file(gKey)
+                    else:
+                        logging.error('[DAEMON][GenerateTTS] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
+                        return False
+
+                    logging.debug('[DAEMON][GenerateTTS] Génération du fichier TTS (mp3)')
+                    filepath = ttsFile
+                    logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
+                    
+                    if not os.path.isfile(filepath):
+                        language_code = "-".join(ttsVoiceName.split("-")[:2])
+                        if _useSSML:
+                            text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
+                        else:
+                            text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                        voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
+                        audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
+
+                        client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
+                        response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+
+                        with open(filepath, "wb") as out:
+                            out.write(response.audio_content)
+                            logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
+                    else:
+                        logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+                else:
+                    logging.warning('[DAEMON][GenerateTTS] Clé API invalide :: ' + Config.gCloudApiKey)
+            
+            elif ttsEngine == "gtranslatetts":
+                logging.debug('[DAEMON][GenerateTTS] TTSEngine = gtranslatetts')
+                filepath = ttsFile
+                logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
+                
+                if not os.path.isfile(filepath):
+                    langToTTS = ttsLang.split('-')[0]
+                    try:
+                        client = gTTS(ttsText, lang=langToTTS)
+                        client.save(filepath)
+                        logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
+                    except Exception as e:
+                        if os.path.isfile(filepath):
+                            try:
+                                os.remove(filepath)
+                            except OSError:
+                                pass
+                        logging.debug('[DAEMON][GenerateTTS] Google Translate API ERROR :: %s', e)
+                else:
+                    logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+            
+            elif ttsEngine == "voicersstts":
+                logging.debug('[DAEMON][GenerateTTS] TTSEngine = voicersstts')
+                logging.debug('[DAEMON][GenerateTTS] Import de la clé API :: *** ')
+                if Config.apiRSSKey != 'noKey':
+                    filepath = ttsFile
+                    logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
+                    
+                    if not os.path.isfile(filepath):
+                        ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
+                        if ttsResult is not None:
+                            with open(filepath, 'wb') as f:
+                                f.write(ttsResult)
+                            logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
+                        else:
+                            logging.debug('[DAEMON][GenerateTTS] VoiceRSS Error :: Incorrect Output')
+                    else:
+                        logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+                else:
+                    logging.warning('[DAEMON][GenerateTTS] Clé API (Voice RSS) invalide :: ' + Config.apiRSSKey)  
+                    
+        except Exception as e:
+            logging.error('[DAEMON][GenerateTTS] Exception on TTS :: %s', e)
+            logging.debug(traceback.format_exc())
                 
     def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None):
         try:
@@ -574,7 +685,7 @@ class TTSCast:
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce)
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
-                    logging.warning('[DAEMON][TestTTS] Clé API invalide :: ' + Config.gCloudApiKey)
+                    logging.warning('[DAEMON][TTS] Clé API invalide :: ' + Config.gCloudApiKey)
             
             elif ttsEngine == "gtranslatetts":
                 logging.debug('[DAEMON][TTS] TTSEngine = gtranslatetts')
@@ -613,10 +724,10 @@ class TTSCast:
                 logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                 
                 if not os.path.isfile(filepath):
-                    ttsfile = TTSCast.jeedomTTS(ttsText, ttsLang)
-                    if ttsfile is not None:
+                    ttsResult = TTSCast.jeedomTTS(ttsText, ttsLang)
+                    if ttsResult is not None:
                         with open(filepath, 'wb') as f:
-                            f.write(ttsfile)
+                            f.write(ttsResult)
                     else:
                         logging.debug('[DAEMON][TTS] JeedomTTS Error :: Incorrect Output')
                 else:
@@ -638,10 +749,10 @@ class TTSCast:
                     logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                     
                     if not os.path.isfile(filepath):
-                        ttsfile = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
-                        if ttsfile is not None:
+                        ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
+                        if ttsResult is not None:
                             with open(filepath, 'wb') as f:
-                                f.write(ttsfile)
+                                f.write(ttsResult)
                         else:
                             logging.debug('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output')
                     else:
