@@ -37,7 +37,7 @@
    "voltage_lounge":{
       "location":"http://voltagelounge.ice.infomaniak.ch/voltagelounge-128.mp3",
       "title":"Voltage Lounge",
-      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+      "image":"https://radiofrench.fr/wp-content/uploads/2021/03/voltage.jpg"
    },
    "rtl":{
       "location":"http://streaming.radio.rtl.fr/rtl-1-44-128",
@@ -132,7 +132,7 @@
    "bfm_business":{
       "location":"https://audio.bfmtv.com/bfmbusiness_128.mp3",
       "title":"BFM Business",
-      "image":"https://backend.radioplayer.fr/logos/28-600x600.png"
+      "image":"https://www.radio.fr/300/bfm.png"
    },
    "cherie_fm":{
       "location":"http://cdn.nrjaudio.fm/audio1/fr/30201/mp3_128.mp3",
@@ -287,37 +287,37 @@
    "voltage":{
       "location":"http://start-voltage.ice.infomaniak.ch/start-voltage-high.mp3",
       "title":"Voltage",
-      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+      "image":"https://radiofrench.fr/wp-content/uploads/2021/03/voltage.jpg"
    },
    "voltage_work":{
       "location":"http://voltagework.ice.infomaniak.ch/voltagework-128.mp3",
       "title":"Voltage @Work",
-      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+      "image":"https://radiofrench.fr/wp-content/uploads/2021/03/voltage.jpg"
    },
    "voltage_2000":{
       "location":"http://voltage2000.ice.infomaniak.ch/voltage2000-128.mp3",
       "title":"Voltage 2000",
-      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+      "image":"https://radiofrench.fr/wp-content/uploads/2021/03/voltage.jpg"
    },
    "voltage_80":{
       "location":"http://voltage80s.ice.infomaniak.ch/voltage80s-128.mp3",
       "title":"Voltage 80's",
-      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+      "image":"https://radiofrench.fr/wp-content/uploads/2021/03/voltage.jpg"
    },
    "voltage_90":{
       "location":"http://voltage90s.ice.infomaniak.ch/voltage90s-128.mp3",
       "title":"Voltage 90's",
-      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+      "image":"https://radiofrench.fr/wp-content/uploads/2021/03/voltage.jpg"
    },
    "voltage_club":{
       "location":"http://voltageclub.ice.infomaniak.ch/voltageclub-128.mp3",
       "title":"Voltage Club",
-      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+      "image":"https://radiofrench.fr/wp-content/uploads/2021/03/voltage.jpg"
    },
    "voltage_love":{
       "location":"http://voltagelove.ice.infomaniak.ch/voltagelove-128.mp3",
       "title":"Voltage Love",
-      "image":"https://bocir-prod-bucket.s3.eu-west-1.amazonaws.com/radios/voltage/images/favicon.ico"
+      "image":"https://radiofrench.fr/wp-content/uploads/2021/03/voltage.jpg"
    },
    "wit_fm":{
       "location":"http://start-witfm.ice.infomaniak.ch/start-witfm-high.mp3",

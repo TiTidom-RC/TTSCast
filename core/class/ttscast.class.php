@@ -653,7 +653,7 @@ class ttscast extends eqLogic
             log::add('ttscast', 'error', '[SendOnStart] Démon non lancé (>10s) :: KO');
             return false;
         }
-        foreach(self::byType('ttscast') as $eqLogic) {
+        foreach(self::byType('ttscast', false) as $eqLogic) {
             if ($eqLogic->getIsEnable()) {
                 $eqLogic->enableCastToDaemon();
             }
@@ -793,7 +793,7 @@ class ttscast extends eqLogic
     public static function updateRadioList()
     {
         try {
-            foreach(self::byType('ttscast') as $eqLogic) {
+            foreach(self::byType('ttscast', false) as $eqLogic) {
                 $cmd = $eqLogic->getCmd(null, 'radios');
                 if (is_object($cmd)) {
                     $radioList = $eqLogic->getRadioList();
@@ -810,7 +810,7 @@ class ttscast extends eqLogic
     public static function updateCustomRadioList()
     {
         try {
-            foreach(self::byType('ttscast') as $eqLogic) {
+            foreach(self::byType('ttscast', false) as $eqLogic) {
                 $cmd = $eqLogic->getCmd(null, 'customradios');
                 if (is_object($cmd)) {
                     $customRadioList = $eqLogic->getCustomRadioList();
@@ -827,7 +827,7 @@ class ttscast extends eqLogic
     public static function updateSoundList()
     {
         try {
-            foreach(self::byType('ttscast') as $eqLogic) {
+            foreach(self::byType('ttscast', false) as $eqLogic) {
                 $cmd = $eqLogic->getCmd(null, 'sounds');
                 if (is_object($cmd)) {
                     $soundList = $eqLogic->getSoundList();
@@ -844,7 +844,7 @@ class ttscast extends eqLogic
     public static function updateCustomSoundList()
     {
         try {
-            foreach(self::byType('ttscast') as $eqLogic) {
+            foreach(self::byType('ttscast', false) as $eqLogic) {
                 $cmd = $eqLogic->getCmd(null, 'customsounds');
                 if (is_object($cmd)) {
                     $customSoundList = $eqLogic->getCustomSoundList();
@@ -891,7 +891,7 @@ class ttscast extends eqLogic
     // * Fonction exécutée automatiquement toutes les 5 minutes par Jeedom
     public static function cron5() {
         $currentTime = time();
-        foreach(self::byType('ttscast') as $eqLogic) {
+        foreach(self::byType('ttscast', true) as $eqLogic) {
             $lastSchedule = $eqLogic->getCmd('info', 'lastschedulets');
             if ($currentTime - intval($lastSchedule->execCmd()) >= 180) {
                 log::add('ttscast', 'debug', '[CRON5][ONLINE] TTSCast :: ' . $eqLogic->getConfiguration('friendly_name') . ' is OFFLINE');
@@ -1797,7 +1797,7 @@ class ttscastCmd extends cmd
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID);
-                    ttscast::playTTS($googleUUID, $_options['message'], $_options['title']);
+                    ttscast::playTTS($googleUUID, $_options['message'], isset($_options['title']) ? $_options['title'] : null);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour diffuser un message TTS');
@@ -1822,7 +1822,7 @@ class ttscastCmd extends cmd
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID);
-                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['message'], $_options['title']);
+                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['message'], isset($_options['title']) ? $_options['title'] : null);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
@@ -1832,7 +1832,7 @@ class ttscastCmd extends cmd
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['select'])) {
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Select / GoogleUUID) :: ' . $_options['select'] . " / " . $googleUUID);
-                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['select'], $_options['title']);
+                    ttscast::mediaGCast($googleUUID, $logicalId, $_options['select'], isset($_options['title']) ? $_options['title'] : null);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
