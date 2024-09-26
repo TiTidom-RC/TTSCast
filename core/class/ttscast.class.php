@@ -507,6 +507,10 @@ class ttscast extends eqLogic
         return $pyenvVersion;
     }
 
+    public static function removeNonUTF8chars($string) {
+        return mb_convert_encoding($string, 'UTF-8', 'UTF-8');
+    }
+
     public static function changeScanState($_scanState)
     {
         if ($_scanState == "scanOn") {

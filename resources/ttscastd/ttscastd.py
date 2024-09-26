@@ -982,6 +982,9 @@ class TTSCast:
 class Functions:
     """ Class Functions """
     
+    def removeNonUtf8Chars(text):
+        return text.encode('utf-8', 'ignore').decode('utf-8')
+    
     def checkIfDashCast(chromecast=None):
         if chromecast is not None and (chromecast.status.app_id == '84912283'):  # DashCast = '84912283'
             logging.debug('[DAEMON][checkIfDashCast] QuitDashCastApp')
@@ -1588,20 +1591,20 @@ class Functions:
                                 'lastschedule': currentTimeStr,
                                 'lastschedulets': currentTime,
                                 'volume_level': castVolumeLevel,
-                                'display_name': castAppDisplayName,
+                                'display_name': Functions.removeNonUtf8Chars(castAppDisplayName),
                                 'is_stand_by': castIsStandBy,
                                 'is_idle': mediaIsIdle,
                                 'is_busy': mediaIsBusy,
                                 'volume_muted': castIsMuted,
                                 'app_id': castAppId,
-                                'status_text': castStatusText,
+                                'status_text': Functions.removeNonUtf8Chars(castStatusText),
                                 'player_state': mediaPlayerState,
-                                'title': mediaTitle,
-                                'artist': mediaArtist,
+                                'title': Functions.removeNonUtf8Chars(mediaTitle),
+                                'artist': Functions.removeNonUtf8Chars(mediaArtist),
                                 'duration': mediaDuration,
                                 'current_time': mediaCurrentTime,
                                 'image': mediaImage,
-                                'album_name': mediaAlbumName,
+                                'album_name': Functions.removeNonUtf8Chars(mediaAlbumName),
                                 'content_type': mediaContentType,
                                 'stream_type': mediaStreamType,
                                 'last_updated': mediaLastUpdated,
@@ -1841,9 +1844,9 @@ class myCast:
                     'is_stand_by': castIsStandBy,
                     'volume_level': castVolumeLevel,
                     'volume_muted': status.volume_muted,
-                    'display_name': castAppDisplayName,
+                    'display_name': Functions.removeNonUtf8Chars(castAppDisplayName),
                     'app_id': castAppId,
-                    'status_text': castStatusText,
+                    'status_text': Functions.removeNonUtf8Chars(castStatusText),
                     'realtime': 1,
                     'status_type': 'cast'
                 }
@@ -1900,12 +1903,12 @@ class myCast:
                     'player_state': mediaPlayerState,
                     'is_idle': mediaIsIdle,
                     'is_busy': mediaIsBusy,
-                    'title': mediaTitle,
-                    'artist': mediaArtist,
+                    'title': Functions.removeNonUtf8Chars(mediaTitle),
+                    'artist': Functions.removeNonUtf8Chars(mediaArtist),
                     'duration': mediaDuration,
                     'current_time': mediaCurrentTime,
                     'image': mediaImage,
-                    'album_name': mediaAlbumName,
+                    'album_name': Functions.removeNonUtf8Chars(mediaAlbumName),
                     'content_type': mediaContentType,
                     'stream_type': mediaStreamType,
                     'last_updated': mediaLastUpdated,
