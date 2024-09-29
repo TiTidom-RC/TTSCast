@@ -873,6 +873,7 @@ class TTSCast:
                 elif cmdWait is not None:
                     if googleUUID in Config.cmdWaitQueue and cmdWait == '1':
                         Config.cmdWaitQueue[googleUUID] = 0
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Reset %s (%s)', cmdWait, googleUUID) 
                     # WaitQueue if option defined
                     if googleUUID in Config.cmdWaitQueue:
                         Config.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait)
@@ -1057,6 +1058,7 @@ class Functions:
                     elif _cmdWait is not None:
                         if _googleUUID in Config.cmdWaitQueue and _cmdWait == '1':
                                 Config.cmdWaitQueue[_googleUUID] = 0
+                                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                         # WaitQueue if option defined
                         if _googleUUID in Config.cmdWaitQueue:
                             Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
@@ -1145,6 +1147,7 @@ class Functions:
                     elif _cmdWait is not None:
                         if _googleUUID in Config.cmdWaitQueue and _cmdWait == '1':
                                 Config.cmdWaitQueue[_googleUUID] = 0
+                                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                         # WaitQueue if option defined
                         if _googleUUID in Config.cmdWaitQueue:
                             Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
@@ -1227,6 +1230,7 @@ class Functions:
                     if _cmdWait is not None:
                         if _googleUUID in Config.cmdWaitQueue and _cmdWait == '1':
                             Config.cmdWaitQueue[_googleUUID] = 0
+                            logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                         if _googleUUID in Config.cmdWaitQueue:
                             Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
                         else:
@@ -1316,6 +1320,7 @@ class Functions:
                             elif _cmdWait is not None:
                                 if _googleUUID in Config.cmdWaitQueue and _cmdWait == '1':
                                     Config.cmdWaitQueue[_googleUUID] = 0
+                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                                 # WaitQueue if option defined
                                 if _googleUUID in Config.cmdWaitQueue:
                                     Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
@@ -1433,6 +1438,7 @@ class Functions:
                         elif _cmdWait is not None:
                             if _googleUUID in Config.cmdWaitQueue and _cmdWait == '1':
                                 Config.cmdWaitQueue[_googleUUID] = 0
+                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                             # WaitQueue if option defined
                             if _googleUUID in Config.cmdWaitQueue:
                                 Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
@@ -1566,6 +1572,7 @@ class Functions:
                         elif _cmdWait is not None:
                             if _googleUUID in Config.cmdWaitQueue and _cmdWait == '1':
                                 Config.cmdWaitQueue[_googleUUID] = 0
+                                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                             # WaitQueue if option defined
                             if _googleUUID in Config.cmdWaitQueue:
                                 Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
