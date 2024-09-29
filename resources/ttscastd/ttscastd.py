@@ -1415,7 +1415,7 @@ class Functions:
                                     break
                                 time.sleep(0.1)
                             if Config.cmdWaitQueue[_googleUUID] == 0:
-                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Cancel / cmdForce %s (%s)', _cmdWait, _googleUUID)
+                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
                                 return False
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: End %s (%s)', _cmdWait, _googleUUID)
                         else:
