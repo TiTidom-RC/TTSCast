@@ -1160,7 +1160,7 @@ class Functions:
                         t = 5
                         while cast.status.app_id is not None and t > 0:
                             time.sleep(0.1)
-                            t = t - 0.1                                       
+                            t = t - 0.1
                     time.sleep(1)
                     
                     logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: %s | %s', _value, str(options_json))
@@ -1549,6 +1549,8 @@ class Functions:
                 
                 if volumeBeforePlay is not None:
                     cast.set_volume(volume=volumeBeforePlay)
+                
+                # TODO : Mise à jour de la WaitQueue en cas d'erreur ???
                 
                 # Libération de la mémoire
                 cast = None
