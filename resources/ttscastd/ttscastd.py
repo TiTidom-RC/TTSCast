@@ -1176,7 +1176,7 @@ class Functions:
                     logging.debug('[DAEMON][controllerActions] YouTube :: Diffusion lancée :: %s', str(cast.media_controller.status))
                     
                     # Mise à jour de la WaitQueue
-                    if _cmdWait is not None:
+                    if _cmdWait is not None and _cmdForce is False:
                         Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
                     
                     # Libération de la mémoire
@@ -1363,7 +1363,7 @@ class Functions:
                                 logging.debug('[DAEMON][controllerActions] Diffusion Radio/CustomRadio lancée :: %s', str(cast.media_controller.status))
                             
                             # Mise à jour de la WaitQueue
-                            if _cmdWait is not None:
+                            if _cmdWait is not None and _cmdForce is False:
                                 Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
                     
                     # Libération de la mémoire
@@ -1490,7 +1490,7 @@ class Functions:
                             cast.set_volume(volume=volumeBeforePlay)
                     
                         # Mise à jour de la WaitQueue
-                        if _cmdWait is not None:
+                        if _cmdWait is not None and _cmdForce is False:
                             Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
                     
                     # Libération de la mémoire
@@ -1611,7 +1611,7 @@ class Functions:
                         logging.debug('[DAEMON][controllerActions] Diffusion Media lancée :: %s', str(cast.media_controller.status))
                         
                         # Mise à jour de la WaitQueue
-                        if _cmdWait is not None:
+                        if _cmdWait is not None and _cmdForce is False:
                             Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
                         
                     # Libération de la mémoire
