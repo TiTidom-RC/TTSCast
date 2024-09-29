@@ -1053,8 +1053,9 @@ class Functions:
                             Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID]
                             logging.debug('[DAEMON][controllerActions] StartApp Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     elif _cmdWait is not None:
+                        if _googleUUID in Config.cmdWaitQueue and _cmdWait == 1:
+                                Config.cmdWaitQueue[_googleUUID] = 0
                         # WaitQueue if option defined
-                        
                         if _googleUUID in Config.cmdWaitQueue:
                             Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
                         else:
@@ -1140,6 +1141,8 @@ class Functions:
                             Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID]
                             logging.debug('[DAEMON][controllerActions] Youtube Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     elif _cmdWait is not None:
+                        if _googleUUID in Config.cmdWaitQueue and _cmdWait == 1:
+                                Config.cmdWaitQueue[_googleUUID] = 0
                         # WaitQueue if option defined
                         if _googleUUID in Config.cmdWaitQueue:
                             Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
@@ -1307,6 +1310,8 @@ class Functions:
                                     Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID]
                                     logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                             elif _cmdWait is not None:
+                                if _googleUUID in Config.cmdWaitQueue and _cmdWait == 1:
+                                    Config.cmdWaitQueue[_googleUUID] = 0
                                 # WaitQueue if option defined
                                 if _googleUUID in Config.cmdWaitQueue:
                                     Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
@@ -1555,6 +1560,8 @@ class Functions:
                                 Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID]
                                 logging.debug('[DAEMON][controllerActions] Media Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                         elif _cmdWait is not None:
+                            if _googleUUID in Config.cmdWaitQueue and _cmdWait == 1:
+                                Config.cmdWaitQueue[_googleUUID] = 0
                             # WaitQueue if option defined
                             if _googleUUID in Config.cmdWaitQueue:
                                 Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
