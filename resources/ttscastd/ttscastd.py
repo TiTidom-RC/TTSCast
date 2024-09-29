@@ -887,7 +887,7 @@ class TTSCast:
                     if Config.cmdWaitQueue[googleUUID] == 0:
                         logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancel/Force %s (%s)', cmdWait, googleUUID)
                         return False
-                    logging.debug('[DAEMON][Cast] Cmd Wait Queue :: End %s (%s)', cmdWait, googleUUID)
+                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: End %s (%s)', cmdWait, googleUUID)
                 else:
                     if googleUUID in Config.cmdWaitQueue:
                         Config.cmdWaitQueue[googleUUID] = 0
