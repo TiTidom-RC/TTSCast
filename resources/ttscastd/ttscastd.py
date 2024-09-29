@@ -958,8 +958,11 @@ class TTSCast:
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 # Mise à jour de la WaitQueue
-                if cmdWait is not None:
-                    Config.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
+                if cmdWait is not None and cmdForce is False:
+                    if Config.cmdWaitQueue[googleUUID] > 0:
+                        Config.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
+                    else:
+                        Config.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait)
                 
                 # Libération de la mémoire
                 cast = None
@@ -972,8 +975,11 @@ class TTSCast:
                     cast.set_volume(volume=volumeBeforePlay)
                 
                 # Mise à jour de la WaitQueue
-                if cmdWait is not None:
-                    Config.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
+                if cmdWait is not None and cmdForce is False:
+                    if Config.cmdWaitQueue[googleUUID] > 0:
+                        Config.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
+                    else:
+                        Config.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait)
                 
                 # Libération de la mémoire
                 cast = None
@@ -1104,9 +1110,13 @@ class Functions:
                     cast.media_controller.block_until_active()
                     
                     logging.debug('[DAEMON][controllerActions] StartApp :: Application lancée :: %s', str(_value))
+                    
                     # Mise à jour de la WaitQueue
                     if _cmdWait is not None and _cmdForce is False:
-                        Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                        if Config.cmdWaitQueue[_googleUUID] > 0:
+                            Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                        else:
+                            Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
                     
                     # Libération de la mémoire
                     cast = None
@@ -1201,7 +1211,10 @@ class Functions:
                     
                     # Mise à jour de la WaitQueue
                     if _cmdWait is not None and _cmdForce is False:
-                        Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                        if Config.cmdWaitQueue[_googleUUID] > 0:
+                            Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                        else:
+                            Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
                     
                     # Libération de la mémoire
                     cast = None
@@ -1399,7 +1412,10 @@ class Functions:
                             
                             # Mise à jour de la WaitQueue
                             if _cmdWait is not None and _cmdForce is False:
-                                Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                                if Config.cmdWaitQueue[_googleUUID] > 0:
+                                    Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                                else:
+                                    Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
                     
                     # Libération de la mémoire
                     cast = None
@@ -1532,7 +1548,10 @@ class Functions:
                     
                         # Mise à jour de la WaitQueue
                         if _cmdWait is not None and _cmdForce is False:
-                            Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                            if Config.cmdWaitQueue[_googleUUID] > 0:
+                                Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                            else:
+                                Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
                     
                     # Libération de la mémoire
                     cast = None
@@ -1659,7 +1678,10 @@ class Functions:
                         
                         # Mise à jour de la WaitQueue
                         if _cmdWait is not None and _cmdForce is False:
-                            Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                            if Config.cmdWaitQueue[_googleUUID] > 0:
+                                Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                            else:
+                                Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
                         
                     # Libération de la mémoire
                     cast = None
