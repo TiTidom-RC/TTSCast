@@ -869,6 +869,7 @@ class TTSCast:
                     Functions.forceQuitApp(cast)
                     if googleUUID in Config.cmdWaitQueue:
                         Config.cmdWaitQueue[googleUUID] = -1 * Config.cmdWaitQueue[googleUUID]
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
                 elif cmdWait is not None:
                     # WaitQueue if option defined
                     if googleUUID in Config.cmdWaitQueue:
@@ -1050,6 +1051,7 @@ class Functions:
                         Functions.forceQuitApp(cast)
                         if _googleUUID in Config.cmdWaitQueue:
                             Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID]
+                            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     elif _cmdWait is not None:
                         # WaitQueue if option defined
                         
@@ -1136,6 +1138,7 @@ class Functions:
                         Functions.forceQuitApp(cast)
                         if _googleUUID in Config.cmdWaitQueue:
                             Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID]
+                            logging.debug('[DAEMON][controllerActions] Youtube Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     elif _cmdWait is not None:
                         # WaitQueue if option defined
                         if _googleUUID in Config.cmdWaitQueue:
@@ -1302,6 +1305,7 @@ class Functions:
                                 Functions.forceQuitApp(cast)
                                 if _googleUUID in Config.cmdWaitQueue:
                                     Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID]
+                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                             elif _cmdWait is not None:
                                 # WaitQueue if option defined
                                 if _googleUUID in Config.cmdWaitQueue:
@@ -1416,6 +1420,7 @@ class Functions:
                             Functions.forceQuitApp(cast)
                             if _googleUUID in Config.cmdWaitQueue:
                                 Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID]
+                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                         elif _cmdWait is not None:
                             # WaitQueue if option defined
                             if _googleUUID in Config.cmdWaitQueue:
@@ -1546,6 +1551,7 @@ class Functions:
                             Functions.forceQuitApp(cast)
                             if _googleUUID in Config.cmdWaitQueue:
                                 Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID]
+                                logging.debug('[DAEMON][controllerActions] Media Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                         elif _cmdWait is not None:
                             # WaitQueue if option defined
                             if _googleUUID in Config.cmdWaitQueue:
