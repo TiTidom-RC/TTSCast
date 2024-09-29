@@ -1392,6 +1392,23 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
+        $cmd = $this->getCmd(null, 'session_id');
+        if (!is_object($cmd)) {
+	        $cmd = new ttscastCmd();
+            $cmd->setName(__('Cast Session Id', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+	        $cmd->setLogicalId('session_id');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
+	        $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
         $cmd = $this->getCmd(null, 'status_text');
         if (!is_object($cmd)) {
 	        $cmd = new ttscastCmd();
