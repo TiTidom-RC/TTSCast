@@ -1402,7 +1402,7 @@ class ttscast extends eqLogic
             $cmd->setSubType('string');
             $cmd->setDisplay('forceReturnLineBefore', '1');
             $cmd->setDisplay('forceReturnLineAfter', '1');
-            $cmd->setIsVisible(1);
+            $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
