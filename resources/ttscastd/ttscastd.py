@@ -138,7 +138,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], '', message['cmd_action']]).start()
                                 
-                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'customradios', 'sounds', 'customsounds', 'media')):
+                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'customradios', 'sounds', 'customsounds', 'media', 'start_app')):
                                 logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
                                 threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options']]).start()
                                 
@@ -1024,6 +1024,78 @@ class Functions:
                 else:
                     logging.debug('[DAEMON][controllerActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
                     return False
+                
+                if (_controller == 'start_app'):
+                    logging.debug('[DAEMON][controllerActions] Lancement de l\'application :: %s', _value)
+                    
+                    _volume = None
+                    _appDing = True
+                    _cmdForce = False
+                    _cmdWait = None
+                    
+                    try:
+                        if (_options is not None):
+                            options_json = json.loads("{" + _options + "}")
+                            _volume = options_json['volume'] if 'volume' in options_json else None
+                            _appDing = options_json['ding'] if 'ding' in options_json else True
+                            _cmdForce = options_json['force'] if 'force' in options_json else False
+                            _cmdWait = options_json['wait'] if 'wait' in options_json else None
+                            logging.debug('[DAEMON][controllerActions] StartApp :: Options :: %s', str(options_json))
+                    except ValueError as e:
+                        logging.debug('[DAEMON][controllerActions] StartApp :: Options mal formatées (Json KO) :: %s', e)
+                    
+                    _appDing = False if Config.appDisableDing else _appDing
+                    
+                    # Si cmdForce alors forcer la sortie de l'appli avant
+                    # Sinon si DashCast alors sortir de l'appli avant sinon cela plante
+                    if _cmdForce:
+                        Functions.forceQuitApp(cast)
+                        if _googleUUID in Config.cmdWaitQueue:
+                            Config.cmdWaitQueue[_googleUUID] = 0
+                    
+                    # WaitQueue if option defined
+                    if _cmdWait is not None:
+                        if _googleUUID in Config.cmdWaitQueue:
+                            Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
+                        else:
+                            Config.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
+                        logging.debug('[DAEMON][controllerActions] StartApp :: WaitQueue :: %s', str(Config.cmdWaitQueue[_googleUUID]))
+                        logging.debug('[DAEMON][controllerActions] StartApp :: Cmd Wait Queue :: Start (%s)', _googleUUID)
+                        queue_start_time = int(time.time())
+                        while Config.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
+                            queue_current_time = int(time.time())
+                            if (queue_start_time + (Config.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
+                                logging.debug('[DAEMON][controllerActions] StartApp :: Cmd Wait Queue :: Timeout (%s)', _googleUUID)
+                                break
+                            time.sleep(0.1)
+                        if Config.cmdWaitQueue[_googleUUID] == 0:
+                            logging.debug('[DAEMON][controllerActions] StartApp :: Cmd Wait Queue :: Cancel / cmdForce (%s)', _googleUUID)
+                            return False
+                        logging.debug('[DAEMON][controllerActions] StartApp :: Cmd Wait Queue :: End (%s)', _googleUUID)
+                    else:
+                        Config.cmdWaitQueue[_googleUUID] = 0
+                        
+                    if not _cmdForce:
+                        Functions.checkIfDashCast(cast)
+                    
+                    if not _appDing:
+                        cast.set_volume(volume=0)
+                    elif (_volume is not None):
+                        logging.debug('[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                        cast.set_volume(volume=_volume / 100)
+                    
+                    cast.start_app(_value)
+                    
+                    if (not _appDing and _volume is not None):
+                        logging.debug('[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                        cast.set_volume(volume=_volume / 100)
+                    elif (not _appDing):
+                        cast.set_volume(volume=volumeBeforePlay)
+                    
+                    cast.media_controller.block_until_active()
+                    
+                    logging.debug('[DAEMON][controllerActions] StartApp :: Application lancée :: %s', str(_value))
+                    return True
                 
                 if (_controller == 'youtube'):
                     logging.debug('[DAEMON][controllerActions] YouTube Id @ UUID :: %s @ %s', _value, _googleUUID)
