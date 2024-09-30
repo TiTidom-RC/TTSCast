@@ -969,6 +969,7 @@ class TTSCast:
                 if cmdWait is not None and cmdForce is False:
                     if Config.cmdWaitQueue[googleUUID] != 0:
                         Config.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
                     """ else:
                         Config.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait) """
                 
@@ -986,8 +987,9 @@ class TTSCast:
                 if cmdWait is not None and cmdForce is False:
                     if Config.cmdWaitQueue[googleUUID] > 0:
                         Config.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
-                    else:
-                        Config.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait)
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
+                    """ else:
+                        Config.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait) """
                 
                 # Libération de la mémoire
                 cast = None
@@ -1131,6 +1133,7 @@ class Functions:
                     if _cmdWait is not None and _cmdForce is False:
                         if Config.cmdWaitQueue[_googleUUID] > 0:
                             Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                         """ else:
                             Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
                     
@@ -1237,6 +1240,7 @@ class Functions:
                     if _cmdWait is not None and _cmdForce is False:
                         if Config.cmdWaitQueue[_googleUUID] > 0:
                             Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                            logging.debug('[DAEMON][controllerActions] YouTube Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                         """ else:
                             Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
                     
@@ -1318,6 +1322,7 @@ class Functions:
                     if _cmdWait is not None:
                         if Config.cmdWaitQueue[_googleUUID] > 0:
                             Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                            logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     
                     # Libération de la mémoire
                     player = None
@@ -1454,6 +1459,7 @@ class Functions:
                             if _cmdWait is not None and _cmdForce is False:
                                 if Config.cmdWaitQueue[_googleUUID] > 0:
                                     Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                                 """ else:
                                     Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
                     
@@ -1597,6 +1603,7 @@ class Functions:
                         if _cmdWait is not None and _cmdForce is False:
                             if Config.cmdWaitQueue[_googleUUID] > 0:
                                 Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                             """ else:
                                 Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
                     
@@ -1734,6 +1741,7 @@ class Functions:
                         if _cmdWait is not None and _cmdForce is False:
                             if Config.cmdWaitQueue[_googleUUID] > 0:
                                 Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
+                                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                             """ else:
                                 Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
                         
