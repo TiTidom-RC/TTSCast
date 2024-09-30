@@ -868,9 +868,8 @@ class TTSCast:
                     # Tester le paramètre cmdForce pour forcer à quitter l'appli en cours de lecture
                     Functions.forceQuitApp(cast)
                     if googleUUID in Config.cmdWaitQueue:
-                        """ Config.cmdWaitQueue[googleUUID] = -1 * Config.cmdWaitQueue[googleUUID] """
                         Config.cmdWaitQueue[googleUUID] = 0
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Force %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
                 elif cmdWait is not None:
                     # WaitQueue if option defined
                     if googleUUID in Config.cmdWaitQueue:
@@ -886,7 +885,7 @@ class TTSCast:
                     else:
                         Config.cmdWaitQueue[googleUUID] = 2 ** int(cmdWait)
                     logging.debug('[DAEMON][Cast] TTS Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: Start %s (%s)', cmdWait, googleUUID)
+                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: Start Waiting %s (%s)', cmdWait, googleUUID)
                     queue_start_time = int(time.time())
                     while Config.cmdWaitQueue[googleUUID] % (2 ** int(cmdWait)) != 0:
                         queue_current_time = int(time.time())
@@ -897,11 +896,9 @@ class TTSCast:
                         time.sleep(0.1)
                     if Config.cmdWaitQueue[googleUUID] == 0:
                         logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancel/Force %s (%s)', cmdWait, googleUUID)
-                        """ Config.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait) """
                         logging.debug('[DAEMON][Cast] TTS Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
                         return False
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: End %s (%s)', cmdWait, googleUUID)
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
+                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: End Waiting %s (%s)', cmdWait, googleUUID)
                 else:
                     if googleUUID in Config.cmdWaitQueue:
                         Config.cmdWaitQueue[googleUUID] = 0
@@ -967,11 +964,9 @@ class TTSCast:
                 
                 # Mise à jour de la WaitQueue
                 if cmdWait is not None and cmdForce is False:
-                    if Config.cmdWaitQueue[googleUUID] != 0:
+                    if Config.cmdWaitQueue[googleUUID] > 0:
                         Config.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
-                    """ else:
-                        Config.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait) """
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Out %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
                 
                 # Libération de la mémoire
                 cast = None
@@ -987,7 +982,7 @@ class TTSCast:
                 if cmdWait is not None and cmdForce is False:
                     if Config.cmdWaitQueue[googleUUID] > 0:
                         Config.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Out %s (%s)', str(Config.cmdWaitQueue[googleUUID]), googleUUID)
                     """ else:
                         Config.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait) """
                 
@@ -1069,9 +1064,8 @@ class Functions:
                         # Si cmdForce alors forcer la sortie de l'appli avant
                         Functions.forceQuitApp(cast)
                         if _googleUUID in Config.cmdWaitQueue:
-                            """ Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID] """
                             Config.cmdWaitQueue[_googleUUID] = 0
-                            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
+                            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Force %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     elif _cmdWait is not None:
                         # WaitQueue if option defined
                         if _googleUUID in Config.cmdWaitQueue:
@@ -1087,7 +1081,7 @@ class Functions:
                         else:
                             Config.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
                         logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Start %s (%s)', _cmdWait, _googleUUID)
+                        logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
                         queue_start_time = int(time.time())
                         while Config.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
                             queue_current_time = int(time.time())
@@ -1098,11 +1092,9 @@ class Functions:
                             time.sleep(0.1)
                         if Config.cmdWaitQueue[_googleUUID] == 0:
                             logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                            """ Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
                             logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                             return False
-                        logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: End %s (%s)', _cmdWait, _googleUUID)
-                        logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
+                        logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: End Waiting %s (%s)', _cmdWait, _googleUUID)
                     else:
                         if _googleUUID in Config.cmdWaitQueue:
                             Config.cmdWaitQueue[_googleUUID] = 0
@@ -1133,9 +1125,7 @@ class Functions:
                     if _cmdWait is not None and _cmdForce is False:
                         if Config.cmdWaitQueue[_googleUUID] > 0:
                             Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        """ else:
-                            Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
+                            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Out %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     
                     # Libération de la mémoire
                     cast = None
@@ -1171,9 +1161,8 @@ class Functions:
                     if _cmdForce:
                         Functions.forceQuitApp(cast)
                         if _googleUUID in Config.cmdWaitQueue:
-                            """ Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID] """
                             Config.cmdWaitQueue[_googleUUID] = 0
-                            logging.debug('[DAEMON][controllerActions] Youtube Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
+                            logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Force %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     elif _cmdWait is not None:
                         # WaitQueue if option defined
                         if _googleUUID in Config.cmdWaitQueue:
@@ -1189,7 +1178,7 @@ class Functions:
                         else:
                             Config.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
                         logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Start %s (%s)', _cmdWait, _googleUUID)
+                        logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
                         queue_start_time = int(time.time())
                         while Config.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
                             queue_current_time = int(time.time())
@@ -1200,11 +1189,9 @@ class Functions:
                             time.sleep(0.1)
                         if Config.cmdWaitQueue[_googleUUID] == 0:
                             logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                            """ Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
                             logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                             return False
-                        logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: End %s (%s)', _cmdWait, _googleUUID)
-                        logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
+                        logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: End Waiting %s (%s)', _cmdWait, _googleUUID)
                     else:
                         Config.cmdWaitQueue[_googleUUID] = 0
                     
@@ -1240,9 +1227,7 @@ class Functions:
                     if _cmdWait is not None and _cmdForce is False:
                         if Config.cmdWaitQueue[_googleUUID] > 0:
                             Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerActions] YouTube Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        """ else:
-                            Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
+                            logging.debug('[DAEMON][controllerActions] YouTube Wait Queue :: Out %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     
                     # Libération de la mémoire
                     cast = None
@@ -1322,7 +1307,7 @@ class Functions:
                     if _cmdWait is not None:
                         if Config.cmdWaitQueue[_googleUUID] > 0:
                             Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
+                            logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Out %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     
                     # Libération de la mémoire
                     player = None
@@ -1365,9 +1350,8 @@ class Functions:
                                 # Si cmdForce alors forcer la sortie de l'appli avant
                                 Functions.forceQuitApp(cast)
                                 if _googleUUID in Config.cmdWaitQueue:
-                                    """ Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID] """
                                     Config.cmdWaitQueue[_googleUUID] = 0
-                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
+                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Force %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                             elif _cmdWait is not None:
                                 # WaitQueue if option defined
                                 if _googleUUID in Config.cmdWaitQueue:
@@ -1383,7 +1367,7 @@ class Functions:
                                 else:
                                     Config.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
                                 logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Start %s (%s)', _cmdWait, _googleUUID)
+                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
                                 queue_start_time = int(time.time())
                                 while Config.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
                                     queue_current_time = int(time.time())
@@ -1394,11 +1378,9 @@ class Functions:
                                     time.sleep(0.1)
                                 if Config.cmdWaitQueue[_googleUUID] == 0:
                                     logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                                    """ Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
                                     logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                                     return False
                                 logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: End %s (%s)', _cmdWait, _googleUUID)
-                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                             else:
                                 if _googleUUID in Config.cmdWaitQueue:
                                     Config.cmdWaitQueue[_googleUUID] = 0
@@ -1459,9 +1441,7 @@ class Functions:
                             if _cmdWait is not None and _cmdForce is False:
                                 if Config.cmdWaitQueue[_googleUUID] > 0:
                                     Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                """ else:
-                                    Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
+                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Out %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     
                     # Libération de la mémoire
                     cast = None
@@ -1495,9 +1475,8 @@ class Functions:
                         if _cmdForce:
                             Functions.forceQuitApp(cast)
                             if _googleUUID in Config.cmdWaitQueue:
-                                """ Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID] """
                                 Config.cmdWaitQueue[_googleUUID] = 0
-                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
+                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Force %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                         elif _cmdWait is not None:
                             if _googleUUID in Config.cmdWaitQueue:
                                 if int(_cmdWait) == 1:
@@ -1512,7 +1491,7 @@ class Functions:
                             else:
                                 Config.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Start %s (%s)', _cmdWait, _googleUUID)
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
                             queue_start_time = int(time.time())
                             while Config.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
                                 queue_current_time = int(time.time())
@@ -1526,8 +1505,7 @@ class Functions:
                                 """ Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
                                 logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                                 return False
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: End %s (%s)', _cmdWait, _googleUUID)
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
+                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: End Waiting %s (%s)', _cmdWait, _googleUUID)
                         else:
                             if _googleUUID in Config.cmdWaitQueue:
                                 Config.cmdWaitQueue[_googleUUID] = 0
@@ -1603,9 +1581,7 @@ class Functions:
                         if _cmdWait is not None and _cmdForce is False:
                             if Config.cmdWaitQueue[_googleUUID] > 0:
                                 Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            """ else:
-                                Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
+                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Out %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                     
                     # Libération de la mémoire
                     cast = None
@@ -1640,9 +1616,8 @@ class Functions:
                         if _cmdForce:
                             Functions.forceQuitApp(cast)
                             if _googleUUID in Config.cmdWaitQueue:
-                                """ Config.cmdWaitQueue[_googleUUID] = -1 * Config.cmdWaitQueue[_googleUUID] """
                                 Config.cmdWaitQueue[_googleUUID] = 0
-                                logging.debug('[DAEMON][controllerActions] Media Wait Queue (Force) :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
+                                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Force %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                         elif _cmdWait is not None:
                             if _googleUUID in Config.cmdWaitQueue:
                                 if int(_cmdWait) == 1:
@@ -1657,7 +1632,7 @@ class Functions:
                             else:
                                 Config.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
                             logging.debug('[DAEMON][controllerActions] Media Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Start %s (%s)', _cmdWait, _googleUUID)
+                            logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
                             queue_start_time = int(time.time())
                             while Config.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
                                 queue_current_time = int(time.time())
@@ -1668,11 +1643,9 @@ class Functions:
                                 time.sleep(0.1)
                             if Config.cmdWaitQueue[_googleUUID] == 0:
                                 logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                                """ Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
                                 logging.debug('[DAEMON][controllerActions] Media Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                                 return False
-                            logging.debug('[DAEMON][controllerActions] Media Wait Queue :: End %s (%s)', _cmdWait, _googleUUID)
-                            logging.debug('[DAEMON][controllerActions] Media Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
+                            logging.debug('[DAEMON][controllerActions] Media Wait Queue :: End Waiting %s (%s)', _cmdWait, _googleUUID)
                         else:
                             if _googleUUID in Config.cmdWaitQueue:
                                 Config.cmdWaitQueue[_googleUUID] = 0
@@ -1741,9 +1714,7 @@ class Functions:
                         if _cmdWait is not None and _cmdForce is False:
                             if Config.cmdWaitQueue[_googleUUID] > 0:
                                 Config.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            """ else:
-                                Config.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait) """
+                                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Out %s (%s)', str(Config.cmdWaitQueue[_googleUUID]), _googleUUID)
                         
                     # Libération de la mémoire
                     cast = None
