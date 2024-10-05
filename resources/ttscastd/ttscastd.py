@@ -877,6 +877,10 @@ class TTSCast:
                             Config.cmdWaitQueue[googleUUID] = 0
                             logging.debug('[DAEMON][Cast] TTS Wait Queue :: Reset %s (%s)', cmdWait, googleUUID) 
                         elif int(cmdWait) > 1 and Config.cmdWaitQueue[googleUUID] == 0:
+                            t = 5
+                            while (Config.cmdWaitQueue[googleUUID] == 0 and t > 0):
+                                time.sleep(0.1)
+                                t -= 1
                             logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancelled %s (%s)', cmdWait, googleUUID)
                             return False
                             
@@ -1071,6 +1075,10 @@ class Functions:
                                 Config.cmdWaitQueue[_googleUUID] = 0
                                 logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                             elif int(_cmdWait) > 1 and Config.cmdWaitQueue[_googleUUID] == 0:
+                                t = 5
+                                while (Config.cmdWaitQueue[_googleUUID] == 0 and t > 0):
+                                    time.sleep(0.1)
+                                    t -= 1
                                 logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
                                 return False
                         
@@ -1168,6 +1176,10 @@ class Functions:
                                 Config.cmdWaitQueue[_googleUUID] = 0
                                 logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                             elif int(_cmdWait) > 1 and Config.cmdWaitQueue[_googleUUID] == 0:
+                                t = 5
+                                while (Config.cmdWaitQueue[_googleUUID] == 0 and t > 0):
+                                    time.sleep(0.1)
+                                    t -= 1
                                 logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
                                 return False
                         
@@ -1257,6 +1269,10 @@ class Functions:
                                 Config.cmdWaitQueue[_googleUUID] = 0
                                 logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                             elif int(_cmdWait) > 1 and Config.cmdWaitQueue[_googleUUID] == 0:
+                                t = 5
+                                while (Config.cmdWaitQueue[_googleUUID] == 0 and t > 0):
+                                    time.sleep(0.1)
+                                    t -= 1
                                 logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
                                 return False
                             
@@ -1355,6 +1371,10 @@ class Functions:
                                         Config.cmdWaitQueue[_googleUUID] = 0
                                         logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                                     elif int(_cmdWait) > 1 and Config.cmdWaitQueue[_googleUUID] == 0:
+                                        t = 5
+                                        while (Config.cmdWaitQueue[_googleUUID] == 0 and t > 0):
+                                            time.sleep(0.1)
+                                            t -= 1
                                         logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
                                         return False
                                     
@@ -1479,6 +1499,10 @@ class Functions:
                                     Config.cmdWaitQueue[_googleUUID] = 0
                                     logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                                 elif int(_cmdWait) > 1 and Config.cmdWaitQueue[_googleUUID] == 0:
+                                    t = 5
+                                    while (Config.cmdWaitQueue[_googleUUID] == 0 and t > 0):
+                                        time.sleep(0.1)
+                                        t -= 1
                                     logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
                                     return False
                             # WaitQueue if option defined
@@ -1619,6 +1643,10 @@ class Functions:
                                     Config.cmdWaitQueue[_googleUUID] = 0
                                     logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
                                 elif int(_cmdWait) > 1 and Config.cmdWaitQueue[_googleUUID] == 0:
+                                    t = 5
+                                    while (Config.cmdWaitQueue[_googleUUID] == 0 and t > 0):
+                                        time.sleep(0.1)
+                                        t -= 1
                                     logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
                                     return False
                             # WaitQueue if option defined
