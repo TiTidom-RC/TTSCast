@@ -10,6 +10,7 @@
     <div class="timeCmd label label-default #history#" data-type="info"></div>
     <template>
         <div>time : duration|date ({{Affiche durée ou date de la valeur}})</div>
+        <div>max-width : 200 ({{Largeur de l'image}})</div>
     </template>
     <script>
         jeedom.cmd.addUpdateFunction('#id#', function (_options) {
@@ -28,5 +29,9 @@
         })
 
         jeedom.cmd.refreshValue([{ cmd_id: '#id#', value: '#value#', display_value: '#state#', valueDate: '#valueDate#', collectDate: '#collectDate#' }])
+
+        if (domUtils.issetWidgetOptParam('#max-width#', 'max-width')) {
+            document.querySelector('.cmd[data-cmd_uid="#uid#"] span.imgCmd > img').style.maxWidth = '#max-width#px'
+        }
     </script>
 </div>
