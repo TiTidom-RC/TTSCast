@@ -10,6 +10,7 @@
     <div class="timeCmd label label-default #history#" data-type="info"></div>
     <template>
         <div>time : duration|date ({{Affiche durée ou date de la valeur}})</div>
+        <div>max-width : 200 ({{Largeur de l'image}})</div>
     </template>
     <script>
         jeedom.cmd.addUpdateFunction('#id#', function (_options) {
@@ -23,6 +24,10 @@
                     cmd.querySelector('.content-sm img').src = './plugins/ttscast/core/php/ttscast.img.proxy.php?img=' + btoa(_options.value)
                 } else {
                     cmd.querySelector('.content-sm img').src = './plugins/ttscast/data/images/ttscast-200.png'
+                }
+
+                if ('#max-width#' != '') {
+                    cmd.querySelector('.content-sm img').style.maxWidth = '#max-width#px'
                 }
             }
         })
