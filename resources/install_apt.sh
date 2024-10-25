@@ -175,7 +175,7 @@ if [ "$versionPython" -lt 11 ]; then
 	[[ -z "$PYENV_PYTHON_VERSION" ]] && PYENV_PYTHON_VERSION="Python PyEnv=None"
 	[[ -z "$VENV_PYTHON_VERSION" ]] && VENV_PYTHON_VERSION="Python Venv=None"
 	log "** Python Versions :: PyEnv = ${PYENV_PYTHON_VERSION} / Venv = ${VENV_PYTHON_VERSION} **"
-	if [ "$PYENV_PYTHON_VERSION" -eq "$VENV_PYTHON_VERSION" ]; then	
+	if [ "$PYENV_PYTHON_VERSION" = "$VENV_PYTHON_VERSION" ]; then	
 		log "** Python Versions Match :: OK **"
 	else
 		log "** Python Versions Mismatch :: NEED UPDATE **"
