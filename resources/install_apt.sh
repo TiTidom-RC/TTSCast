@@ -196,14 +196,14 @@ if [ "$versionPython" -ge 11 ]; then
 		python3 -m venv --upgrade-deps ${VENV_DIR} | log 
 	fi
 else
-	vPythonVenv=$(${VENV_DIR}/bin/python3 --version 2>/dev/null | awk -F'[ ,.]' '{print $3}')
-	[[ -z "$vPythonVenv" ]] && vPythonVenv=0
-	if [ "$vPythonVenv" -eq 0 ]; then 
+	read majorPythonVenv minorPythonVenv patchPythonVenv <<< $(${VENV_DIR}/bin/python3 --version 2>/dev/null | awk -F'[ ,.]' '{print $2 $3 $4}')
+	[[ -z "$minorPythonVenv" ]] && minorPythonVenv=0
+	if [ "$minorPythonVenv" -eq 0 ]; then 
 		log "Python3 (Venv) Version :: None"
 	else
-		log "Python3 (Venv) Version :: 3.${vPythonVenv}"
+		log "Python3 (Venv) Version :: ${majorPythonVenv}.${minorPythonVenv}.${patchPythonVenv}"
 	fi
-	if [ "$vPythonVenv" -ge 11 ]; then
+	if [ "$minorPythonVenv" -ge 11 ]; then
 		log "Latest Python version installed with PyEnv :: $(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest 3.11)"
 		if [ "$VenvToUpdate" -eq 1 ] || [ "$FORCE_INIT_VENV" -eq 1 ]; then
 			# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
