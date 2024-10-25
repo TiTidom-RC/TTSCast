@@ -170,12 +170,10 @@ if [ "$versionPython" -lt 11 ]; then
 	log "*****************************************"
 	log "* Check Versions : Python VENV vs PyEnv *"
 	log "*****************************************"
-	PYENV_PYTHON_VERSION = $(${PYENV_DIR}/versions/${PYTHON_VERSION}/bin/python3 --version 2>/dev/null)
-	VENV_PYTHON_VERSION = $(${VENV_DIR}/bin/python3 --version 2>/dev/null)
-	[[ -z "$PYENV_PYTHON_VERSION" ]] && PYENV_PYTHON_VERSION="Python PyEnv=None"
-	[[ -z "$VENV_PYTHON_VERSION" ]] && VENV_PYTHON_VERSION="Python Venv=None"
-	log "** Python Versions :: PyEnv = ${PYENV_PYTHON_VERSION} / Venv = ${VENV_PYTHON_VERSION} **"
-	if [ "$PYENV_PYTHON_VERSION" = "$VENV_PYTHON_VERSION" ]; then	
+	VENV_PYTHON_VERSION=$(${VENV_DIR}/bin/python3 --version 2>/dev/null | awk '{print $2}')
+	[[ -z "$VENV_PYTHON_VERSION" ]] && VENV_PYTHON_VERSION="None"
+	log "** Python Versions :: PyEnv = ${PYTHON_VERSION} / Venv = ${VENV_PYTHON_VERSION} **"
+	if [ "$PYTHON_VERSION" = "$VENV_PYTHON_VERSION" ]; then	
 		log "** Python Versions Match :: OK **"
 	else
 		log "** Python Versions Mismatch :: NEED UPDATE **"
