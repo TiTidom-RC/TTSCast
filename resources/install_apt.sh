@@ -168,7 +168,7 @@ if [ "$versionPython" -lt 11 ]; then
 
 	echo 52 > ${PROGRESS_FILE}
 	log "*****************************************"
-	log "* Check Versions : Python VENV vs PyEnv *"
+	log "* Check Versions : Python PyEnv vs Venv *"
 	log "*****************************************"
 	VENV_PYTHON_VERSION=$(${VENV_DIR}/bin/python3 --version 2>/dev/null | awk '{print $2}')
 	[[ -z "$VENV_PYTHON_VERSION" ]] && VENV_PYTHON_VERSION="None"
