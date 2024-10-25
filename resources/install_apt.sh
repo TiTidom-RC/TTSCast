@@ -165,6 +165,22 @@ if [ "$versionPython" -lt 11 ]; then
 	# PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv install -s 3.11 | log
 	PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv install -s ${PYTHON_VERSION} | log
 	log "** Python ${PYTHON_VERSION} Installation :: Done **"
+
+	echo 52 > ${PROGRESS_FILE}
+	log "*****************************************"
+	log "* Check Versions : Python VENV vs PyEnv *"
+	log "*****************************************"
+	PYENV_PYTHON_VERSION = $(${PYENV_DIR}/versions/${PYTHON_VERSION}/bin/python3 --version 2>/dev/null)
+	VENV_PYTHON_VERSION = $(${VENV_DIR}/bin/python3 --version 2>/dev/null)
+	[[ -z "$PYENV_PYTHON_VERSION" ]] && PYENV_PYTHON_VERSION="Python PyEnv=None"
+	[[ -z "$VENV_PYTHON_VERSION" ]] && VENV_PYTHON_VERSION="Python Venv=None"
+	log "** Python Versions :: PyEnv = ${PYENV_PYTHON_VERSION} / Venv = ${VENV_PYTHON_VERSION} **"
+	if [ "$PYENV_PYTHON_VERSION" -eq "$VENV_PYTHON_VERSION" ]; then	
+		log "** Python Versions Match :: OK **"
+	else
+		log "** Python Versions Mismatch :: NEED UPDATE **"
+		VenvToUpdate=1
+	fi
 else
 	log "*********************"
 	log "* PyEnv Environment *"
