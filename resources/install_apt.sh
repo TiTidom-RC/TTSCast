@@ -196,7 +196,7 @@ if [ "$versionPython" -ge 11 ]; then
 		python3 -m venv --upgrade-deps ${VENV_DIR} | log 
 	fi
 else
-	read majorPythonVenv minorPythonVenv patchPythonVenv <<< $(${VENV_DIR}/bin/python3 --version 2>/dev/null | awk -F'[ ,.]' '{print $2 $3 $4}')
+	read majorPythonVenv minorPythonVenv patchPythonVenv <<< $(${VENV_DIR}/bin/python3 --version 2>/dev/null | awk -F'[ ,.]' '{print $2, $3, $4}')
 	[[ -z "$minorPythonVenv" ]] && minorPythonVenv=0
 	if [ "$minorPythonVenv" -eq 0 ]; then 
 		log "Python3 (Venv) Version :: None"
