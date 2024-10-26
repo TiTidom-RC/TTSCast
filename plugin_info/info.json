@@ -1,35 +1,39 @@
 {
-	"id" : "ttscast",
-	"name" : "TTS Cast",
-	"pluginVersion": "1.5.19",
-	"description" : {
+	"id": "ttscast",
+	"name": "TTS Cast",
+	"pluginVersion": "1.5.20",
+	"description": {
 		"fr_FR": "Plugin pour gérer ses équipements Google, type Google Home, Nest Mini, Nest Hub (Max), Chromecast. Il permet de générer des notifications TTS (Text To Speech) et de les diffuser sur les équipements Google. Il permet également de diffuser des sons (mp3), des vidéos YouTube, une page Web, ou encore une radio en streaming sur ces mêmes équipements.",
 		"en_US": "Plugin to manage Google equipment, such as Google Home, Nest Mini, Nest Hub (Max), Chromecast. It allows you to generate TTS (Text To Speech) notifications and broadcast them to Google devices. It also allows you to broadcast sounds (mp3), YouTube videos, a web page, or even streaming radio on the same equipment.",
 		"es_ES": "Complemento para administrar equipos de Google, como Google Home, Nest Mini, Nest Hub (Max), Chromecast. Le permite generar notificaciones TTS (Text To Speech) y transmitirlas a dispositivos de Google. También permite transmitir sonidos (mp3), vídeos de YouTube, una página web o incluso radio en streaming en el mismo equipo.",
-		"de_DE": "Plugin zur Verwaltung von Google-Geräten wie Google Home, Nest Mini, Nest Hub (Max), Chromecast. Es ermöglicht Ihnen, TTS-Benachrichtigungen (Text To Speech) zu generieren und diese an Google-Geräte zu senden. Sie können damit auch Sounds (mp3), YouTube-Videos, eine Webseite oder sogar Radio-Streaming auf demselben Gerät übertragen."
+		"de_DE": "Plugin zur Verwaltung von Google-Geräten wie Google Home, Nest Mini, Nest Hub (Max), Chromecast. Es ermöglicht Ihnen, TTS-Benachrichtigungen (Text To Speech) zu generieren und diese an Google-Geräte zu senden. Sie können damit auch Sounds (mp3), YouTube-Videos, eine Webseite oder sogar Radio-Streaming auf demselben Gerät übertragen.",
+		"it_IT": "Plugin per la gestione di dispositivi Google come Google Home, Nest Mini, Nest Hub (Max) e Chromecast. Genera notifiche TTS (Text To Speech) e le trasmette ai dispositivi Google. Può anche essere utilizzato per trasmettere audio (mp3), video di YouTube, una pagina web o una radio agli stessi dispositivi.",
+		"pt_PT": "Plug-in para gerir dispositivos Google, como o Google Home, Nest Mini, Nest Hub (Max) e Chromecast. Gera notificações TTS (Text To Speech) e transmite-as aos dispositivos Google. Também pode ser utilizado para transmitir áudio (mp3), vídeos do YouTube, uma página Web ou rádio para os mesmos dispositivos."
 	},
 	"utilization": "Scannez les Google Home/Nest/ChromeCast présents sur votre réseau, et utilisez les pour diffuser des notifications vocales (TTS), des sons (mp3), des vidéos YouTube, des pages Web (DashCast), ou une Radio (en streaming) à partir de Jeedom. Plusieurs moteurs TTS (pour générer les notifications vocales) sont disponibles dans le plugin (JeedomTTS, Google Translate API, Google Cloud TTS, Voice RSS)",
-	"licence" : "AGPL",
-	"author" : "TiTidom",
-	"require" : "4.2.0",
-	"category" : "multimedia",
-	"hasTtsEngine" : true,
-	"hasDependency" : true,
-	"hasOwnDeamon" : true,
-	"maxDependancyInstallTime" : 60,
+	"licence": "AGPL",
+	"author": "TiTidom",
+	"require": "4.2.0",
+	"category": "multimedia",
+	"hasTtsEngine": true,
+	"hasDependency": true,
+	"hasOwnDeamon": true,
+	"maxDependancyInstallTime": 60,
 	"changelog": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/changelog",
-    "documentation": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/index",
-    "changelog_beta": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/beta/changelog",
-    "documentation_beta": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/beta/index",
+	"documentation": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/index",
+	"changelog_beta": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/beta/changelog",
+	"documentation_beta": "https://titidom-rc.github.io/Documentation/#language#/TTSCast/beta/index",
 	"link": {
-        "forum": "https://community.jeedom.com/tag/plugin-ttscast",
-        "video": ""
-    },
+		"forum": "https://community.jeedom.com/tag/plugin-ttscast",
+		"video": ""
+	},
 	"language": [
-		"fr_FR",
+		"de_DE",
 		"en_US",
 		"es_ES",
-		"de_DE"
+		"fr_FR",
+		"it_IT",
+		"pt_PT"
 	],
 	"compatibility": [
 		"miniplus",
