@@ -55,7 +55,7 @@ class jeedom_com():
 					continue
 				changes = self._changes
 				self._changes = {}
-				self.__post_changes(changes)
+				self.__post_change(changes)
 				logging.debug('[DAEMON][COM] Send to jeedom: %s', changes)
 			except Exception as error:
 				logging.error('[DAEMON][COM] Critical error on __thread_changes_async :: %s', error)
@@ -83,7 +83,7 @@ class jeedom_com():
 	def send_change_immediate(self, change):
 		Thread(target=self.__post_change, args=(change,)).start()
 
-	def __post_changes(self, change):
+	def __post_change(self, change):
 		logging.debug('[DAEMON][COM] Send to jeedom : %s', change)
 		for i in range(self._retry):
 			try:
