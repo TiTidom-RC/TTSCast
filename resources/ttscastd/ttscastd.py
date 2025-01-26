@@ -32,8 +32,8 @@ from uuid import UUID
 
 # Import pour Jeedom
 try:
-    from jeedom.jeedom import *
-    # from jeedom.jeedom import jeedom_socket, jeedom_utils, jeedom_com, JEEDOM_SOCKET_MESSAGE
+    # from jeedom.jeedom import *
+    from jeedom.jeedom import jeedom_socket, jeedom_utils, jeedom_com, JEEDOM_SOCKET_MESSAGE  # jeedom_serial
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module jeedom.jeedom ::", e)
     sys.exit(1)
@@ -83,7 +83,7 @@ except ImportError as e:
 class Loops:
     # *** Boucle events from Jeedom ***
     def eventsFromJeedom(cycle=0.5):
-        global JEEDOM_SOCKET_MESSAGE
+        # global JEEDOM_SOCKET_MESSAGE
         while not Config.IS_ENDING:    
             if not JEEDOM_SOCKET_MESSAGE.empty():
                 logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
@@ -214,7 +214,7 @@ class Loops:
         
     # *** Boucle principale infinie (daemon) ***
     def mainLoop(cycle=2):
-        jeedom_socket.open()
+        my_jeedom_socket.open()
         logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
         
         # *** Thread pour les Event venant de Jeedom ***
@@ -2009,7 +2009,8 @@ class Functions:
         try:
             result = urlparse(url)
             return all([result.scheme, result.netloc, result.path])
-        except:
+        except Exception as e:
+            logging.error('[DAEMON][isURL] Exception :: %s', e)
             return False
         
 class myCast:
@@ -2125,7 +2126,7 @@ class myCast:
         """Listener for discovering chromecasts."""
 
         def add_cast(self, uuid, _service):
-            """Called when a new cast has beeen discovered."""
+            """Called when a new cast has been discovered."""
             # print(f"Found cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
             logging.debug('[DAEMON][NETCAST][Add_Cast] Found Cast Device (Name/UUID) :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
             # TODO Action lorsqu'un GoogleCast est ajouté
@@ -2141,14 +2142,14 @@ class myCast:
             # TODO Config.NETCAST_DEVICES add device ?
 
         def remove_cast(self, uuid, _service, cast_info):
-            """Called when a cast has beeen lost (MDNS info expired or host down)."""
+            """Called when a cast has been lost (MDNS info expired or host down)."""
             # print(f"Lost cast device '{cast_info.friendly_name}' with UUID {uuid}")
             logging.debug('[DAEMON][NETCAST][Remove_Cast] Lost Cast Device (Name/UUID) :: ' + cast_info.friendly_name + ' / ' + str(uuid))
             # TODO Action lorsqu'un GoogleCast est supprimé
             # TODO Config.NETCAST_DEVICES remove device + Listener ?
 
         def update_cast(self, uuid, _service):
-            """Called when a cast has beeen updated (MDNS info renewed or changed)."""
+            """Called when a cast has been updated (MDNS info renewed or changed)."""
             # print(f"Updated cast device '{Config.NETCAST_BROWSER.services[uuid].friendly_name}' with UUID {uuid}")
             logging.debug('[DAEMON][NETCAST][Update_Cast] Updated Cast Device (Name/UUID) :: ' + Config.NETCAST_BROWSER.services[uuid].friendly_name + ' / ' + str(uuid))
             # TODO Action lorsqu'un GoogleCast est mis à jour
@@ -2332,7 +2333,7 @@ def shutdown():
     except Exception:
         pass
     try:
-        jeedom_socket.close()
+        my_jeedom_socket.close()
     except Exception:
         pass
     logging.info("[DAEMON] Shutdown :: Exit 0")
@@ -2446,7 +2447,7 @@ try:
         shutdown()
     else:
         logging.info('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication OK (Daemon to Jeedom)')
-    jeedom_socket = jeedom_socket(port=Config.socketPort, address=Config.socketHost)
+    my_jeedom_socket = jeedom_socket(port=Config.socketPort, address=Config.socketHost)
     Loops.mainLoop(Config.cycleMain)
 except Exception as e:
     logging.error('[DAEMON][MAIN] Fatal error: %s', e)
