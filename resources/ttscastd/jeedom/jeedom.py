@@ -83,7 +83,7 @@ class jeedom_com():
 	def send_change_immediate(self, change):
 		Thread(target=self.__post_change, args=(change,)).start()
 
-	def __post_change(self, change):
+	def __post_changes(self, change):
 		logging.debug('[DAEMON][COM] Send to jeedom : %s', change)
 		for i in range(self._retry):
 			try:
