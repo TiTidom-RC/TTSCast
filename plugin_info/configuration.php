@@ -249,17 +249,19 @@ if (!isConnect()) {
                     <select class="configKey form-control" data-l1key="gCloudTTSVoice">
                         <!-- French France -->
                         <option disabled>--- Français (France) ---</option>
-                        <option value="fr-FR-Neural2-A">Français (France) - Neural2 A Female (fr-FR-Neural2-A)</option>
-                        <option value="fr-FR-Neural2-B">Français (France) - Neural2 B Male (fr-FR-Neural2-B)</option>
-                        <option value="fr-FR-Neural2-C">Français (France) - Neural2 C Female (fr-FR-Neural2-C)</option>
-                        <option value="fr-FR-Neural2-D">Français (France) - Neural2 D Male (fr-FR-Neural2-D)</option>
-                        <option value="fr-FR-Neural2-E">Français (France) - Neural2 E Female (fr-FR-Neural2-E)</option>
+                        <option value="fr-FR-Journey-D">Français (France) - Journey D Male (fr-FR-Journey-D)</option>
+                        <option value="fr-FR-Journey-F">Français (France) - Journey F Female (fr-FR-Journey-F)</option>
+                        <option value="fr-FR-Journey-O">Français (France) - Journey O Female (fr-FR-Journey-O)</option>
+                        <option value="fr-FR-Neural2-F">Français (France) - Neural2 F Female (fr-FR-Neural2-F)</option>
+                        <option value="fr-FR-Neural2-G">Français (France) - Neural2 G Male (fr-FR-Neural2-G)</option>
                         <option value="fr-FR-Polyglot-1">Français (France) - Polyglot 1 Male (fr-FR-Polyglot-1)</option>
                         <option value="fr-FR-Standard-A">Français (France) - Standard A Female (fr-FR-Standard-A)</option>
                         <option value="fr-FR-Standard-B">Français (France) - Standard B Male (fr-FR-Standard-B)</option>
                         <option value="fr-FR-Standard-C">Français (France) - Standard C Female (fr-FR-Standard-C)</option>
                         <option value="fr-FR-Standard-D">Français (France) - Standard D Male (fr-FR-Standard-D)</option>
                         <option value="fr-FR-Standard-E">Français (France) - Standard E Female (fr-FR-Standard-E)</option>
+                        <option value="fr-FR-Standard-F">Français (France) - Standard F Female (fr-FR-Standard-F)</option>
+                        <option value="fr-FR-Standard-G">Français (France) - Standard G Male (fr-FR-Standard-G)</option>
                         <option value="fr-FR-Studio-A">Français (France) - Studio A Female (fr-FR-Studio-A)</option>
                         <option value="fr-FR-Studio-D">Français (France) - Studio D Male (fr-FR-Studio-D)</option>
                         <option value="fr-FR-Wavenet-A">Français (France) - Wavenet A Female (fr-FR-Wavenet-A)</option>
@@ -267,8 +269,13 @@ if (!isConnect()) {
                         <option value="fr-FR-Wavenet-C">Français (France) - Wavenet C Female (fr-FR-Wavenet-C)</option>
                         <option value="fr-FR-Wavenet-D">Français (France) - Wavenet D Male (fr-FR-Wavenet-D)</option>
                         <option value="fr-FR-Wavenet-E">Français (France) - Wavenet E Female (fr-FR-Wavenet-E)</option>
+                        <option value="fr-FR-Wavenet-F">Français (France) - Wavenet F Female (fr-FR-Wavenet-F)</option>
+                        <option value="fr-FR-Wavenet-G">Français (France) - Wavenet G Male (fr-FR-Wavenet-G)</option>
                         <!-- French Canada -->
                         <option disabled>--- Français (Canada) ---</option>
+                        <option value="fr-CA-Journey-D">Français (Canada) - Journey D Male (fr-CA-Journey-D)</option>
+                        <option value="fr-CA-Journey-F">Français (Canada) - Journey F Female (fr-CA-Journey-F)</option>
+                        <option value="fr-CA-Journey-O">Français (Canada) - Journey O Female (fr-CA-Journey-O)</option>
                         <option value="fr-CA-Neural2-A">Français (Canada) - Neural2 A Female (fr-CA-Neural2-A)</option>
                         <option value="fr-CA-Neural2-B">Français (Canada) - Neural2 B Male (fr-CA-Neural2-B)</option>
                         <option value="fr-CA-Neural2-C">Français (Canada) - Neural2 C Female (fr-CA-Neural2-C)</option>
@@ -286,6 +293,7 @@ if (!isConnect()) {
                         <option value="en-US-Casual-K">Anglais (US) - Casual K Male (en-US-Casual-K)</option>
                         <option value="en-US-Journey-D">Anglais (US) - Journey D Male (en-US-Journey-D)</option>
                         <option value="en-US-Journey-F">Anglais (US) - Journey F Female (en-US-Journey-F)</option>
+                        <option value="en-US-Journey-O">Anglais (US) - Journey O Female (en-US-Journey-O)</option>
                         <option value="en-US-Neural2-A">Anglais (US) - Neural2 A Male (en-US-Neural2-A)</option>
                         <option value="en-US-Neural2-C">Anglais (US) - Neural2 C Female (en-US-Neural2-C)</option>
                         <option value="en-US-Neural2-D">Anglais (US) - Neural2 D Male (en-US-Neural2-D)</option>
@@ -323,11 +331,11 @@ if (!isConnect()) {
                         <option value="en-US-Wavenet-J">Anglais (US) - Wavenet J Male (en-US-Wavenet-J)</option>
                         <!-- English (GB) -->
                         <option disabled>--- Anglais (GB) ---</option>
-                        <option value="en-GB-Neural2-A">Anglais (GB) - Neural2 A Female (en-GB-Neural2-A)</option>
-                        <option value="en-GB-Neural2-B">Anglais (GB) - Neural2 B Male (en-GB-Neural2-B)</option>
-                        <option value="en-GB-Neural2-C">Anglais (GB) - Neural2 C Female (en-GB-Neural2-C)</option>
-                        <option value="en-GB-Neural2-D">Anglais (GB) - Neural2 D Male (en-GB-Neural2-D)</option>
-                        <option value="en-GB-Neural2-F">Anglais (GB) - Neural2 F Female (en-GB-Neural2-F)</option>
+                        <option value="en-GB-Journey-D">Anglais (GB) - Journey D Male (en-GB-Journey-D)</option>
+                        <option value="en-GB-Journey-F">Anglais (GB) - Journey F Female (en-GB-Journey-F)</option>
+                        <option value="en-GB-Journey-O">Anglais (GB) - Journey O Female (en-GB-Journey-O)</option>
+                        <option value="en-GB-Neural2-N">Anglais (GB) - Neural2 N Female (en-GB-Neural2-N)</option>
+                        <option value="en-GB-Neural2-O">Anglais (GB) - Neural2 O Male (en-GB-Neural2-O)</option>
                         <option value="en-GB-News-G">Anglais (GB) - News G Female (en-GB-News-G)</option>
                         <option value="en-GB-News-H">Anglais (GB) - News H Female (en-GB-News-H)</option>
                         <option value="en-GB-News-I">Anglais (GB) - News I Female (en-GB-News-I)</option>
@@ -340,6 +348,8 @@ if (!isConnect()) {
                         <option value="en-GB-Standard-C">Anglais (GB) - Standard C Female (en-GB-Standard-C)</option>
                         <option value="en-GB-Standard-D">Anglais (GB) - Standard D Male (en-GB-Standard-D)</option>
                         <option value="en-GB-Standard-F">Anglais (GB) - Standard F Female (en-GB-Standard-F)</option>
+                        <option value="en-GB-Standard-N">Anglais (GB) - Standard N Female (en-GB-Standard-N)</option>
+                        <option value="en-GB-Standard-O">Anglais (GB) - Standard O Male (en-GB-Standard-O)</option>
                         <option value="en-GB-Studio-B">Anglais (GB) - Studio B Male (en-GB-Studio-B)</option>
                         <option value="en-GB-Studio-C">Anglais (GB) - Studio C Female (en-GB-Studio-C)</option>
                         <option value="en-GB-Wavenet-A">Anglais (GB) - Wavenet A Female (en-GB-Wavenet-A)</option>
@@ -347,41 +357,61 @@ if (!isConnect()) {
                         <option value="en-GB-Wavenet-C">Anglais (GB) - Wavenet C Female (en-GB-Wavenet-C)</option>
                         <option value="en-GB-Wavenet-D">Anglais (GB) - Wavenet D Male (en-GB-Wavenet-D)</option>
                         <option value="en-GB-Wavenet-F">Anglais (GB) - Wavenet F Female (en-GB-Wavenet-F)</option>
+                        <option value="en-GB-Wavenet-N">Anglais (GB) - Wavenet N Female (en-GB-Wavenet-N)</option>
+                        <option value="en-GB-Wavenet-O">Anglais (GB) - Wavenet O Male (en-GB-Wavenet-O)</option>
                         <!-- Italian -->
                         <option disabled>--- Italien (Italie) ---</option>
+                        <option value="it-IT-Journey-D">Italien (Italie) - Journey D Male (it-IT-Journey-D)</option>
+                        <option value="it-IT-Journey-F">Italien (Italie) - Journey F Female (it-IT-Journey-F)</option>
+                        <option value="it-IT-Journey-O">Italien (Italie) - Journey O Female (it-IT-Journey-O)</option>
                         <option value="it-IT-Neural2-A">Italien (Italie) - Neural2 A Female (it-IT-Neural2-A)</option>
-                        <option value="it-IT-Neural2-C">Italien (Italie) - Neural2 C Male (it-IT-Neural2-C)</option>
+                        <option value="it-IT-Neural2-F">Italien (Italie) - Neural2 F Male (it-IT-Neural2-F)</option>
                         <option value="it-IT-Standard-A">Italien (Italie) - Standard A Female (it-IT-Standard-A)</option>
                         <option value="it-IT-Standard-B">Italien (Italie) - Standard B Female (it-IT-Standard-B)</option>
                         <option value="it-IT-Standard-C">Italien (Italie) - Standard C Male (it-IT-Standard-C)</option>
                         <option value="it-IT-Standard-D">Italien (Italie) - Standard D Male (it-IT-Standard-D)</option>
+                        <option value="it-IT-Standard-E">Italien (Italie) - Standard E Female (it-IT-Standard-E)</option>
+                        <option value="it-IT-Standard-F">Italien (Italie) - Standard F Male (it-IT-Standard-F)</option>
                         <option value="it-IT-Wavenet-A">Italien (Italie) - Wavenet A Female (it-IT-Wavenet-A)</option>
                         <option value="it-IT-Wavenet-B">Italien (Italie) - Wavenet B Female (it-IT-Wavenet-B)</option>
                         <option value="it-IT-Wavenet-C">Italien (Italie) - Wavenet C Male (it-IT-Wavenet-C)</option>
                         <option value="it-IT-Wavenet-D">Italien (Italie) - Wavenet D Male (it-IT-Wavenet-D)</option>
+                        <option value="it-IT-Wavenet-E">Italien (Italie) - Wavenet E Female (it-IT-Wavenet-E)</option>
+                        <option value="it-IT-Wavenet-F">Italien (Italie) - Wavenet F Male (it-IT-Wavenet-F)</option>
                         <!-- Spanish (Espagne) -->
-                        <option disabled>--- Espagnol (Espagne) ---</option>
+                        <option value="es-ES-Journey-D">Espagnol (Espagne) - Journey D Male (es-ES-Journey-D)</option>
+                        <option value="es-ES-Journey-F">Espagnol (Espagne) - Journey F Female (es-ES-Journey-F)</option>
+                        <option value="es-ES-Journey-O">Espagnol (Espagne) - Journey O Female (es-ES-Journey-O)</option>
                         <option value="es-ES-Neural2-A">Espagnol (Espagne) - Neural2 A Female (es-ES-Neural2-A)</option>
-                        <option value="es-ES-Neural2-B">Espagnol (Espagne) - Neural2 B Male (es-ES-Neural2-B)</option>
-                        <option value="es-ES-Neural2-C">Espagnol (Espagne) - Neural2 C Female (es-ES-Neural2-C)</option>
-                        <option value="es-ES-Neural2-D">Espagnol (Espagne) - Neural2 D Female (es-ES-Neural2-D)</option>
                         <option value="es-ES-Neural2-E">Espagnol (Espagne) - Neural2 E Female (es-ES-Neural2-E)</option>
                         <option value="es-ES-Neural2-F">Espagnol (Espagne) - Neural2 F Male (es-ES-Neural2-F)</option>
+                        <option value="es-ES-Neural2-G">Espagnol (Espagne) - Neural2 G Male (es-ES-Neural2-G)</option>
+                        <option value="es-ES-Neural2-H">Espagnol (Espagne) - Neural2 H Female (es-ES-Neural2-H)</option>
                         <option value="es-ES-Polyglot-1">Espagnol (Espagne) - Polyglot 1 Male (es-ES-Polyglot-1)</option>
                         <option value="es-ES-Standard-A">Espagnol (Espagne) - Standard A Female (es-ES-Standard-A)</option>
                         <option value="es-ES-Standard-B">Espagnol (Espagne) - Standard B Male (es-ES-Standard-B)</option>
                         <option value="es-ES-Standard-C">Espagnol (Espagne) - Standard C Female (es-ES-Standard-C)</option>
                         <option value="es-ES-Standard-D">Espagnol (Espagne) - Standard D Female (es-ES-Standard-D)</option>
+                        <option value="es-ES-Standard-E">Espagnol (Espagne) - Standard E Male (es-ES-Standard-E)</option>
+                        <option value="es-ES-Standard-F">Espagnol (Espagne) - Standard F Female (es-ES-Standard-F)</option>
+                        <option value="es-ES-Standard-G">Espagnol (Espagne) - Standard G Male (es-ES-Standard-G)</option>
+                        <option value="es-ES-Standard-H">Espagnol (Espagne) - Standard H Female (es-ES-Standard-H)</option>
+                        <option value="es-ES-Studio-C">Espagnol (Espagne) - Studio C Female (es-ES-Studio-C)</option>
+                        <option value="es-ES-Studio-F">Espagnol (Espagne) - Studio F Male (es-ES-Studio-F)</option>
                         <option value="es-ES-Wavenet-B">Espagnol (Espagne) - Wavenet B Male (es-ES-Wavenet-B)</option>
                         <option value="es-ES-Wavenet-C">Espagnol (Espagne) - Wavenet C Female (es-ES-Wavenet-C)</option>
                         <option value="es-ES-Wavenet-D">Espagnol (Espagne) - Wavenet D Female (es-ES-Wavenet-D)</option>
-                        <option value="de-DE-Neural2-A">Allemand (Allemagne) - Neural2 A Female (de-DE-Neural2-A)</option>
+                        <option value="es-ES-Wavenet-E">Espagnol (Espagne) - Wavenet E Male (es-ES-Wavenet-E)</option>
+                        <option value="es-ES-Wavenet-F">Espagnol (Espagne) - Wavenet F Female (es-ES-Wavenet-F)</option>
+                        <option value="es-ES-Wavenet-G">Espagnol (Espagne) - Wavenet G Male (es-ES-Wavenet-G)</option>
+                        <option value="es-ES-Wavenet-H">Espagnol (Espagne) - Wavenet H Female (es-ES-Wavenet-H)</option>
                         <!-- Deutsch (Allemagne) -->
                         <option disabled>--- Allemand (Allemagne) ---</option>
-                        <option value="de-DE-Neural2-B">Allemand (Allemagne) - Neural2 B Male (de-DE-Neural2-B)</option>
-                        <option value="de-DE-Neural2-C">Allemand (Allemagne) - Neural2 C Female (de-DE-Neural2-C)</option>
-                        <option value="de-DE-Neural2-D">Allemand (Allemagne) - Neural2 D Male (de-DE-Neural2-D)</option>
-                        <option value="de-DE-Neural2-F">Allemand (Allemagne) - Neural2 F Female (de-DE-Neural2-F)</option>
+                        <option value="de-DE-Journey-D">Allemand (Allemagne) - Journey D Male (de-DE-Journey-D)</option>
+                        <option value="de-DE-Journey-F">Allemand (Allemagne) - Journey F Female (de-DE-Journey-F)</option>
+                        <option value="de-DE-Journey-O">Allemand (Allemagne) - Journey O Female (de-DE-Journey-O)</option>
+                        <option value="de-DE-Neural2-G">Allemand (Allemagne) - Neural2 G Female (de-DE-Neural2-G)</option>
+                        <option value="de-DE-Neural2-H">Allemand (Allemagne) - Neural2 H Male (de-DE-Neural2-H)</option>
                         <option value="de-DE-Polyglot-1">Allemand (Allemagne) - Polyglot 1 Male (de-DE-Polyglot-1)</option>
                         <option value="de-DE-Standard-A">Allemand (Allemagne) - Standard A Female (de-DE-Standard-A)</option>
                         <option value="de-DE-Standard-B">Allemand (Allemagne) - Standard B Male (de-DE-Standard-B)</option>
@@ -389,6 +419,8 @@ if (!isConnect()) {
                         <option value="de-DE-Standard-D">Allemand (Allemagne) - Standard D Male (de-DE-Standard-D)</option>
                         <option value="de-DE-Standard-E">Allemand (Allemagne) - Standard E Male (de-DE-Standard-E)</option>
                         <option value="de-DE-Standard-F">Allemand (Allemagne) - Standard F Female (de-DE-Standard-F)</option>
+                        <option value="de-DE-Standard-G">Allemand (Allemagne) - Standard G Female (de-DE-Standard-G)</option>
+                        <option value="de-DE-Standard-H">Allemand (Allemagne) - Standard H Male (de-DE-Standard-H)</option>
                         <option value="de-DE-Studio-B">Allemand (Allemagne) - Studio B Male (de-DE-Studio-B)</option>
                         <option value="de-DE-Studio-C">Allemand (Allemagne) - Studio C Female (de-DE-Studio-C)</option>
                         <option value="de-DE-Wavenet-A">Allemand (Allemagne) - Wavenet A Female (de-DE-Wavenet-A)</option>
@@ -397,12 +429,32 @@ if (!isConnect()) {
                         <option value="de-DE-Wavenet-D">Allemand (Allemagne) - Wavenet D Male (de-DE-Wavenet-D)</option>
                         <option value="de-DE-Wavenet-E">Allemand (Allemagne) - Wavenet E Male (de-DE-Wavenet-E)</option>
                         <option value="de-DE-Wavenet-F">Allemand (Allemagne) - Wavenet F Female (de-DE-Wavenet-F)</option>
+                        <option value="de-DE-Wavenet-G">Allemand (Allemagne) - Wavenet G Female (de-DE-Wavenet-G)</option>
+                        <option value="de-DE-Wavenet-H">Allemand (Allemagne) - Wavenet H Male (de-DE-Wavenet-H)</option>
                         <!-- Néerlandais (Belgique) -->
                         <option disabled>--- Néerlandais (Belgique) ---</option>
                         <option value="nl-BE-Standard-A">Néerlandais (Belgique) - Standard A Female (nl-BE-Standard-A)</option>
                         <option value="nl-BE-Standard-B">Néerlandais (Belgique) - Standard B Male (nl-BE-Standard-B)</option>
+                        <option value="nl-BE-Standard-C">Néerlandais (Belgique) - Standard C Female (nl-BE-Standard-C)</option>
+                        <option value="nl-BE-Standard-D">Néerlandais (Belgique) - Standard D Male (nl-BE-Standard-D)</option>
                         <option value="nl-BE-Wavenet-A">Néerlandais (Belgique) - Wavenet A Female (nl-BE-Wavenet-A)</option>
                         <option value="nl-BE-Wavenet-B">Néerlandais (Belgique) - Wavenet B Male (nl-BE-Wavenet-B)</option>
+                        <option value="nl-BE-Wavenet-C">Néerlandais (Belgique) - Wavenet C Female (nl-BE-Wavenet-C)</option>
+                        <option value="nl-BE-Wavenet-D">Néerlandais (Belgique) - Wavenet D Male (nl-BE-Wavenet-D)</option>
+                        <option value="nl-NL-Standard-A">Néerlandais (Belgique) - nl NL Standard A Female (nl-NL-Standard-A)</option>
+                        <option value="nl-NL-Standard-B">Néerlandais (Belgique) - nl NL Standard B Male (nl-NL-Standard-B)</option>
+                        <option value="nl-NL-Standard-C">Néerlandais (Belgique) - nl NL Standard C Male (nl-NL-Standard-C)</option>
+                        <option value="nl-NL-Standard-D">Néerlandais (Belgique) - nl NL Standard D Female (nl-NL-Standard-D)</option>
+                        <option value="nl-NL-Standard-E">Néerlandais (Belgique) - nl NL Standard E Female (nl-NL-Standard-E)</option>
+                        <option value="nl-NL-Standard-F">Néerlandais (Belgique) - nl NL Standard F Female (nl-NL-Standard-F)</option>
+                        <option value="nl-NL-Standard-G">Néerlandais (Belgique) - nl NL Standard G Male (nl-NL-Standard-G)</option>
+                        <option value="nl-NL-Wavenet-A">Néerlandais (Belgique) - nl NL Wavenet A Female (nl-NL-Wavenet-A)</option>
+                        <option value="nl-NL-Wavenet-B">Néerlandais (Belgique) - nl NL Wavenet B Male (nl-NL-Wavenet-B)</option>
+                        <option value="nl-NL-Wavenet-C">Néerlandais (Belgique) - nl NL Wavenet C Male (nl-NL-Wavenet-C)</option>
+                        <option value="nl-NL-Wavenet-D">Néerlandais (Belgique) - nl NL Wavenet D Female (nl-NL-Wavenet-D)</option>
+                        <option value="nl-NL-Wavenet-E">Néerlandais (Belgique) - nl NL Wavenet E Female (nl-NL-Wavenet-E)</option>
+                        <option value="nl-NL-Wavenet-F">Néerlandais (Belgique) - nl NL Wavenet F Female (nl-NL-Wavenet-F)</option>
+                        <option value="nl-NL-Wavenet-G">Néerlandais (Belgique) - nl NL Wavenet G Male (nl-NL-Wavenet-G)</option>
                         <!-- Serbian -->
                         <option disabled>--- Serbe (Serbie) ---</option>
                         <option value="sr-RS-Standard-A">Serbe (Serbie) - Standard A Female (sr-RS-Standard-A)</option>
