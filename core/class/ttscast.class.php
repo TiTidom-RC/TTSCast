@@ -38,7 +38,7 @@ class ttscast extends eqLogic
      */
     public static $_encryptConfigKey = array('voiceRSSAPIKey');    
 
-    /* ************************ Methodes statiques : Démon & Dépendances *************************** */
+    /* ************************ Méthodes statiques : Démon & Dépendances *************************** */
 
     public static function backupExclude() {
         return [
@@ -231,7 +231,7 @@ class ttscast extends eqLogic
         }
     }
 
-    /* ************************ Methodes static : PLUGIN *************************** */
+    /* ************************ Méthodes static : PLUGIN *************************** */
 
     public static function testExternalAddress($useExternal=NULL)
     {

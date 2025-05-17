@@ -489,8 +489,26 @@ class TTSCast:
             try:
                 if (ttsOptions is not None):
                     options_json = json.loads("{" + ttsOptions + "}")
+                    
+                    # SSML
                     _useSSML = options_json['ssml'] if 'ssml' in options_json else False
+                    # Before
                     _silenceBefore = options_json['before'] if 'before' in options_json else None
+                    # Custom Voice 
+                    _ttsVoiceCode = options_json['voice'] if 'voice' in options_json else None
+                    
+                    if _ttsVoiceCode is not None:
+                        if ttsEngine == "gcloudtts":
+                            ttsVoiceName = _ttsVoiceCode
+                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (Google Cloud) :: %s', ttsVoiceName)
+                        elif ttsEngine == "gtranslatetts":
+                            ttsLang = _ttsVoiceCode
+                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (Google Translate) :: %s', ttsLang)
+                        elif ttsEngine == "voicersstts":
+                            ttsRSSVoiceName = _ttsVoiceCode
+                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (VoiceRSS) :: %s', ttsRSSVoiceName)
+                    else:
+                        logging.debug('[DAEMON][GenerateTTS] Code Voix (Standard) :: %s', ttsVoiceName)
                     
                     if _silenceBefore is not None and _useSSML is False:
                         _useSSML = True
