@@ -494,9 +494,17 @@ class TTSCast:
                     _useSSML = options_json['ssml'] if 'ssml' in options_json else False
                     # Before
                     _silenceBefore = options_json['before'] if 'before' in options_json else None
+                    
+                    if _silenceBefore is not None and _useSSML is False:
+                        _useSSML = True
+                        ttsText = "<speak><break time='" + str(_silenceBefore) + "' /><p>" + ttsText + "</p></speak>"
+                        logging.debug('[DAEMON][GenerateTTS] Ajout de %s de silence avant le TTS :: %s', str(_silenceBefore), ttsText)
+                    elif _silenceBefore is not None and _useSSML is True:
+                        logging.error('[DAEMON][GenerateTTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande.')
+                        return False
+                    
                     # Custom Voice 
                     _ttsVoiceCode = options_json['voice'] if 'voice' in options_json else None
-                    
                     if _ttsVoiceCode is not None:
                         if ttsEngine == "gcloudtts":
                             ttsVoiceName = _ttsVoiceCode
@@ -507,17 +515,7 @@ class TTSCast:
                         elif ttsEngine == "voicersstts":
                             ttsRSSVoiceName = _ttsVoiceCode
                             logging.debug('[DAEMON][GenerateTTS] Voix Custom (VoiceRSS) :: %s', ttsRSSVoiceName)
-                    else:
-                        logging.debug('[DAEMON][GenerateTTS] Code Voix (Standard) :: %s', ttsVoiceName)
-                    
-                    if _silenceBefore is not None and _useSSML is False:
-                        _useSSML = True
-                        ttsText = "<speak><break time='" + str(_silenceBefore) + "' /><p>" + ttsText + "</p></speak>"
-                        logging.debug('[DAEMON][GenerateTTS] Ajout de %s de silence avant le TTS :: %s', str(_silenceBefore), ttsText)
-                    elif _silenceBefore is not None and _useSSML is True:
-                        logging.error('[DAEMON][GenerateTTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande.')
-                        return False
-                    
+                            
                     logging.debug('[DAEMON][GenerateTTS] Options :: %s', str(options_json))
             except ValueError as e:
                 logging.debug('[DAEMON][GenerateTTS] Options mal formatées (Json KO) :: %s', e)
@@ -631,12 +629,15 @@ class TTSCast:
             try:
                 if (ttsOptions is not None):
                     options_json = json.loads("{" + ttsOptions + "}")
+                    
                     _ttsVolume = options_json['volume'] if 'volume' in options_json else None
                     _appDing = options_json['ding'] if 'ding' in options_json else True
                     _cmdWait = options_json['wait'] if 'wait' in options_json else None
+                    
+                    # SSML
                     _useSSML = options_json['ssml'] if 'ssml' in options_json else False
+                    # Silent Before
                     _silenceBefore = options_json['before'] if 'before' in options_json else None
-                    _cmdForce = options_json['force'] if 'force' in options_json else False
                     
                     if _silenceBefore is not None and _useSSML is False:
                         _useSSML = True
@@ -646,6 +647,26 @@ class TTSCast:
                         logging.error('[DAEMON][TTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande.')
                         return False
                     
+                    # Force
+                    _cmdForce = options_json['force'] if 'force' in options_json else False
+                    
+                    # Custom Voice 
+                    _ttsVoiceCode = options_json['voice'] if 'voice' in options_json else None
+                    
+                    if _ttsVoiceCode is not None:
+                        if ttsEngine == "gcloudtts":
+                            ttsVoiceName = _ttsVoiceCode
+                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (Google Cloud) :: %s', ttsVoiceName)
+                        elif ttsEngine == "gtranslatetts":
+                            ttsLang = _ttsVoiceCode
+                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (Google Translate) :: %s', ttsLang)
+                        elif ttsEngine == "voicersstts":
+                            ttsRSSVoiceName = _ttsVoiceCode
+                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (VoiceRSS) :: %s', ttsRSSVoiceName)
+                        elif ttsEngine == "jeedomtts":
+                            ttsLang = _ttsVoiceCode
+                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (Jeedom) :: %s', ttsLang)
+
                     logging.debug('[DAEMON][TTS] Options :: %s', str(options_json))
             except ValueError as e:
                 logging.debug('[DAEMON][TTS] Options mal formatées (Json KO) :: %s', e)
