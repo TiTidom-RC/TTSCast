@@ -121,7 +121,7 @@ class ttscast extends eqLogic
                 log::add('ttscast', 'debug', '[DepInfo][ERROR] Missing Python dependencies');
                 $return['state'] = 'nok';
             } else {
-                log::add('ttscast', 'debug', '[DepInfo] All dependencies are installed');
+                log::add('ttscast', 'debug', '[DepInfo][INFO] All dependencies are installed');
                 $return['state'] = 'ok';
             }
         }
