@@ -698,6 +698,14 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
+                <label class="col-lg-3 control-label">{{ID Projet (Google)}} <a class="btn btn-info btn-xs" target="_blank" href="https://console.cloud.google.com/apis">{{SITE}}</a>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Entrez votre ID de projet Google pour l'authentification avec le moteur d'IA.}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <input class="configKey form-control" type="text" data-l1key="ttsAIProjectID" />
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Clé API}} <a class="btn btn-info btn-xs" target="_blank" href="https://aistudio.google.com/apikey">{{SITE}}</a>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Entrez votre clé API pour l'authentification avec le moteur d'IA.}}"></i></sup>
                 </label>

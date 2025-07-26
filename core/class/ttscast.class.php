@@ -179,6 +179,7 @@ class ttscast extends eqLogic
         $cmd .= ' --cmdwaittimeout ' . config::byKey('cmdWaitTimeout', __CLASS__, '60');
         $cmd .= ' --aienabled ' . config::byKey('ttsAI', __CLASS__, '0');
         $cmd .= ' --aiauthmode ' . config::byKey('ttsAIAuthMode', __CLASS__, 'noMode');
+        $cmd .= ' --aiprojectid ' . config::byKey('ttsAIProjectID', __CLASS__, 'noProjectID');
         $cmd .= ' --aiapikey ' . config::byKey('ttsAIAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --aimodel ' . config::byKey('ttsAIModel', __CLASS__, 'noModel');
         $cmd .= ' --aidefaulttone ' . config::byKey('ttsAIDefaultTone', __CLASS__, 'NoDefaultTone');

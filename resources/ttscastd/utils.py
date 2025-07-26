@@ -69,11 +69,14 @@ class Config:
     # AI Configuration
     aiEnabled = False
     aiAuthMode = 'noMode'  # 'noMode', 'apikey', 'oauth2'
+    aiProjectID = 'noProjectID'  # Google Cloud Project ID for AI
     aiApiKey = ''
     aiModel = 'noModel'  # 'noModel', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'
     aiDefaultTone = 'Enthousiaste et humoristique'  # Default tone for AI TTS
+    aiDefaultSysPrompt = 'Répond à la question posée seulement s\'il y en a une, sinon reformule simplement la phrase, sur un ton ' + aiDefaultTone + '. Sois clair, bref et concis et conserve les valeurs chiffrées s\'il y en a.'
     aiUseCustomSysPrompt = False
     aiCustomSysPrompt = ''
+    aiScopes = ['https://www.googleapis.com/auth/cloud-platform']
     
     # Paths for various resources
     mediaFolder = 'data/media'

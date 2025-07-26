@@ -66,12 +66,15 @@ except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module gTTS ::", e)
     sys.exit(1)
 
-# Import pyDub (Audio changing)
-# try:
-#     from pydub import AudioSegment
-# except ImportError as e: 
-#     print("[DAEMON][IMPORT] Error: importing module gTTS ::", e)
-#     sys.exit(1)
+# Import GenAI (Gemini)
+try:
+    from google import genai
+    from google.genai import types
+    import markdown
+    from bs4 import BeautifulSoup
+except ImportError as e:
+    print("[DAEMON][IMPORT] Error: importing modules for GenAI ::", e)
+    sys.exit(1)
 
 # Import Config
 try:
@@ -105,10 +108,10 @@ class Loops:
                             # Traitement des actions (inclus les CustomCmd)
                             if message['cmd_action'] == 'ttstest':
                                 logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
-                        
-                                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsSSML')):
-                                    logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'])
-                                    threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML']]).start()
+
+                                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsSSML', 'ttsAI')):
+                                    logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'] + ' | ' + message['ttsAI'])
+                                    threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML'], message['ttsAI']]).start()
                                 else:
                                     logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                             
@@ -347,7 +350,7 @@ class TTSCast:
             filecontent = None
         return filecontent
     
-    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0'):
+    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0', ttsAI='0'):
         logging.debug('[DAEMON][TestTTS] Param TTSEngine :: %s', ttsEngine)
         
         logging.debug('[DAEMON][TestTTS] Check des répertoires')
@@ -377,12 +380,22 @@ class TTSCast:
                 
                 logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
                 
-                if not os.path.isfile(filepath):
+                if not os.path.isfile(filepath) or ttsAI == '1':
                     language_code = "-".join(ttsVoiceName.split("-")[:2])
                     logging.debug('[DAEMON][TestTTS] LanguageCode :: %s', language_code)
                     if ttsSSML == '1':
+                        logging.debug('[DAEMON][TestTTS] Génération du TTS avec SSML')
                         text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
+                    elif ttsAI == '1':
+                        ttsAIText = TTSCast.genAI(ttsText)
+                        if ttsAIText is not None:
+                            logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
+                            text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
+                        else:
+                            logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                            text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     else:
+                        logging.debug('[DAEMON][TestTTS] Génération du TTS')
                         text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                     audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
@@ -1036,9 +1049,63 @@ class TTSCast:
             logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome + GoogleUUID manquants)')
             return False
 
+    def genAI(_aiPrompt, _aiCustomSysPrompt=None):
+        """
+        Reformule une phrase en utilisant l'API Gemini avec un ton spécifique.
+        """
+        try:
+            if Config.gCloudApiKey != 'noKey':
+                gKey = os.path.join(Config.configFullPath, Config.gCloudApiKey)
+                if os.path.exists(gKey):
+                    credentials = service_account.Credentials.from_service_account_file(gKey, scopes=Config.aiScopes)
+                else:
+                    logging.error('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
+                    return None
+                logging.debug('[DAEMON][genAI] Reformulation de texte via IA')
+                client = genai.Client(
+                    vertexai=True,
+                    project=Config.aiProjectID,
+                    location="global",
+                    credentials=credentials,
+                )
+                MODEL_ID = Config.aiModel
+                logging.debug('[DAEMON][GenAI] Utilisation du modèle :: %s', MODEL_ID)
+                
+                THINKING_CONFIG = types.ThinkingConfig(thinking_budget=0)
+                GOOGLE_SEARCH_TOOL = types.Tool(google_search=types.GoogleSearch())
+            
+                response = client.models.generate_content(
+                    model=MODEL_ID,
+                    contents=_aiPrompt,
+                    config=types.GenerateContentConfig(
+                        temperature=1.0,
+                        thinking_config=THINKING_CONFIG,
+                        tools=[GOOGLE_SEARCH_TOOL]
+                    )
+                )
+                if not response.text:
+                    logging.warning('[DAEMON][GenAI] Aucune réponse générée par Gemini.')
+                    return None
+                else:
+                    logging.debug('[DAEMON][GenAI] Réponse générée par Gemini :: %s', response.text.strip())
+                    return Functions.markdownToPlainText(response.text.strip())
+            else:
+                logging.error('[DAEMON][GenAI] Clé API invalide :: ' + Config.gCloudApiKey)
+                return None
+        except Exception as e:
+            logging.error('[DAEMON][GenAI] Erreur: %s', e)
+            return None
+
 class Functions:
     """ Class Functions """
     
+    def markdownToPlainText(text):
+        """ Convert Markdown text to plain text """
+        # Convert Markdown to HTML and then extract text
+        html = markdown.markdown(text)
+        soup = BeautifulSoup(html, "html.parser")
+        return soup.get_text()
+
     def removeNonUtf8Chars(text):
         return text.encode('utf-8', 'ignore').decode('utf-8')
     
@@ -2399,6 +2466,7 @@ parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 parser.add_argument("--aienabled", help="Enable AI", type=str, default='0')
 parser.add_argument("--aiauthmode", help="AI Auth Mode", type=str, default='noMode')
+parser.add_argument("--aiprojectid", help="AI Project ID", type=str, default='noProjectId')
 parser.add_argument("--aiapikey", help="AI ApiKey", type=str, default='noKey')
 parser.add_argument("--aimodel", help="AI Model", type=str, default='noModel')
 parser.add_argument("--aiusecustomsysprompt", help="Use Custom System Prompt for AI", type=str, default='0')
@@ -2414,7 +2482,7 @@ if args.callback:
     Config.callBack = args.callback
 if args.apikey:
     Config.apiKey = args.apikey
-if args.apikey:
+if args.apittskey:
     Config.apiTTSKey = args.apittskey
 if args.gcloudapikey:
     Config.gCloudApiKey = args.gcloudapikey
@@ -2432,6 +2500,8 @@ if args.aienabled:
         Config.aiEnabled = True
 if args.aiauthmode:
     Config.aiAuthMode = args.aiauthmode
+if args.aiprojectid and args.aiprojectid != 'noProjectId':
+    Config.aiProjectId = args.aiprojectid
 if args.aiapikey and args.aiapikey != 'noKey':
     Config.aiApiKey = args.aiapikey
 if args.aimodel and args.aimodel != 'noModel':
