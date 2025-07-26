@@ -177,6 +177,13 @@ class ttscast extends eqLogic
         $cmd .= ' --voicerssapikey ' . config::byKey('voiceRSSAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, '0');
         $cmd .= ' --cmdwaittimeout ' . config::byKey('cmdWaitTimeout', __CLASS__, '60');
+        $cmd .= ' --ttsaienabled ' . config::byKey('ttsAI', __CLASS__, '0');
+        $cmd .= ' --ttsaiauthmode ' . config::byKey('ttsAIAuthMode', __CLASS__, 'noMode');
+        $cmd .= ' --ttsaiapikey ' . config::byKey('ttsAIAPIKey', __CLASS__, 'noKey');
+        $cmd .= ' --ttsaimodel ' . config::byKey('ttsAIModel', __CLASS__, 'noModel');
+        $cmd .= ' --ttsaiusecustomsysprompt ' . config::byKey('ttsAIUseCustomSysPrompt', __CLASS__, '0');
+        $cmd .= ' --ttsaicustomsysprompt ' . config::byKey('ttsAICustomSysPrompt', __CLASS__, '');
+
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
         log::add(__CLASS__, 'info', 'Lancement du démon');
@@ -270,7 +277,8 @@ class ttscast extends eqLogic
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsSSML = config::byKey('ttsTestSSML', 'ttscast', '0');
-        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML);
+        $ttsAI = config::byKey('ttsTestAI', 'ttscast', '0');
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI);
         self::sendToDaemon($value);
     }
 

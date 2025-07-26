@@ -718,6 +718,14 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
+                <label class="col-lg-3 control-label">{{Ton de Reformulation}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser ce prompt système personnalisé}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="ttsAIDefaultTone" placeholder="{{Ex: Enthousiaste et humoristique}}" />
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Prompt Système Personnalisé}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser ce prompt système personnalisé}}"></i></sup>
                 </label>
