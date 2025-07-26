@@ -182,9 +182,9 @@ class ttscast extends eqLogic
         $cmd .= ' --aiprojectid ' . config::byKey('ttsAIProjectID', __CLASS__, 'noProjectID');
         $cmd .= ' --aiapikey ' . config::byKey('ttsAIAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --aimodel ' . config::byKey('ttsAIModel', __CLASS__, 'noModel');
-        $cmd .= ' --aidefaulttone ' . config::byKey('ttsAIDefaultTone', __CLASS__, 'NoDefaultTone');
+        $cmd .= ' --aidefaulttone "' . config::byKey('ttsAIDefaultTone', __CLASS__, 'NoDefaultTone') . '"';
         $cmd .= ' --aiusecustomsysprompt ' . config::byKey('ttsAIUseCustomSysPrompt', __CLASS__, '0');
-        $cmd .= ' --aicustomsysprompt ' . config::byKey('ttsAICustomSysPrompt', __CLASS__, 'NoCustomSysPrompt');
+        $cmd .= ' --aicustomsysprompt "' . config::byKey('ttsAICustomSysPrompt', __CLASS__, 'NoCustomSysPrompt') . '"';
 
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
