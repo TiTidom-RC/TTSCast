@@ -113,15 +113,15 @@ class ttscast extends eqLogic
             $return['state'] = 'in_progress';
         } else {
             if (exec(system::getCmdSudo() . system::get('cmd_check') . '-Ec "python3\-requests|python3\-setuptools|python3\-dev|python3\-venv"') < 4) {
-                log::add('ttscast', 'error', '[dependancy_info] Missing system dependencies');
+                log::add('ttscast', 'debug', '[DepInfo][ERROR] Missing system dependencies');
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
             } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Eiwc "' . config::byKey('pythonDepString', 'ttscast', '', true) . '"') < config::byKey('pythonDepNum', 'ttscast', 0, true)) {
-                log::add('ttscast', 'error', '[dependancy_info] Missing Python dependencies');
+                log::add('ttscast', 'debug', '[DepInfo][ERROR] Missing Python dependencies');
                 $return['state'] = 'nok';
             } else {
-                log::add('ttscast', 'debug', '[dependancy_info] All dependencies are installed');
+                log::add('ttscast', 'debug', '[DepInfo] All dependencies are installed');
                 $return['state'] = 'ok';
             }
         }
