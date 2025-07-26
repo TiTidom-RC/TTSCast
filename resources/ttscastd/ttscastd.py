@@ -1099,7 +1099,7 @@ class TTSCast:
                 
                 THINKING_CONFIG = types.ThinkingConfig(thinking_budget=0)
                 GOOGLE_SEARCH_TOOL = types.Tool(google_search=types.GoogleSearch())
-                SYSTEM_INSTRUCTION = Config.aiDefaultSysPrompt if _aiCustomSysPrompt is None else _aiCustomSysPrompt
+                SYSTEM_INSTRUCTION = myConfig.aiDefaultSysPrompt if _aiCustomSysPrompt is None else _aiCustomSysPrompt
                 logging.debug('[DAEMON][GenAI] Instructions Système :: %s', SYSTEM_INSTRUCTION)
                 response = client.models.generate_content(
                     model=MODEL_ID,
@@ -2477,6 +2477,8 @@ def shutdown():
 # ----------------------------------------------------------------------------
 
 # ***** PROGRAMME PRINCIPAL *****
+
+myConfig = Config()
 
 parser = argparse.ArgumentParser(description='TTSCast Daemon for Jeedom plugin')
 parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
