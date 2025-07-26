@@ -2397,6 +2397,13 @@ parser.add_argument("--appdisableding", help="App Disable Ding Parameter", type=
 parser.add_argument("--cmdwaittimeout", help="Cmd Wait Timeout Parameter", type=str)
 parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
+parser.add_argument("--aienabled", help="Enable AI", type=str, default='0')
+parser.add_argument("--aiauthmode", help="AI Auth Mode", type=str, default='noMode')
+parser.add_argument("--aiapikey", help="AI ApiKey", type=str, default='noKey')
+parser.add_argument("--aimodel", help="AI Model", type=str, default='noModel')
+parser.add_argument("--aiusecustomsysprompt", help="Use Custom System Prompt for AI", type=str, default='0')
+parser.add_argument("--aicustomsysprompt", help="Custom System Prompt for AI", type=str, default='')
+parser.add_argument("--aidefaulttone", help="Default AI Tone", type=str, default='')
 
 args = parser.parse_args()
 if args.loglevel:
@@ -2418,6 +2425,26 @@ if args.appdisableding:
         Config.appDisableDing = False
     else:
         Config.appDisableDing = True
+if args.aienabled:
+    if (args.aienabled == '0'):
+        Config.aiEnabled = False
+    else:
+        Config.aiEnabled = True
+if args.aiauthmode:
+    Config.aiAuthMode = args.aiauthmode
+if args.aiapikey:
+    Config.aiApiKey = args.aiapikey
+if args.aimodel:
+    Config.aiModel = args.aimodel
+if args.aidefaulttone and args.aidefaulttone != '':
+    Config.aiDefaultTone = args.aidefaulttone
+if args.aiusecustomsysprompt:
+    if (args.aiusecustomsysprompt == '0'):
+        Config.aiUseCustomSysPrompt = False
+    else:
+        Config.aiUseCustomSysPrompt = True
+if args.aicustomsysprompt:
+    Config.aiCustomSysPrompt = args.aicustomsysprompt
 if args.cmdwaittimeout:
     Config.cmdWaitTimeout = int(args.cmdwaittimeout)
 if args.pid:

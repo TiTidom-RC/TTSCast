@@ -65,7 +65,17 @@ class Config:
     # ttsVoiceRSSUrl = 'api.voicerss.org:443'
 
     gCloudApiKey = ''
-
+    
+    # AI Configuration
+    aiEnabled = False
+    aiAuthMode = 'noMode'  # 'noMode', 'apikey', 'oauth2'
+    aiApiKey = ''
+    aiModel = 'noModel'  # 'noModel', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'
+    aiDefaultTone = 'Enthousiaste et humoristique'  # Default tone for AI TTS
+    aiUseCustomSysPrompt = False
+    aiCustomSysPrompt = ''
+    
+    # Paths for various resources
     mediaFolder = 'data/media'
     mediaFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), mediaFolder))
 
