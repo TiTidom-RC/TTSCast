@@ -690,7 +690,7 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{Authentification IA}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le mode d'authentification à utiliser pour se connecter au moteur d'IA.}}"></i></sup>
                 </label>
-                <div class="col-lg-1">
+                <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsAIAuthMode">
                         <option value="apiKey">{{Clé API}}</option>
                         <option value="oauth2" selected>{{Fichier JSON (OAuth 2.0)}}</option>
@@ -709,7 +709,7 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{Modèle IA}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>
                 </label>
-                <div class="col-lg-1">
+                <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsAIModel">
                         <option value="gemini-2.5-flash-lite" selected>Gemini 2.5 Flash Lite</option>
                         <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
