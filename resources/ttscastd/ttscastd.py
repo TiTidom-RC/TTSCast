@@ -1078,6 +1078,7 @@ class TTSCast:
                     model=MODEL_ID,
                     contents=_aiPrompt,
                     config=types.GenerateContentConfig(
+                        system_instruction=Config.aiDefaultSysPrompt if _aiCustomSysPrompt is None else _aiCustomSysPrompt,
                         temperature=1.0,
                         thinking_config=THINKING_CONFIG,
                         tools=[GOOGLE_SEARCH_TOOL]
