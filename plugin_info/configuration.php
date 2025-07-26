@@ -677,7 +677,7 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
-            <legend><i class="fas fas fa-brain"></i> {{GenAI}}</legend>
+            <legend><i class="fas fas fa-brain"></i> {{IA}}</legend>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
                <label class="col-lg-3 control-label">{{Tester avec la syntaxe SSML (TTS)}}
@@ -689,7 +689,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Tester la Synthèse Vocale (TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (Générer + Diffuser)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton [Générer + Diffuser]}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Ex: Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
