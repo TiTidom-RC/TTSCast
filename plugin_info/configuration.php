@@ -705,7 +705,7 @@ if (!isConnect()) {
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsAIUseCustomSysPrompt" />
                 </div>
-                <div class="col-lg-3">
+                <div class="col-lg-2">
                     <input class="configKey form-control" type="text" data-l1key="ttsAICustomSysPrompt" placeholder="{{Ex: Répond à la question s'il y en a une et reformule la phrase}}" />
                 </div>
             </div>
