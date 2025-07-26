@@ -2402,8 +2402,8 @@ parser.add_argument("--aiauthmode", help="AI Auth Mode", type=str, default='noMo
 parser.add_argument("--aiapikey", help="AI ApiKey", type=str, default='noKey')
 parser.add_argument("--aimodel", help="AI Model", type=str, default='noModel')
 parser.add_argument("--aiusecustomsysprompt", help="Use Custom System Prompt for AI", type=str, default='0')
-parser.add_argument("--aicustomsysprompt", help="Custom System Prompt for AI", type=str, default='')
-parser.add_argument("--aidefaulttone", help="Default AI Tone", type=str, default='')
+parser.add_argument("--aicustomsysprompt", help="Custom System Prompt for AI", type=str, default='NoCustomSysPrompt')
+parser.add_argument("--aidefaulttone", help="Default AI Tone", type=str, default='NoDefaultTone')
 
 args = parser.parse_args()
 if args.loglevel:
@@ -2432,18 +2432,18 @@ if args.aienabled:
         Config.aiEnabled = True
 if args.aiauthmode:
     Config.aiAuthMode = args.aiauthmode
-if args.aiapikey:
+if args.aiapikey and args.aiapikey != 'noKey':
     Config.aiApiKey = args.aiapikey
-if args.aimodel:
+if args.aimodel and args.aimodel != 'noModel':
     Config.aiModel = args.aimodel
-if args.aidefaulttone and args.aidefaulttone != '':
+if args.aidefaulttone and args.aidefaulttone != 'NoDefaultTone':
     Config.aiDefaultTone = args.aidefaulttone
 if args.aiusecustomsysprompt:
     if (args.aiusecustomsysprompt == '0'):
         Config.aiUseCustomSysPrompt = False
     else:
         Config.aiUseCustomSysPrompt = True
-if args.aicustomsysprompt:
+if args.aicustomsysprompt and args.aicustomsysprompt != 'NoCustomSysPrompt':
     Config.aiCustomSysPrompt = args.aicustomsysprompt
 if args.cmdwaittimeout:
     Config.cmdWaitTimeout = int(args.cmdwaittimeout)
