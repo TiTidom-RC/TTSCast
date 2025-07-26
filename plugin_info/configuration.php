@@ -678,6 +678,14 @@ if (!isConnect()) {
                 </div>
             </div>
             <legend><i class="fas fas fa-brain"></i> {{IA}}</legend>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Active l'IA Générative}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Autoriser l'usage de l'IA pour la reformulation des réponses. Désactivez cette option si vous ne souhaitez pas utiliser l'IA}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsAI" />
+                </div>
+            </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
                <label class="col-lg-3 control-label">{{Tester avec la syntaxe SSML (TTS)}}
