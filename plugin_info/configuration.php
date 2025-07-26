@@ -692,8 +692,8 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsAIAuthMode">
-                        <option value="apiKey">{{Clé API}}</option>
-                        <option value="oauth2" selected>{{Fichier JSON (OAuth 2.0)}}</option>
+                        <option value="apiKey">{{Clé API (AI Studio)}}</option>
+                        <option value="oauth2" selected>{{Fichier JSON (Vertex AI)}}</option>
                     </select>
                 </div>
             </div>
