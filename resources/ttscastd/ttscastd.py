@@ -2471,8 +2471,8 @@ parser.add_argument("--aiprojectid", help="AI Project ID", type=str, default='no
 parser.add_argument("--aiapikey", help="AI ApiKey", type=str, default='noKey')
 parser.add_argument("--aimodel", help="AI Model", type=str, default='noModel')
 parser.add_argument("--aiusecustomsysprompt", help="Use Custom System Prompt for AI", type=str, default='0')
-parser.add_argument("--aicustomsysprompt", help="Custom System Prompt for AI", type=str, default='NoCustomSysPrompt')
-parser.add_argument("--aidefaulttone", help="Default AI Tone", type=str, default='NoDefaultTone')
+parser.add_argument("--aicustomsysprompt", help="Custom System Prompt for AI", type=str, nargs='+', default='NoCustomSysPrompt')
+parser.add_argument("--aidefaulttone", help="Default AI Tone", type=str, nargs='+', default='NoDefaultTone')
 
 args = parser.parse_args()
 if args.loglevel:
