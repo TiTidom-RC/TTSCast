@@ -708,6 +708,14 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
+               <label class="col-lg-3 control-label">{{Tester avec l'IA}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Ce paramètre permet de tester la reformulation des réponses à l'aide de l'IA.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsTestAI" />
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Tester la Synthèse Vocale (TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton [Générer + Diffuser]}}"></i></sup>
                 </label>
