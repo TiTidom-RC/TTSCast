@@ -73,7 +73,7 @@ class Config:
     aiApiKey = ''
     aiModel = 'noModel'  # 'noModel', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'
     aiDefaultTone = 'Enthousiaste et humoristique'  # Default tone for AI TTS
-    aiDefaultSysPrompt = 'Répond à la question posée seulement s\'il y en a une, sinon reformule simplement la phrase, sur un ton ' + aiDefaultTone + '. Sois clair, bref et concis et conserve les valeurs chiffrées s\'il y en a. Ne pas utiliser d\'emojis.'
+    aiDefaultSysPrompt = 'Répond à la question posée seulement s\'il y en a une, sinon reformule simplement la phrase, sur un ton ' + aiDefaultTone + '. Sois clair, bref et concis et conserve les valeurs chiffrées s\'il y en a. Ne pas utiliser d\'emojis. Ne commente pas tes propres actions ou le processus de génération.'
     aiUseCustomSysPrompt = False
     aiCustomSysPrompt = ''
     aiScopes = ['https://www.googleapis.com/auth/cloud-platform']
