@@ -683,7 +683,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Autoriser l'usage de l'IA pour la reformulation des réponses. Désactivez cette option si vous ne souhaitez pas utiliser l'IA}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <input type="checkbox" class="configKey" data-l1key="ttsAI" />
+                    <input type="checkbox" class="configKey" data-l1key="ttsAIEnable" />
                 </div>
             </div>
             <div class="form-group">
@@ -696,6 +696,17 @@ if (!isConnect()) {
                         <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                         <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                     </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Prompt Système Personnalisé}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser ce prompt système personnalisé}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsAIUseCustomSysPrompt" />
+                </div>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="ttsAICustomSysPrompt" placeholder="{{Ex: Répond à la question s'il y en a une et reformule la phrase}}" />
                 </div>
             </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
