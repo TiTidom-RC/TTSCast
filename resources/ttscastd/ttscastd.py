@@ -1073,12 +1073,13 @@ class TTSCast:
                 
                 THINKING_CONFIG = types.ThinkingConfig(thinking_budget=0)
                 GOOGLE_SEARCH_TOOL = types.Tool(google_search=types.GoogleSearch())
-            
+                SYSTEM_INSTRUCTION = Config.aiDefaultSysPrompt if _aiCustomSysPrompt is None else _aiCustomSysPrompt
+                logging.debug('[DAEMON][GenAI] Instructions Système :: %s', SYSTEM_INSTRUCTION)
                 response = client.models.generate_content(
                     model=MODEL_ID,
                     contents=_aiPrompt,
                     config=types.GenerateContentConfig(
-                        system_instruction=Config.aiDefaultSysPrompt if _aiCustomSysPrompt is None else _aiCustomSysPrompt,
+                        system_instruction=SYSTEM_INSTRUCTION,
                         temperature=1.0,
                         thinking_config=THINKING_CONFIG,
                         tools=[GOOGLE_SEARCH_TOOL]
