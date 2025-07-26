@@ -687,6 +687,25 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
+                <label class="col-lg-3 control-label">{{Authentification IA}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le mode d'authentification à utiliser pour se connecter au moteur d'IA.}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="ttsAIAuthMode">
+                        <option value="apiKey">{{Clé API}}</option>
+                        <option value="oauth2" selected>{{Fichier JSON (OAuth 2.0)}}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Clé API}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Entrez votre clé API pour l'authentification avec le moteur d'IA.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="ttsAIAPIKey" />
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Modèle IA}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>
                 </label>
