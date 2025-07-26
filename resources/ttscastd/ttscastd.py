@@ -2502,7 +2502,7 @@ if args.aienabled:
 if args.aiauthmode:
     Config.aiAuthMode = args.aiauthmode
 if args.aiprojectid and args.aiprojectid != 'noProjectId':
-    Config.aiProjectId = args.aiprojectid
+    Config.aiProjectID = args.aiprojectid
 if args.aiapikey and args.aiapikey != 'noKey':
     Config.aiApiKey = args.aiapikey
 if args.aimodel and args.aimodel != 'noModel':
@@ -2568,7 +2568,7 @@ logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', "***")
 logging.info('[DAEMON][MAIN] App Disable Ding: %s', str(Config.appDisableDing))
 logging.info('[DAEMON][MAIN] AI Enabled: %s', str(Config.aiEnabled))
 logging.info('[DAEMON][MAIN] AI Auth Mode: %s', Config.aiAuthMode)
-logging.info('[DAEMON][MAIN] AI Project ID: %s', Config.aiProjectId)
+logging.info('[DAEMON][MAIN] AI Project ID: %s', Config.aiProjectID)
 logging.info('[DAEMON][MAIN] AI ApiKey: %s', "***")
 logging.info('[DAEMON][MAIN] AI Model: %s', Config.aiModel)
 logging.info('[DAEMON][MAIN] AI Use Custom System Prompt: %s', str(Config.aiUseCustomSysPrompt))
