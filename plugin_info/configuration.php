@@ -686,6 +686,18 @@ if (!isConnect()) {
                     <input type="checkbox" class="configKey" data-l1key="ttsAI" />
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Modèle IA}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="ttsAIModel">
+                        <option value="gemini-2.5-flash-lite" selected>Gemini 2.5 Flash Lite</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                    </select>
+                </div>
+            </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
                <label class="col-lg-3 control-label">{{Tester avec la syntaxe SSML (TTS)}}
