@@ -496,6 +496,7 @@ class TTSCast:
             if not ttsOptions:
                 ttsOptions = None
             
+            _useAI = False
             _useSSML = False
             _silenceBefore = None
             
@@ -503,6 +504,8 @@ class TTSCast:
                 if (ttsOptions is not None):
                     options_json = json.loads("{" + ttsOptions + "}")
                     
+                    # AI
+                    _useAI = options_json['genai'] if 'genai' in options_json else False
                     # SSML
                     _useSSML = options_json['ssml'] if 'ssml' in options_json else False
                     # Before
@@ -548,11 +551,21 @@ class TTSCast:
                     filepath = ttsFile
                     logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
                     
-                    if not os.path.isfile(filepath):
+                    if not os.path.isfile(filepath) or _useAI:
                         language_code = "-".join(ttsVoiceName.split("-")[:2])
                         if _useSSML:
+                            logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec SSML')
                             text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
+                        elif _useAI:
+                            ttsAIText = TTSCast.genAI(ttsText)
+                            if ttsAIText is not None:
+                                logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
+                                text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
+                            else:
+                                logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                                text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         else:
+                            logging.debug('[DAEMON][GenerateTTS] Génération du TTS')
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
@@ -635,6 +648,7 @@ class TTSCast:
             _ttsVolume = None
             _appDing = True
             _cmdWait = None
+            _useAI = False
             _useSSML = False
             _silenceBefore = None
             _cmdForce = False
@@ -647,6 +661,8 @@ class TTSCast:
                     _appDing = options_json['ding'] if 'ding' in options_json else True
                     _cmdWait = options_json['wait'] if 'wait' in options_json else None
                     
+                    # AI
+                    _useAI = options_json['genai'] if 'genai' in options_json else False
                     # SSML
                     _useSSML = options_json['ssml'] if 'ssml' in options_json else False
                     # Silent Before
@@ -704,11 +720,21 @@ class TTSCast:
                     
                     logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                     
-                    if not os.path.isfile(filepath):
+                    if not os.path.isfile(filepath) or _useAI:
                         language_code = "-".join(ttsVoiceName.split("-")[:2])
                         if _useSSML:
+                            logging.debug('[DAEMON][TTS] Génération du TTS avec SSML')
                             text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
+                        elif _useAI:
+                            ttsAIText = TTSCast.genAI(ttsText)
+                            if ttsAIText is not None:
+                                logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
+                                text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
+                            else:
+                                logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                                text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         else:
+                            logging.debug('[DAEMON][TTS] Génération du TTS')
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))

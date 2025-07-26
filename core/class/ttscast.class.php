@@ -404,6 +404,9 @@ class ttscast extends eqLogic
             if (array_key_exists('ssml', $data)) {
                 $resOptions['ssml'] = $data['ssml'];
             }
+            if (array_key_exists('genai', $data)) {
+                $resOptions['genai'] = $data['genai'];
+            }
             if (array_key_exists('before', $data)) {
                 $resOptions['before'] = $data['before'];
             }
