@@ -63,7 +63,7 @@ if (!isConnect()) {
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Force la réinitialisation de PyEnv}}
                     <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètre}}"></i></sup>    
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer la réinitilsation de l'environnement Python utilisé par le plugin}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer la réinitialisation de l'environnement Python utilisé par le plugin}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="debugRestorePyEnv" />
@@ -72,7 +72,7 @@ if (!isConnect()) {
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Force la réinitialisation de Venv}}
                     <sup><i class="fas fa-ban tooltips" style="color:var(--al-danger-color)!important;" title="{{Les dépendances devront être relancées après la sauvegarde de ce paramètre}}"></i></sup>    
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer la réinitilsation de l'environnement Venv utilisé par le plugin}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de forcer la réinitialisation de l'environnement Venv utilisé par le plugin}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="debugRestoreVenv" />
@@ -144,7 +144,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-gcloudtts">
-                <label class="col-lg-3 control-label">{{Clé API (gCloud TTS)}}
+                <label class="col-lg-3 control-label">{{Clé API (gCloud TTS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://console.cloud.google.com/apis">{{SITE}}</a>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>    
                     <sup><i class="fas fa-question-circle tooltips" title="{{Uploader votre clé JSON en utilisant le bouton 'Ajouter Clé (JSON)'}}"></i></sup>
                 </label>
@@ -677,6 +677,78 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
+            <legend><i class="fas fas fa-brain"></i> {{IA - Gemini}}</legend>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Activer IA Générative}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Autoriser l'usage de l'IA pour la reformulation des réponses. Désactivez cette option si vous ne souhaitez pas utiliser l'IA}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsAIEnable" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Modèle IA}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="ttsAIModel">
+                        <option value="gemini-2.5-flash-lite" selected>Gemini 2.5 Flash Lite</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Authentification IA}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le mode d'authentification à utiliser pour se connecter au moteur d'IA.}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control customform-ai-authmode" data-l1key="ttsAIAuthMode">
+                        <option value="apikey">{{Clé API (Google AI Studio)}}</option>
+                        <option value="oauth2">{{Fichier JSON (Vertex AI - Google)}}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group customform-ai-oauth2">
+                <label class="col-lg-3 control-label">{{Id Projet Google}} <a class="btn btn-info btn-xs" target="_blank" href="https://console.cloud.google.com/apis">{{SITE}}</a>
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Entrez votre ID de projet Google pour l'authentification avec le moteur d'IA.}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <input class="configKey form-control" type="text" data-l1key="ttsAIProjectID" />
+                </div>
+            </div>
+            <div class="form-group customform-ai-apikey">
+                <label class="col-lg-3 control-label">{{Clé API}} <a class="btn btn-info btn-xs" target="_blank" href="https://aistudio.google.com/apikey">{{SITE}}</a>
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Entrez votre clé API pour l'authentification avec le moteur d'IA.}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <input class="configKey form-control" type="text" data-l1key="ttsAIAPIKey" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Ton de Reformulation}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de choisir le ton sur lequel le moteur IA reformulera votre notification.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="ttsAIDefaultTone" placeholder="{{Ex: Enthousiaste et humoristique}}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Prompt Système Personnalisé}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de personnaliser le prompt système utilisé par l'IA.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input type="checkbox" class="configKey" data-l1key="ttsAIUseCustomSysPrompt" />
+                    <input class="configKey form-control" type="text" data-l1key="ttsAICustomSysPrompt" placeholder="{{Ex: Répond à la question s'il y en a une et reformule la phrase}}" />
+                </div>
+            </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
                <label class="col-lg-3 control-label">{{Tester avec la syntaxe SSML (TTS)}}
@@ -687,8 +759,16 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
+               <label class="col-lg-3 control-label">{{Tester avec l'IA}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Ce paramètre permet de tester la reformulation des réponses à l'aide de l'IA.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsTestAI" />
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Tester la Synthèse Vocale (TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton (GENERER + DIFFUSER)}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton [Générer + Diffuser]}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control" type="text" data-l1key="ttsTestFileGen" placeholder="{{Ex: Ceci est un message de test pour la synthèse vocale à partir de Jeedom.}}" />
@@ -839,10 +919,23 @@ if (!isConnect()) {
         }
     }
 
+    function aiAuthModeSelect() {
+        var val = $('.customform-ai-authmode').val();
+        if (val == 'apikey') {
+            $('.customform-ai-apikey').show();
+            $('.customform-ai-oauth2').hide();
+        } else if (val == 'oauth2') {
+            $('.customform-ai-apikey').hide();
+            $('.customform-ai-oauth2').show();
+        }
+    }
+
     $(document).ready(function() {
         ttsEngineSelect();
+        aiAuthModeSelect();
     });
     $('.customform-ttsengine').on('change', ttsEngineSelect);
+    $('.customform-ai-authmode').on('change', aiAuthModeSelect);
 
     $('.customclass-resetapikey').on('click', function () {
         const fileName = $('.custominput-apikey').val();
