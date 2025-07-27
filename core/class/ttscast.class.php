@@ -374,44 +374,14 @@ class ttscast extends eqLogic
             }
 
             # Options
-            if (array_key_exists('force', $data)) {
-                $resOptions['force'] = $data['force'];
-            }
-            if (array_key_exists('reload_seconds', $data)) {
-                $resOptions['reload_seconds'] = $data['reload_seconds'];
-            }
-            if (array_key_exists('quit_app', $data)) {
-                $resOptions['quit_app'] = $data['quit_app'];
-            }
-            if (array_key_exists('playlist', $data)) {
-                $resOptions['playlist'] = $data['playlist'];
-            }
-            if (array_key_exists('enqueue', $data)) {
-                $resOptions['enqueue'] = $data['enqueue'];
-            }
-            if (array_key_exists('volume', $data)) {
-                $resOptions['volume'] = $data['volume'];
-            }
-            if (array_key_exists('ding', $data)) {
-                $resOptions['ding'] = $data['ding'];
-            }
-            if (array_key_exists('wait', $data)) {
-                $resOptions['wait'] = $data['wait'];
-            }
-            if (array_key_exists('type', $data)) {
-                $resOptions['type'] = $data['type'];
-            }
-            if (array_key_exists('ssml', $data)) {
-                $resOptions['ssml'] = $data['ssml'];
-            }
-            if (array_key_exists('genai', $data)) {
-                $resOptions['genai'] = $data['genai'];
-            }
-            if (array_key_exists('before', $data)) {
-                $resOptions['before'] = $data['before'];
-            }
-            if (array_key_exists('voice', $data)) {
-                $resOptions['voice'] = $data['voice'];
+            $optionKeys = [
+                'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
+                'ding', 'wait', 'type', 'ssml', 'genai', 'before', 'voice'
+            ];
+            foreach ($optionKeys as $key) {
+                if (array_key_exists($key, $data)) {
+                    $resOptions[$key] = $data[$key];
+                }
             }
 
             $resCmd['title'] = substr(json_encode($resOptions), 1, -1);
