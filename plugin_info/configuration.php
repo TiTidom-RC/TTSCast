@@ -679,7 +679,7 @@ if (!isConnect()) {
             </div>
             <legend><i class="fas fas fa-brain"></i> {{IA}}</legend>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Active l'IA Générative}}
+                <label class="col-lg-3 control-label">{{Activer IA Générative}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Autoriser l'usage de l'IA pour la reformulation des réponses. Désactivez cette option si vous ne souhaitez pas utiliser l'IA}}"></i></sup>
                 </label>
@@ -694,8 +694,8 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control customform-ai-authmode" data-l1key="ttsAIAuthMode">
-                        <option value="apikey">{{Clé API (AI Studio)}}</option>
-                        <option value="oauth2">{{Fichier JSON (Vertex AI)}}</option>
+                        <option value="apikey">{{Clé API (Google AI Studio)}}</option>
+                        <option value="oauth2">{{Fichier JSON (Vertex AI - Google)}}</option>
                     </select>
                 </div>
             </div>
