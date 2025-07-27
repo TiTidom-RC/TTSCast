@@ -700,7 +700,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-ai-oauth2">
-                <label class="col-lg-3 control-label">{{ID Projet (Google)}} <a class="btn btn-info btn-xs" target="_blank" href="https://console.cloud.google.com/apis">{{SITE}}</a>
+                <label class="col-lg-3 control-label">{{Id Projet Google}} <a class="btn btn-info btn-xs" target="_blank" href="https://console.cloud.google.com/apis">{{SITE}}</a>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Entrez votre ID de projet Google pour l'authentification avec le moteur d'IA.}}"></i></sup>
                 </label>
