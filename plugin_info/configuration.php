@@ -688,6 +688,19 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
+                <label class="col-lg-3 control-label">{{Modèle IA}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="ttsAIModel">
+                        <option value="gemini-2.5-flash-lite" selected>Gemini 2.5 Flash Lite</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Authentification IA}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le mode d'authentification à utiliser pour se connecter au moteur d'IA.}}"></i></sup>
@@ -715,19 +728,6 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-2">
                     <input class="configKey form-control" type="text" data-l1key="ttsAIAPIKey" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Modèle IA}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>
-                </label>
-                <div class="col-lg-2">
-                    <select class="configKey form-control" data-l1key="ttsAIModel">
-                        <option value="gemini-2.5-flash-lite" selected>Gemini 2.5 Flash Lite</option>
-                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                    </select>
                 </div>
             </div>
             <div class="form-group">
