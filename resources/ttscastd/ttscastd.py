@@ -509,15 +509,15 @@ class TTSCast:
                     
                     # AI
                     if myConfig.aiEnabled:
-                        _useAI = options_json['genai'] if 'genai' in options_json else False
-                        _aiCustomTone = options_json['aitone'] if 'aitone' in options_json else None
-                        _aiCustomSysPrompt = options_json['aisysprompt'] if 'aisysprompt' in options_json else None
-                        _aiCustomTemp = options_json['aitemp'] if 'aitemp' in options_json else None
+                        _useAI = options_json.get('genai', False)
+                        _aiCustomTone = options_json.get('aitone', None)
+                        _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
+                        _aiCustomTemp = options_json.get('aitemp', None)
                     # SSML
-                    _useSSML = options_json['ssml'] if 'ssml' in options_json else False
+                    _useSSML = options_json.get('ssml', False)
                     # Before
-                    _silenceBefore = options_json['before'] if 'before' in options_json else None
-                    
+                    _silenceBefore = options_json.get('before', None)
+
                     if _silenceBefore is not None and _useSSML is False:
                         _useSSML = True
                         ttsText = "<speak><break time='" + str(_silenceBefore) + "' /><p>" + ttsText + "</p></speak>"
@@ -525,9 +525,9 @@ class TTSCast:
                     elif _silenceBefore is not None and _useSSML is True:
                         logging.error('[DAEMON][GenerateTTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande.')
                         return False
-                    
-                    # Custom Voice 
-                    _ttsVoiceCode = options_json['voice'] if 'voice' in options_json else None
+
+                    # Custom Voice
+                    _ttsVoiceCode = options_json.get('voice', None)
                     if _ttsVoiceCode is not None:
                         if ttsEngine == "gcloudtts":
                             ttsVoiceName = _ttsVoiceCode
@@ -667,20 +667,21 @@ class TTSCast:
                 if (ttsOptions is not None):
                     options_json = json.loads("{" + ttsOptions + "}")
                     
-                    _ttsVolume = options_json['volume'] if 'volume' in options_json else None
-                    _appDing = options_json['ding'] if 'ding' in options_json else True
-                    _cmdWait = options_json['wait'] if 'wait' in options_json else None
-                    
+                    # General Options
+                    _ttsVolume = options_json.get('volume', None)
+                    _appDing = options_json.get('ding', True)
+                    _cmdWait = options_json.get('wait', None)
+
                     # AI
-                    _useAI = options_json['genai'] if 'genai' in options_json else False
-                    _aiCustomTone = options_json['aitone'] if 'aitone' in options_json else None
-                    _aiCustomSysPrompt = options_json['aisysprompt'] if 'aisysprompt' in options_json else None
-                    _aiCustomTemp = options_json['aitemp'] if 'aitemp' in options_json else None
+                    _useAI = options_json.get('genai', False)
+                    _aiCustomTone = options_json.get('aitone', None)
+                    _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
+                    _aiCustomTemp = options_json.get('aitemp', None)
                     # SSML
-                    _useSSML = options_json['ssml'] if 'ssml' in options_json else False
+                    _useSSML = options_json.get('ssml', False)
                     # Silent Before
-                    _silenceBefore = options_json['before'] if 'before' in options_json else None
-                    
+                    _silenceBefore = options_json.get('before', None)
+
                     if _silenceBefore is not None and _useSSML is False:
                         _useSSML = True
                         ttsText = "<speak><break time='" + str(_silenceBefore) + "' /><p>" + ttsText + "</p></speak>"
@@ -690,11 +691,11 @@ class TTSCast:
                         return False
                     
                     # Force
-                    _cmdForce = options_json['force'] if 'force' in options_json else False
-                    
-                    # Custom Voice 
-                    _ttsVoiceCode = options_json['voice'] if 'voice' in options_json else None
-                    
+                    _cmdForce = options_json.get('force', False)
+
+                    # Custom Voice
+                    _ttsVoiceCode = options_json.get('voice', None)
+
                     if _ttsVoiceCode is not None:
                         if ttsEngine == "gcloudtts":
                             ttsVoiceName = _ttsVoiceCode
@@ -1223,10 +1224,10 @@ class Functions:
                     try:
                         if (_options is not None):
                             options_json = json.loads("{" + _options + "}")
-                            _volume = options_json['volume'] if 'volume' in options_json else None
-                            _appDing = options_json['ding'] if 'ding' in options_json else True
-                            _cmdForce = options_json['force'] if 'force' in options_json else False
-                            _cmdWait = options_json['wait'] if 'wait' in options_json else None
+                            _volume = options_json.get('volume', None)
+                            _appDing = options_json.get('ding', True)
+                            _cmdForce = options_json.get('force', False)
+                            _cmdWait = options_json.get('wait', None)
                             logging.debug('[DAEMON][controllerActions] StartApp :: Options :: %s', str(options_json))
                     except ValueError as e:
                         logging.debug('[DAEMON][controllerActions] StartApp :: Options mal formatées (Json KO) :: %s', e)
@@ -1323,12 +1324,12 @@ class Functions:
                     try:
                         if (_options is not None):
                             options_json = json.loads("{" + _options + "}")
-                            _playlist = options_json['playlist'] if 'playlist' in options_json else None
-                            _enqueue = options_json['enqueue'] if 'enqueue' in options_json else False
-                            _volume = options_json['volume'] if 'volume' in options_json else None
-                            _appDing = options_json['ding'] if 'ding' in options_json else True
-                            _cmdForce = options_json['force'] if 'force' in options_json else False
-                            _cmdWait = options_json['wait'] if 'wait' in options_json else None
+                            _playlist = options_json.get('playlist', None)
+                            _enqueue = options_json.get('enqueue', False)
+                            _volume = options_json.get('volume', None)
+                            _appDing = options_json.get('ding', True)
+                            _cmdForce = options_json.get('force', False)
+                            _cmdWait = options_json.get('wait', None)
                             logging.debug('[DAEMON][controllerActions] YouTube :: Options :: %s', str(options_json))
                     except ValueError as e:
                         logging.debug('[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: %s', e)
@@ -1431,9 +1432,9 @@ class Functions:
                     try:
                         if (_options is not None):
                             options_json = json.loads("{" + _options + "}")    
-                            _force = options_json['force'] if 'force' in options_json else False
-                            _reload_seconds = options_json['reload_seconds'] if 'reload_seconds' in options_json else None
-                            _cmdWait = options_json['wait'] if 'wait' in options_json else None
+                            _force = options_json.get('force', False)
+                            _reload_seconds = options_json.get('reload_seconds', None)
+                            _cmdWait = options_json.get('wait', None)
                     except ValueError as e:
                         logging.debug('[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: %s', e)
                     
@@ -1475,8 +1476,8 @@ class Functions:
                     else:
                         if _googleUUID in myConfig.cmdWaitQueue:
                             myConfig.cmdWaitQueue[_googleUUID] = 0
-                    
-                    if ('quit_app' in options_json and options_json['quit_app']):
+
+                    if options_json.get('quit_app', False):
                         logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
                         cast.quit_app()
                         t = 5
@@ -1525,10 +1526,10 @@ class Functions:
                             try:
                                 if (_options is not None):
                                     options_json = json.loads("{" + _options + "}")
-                                    _volume = options_json['volume'] if 'volume' in options_json else None
-                                    _appDing = options_json['ding'] if 'ding' in options_json else True
-                                    _cmdForce = options_json['force'] if 'force' in options_json else False
-                                    _cmdWait = options_json['wait'] if 'wait' in options_json else None
+                                    _volume = options_json.get('volume', None)
+                                    _appDing = options_json.get('ding', True)
+                                    _cmdForce = options_json.get('force', False)
+                                    _cmdWait = options_json.get('wait', None)
                                     logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options :: %s', str(options_json))
                             except ValueError as e:
                                 logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options mal formatées (Json KO) :: %s', e)
@@ -1657,10 +1658,10 @@ class Functions:
                         try:
                             if (_options is not None):
                                 options_json = json.loads("{" + _options + "}")
-                                _volume = options_json['volume'] if 'volume' in options_json else None
-                                _appDing = options_json['ding'] if 'ding' in options_json else True
-                                _cmdWait = options_json['wait'] if 'wait' in options_json else None
-                                _cmdForce = options_json['force'] if 'force' in options_json else False
+                                _volume = options_json.get('volume', None)
+                                _appDing = options_json.get('ding', True)
+                                _cmdWait = options_json.get('wait', None)
+                                _cmdForce = options_json.get('force', False)
                                 logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Options :: %s', str(options_json))
                         except ValueError as e:
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Options mal formatées (Json KO) :: %s', e)
@@ -1801,12 +1802,12 @@ class Functions:
                         try:
                             if (_options is not None):
                                 options_json = json.loads("{" + _options + "}")
-                                _volume = options_json['volume'] if 'volume' in options_json else None
-                                _appDing = options_json['ding'] if 'ding' in options_json else True
-                                _mediaType = options_json['type'] if 'type' in options_json else None
-                                _cmdForce = options_json['force'] if 'force' in options_json else False
-                                _cmdWait = options_json['wait'] if 'wait' in options_json else None
-                                
+                                _volume = options_json.get('volume', None)
+                                _appDing = options_json.get('ding', True)
+                                _mediaType = options_json.get('type', None)
+                                _cmdForce = options_json.get('force', False)
+                                _cmdWait = options_json.get('wait', None)
+
                                 logging.debug('[DAEMON][controllerActions] Media :: Options :: %s', str(options_json))
                         except ValueError as e:
                             logging.debug('[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: %s', e)
