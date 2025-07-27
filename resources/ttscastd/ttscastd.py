@@ -499,6 +499,7 @@ class TTSCast:
             _useAI = False
             _aiCustomTone = None
             _aiCustomSysPrompt = None
+            _aiCustomTemp = None
             _useSSML = False
             _silenceBefore = None
             
@@ -511,6 +512,7 @@ class TTSCast:
                         _useAI = options_json['genai'] if 'genai' in options_json else False
                         _aiCustomTone = options_json['aitone'] if 'aitone' in options_json else None
                         _aiCustomSysPrompt = options_json['aisysprompt'] if 'aisysprompt' in options_json else None
+                        _aiCustomTemp = options_json['aitemp'] if 'aitemp' in options_json else None
                     # SSML
                     _useSSML = options_json['ssml'] if 'ssml' in options_json else False
                     # Before
@@ -562,7 +564,7 @@ class TTSCast:
                             logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec SSML')
                             text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                         elif _useAI:
-                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone)
+                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
@@ -654,6 +656,9 @@ class TTSCast:
             _appDing = True
             _cmdWait = None
             _useAI = False
+            _aiCustomTone = None
+            _aiCustomSysPrompt = None
+            _aiCustomTemp = None
             _useSSML = False
             _silenceBefore = None
             _cmdForce = False
@@ -670,6 +675,7 @@ class TTSCast:
                     _useAI = options_json['genai'] if 'genai' in options_json else False
                     _aiCustomTone = options_json['aitone'] if 'aitone' in options_json else None
                     _aiCustomSysPrompt = options_json['aisysprompt'] if 'aisysprompt' in options_json else None
+                    _aiCustomTemp = options_json['aitemp'] if 'aitemp' in options_json else None
                     # SSML
                     _useSSML = options_json['ssml'] if 'ssml' in options_json else False
                     # Silent Before
@@ -733,7 +739,7 @@ class TTSCast:
                             logging.debug('[DAEMON][TTS] Génération du TTS avec SSML')
                             text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                         elif _useAI:
-                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone)
+                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
@@ -1082,7 +1088,7 @@ class TTSCast:
             logging.debug('[DAEMON][Cast] Diffusion impossible (GoogleHome + GoogleUUID manquants)')
             return False
 
-    def genAI(_aiPrompt, _aiCustomSysPrompt=None, _aiCustomTone=None):
+    def genAI(_aiPrompt, _aiCustomSysPrompt=None, _aiCustomTone=None, _aiCustomTemp=None):
         """
         Reformule une phrase en utilisant l'API Gemini avec un ton spécifique.
         """
@@ -1106,18 +1112,22 @@ class TTSCast:
                 
                 THINKING_CONFIG = types.ThinkingConfig(thinking_budget=0)
                 GOOGLE_SEARCH_TOOL = types.Tool(google_search=types.GoogleSearch())
+                
+                TEMPERATURE = 1.0 if _aiCustomTemp is None else float(_aiCustomTemp)
+                logging.debug('[DAEMON][GenAI] Température :: %s', TEMPERATURE)
+
                 if _aiCustomTone is not None:
-                    logging.debug('[DAEMON][GenAI] Ton personnalisé :: %s', _aiCustomTone)
                     SYSTEM_INSTRUCTION = myConfig.aiSysPrompt(_aiCustomTone)
                 else:
                     SYSTEM_INSTRUCTION = myConfig.aiSysPrompt() if _aiCustomSysPrompt is None else _aiCustomSysPrompt
                 logging.debug('[DAEMON][GenAI] Instructions Système :: %s', SYSTEM_INSTRUCTION)
+                
                 response = client.models.generate_content(
                     model=MODEL_ID,
                     contents=_aiPrompt,
                     config=types.GenerateContentConfig(
                         system_instruction=SYSTEM_INSTRUCTION,
-                        temperature=1.0,
+                        temperature=TEMPERATURE,
                         thinking_config=THINKING_CONFIG,
                         tools=[GOOGLE_SEARCH_TOOL]
                     )
