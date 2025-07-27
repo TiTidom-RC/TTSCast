@@ -358,6 +358,8 @@ class TTSCast:
         symLinkPath = myConfig.ttsCacheFolderTmp
         ttsSrvWeb = myConfig.ttsWebSrvCache
         
+        _aiCustomSysPrompt = myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None
+        
         try:
             os.stat(symLinkPath)
         except Exception:
@@ -387,7 +389,7 @@ class TTSCast:
                         logging.debug('[DAEMON][TestTTS] Génération du TTS avec SSML')
                         text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                     elif ttsAI == '1':
-                        ttsAIText = TTSCast.genAI(ttsText)
+                        ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt)
                         if ttsAIText is not None:
                             logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                             text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
