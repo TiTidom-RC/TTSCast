@@ -1877,6 +1877,4 @@ class ttscastCmd extends cmd
         }
         return true;
     }
-
-    /* ***********************Getteur Setteur*************************** */
 }
