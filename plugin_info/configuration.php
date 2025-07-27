@@ -935,6 +935,7 @@ if (!isConnect()) {
         aiAuthModeSelect();
     });
     $('.customform-ttsengine').on('change', ttsEngineSelect);
+    $('.customform-ai-authmode').on('change', aiAuthModeSelect);
 
     $('.customclass-resetapikey').on('click', function () {
         const fileName = $('.custominput-apikey').val();
