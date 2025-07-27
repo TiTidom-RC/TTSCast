@@ -733,7 +733,7 @@ if (!isConnect()) {
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Ton de Reformulation}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser ce prompt système personnalisé}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de choisir le ton sur lequel le moteur IA reformulera votre notification.}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input class="configKey form-control" type="text" data-l1key="ttsAIDefaultTone" placeholder="{{Ex: Enthousiaste et humoristique}}" />
@@ -742,7 +742,7 @@ if (!isConnect()) {
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Prompt Système Personnalisé}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser ce prompt système personnalisé}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de personnaliser le prompt système utilisé par l'IA.}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <input type="checkbox" class="configKey" data-l1key="ttsAIUseCustomSysPrompt" />
