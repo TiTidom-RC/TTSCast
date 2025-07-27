@@ -1093,20 +1093,34 @@ class TTSCast:
         Reformule une phrase en utilisant l'API Gemini avec un ton spécifique.
         """
         try:
-            if myConfig.gCloudApiKey != 'noKey':
-                gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
-                if os.path.exists(gKey):
-                    credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
+            if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProject') or myConfig.aiApiKey != 'noKey':
+                # Initialisation du client Gemini
+                credentials = None
+                client = None
+                
+                if myConfig.aiAuthMode == 'oauth2' and myConfig.gCloudApiKey != 'noKey':
+                    gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
+                    if os.path.exists(gKey):
+                        logging.debug('[DAEMON][genAI] Chargement des credentials depuis le fichier JSON :: %s', myConfig.gCloudApiKey)
+                        credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
+                        client = genai.Client(
+                            vertexai=True,
+                            project=myConfig.aiProjectID,
+                            location="global",
+                            credentials=credentials,
+                        )   
+                    else:
+                        logging.error('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
+                        return None
+                elif myConfig.aiAuthMode == 'apiKey' and myConfig.aiApiKey != 'noKey':
+                    logging.debug('[DAEMON][genAI] Chargement des credentials avec la clé API')
+                    client = genai.Client(api_key=myConfig.aiApiKey)
                 else:
-                    logging.error('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
+                    logging.error('[DAEMON][genAI] Mode d\'authentification invalide ou clé API manquante.')
                     return None
+                
                 logging.debug('[DAEMON][genAI] Reformulation de texte via IA')
-                client = genai.Client(
-                    vertexai=True,
-                    project=myConfig.aiProjectID,
-                    location="global",
-                    credentials=credentials,
-                )
+                
                 MODEL_ID = myConfig.aiModel
                 logging.debug('[DAEMON][GenAI] Utilisation du modèle :: %s', MODEL_ID)
                 
@@ -1139,7 +1153,7 @@ class TTSCast:
                     logging.debug('[DAEMON][GenAI] Réponse générée par Gemini :: %s', response.text.strip())
                     return Functions.markdownToPlainText(response.text.strip())
             else:
-                logging.error('[DAEMON][GenAI] Clé API invalide :: ' + myConfig.gCloudApiKey)
+                logging.error('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, "***" if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
                 return None
         except Exception as e:
             logging.error('[DAEMON][GenAI] Erreur: %s', e)
