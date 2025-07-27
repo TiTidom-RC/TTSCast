@@ -417,6 +417,7 @@ class TTSCast:
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Google Cloud TTS) invalide :: ' + myConfig.gCloudApiKey)
+        
         elif ttsEngine == "gtranslatetts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = gtranslatetts')
             raw_filename = ttsText + "|gTTS|" + ttsLang
@@ -424,9 +425,16 @@ class TTSCast:
             filepath = os.path.join(symLinkPath, filename)
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
             
-            if not os.path.isfile(filepath):
+            if not os.path.isfile(filepath) or ttsAI == '1':
                 langToTTS = ttsLang.split('-')[0]
                 try:
+                    if ttsAI == '1':
+                        ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt)
+                        if ttsAIText is not None:
+                            logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
+                            ttsText = ttsAIText
+                        else:
+                            logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                     client = gTTS(ttsText, lang=langToTTS)
                     client.save(filepath)
                 except Exception as e:
@@ -444,14 +452,22 @@ class TTSCast:
             
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
             logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+        
         elif ttsEngine == "jeedomtts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = jeedomtts')
             raw_filename = ttsText + "|JeedomTTS|" + ttsLang
             filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
             filepath = os.path.join(symLinkPath, filename)
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
-            
-            if not os.path.isfile(filepath):
+
+            if not os.path.isfile(filepath) or ttsAI == '1':
+                if ttsAI == '1':
+                    ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt)
+                    if ttsAIText is not None:
+                        logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
+                        ttsText = ttsAIText
+                    else:
+                        logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                 ttsResult = TTSCast.jeedomTTS(ttsText, ttsLang)
                 if ttsResult is not None:
                     with open(filepath, 'wb') as f:
@@ -475,7 +491,14 @@ class TTSCast:
                 filepath = os.path.join(symLinkPath, filename)
                 logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
                 
-                if not os.path.isfile(filepath):
+                if not os.path.isfile(filepath) or (ttsAI == '1' and ttsSSML == '0'):
+                    if ttsAI == '1' and ttsSSML == '0':
+                        ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt)
+                        if ttsAIText is not None:
+                            logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
+                            ttsText = ttsAIText
+                        else:
+                            logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                     ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, True if ttsSSML == '1' else False)
                     if ttsResult is not None:
                         with open(filepath, 'wb') as f:
@@ -595,9 +618,16 @@ class TTSCast:
                 filepath = ttsFile
                 logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
                 
-                if not os.path.isfile(filepath):
+                if not os.path.isfile(filepath) or _useAI:
                     langToTTS = ttsLang.split('-')[0]
                     try:
+                        if _useAI:
+                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                            if ttsAIText is not None:
+                                logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
+                                ttsText = ttsAIText
+                            else:
+                                logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                         client = gTTS(ttsText, lang=langToTTS)
                         client.save(filepath)
                         logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
@@ -618,7 +648,14 @@ class TTSCast:
                     filepath = ttsFile
                     logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
                     
-                    if not os.path.isfile(filepath):
+                    if not os.path.isfile(filepath) or (_useAI and _useSSML is False):
+                        if _useAI and _useSSML is False:
+                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                            if ttsAIText is not None:
+                                logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
+                                ttsText = ttsAIText
+                            else:
+                                logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                         ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
                         if ttsResult is not None:
                             with open(filepath, 'wb') as f:
@@ -778,9 +815,16 @@ class TTSCast:
                 filepath = os.path.join(symLinkPath, filename)
                 logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                 
-                if not os.path.isfile(filepath):
+                if not os.path.isfile(filepath) or _useAI:
                     langToTTS = ttsLang.split('-')[0]
                     try:
+                        if _useAI:
+                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                            if ttsAIText is not None:
+                                logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
+                                ttsText = ttsAIText
+                            else:
+                                logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                         client = gTTS(ttsText, lang=langToTTS)
                         client.save(filepath)
                     except Exception as e:
@@ -807,7 +851,14 @@ class TTSCast:
                 filepath = os.path.join(symLinkPath, filename)
                 logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                 
-                if not os.path.isfile(filepath):
+                if not os.path.isfile(filepath) or _useAI:
+                    if _useAI:
+                        ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                        if ttsAIText is not None:
+                            logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
+                            ttsText = ttsAIText
+                        else:
+                            logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                     ttsResult = TTSCast.jeedomTTS(ttsText, ttsLang)
                     if ttsResult is not None:
                         with open(filepath, 'wb') as f:
@@ -832,7 +883,14 @@ class TTSCast:
                     filepath = os.path.join(symLinkPath, filename)
                     logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
                     
-                    if not os.path.isfile(filepath):
+                    if not os.path.isfile(filepath) or (_useAI and _useSSML is False):
+                        if _useAI and _useSSML is False:
+                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                            if ttsAIText is not None:
+                                logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
+                                ttsText = ttsAIText
+                            else:
+                                logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                         ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
                         if ttsResult is not None:
                             with open(filepath, 'wb') as f:
