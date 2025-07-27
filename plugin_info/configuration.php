@@ -680,6 +680,7 @@ if (!isConnect()) {
             <legend><i class="fas fas fa-brain"></i> {{IA}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Active l'IA Générative}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Autoriser l'usage de l'IA pour la reformulation des réponses. Désactivez cette option si vous ne souhaitez pas utiliser l'IA}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -688,6 +689,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Authentification IA}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le mode d'authentification à utiliser pour se connecter au moteur d'IA.}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
@@ -699,6 +701,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{ID Projet (Google)}} <a class="btn btn-info btn-xs" target="_blank" href="https://console.cloud.google.com/apis">{{SITE}}</a>
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Entrez votre ID de projet Google pour l'authentification avec le moteur d'IA.}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
@@ -707,6 +710,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Clé API}} <a class="btn btn-info btn-xs" target="_blank" href="https://aistudio.google.com/apikey">{{SITE}}</a>
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Entrez votre clé API pour l'authentification avec le moteur d'IA.}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
@@ -715,6 +719,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Modèle IA}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
@@ -727,6 +732,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Ton de Reformulation}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser ce prompt système personnalisé}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -735,6 +741,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Prompt Système Personnalisé}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser ce prompt système personnalisé}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
