@@ -1112,7 +1112,7 @@ class TTSCast:
                     else:
                         logging.error('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return None
-                elif myConfig.aiAuthMode == 'apiKey' and myConfig.aiApiKey != 'noKey':
+                elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
                     logging.debug('[DAEMON][genAI] Chargement des credentials avec la clé API')
                     client = genai.Client(api_key=myConfig.aiApiKey)
                 else:
