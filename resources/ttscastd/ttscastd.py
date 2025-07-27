@@ -511,7 +511,6 @@ class TTSCast:
                         _useAI = options_json['genai'] if 'genai' in options_json else False
                         _aiCustomTone = options_json['aitone'] if 'aitone' in options_json else None
                         _aiCustomSysPrompt = options_json['aisysprompt'] if 'aisysprompt' in options_json else None
-                        
                     # SSML
                     _useSSML = options_json['ssml'] if 'ssml' in options_json else False
                     # Before
@@ -669,6 +668,8 @@ class TTSCast:
                     
                     # AI
                     _useAI = options_json['genai'] if 'genai' in options_json else False
+                    _aiCustomTone = options_json['aitone'] if 'aitone' in options_json else None
+                    _aiCustomSysPrompt = options_json['aisysprompt'] if 'aisysprompt' in options_json else None
                     # SSML
                     _useSSML = options_json['ssml'] if 'ssml' in options_json else False
                     # Silent Before
@@ -732,7 +733,7 @@ class TTSCast:
                             logging.debug('[DAEMON][TTS] Génération du TTS avec SSML')
                             text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                         elif _useAI:
-                            ttsAIText = TTSCast.genAI(ttsText)
+                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
@@ -1106,6 +1107,7 @@ class TTSCast:
                 THINKING_CONFIG = types.ThinkingConfig(thinking_budget=0)
                 GOOGLE_SEARCH_TOOL = types.Tool(google_search=types.GoogleSearch())
                 if _aiCustomTone is not None:
+                    logging.debug('[DAEMON][GenAI] Ton personnalisé :: %s', _aiCustomTone)
                     SYSTEM_INSTRUCTION = myConfig.aiSysPrompt(_aiCustomTone)
                 else:
                     SYSTEM_INSTRUCTION = myConfig.aiSysPrompt() if _aiCustomSysPrompt is None else _aiCustomSysPrompt
