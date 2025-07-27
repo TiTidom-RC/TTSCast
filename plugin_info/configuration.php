@@ -677,7 +677,7 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
-            <legend><i class="fas fas fa-brain"></i> {{IA}}</legend>
+            <legend><i class="fas fas fa-brain"></i> {{IA - Gemini}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Activer IA Générative}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
