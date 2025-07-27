@@ -1104,7 +1104,7 @@ class TTSCast:
                 if myConfig.aiAuthMode == 'oauth2' and myConfig.gCloudApiKey != 'noKey':
                     gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
                     if os.path.exists(gKey):
-                        logging.debug('[DAEMON][genAI] Chargement des credentials depuis le fichier JSON :: %s', myConfig.gCloudApiKey)
+                        logging.debug('[DAEMON][genAI] Chargement des credentials (pour le moteur IA) à partir du fichier JSON :: %s', myConfig.gCloudApiKey)
                         credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
                         client = genai.Client(
                             vertexai=True,
@@ -1116,7 +1116,7 @@ class TTSCast:
                         logging.error('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return None
                 elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
-                    logging.debug('[DAEMON][genAI] Chargement des credentials avec la clé API')
+                    logging.debug('[DAEMON][genAI] Chargement du moteur IA en utilisant la clé API :: %s', "***" if myConfig.aiApiKey else "N/A")
                     client = genai.Client(api_key=myConfig.aiApiKey)
                 else:
                     logging.error('[DAEMON][genAI] Mode d\'authentification invalide ou clé API manquante.')
