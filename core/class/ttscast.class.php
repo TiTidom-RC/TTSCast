@@ -113,12 +113,15 @@ class ttscast extends eqLogic
             $return['state'] = 'in_progress';
         } else {
             if (exec(system::getCmdSudo() . system::get('cmd_check') . '-Ec "python3\-requests|python3\-setuptools|python3\-dev|python3\-venv"') < 4) {
+                log::add('ttscast', 'debug', '[DepInfo][ERROR] Missing system dependencies');
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Ewc "' . config::byKey('pythonDepString', 'ttscast', '', true) . '"') < config::byKey('pythonDepNum', 'ttscast', 0, true)) {
+            } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Eiwc "' . config::byKey('pythonDepString', 'ttscast', '', true) . '"') < config::byKey('pythonDepNum', 'ttscast', 0, true)) {
+                log::add('ttscast', 'debug', '[DepInfo][ERROR] Missing Python dependencies');
                 $return['state'] = 'nok';
             } else {
+                log::add('ttscast', 'debug', '[DepInfo][INFO] All dependencies are installed');
                 $return['state'] = 'ok';
             }
         }
@@ -174,6 +177,15 @@ class ttscast extends eqLogic
         $cmd .= ' --voicerssapikey ' . config::byKey('voiceRSSAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, '0');
         $cmd .= ' --cmdwaittimeout ' . config::byKey('cmdWaitTimeout', __CLASS__, '60');
+        $cmd .= ' --aienabled ' . config::byKey('ttsAI', __CLASS__, '0');
+        $cmd .= ' --aiauthmode ' . config::byKey('ttsAIAuthMode', __CLASS__, 'noMode');
+        $cmd .= ' --aiprojectid ' . config::byKey('ttsAIProjectID', __CLASS__, 'noProjectID');
+        $cmd .= ' --aiapikey ' . config::byKey('ttsAIAPIKey', __CLASS__, 'noKey');
+        $cmd .= ' --aimodel ' . config::byKey('ttsAIModel', __CLASS__, 'noModel');
+        $cmd .= ' --aidefaulttone "' . config::byKey('ttsAIDefaultTone', __CLASS__, 'NoDefaultTone') . '"';
+        $cmd .= ' --aiusecustomsysprompt ' . config::byKey('ttsAIUseCustomSysPrompt', __CLASS__, '0');
+        $cmd .= ' --aicustomsysprompt "' . config::byKey('ttsAICustomSysPrompt', __CLASS__, 'NoCustomSysPrompt') . '"';
+
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
         log::add(__CLASS__, 'info', 'Lancement du démon');
@@ -267,7 +279,8 @@ class ttscast extends eqLogic
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsSSML = config::byKey('ttsTestSSML', 'ttscast', '0');
-        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML);
+        $ttsAI = config::byKey('ttsTestAI', 'ttscast', '0');
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI);
         self::sendToDaemon($value);
     }
 
@@ -361,41 +374,14 @@ class ttscast extends eqLogic
             }
 
             # Options
-            if (array_key_exists('force', $data)) {
-                $resOptions['force'] = $data['force'];
-            }
-            if (array_key_exists('reload_seconds', $data)) {
-                $resOptions['reload_seconds'] = $data['reload_seconds'];
-            }
-            if (array_key_exists('quit_app', $data)) {
-                $resOptions['quit_app'] = $data['quit_app'];
-            }
-            if (array_key_exists('playlist', $data)) {
-                $resOptions['playlist'] = $data['playlist'];
-            }
-            if (array_key_exists('enqueue', $data)) {
-                $resOptions['enqueue'] = $data['enqueue'];
-            }
-            if (array_key_exists('volume', $data)) {
-                $resOptions['volume'] = $data['volume'];
-            }
-            if (array_key_exists('ding', $data)) {
-                $resOptions['ding'] = $data['ding'];
-            }
-            if (array_key_exists('wait', $data)) {
-                $resOptions['wait'] = $data['wait'];
-            }
-            if (array_key_exists('type', $data)) {
-                $resOptions['type'] = $data['type'];
-            }
-            if (array_key_exists('ssml', $data)) {
-                $resOptions['ssml'] = $data['ssml'];
-            }
-            if (array_key_exists('before', $data)) {
-                $resOptions['before'] = $data['before'];
-            }
-            if (array_key_exists('voice', $data)) {
-                $resOptions['voice'] = $data['voice'];
+            $optionKeys = [
+                'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
+                'ding', 'wait', 'type', 'ssml', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp'
+            ];
+            foreach ($optionKeys as $key) {
+                if (array_key_exists($key, $data)) {
+                    $resOptions[$key] = $data[$key];
+                }
             }
 
             $resCmd['title'] = substr(json_encode($resOptions), 1, -1);
@@ -1891,6 +1877,4 @@ class ttscastCmd extends cmd
         }
         return true;
     }
-
-    /* ***********************Getteur Setteur*************************** */
 }

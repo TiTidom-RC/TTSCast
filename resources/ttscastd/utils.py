@@ -65,7 +65,24 @@ class Config:
     # ttsVoiceRSSUrl = 'api.voicerss.org:443'
 
     gCloudApiKey = ''
+    
+    # AI Configuration
+    aiEnabled = False
+    aiAuthMode = 'noMode'  # 'noMode', 'apikey', 'oauth2'
+    aiProjectID = 'noProjectID'  # Google Cloud Project ID for AI
+    aiApiKey = ''
+    aiModel = 'noModel'  # 'noModel', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'
+    aiDefaultTone = 'Enthousiaste et humoristique'  # Default tone for AI TTS
+    
+    def aiSysPrompt(self, aiCustomTone=None):
+        _aiTone = aiCustomTone if aiCustomTone else self.aiDefaultTone
+        return 'Répond à la question posée seulement s\'il y en a une, sinon reformule simplement la phrase, sur un ton ' + _aiTone + '. Sois clair, bref et concis et conserve les valeurs chiffrées s\'il y en a. Ne pas utiliser d\'emojis. Ne commente pas tes propres actions ou le processus de génération.'
 
+    aiUseCustomSysPrompt = False
+    aiCustomSysPrompt = ''
+    aiScopes = ['https://www.googleapis.com/auth/cloud-platform']
+    
+    # Paths for various resources
     mediaFolder = 'data/media'
     mediaFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), mediaFolder))
 
