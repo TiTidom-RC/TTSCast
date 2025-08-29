@@ -609,19 +609,19 @@ class TTSCast:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
-                                logging.debug('[DAEMON][GenerateTTS] TTS AI Text à générer :: %s', ttsAIText)
+                                # logging.debug('[DAEMON][GenerateTTS] TTS AI Text à générer :: %s', ttsAIText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
                                 logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                logging.debug('[DAEMON][GenerateTTS] TTS Text à générer :: %s', ttsText)
+                                # logging.debug('[DAEMON][GenerateTTS] TTS Text à générer :: %s', ttsText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         else:
                             logging.debug('[DAEMON][GenerateTTS] Génération du TTS')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            logging.debug('[DAEMON][GenerateTTS] TTS Text à générer :: %s', ttsText)
+                            # logging.debug('[DAEMON][GenerateTTS] TTS Text à générer :: %s', ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
@@ -809,19 +809,19 @@ class TTSCast:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
-                                logging.debug('[DAEMON][TTS] TTS AI Text à générer :: %s', ttsAIText)
+                                # logging.debug('[DAEMON][TTS] TTS AI Text à générer :: %s', ttsAIText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                logging.debug('[DAEMON][TTS] TTS Text à générer :: %s', ttsText)
+                                # logging.debug('[DAEMON][TTS] TTS Text à générer :: %s', ttsText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         else:
                             logging.debug('[DAEMON][TTS] Génération du TTS')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            logging.debug('[DAEMON][TTS] TTS Text à générer :: %s', ttsText)
+                            # logging.debug('[DAEMON][TTS] TTS Text à générer :: %s', ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
