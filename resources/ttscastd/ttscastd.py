@@ -392,9 +392,6 @@ class TTSCast:
                     logging.debug('[DAEMON][TestTTS] LanguageCode :: %s', language_code)
                     if ttsSSML == '1':
                         logging.debug('[DAEMON][TestTTS] Génération du TTS avec SSML')
-                        if myConfig.appConvertSingleQuote:
-                            ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            logging.debug('[DAEMON][TestTTS] TTS Text after SingleQuoteToDoubleQuote :: %s', ttsText)
                         text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                     elif ttsAI == '1':
                         ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt)
@@ -402,19 +399,19 @@ class TTSCast:
                             logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                             if myConfig.appConvertSingleQuote:
                                 ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
-                                logging.debug('[DAEMON][TestTTS] TTS AI Text after SingleQuoteToDoubleQuote :: %s', ttsAIText)
+                            logging.debug('[DAEMON][TestTTS] TTS AI Text à générer :: %s', ttsAIText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                         else:
                             logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                logging.debug('[DAEMON][TestTTS] TTS Text after SingleQuoteToDoubleQuote :: %s', ttsText)
+                            logging.debug('[DAEMON][TestTTS] TTS Text à générer :: %s', ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     else:
                         logging.debug('[DAEMON][TestTTS] Génération du TTS')
                         if myConfig.appConvertSingleQuote:
                             ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            logging.debug('[DAEMON][TestTTS] TTS Text after SingleQuoteToDoubleQuote :: %s', ttsText)
+                        logging.debug('[DAEMON][TestTTS] TTS Text à générer :: %s', ttsText)
                         text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                     audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
@@ -605,9 +602,6 @@ class TTSCast:
                         language_code = "-".join(ttsVoiceName.split("-")[:2])
                         if _useSSML:
                             logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec SSML')
-                            if myConfig.appConvertSingleQuote:
-                                ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                logging.debug('[DAEMON][GenerateTTS] TTS Text after SingleQuoteToDoubleQuote :: %s', ttsText)
                             text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                         elif _useAI:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
@@ -615,19 +609,19 @@ class TTSCast:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
-                                    logging.debug('[DAEMON][GenerateTTS] TTS AI Text after SingleQuoteToDoubleQuote :: %s', ttsAIText)
+                                logging.debug('[DAEMON][GenerateTTS] TTS AI Text à générer :: %s', ttsAIText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
                                 logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                    logging.debug('[DAEMON][GenerateTTS] TTS Text after SingleQuoteToDoubleQuote :: %s', ttsText)
+                                logging.debug('[DAEMON][GenerateTTS] TTS Text à générer :: %s', ttsText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         else:
                             logging.debug('[DAEMON][GenerateTTS] Génération du TTS')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                logging.debug('[DAEMON][GenerateTTS] TTS Text after SingleQuoteToDoubleQuote :: %s', ttsText)
+                            logging.debug('[DAEMON][GenerateTTS] TTS Text à générer :: %s', ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
@@ -808,9 +802,6 @@ class TTSCast:
                         language_code = "-".join(ttsVoiceName.split("-")[:2])
                         if _useSSML:
                             logging.debug('[DAEMON][TTS] Génération du TTS avec SSML')
-                            if myConfig.appConvertSingleQuote:
-                                ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                logging.debug('[DAEMON][TTS] TTS Text after SingleQuoteToDoubleQuote :: %s', ttsText)
                             text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                         elif _useAI:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
@@ -1279,9 +1270,9 @@ class Functions:
     @staticmethod
     def convertSingleQuoteToDoubleQuote(text):
         """ Convert single quotes to double quotes """
-        logging.debug('[DAEMON][convertSingleQuoteToDoubleQuote] Texte original : %s', text)
+        # logging.debug('[DAEMON][convertSingleQuoteToDoubleQuote] Texte original : %s', text)
         result = text.replace("'", '"')
-        logging.debug('[DAEMON][convertSingleQuoteToDoubleQuote] Texte converti : %s', result)
+        # logging.debug('[DAEMON][convertSingleQuoteToDoubleQuote] Texte converti : %s', result)
         return result
 
     @staticmethod
