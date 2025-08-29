@@ -1279,7 +1279,10 @@ class Functions:
     @staticmethod
     def convertSingleQuoteToDoubleQuote(text):
         """ Convert single quotes to double quotes """
-        return text.replace("'", '"')
+        logging.debug('[DAEMON][convertSingleQuoteToDoubleQuote] Texte original : %s', text)
+        result = text.replace("'", '"')
+        logging.debug('[DAEMON][convertSingleQuoteToDoubleQuote] Texte converti : %s', result)
+        return result
 
     @staticmethod
     def removeNonUtf8Chars(text):
