@@ -93,6 +93,7 @@ class Config:
     configFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), configFolder))
     
     appDisableDing = False
+    appConvertSingleQuote = False  # Convertit les apostrophes simples en guillemets doubles pour contourner un bug de prononciation Google TTS
     cmdWaitTimeout = 60
     cmdWaitQueue = {}
     

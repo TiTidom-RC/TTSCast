@@ -176,6 +176,7 @@ class ttscast extends eqLogic
         $cmd .= ' --gcloudapikey ' . config::byKey('gCloudAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --voicerssapikey ' . config::byKey('voiceRSSAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, '0');
+        $cmd .= ' --appconvertsinglequote ' . config::byKey('appConvertSingleQuote', __CLASS__, '0');
         $cmd .= ' --cmdwaittimeout ' . config::byKey('cmdWaitTimeout', __CLASS__, '60');
         $cmd .= ' --aienabled ' . config::byKey('ttsAI', __CLASS__, '0');
         $cmd .= ' --aiauthmode ' . config::byKey('ttsAIAuthMode', __CLASS__, 'noMode');
