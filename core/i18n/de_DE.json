@@ -164,6 +164,8 @@
         "Clé API (Google AI Studio)": "API-Schlüssel (Google AI Studio)",
         "Clé API (Voice RSS)": "API Key (Voice RSS)",
         "Clé API (gCloud TTS)": "API Key (gCloud TTS)",
+        "Contournement du bug Google TTS de prononciation des mots contenant une apostrophe suivi de caractères accentués": "Umgehung des Google TTS-Fehlers bei der Aussprache von Wörtern, die ein Apostroph gefolgt von Akzentzeichen enthalten",
+        "Convertir les SingleQuote en DoubleQuote": "SingleQuote in DoubleQuote umwandeln",
         "Demande de génération du TTS de test envoyée (voir les logs du démon pour le résultat)": "Request to generate test TTS :: Sent (See daemon logs for result)",
         "Demande de mise à jour des listes :: Custom Sounds :: envoyée (voir les logs ttscast)": "Request to update lists :: Custom Sounds :: Sent (See ttscast logs for result)",
         "Demande de mise à jour des listes :: CustomRadios :: envoyée (voir les logs ttscast)": "Request to update lists :: CustomRadios :: Sent (See ttscast logs for result)",
