@@ -91,7 +91,8 @@ class Config:
 
     configFolder = 'data/config'
     configFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), configFolder))
-    
+
+    ttsDisableCache = False
     appDisableDing = False
     appConvertSingleQuote = False  # Convertit les apostrophes simples en guillemets doubles pour contourner un bug de prononciation Google TTS
     cmdWaitTimeout = 60

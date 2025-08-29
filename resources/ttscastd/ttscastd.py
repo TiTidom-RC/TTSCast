@@ -387,7 +387,7 @@ class TTSCast:
                 
                 logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
                 
-                if not os.path.isfile(filepath) or ttsAI == '1':
+                if not os.path.isfile(filepath) or myConfig.ttsDisableCache or ttsAI == '1':
                     language_code = "-".join(ttsVoiceName.split("-")[:2])
                     logging.debug('[DAEMON][TestTTS] LanguageCode :: %s', language_code)
                     if ttsSSML == '1':
@@ -439,7 +439,7 @@ class TTSCast:
             filepath = os.path.join(symLinkPath, filename)
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
             
-            if not os.path.isfile(filepath) or ttsAI == '1':
+            if not os.path.isfile(filepath) or myConfig.ttsDisableCache or ttsAI == '1':
                 langToTTS = ttsLang.split('-')[0]
                 try:
                     if ttsAI == '1':
@@ -474,7 +474,7 @@ class TTSCast:
             filepath = os.path.join(symLinkPath, filename)
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
 
-            if not os.path.isfile(filepath) or ttsAI == '1':
+            if not os.path.isfile(filepath) or myConfig.ttsDisableCache or ttsAI == '1':
                 if ttsAI == '1':
                     ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt)
                     if ttsAIText is not None:
@@ -504,8 +504,8 @@ class TTSCast:
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
                 filepath = os.path.join(symLinkPath, filename)
                 logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
-                
-                if not os.path.isfile(filepath) or (ttsAI == '1' and ttsSSML == '0'):
+
+                if not os.path.isfile(filepath) or myConfig.ttsDisableCache or (ttsAI == '1' and ttsSSML == '0'):
                     if ttsAI == '1' and ttsSSML == '0':
                         ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt)
                         if ttsAIText is not None:
@@ -597,8 +597,8 @@ class TTSCast:
                     logging.debug('[DAEMON][GenerateTTS] Génération du fichier TTS (mp3)')
                     filepath = ttsFile
                     logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
-                    
-                    if not os.path.isfile(filepath) or _useAI:
+
+                    if not os.path.isfile(filepath) or myConfig.ttsDisableCache or _useAI:
                         language_code = "-".join(ttsVoiceName.split("-")[:2])
                         if _useSSML:
                             logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec SSML')
@@ -641,8 +641,8 @@ class TTSCast:
                 logging.debug('[DAEMON][GenerateTTS] TTSEngine = gtranslatetts')
                 filepath = ttsFile
                 logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
-                
-                if not os.path.isfile(filepath) or _useAI:
+
+                if not os.path.isfile(filepath) or myConfig.ttsDisableCache or _useAI:
                     langToTTS = ttsLang.split('-')[0]
                     try:
                         if _useAI:
@@ -671,8 +671,8 @@ class TTSCast:
                 if myConfig.apiRSSKey != 'noKey':
                     filepath = ttsFile
                     logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
-                    
-                    if not os.path.isfile(filepath) or (_useAI and _useSSML is False):
+
+                    if not os.path.isfile(filepath) or myConfig.ttsDisableCache or (_useAI and _useSSML is False):
                         if _useAI and _useSSML is False:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
@@ -797,8 +797,8 @@ class TTSCast:
                     filepath = os.path.join(symLinkPath, filename)
                     
                     logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
-                    
-                    if not os.path.isfile(filepath) or _useAI:
+
+                    if not os.path.isfile(filepath) or myConfig.ttsDisableCache or _useAI:
                         language_code = "-".join(ttsVoiceName.split("-")[:2])
                         if _useSSML:
                             logging.debug('[DAEMON][TTS] Génération du TTS avec SSML')
@@ -809,19 +809,19 @@ class TTSCast:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
-                                    logging.debug('[DAEMON][TTS] TTS AI Text after SingleQuoteToDoubleQuote :: %s', ttsAIText)
+                                logging.debug('[DAEMON][TTS] TTS AI Text à générer :: %s', ttsAIText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                    logging.debug('[DAEMON][TTS] TTS Text after SingleQuoteToDoubleQuote :: %s', ttsText)
+                                logging.debug('[DAEMON][TTS] TTS Text à générer :: %s', ttsText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         else:
                             logging.debug('[DAEMON][TTS] Génération du TTS')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                logging.debug('[DAEMON][TTS] TTS Text after SingleQuoteToDoubleQuote :: %s', ttsText)
+                            logging.debug('[DAEMON][TTS] TTS Text à générer :: %s', ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
@@ -848,8 +848,8 @@ class TTSCast:
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
                 filepath = os.path.join(symLinkPath, filename)
                 logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
-                
-                if not os.path.isfile(filepath) or _useAI:
+
+                if not os.path.isfile(filepath) or myConfig.ttsDisableCache or _useAI:
                     langToTTS = ttsLang.split('-')[0]
                     try:
                         if _useAI:
@@ -884,8 +884,8 @@ class TTSCast:
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
                 filepath = os.path.join(symLinkPath, filename)
                 logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
-                
-                if not os.path.isfile(filepath) or _useAI:
+
+                if not os.path.isfile(filepath) or myConfig.ttsDisableCache or _useAI:
                     if _useAI:
                         ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                         if ttsAIText is not None:
@@ -916,8 +916,8 @@ class TTSCast:
                     filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
                     filepath = os.path.join(symLinkPath, filename)
                     logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
-                    
-                    if not os.path.isfile(filepath) or (_useAI and _useSSML is False):
+
+                    if not os.path.isfile(filepath) or myConfig.ttsDisableCache or (_useAI and _useSSML is False):
                         if _useAI and _useSSML is False:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
@@ -2644,6 +2644,7 @@ parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
 parser.add_argument("--voicerssapikey", help="Voice RSS ApiKey", type=str)
 parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
 parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
+parser.add_argument("--ttsdisablecache", help="TTS Disable Cache", type=str)
 parser.add_argument("--appdisableding", help="App Disable Ding Parameter", type=str)
 parser.add_argument("--appconvertsinglequote", help="App Convert Single Quote Parameter", type=str)
 parser.add_argument("--cmdwaittimeout", help="Cmd Wait Timeout Parameter", type=str)
@@ -2673,6 +2674,11 @@ if args.gcloudapikey:
     myConfig.gCloudApiKey = args.gcloudapikey
 if args.voicerssapikey:
     myConfig.apiRSSKey = args.voicerssapikey
+if args.ttsdisablecache:
+    if (args.ttsdisablecache == '0'):
+        myConfig.ttsDisableCache = False
+    else:
+        myConfig.ttsDisableCache = True
 if args.appdisableding:
     if (args.appdisableding == '0'):
         myConfig.appDisableDing = False
@@ -2754,6 +2760,7 @@ logging.info('[DAEMON][MAIN] ApiKey: %s', "***" if myConfig.apiKey else "N/A")
 logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***" if myConfig.apiTTSKey else "N/A")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', myConfig.gCloudApiKey)
 logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', "***" if myConfig.apiRSSKey else "N/A")
+logging.info('[DAEMON][MAIN] TTS Disable Cache: %s', str(myConfig.ttsDisableCache))
 logging.info('[DAEMON][MAIN] App Disable Ding: %s', str(myConfig.appDisableDing))
 logging.info('[DAEMON][MAIN] App Convert Single Quote: %s', str(myConfig.appConvertSingleQuote))
 logging.info('[DAEMON][MAIN] AI Enabled: %s', str(myConfig.aiEnabled))
