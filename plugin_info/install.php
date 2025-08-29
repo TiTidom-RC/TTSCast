@@ -52,11 +52,17 @@ function ttscast_install() {
     if (config::byKey('gCloudTTSVoice', 'ttscast') == '') {
         config::save('gCloudTTSVoice', 'fr-FR-Standard-A', 'ttscast');
     }
+    if (config::byKey('ttsDisableCache', 'ttscast') == '') {
+        config::save('ttsDisableCache', '0', 'ttscast');
+    }
     if (config::byKey('ttsPurgeCacheDays', 'ttscast') == '') {
         config::save('ttsPurgeCacheDays', '10', 'ttscast');
     }
     if (config::byKey('appDisableDing', 'ttscast') == '') {
         config::save('appDisableDing', '0', 'ttscast');
+    }
+    if (config::byKey('appConvertSingleQuote', 'ttscast') == '') {
+        config::save('appConvertSingleQuote', '0', 'ttscast');
     }
     if (config::byKey('cmdWaitTimeout', 'ttscast') == '') {
         config::save('cmdWaitTimeout', '60', 'ttscast');
@@ -121,11 +127,17 @@ function ttscast_update() {
     if (config::byKey('gCloudTTSVoice', 'ttscast') == '') {
         config::save('gCloudTTSVoice', 'fr-FR-Standard-A', 'ttscast');
     }
+    if (config::byKey('ttsDisableCache', 'ttscast') == '') {
+        config::save('ttsDisableCache', '0', 'ttscast');
+    }
     if (config::byKey('ttsPurgeCacheDays', 'ttscast') == '') {
         config::save('ttsPurgeCacheDays', '10', 'ttscast');
     }
     if (config::byKey('appDisableDing', 'ttscast') == '') {
         config::save('appDisableDing', '0', 'ttscast');
+    }
+    if (config::byKey('appConvertSingleQuote', 'ttscast') == '') {
+        config::save('appConvertSingleQuote', '0', 'ttscast');
     }
     if (config::byKey('cmdWaitTimeout', 'ttscast') == '') {
         config::save('cmdWaitTimeout', '60', 'ttscast');
