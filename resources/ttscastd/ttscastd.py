@@ -737,10 +737,11 @@ class TTSCast:
                     _cmdWait = options_json.get('wait', None)
 
                     # AI
-                    _useAI = options_json.get('genai', False)
-                    _aiCustomTone = options_json.get('aitone', None)
-                    _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
-                    _aiCustomTemp = options_json.get('aitemp', None)
+                    if myConfig.aiEnabled:
+                        _useAI = options_json.get('genai', False)
+                        _aiCustomTone = options_json.get('aitone', None)
+                        _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
+                        _aiCustomTemp = options_json.get('aitemp', None)
                     # SSML
                     _useSSML = options_json.get('ssml', False)
                     # Silent Before
