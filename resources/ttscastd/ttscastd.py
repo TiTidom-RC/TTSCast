@@ -1268,6 +1268,7 @@ class Functions:
         Args:
             text: La chaîne de caractères à traiter.
             showLogs: Indique si les logs doivent être affichées.
+            callerFunc: Le nom de la fonction appelante (pour les logs).
 
         Returns:
             result: La chaîne de caractères avec les remplacements effectués.
