@@ -164,6 +164,8 @@
         "Clé API (Google AI Studio)": "Chiave API (Google AI Studio)",
         "Clé API (Voice RSS)": "Chiave API (RSS vocale)",
         "Clé API (gCloud TTS)": "Chiave API (gCloud TTS)",
+        "Contournement du bug Google TTS de prononciation des mots contenant une apostrophe suivi de caractères accentués": "Come risolvere il bug di Google TTS nella pronuncia delle parole contenenti un apostrofo seguito da caratteri accentati",
+        "Convertir les SingleQuote en DoubleQuote": "Convertire le virgolette singole in virgolette doppie",
         "Demande de génération du TTS de test envoyée (voir les logs du démon pour le résultat)": "Richiesta di generazione TTS di prova inviata (vedere i log del demone per i risultati)",
         "Demande de mise à jour des listes :: Custom Sounds :: envoyée (voir les logs ttscast)": "Richiesta di aggiornamento delle liste :: Suoni personalizzati :: inviata (vedi log ttscast)",
         "Demande de mise à jour des listes :: CustomRadios :: envoyée (voir les logs ttscast)": "Richiesta di aggiornamento della lista :: CustomRadios :: inviata (vedi log ttscast)",
