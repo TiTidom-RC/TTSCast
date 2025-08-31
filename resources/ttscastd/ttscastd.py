@@ -2500,7 +2500,8 @@ class myCast:
                 Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)  # type: ignore
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Cast_Status] Exception :: %s', e)
-                logging.debug(traceback.format_exc())     
+                logging.debug(traceback.format_exc())
+                  
     class MyMediaStatusListener(MediaStatusListener):
         """Status media listener"""
 
