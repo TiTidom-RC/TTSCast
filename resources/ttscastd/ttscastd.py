@@ -26,6 +26,7 @@ import argparse
 import threading
 import datetime
 import requests
+import re
 
 from urllib.parse import urljoin, urlencode, urlparse
 from uuid import UUID
@@ -398,20 +399,17 @@ class TTSCast:
                         if ttsAIText is not None:
                             logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                             if myConfig.appConvertSingleQuote:
-                                ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
-                            logging.debug('[DAEMON][TestTTS] TTS AI Text à générer :: %s', ttsAIText)
+                                ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText, True, "TestTTS")
                             text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                         else:
                             logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                             if myConfig.appConvertSingleQuote:
-                                ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            logging.debug('[DAEMON][TestTTS] TTS Text à générer :: %s', ttsText)
+                                ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     else:
                         logging.debug('[DAEMON][TestTTS] Génération du TTS')
                         if myConfig.appConvertSingleQuote:
-                            ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                        logging.debug('[DAEMON][TestTTS] TTS Text à générer :: %s', ttsText)
+                            ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
                         text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                     audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
@@ -609,19 +607,16 @@ class TTSCast:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
-                                # logging.debug('[DAEMON][GenerateTTS] TTS AI Text à générer :: %s', ttsAIText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
                                 logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                # logging.debug('[DAEMON][GenerateTTS] TTS Text à générer :: %s', ttsText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         else:
                             logging.debug('[DAEMON][GenerateTTS] Génération du TTS')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            # logging.debug('[DAEMON][GenerateTTS] TTS Text à générer :: %s', ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
@@ -810,19 +805,16 @@ class TTSCast:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
-                                # logging.debug('[DAEMON][TTS] TTS AI Text à générer :: %s', ttsAIText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                # logging.debug('[DAEMON][TTS] TTS Text à générer :: %s', ttsText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         else:
                             logging.debug('[DAEMON][TTS] Génération du TTS')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            # logging.debug('[DAEMON][TTS] TTS Text à générer :: %s', ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
@@ -1269,11 +1261,42 @@ class Functions:
         return soup.get_text()
 
     @staticmethod
-    def convertSingleQuoteToDoubleQuote(text):
-        """ Convert single quotes to double quotes """
-        # logging.debug('[DAEMON][convertSingleQuoteToDoubleQuote] Texte original : %s', text)
-        result = text.replace("'", '"')
-        # logging.debug('[DAEMON][convertSingleQuoteToDoubleQuote] Texte converti : %s', result)
+    def convertSingleQuoteToDoubleQuote(text: str, showLogs: bool = False, callerFunc: str = "SingleQuote") -> str:
+        """
+        Remplace une apostrophe (') par un guillemet double (") uniquement si le caractère suivant est une lettre accentuée.
+        
+        Args:
+            text: La chaîne de caractères à traiter.
+            showLogs: Indique si les logs doivent être affichées.
+            callerFunc: Le nom de la fonction appelante (pour les logs).
+
+        Returns:
+            result: La chaîne de caractères avec les remplacements effectués.
+        """
+        # Liste des caractères accentués (minuscules et majuscules)
+        char_accented = "éèêëàâäôöîïûüùçÉÈÊËÀÂÄÔÖÎÏÛÜÙÇ"
+        
+        # L'expression régulière se décompose ainsi :
+        # '      : recherche une apostrophe littérale.
+        # (      : commence un groupe de capture.
+        # [...]  : une classe de caractères, recherche n'importe quel caractère listé à l'intérieur.
+        # )      : termine le groupe de capture.
+        # Le groupe de capture permet de "retenir" le caractère accentué pour le réutiliser.
+        pattern = f"'([{char_accented}])"
+        
+        # La chaîne de remplacement :
+        # "      : un guillemet double littéral.
+        # \1     : est une référence au contenu du premier groupe de capture
+        #          (c'est-à-dire notre caractère accentué).
+        replacement = r'"\1'
+        
+        result = re.sub(pattern, replacement, text)
+
+        # Pour les tests
+        if showLogs:
+            logging.debug('[DAEMON][%s] Texte avant conversion :: %s', callerFunc, text)
+            logging.debug('[DAEMON][%s] Texte après conversion :: %s', callerFunc, result)
+
         return result
 
     @staticmethod
@@ -2477,8 +2500,7 @@ class myCast:
                 Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)  # type: ignore
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Cast_Status] Exception :: %s', e)
-                logging.debug(traceback.format_exc())
-            
+                logging.debug(traceback.format_exc())     
     class MyMediaStatusListener(MediaStatusListener):
         """Status media listener"""
 
