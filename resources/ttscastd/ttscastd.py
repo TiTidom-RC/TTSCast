@@ -26,6 +26,7 @@ import argparse
 import threading
 import datetime
 import requests
+import re
 
 from urllib.parse import urljoin, urlencode, urlparse
 from uuid import UUID
@@ -1269,12 +1270,34 @@ class Functions:
         return soup.get_text()
 
     @staticmethod
-    def convertSingleQuoteToDoubleQuote(text):
-        """ Convert single quotes to double quotes """
-        # logging.debug('[DAEMON][convertSingleQuoteToDoubleQuote] Texte original : %s', text)
-        result = text.replace("'", '"')
-        # logging.debug('[DAEMON][convertSingleQuoteToDoubleQuote] Texte converti : %s', result)
-        return result
+    def convertSingleQuoteToDoubleQuote(text: str) -> str:
+        """
+        Remplace une apostrophe (') par un guillemet double (") uniquement si le caractère suivant est une lettre accentuée.
+        
+        Args:
+            texte: La chaîne de caractères à traiter.
+        
+        Returns:
+            La chaîne de caractères avec les remplacements effectués.
+        """
+        # Liste des caractères accentués (minuscules et majuscules)
+        char_accented = "éèêëàâäôöîïûüùçÉÈÊËÀÂÄÔÖÎÏÛÜÙÇ"
+        
+        # L'expression régulière se décompose ainsi :
+        # '      : recherche une apostrophe littérale.
+        # (      : commence un groupe de capture.
+        # [...]  : une classe de caractères, recherche n'importe quel caractère listé à l'intérieur.
+        # )      : termine le groupe de capture.
+        # Le groupe de capture permet de "retenir" le caractère accentué pour le réutiliser.
+        pattern = f"'([{char_accented}])"
+        
+        # La chaîne de remplacement :
+        # "      : un guillemet double littéral.
+        # \1     : est une référence au contenu du premier groupe de capture
+        #          (c'est-à-dire notre caractère accentué).
+        replacement = r'"\1'
+        
+        return re.sub(pattern, replacement, text)
 
     @staticmethod
     def removeNonUtf8Chars(text):
@@ -2477,8 +2500,7 @@ class myCast:
                 Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)  # type: ignore
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Cast_Status] Exception :: %s', e)
-                logging.debug(traceback.format_exc())
-            
+                logging.debug(traceback.format_exc())     
     class MyMediaStatusListener(MediaStatusListener):
         """Status media listener"""
 
