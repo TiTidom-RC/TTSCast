@@ -399,17 +399,17 @@ class TTSCast:
                         if ttsAIText is not None:
                             logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                             if myConfig.appConvertSingleQuote:
-                                ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText, True)
+                                ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText, True, "TestTTS")
                             text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                         else:
                             logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                             if myConfig.appConvertSingleQuote:
-                                ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True)
+                                ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     else:
                         logging.debug('[DAEMON][TestTTS] Génération du TTS')
                         if myConfig.appConvertSingleQuote:
-                            ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True)
+                            ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
                         text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                     audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
@@ -1261,7 +1261,7 @@ class Functions:
         return soup.get_text()
 
     @staticmethod
-    def convertSingleQuoteToDoubleQuote(text: str, showLogs: bool = False) -> str:
+    def convertSingleQuoteToDoubleQuote(text: str, showLogs: bool = False, callerFunc: str = "SingleQuote") -> str:
         """
         Remplace une apostrophe (') par un guillemet double (") uniquement si le caractère suivant est une lettre accentuée.
         
@@ -1293,8 +1293,8 @@ class Functions:
 
         # Pour les tests
         if showLogs:
-            logging.debug('[DAEMON][SingleQuote] Texte avant conversion :: %s', text)
-            logging.debug('[DAEMON][SingleQuote] Texte après conversion :: %s', result)
+            logging.debug('[DAEMON][%s] Texte avant conversion :: %s', callerFunc, text)
+            logging.debug('[DAEMON][%s] Texte après conversion :: %s', callerFunc, result)
 
         return result
 
