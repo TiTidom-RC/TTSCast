@@ -1332,8 +1332,8 @@ class Functions:
             return False
 
     @staticmethod
-    def controllerActions(_googleUUID='UNKOWN', _controller='', _value='', _options=''):
-        if _googleUUID != 'UNKOWN':
+    def controllerActions(_googleUUID='UNKNOWN', _controller='', _value='', _options=''):
+        if _googleUUID != 'UNKNOWN':
             cast = None
             volumeBeforePlay = None
             
@@ -2074,8 +2074,8 @@ class Functions:
                 return False
 
     @staticmethod
-    def mediaActions(_googleUUID='UNKOWN', _value='0', _mode=''):
-        if _googleUUID != 'UNKOWN':
+    def mediaActions(_googleUUID='UNKNOWN', _value='0', _mode=''):
+        if _googleUUID != 'UNKNOWN':
             cast = None
             try:
                 _uuid = UUID(_googleUUID)
@@ -2135,7 +2135,7 @@ class Functions:
                 return False
 
     @staticmethod
-    def scanChromeCast(_mode='UNKOWN'):
+    def scanChromeCast(_mode='UNKNOWN'):
         try:
             logging.debug('[DAEMON][SCANNER] Start Scanner :: %s', _mode)
             myConfig.ScanPending = True

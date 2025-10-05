@@ -79,6 +79,9 @@ function ttscast_install() {
     if (config::byKey('debugRestoreVenv', 'ttscast') == '') {
         config::save('debugRestoreVenv', '0', 'ttscast');
     }
+    if (config::byKey('disableUpdateMsg', 'ttscast') == '') {
+        config::save('disableUpdateMsg', '0', 'ttscast');
+    }
 
     $dependencyInfo = ttscast::dependancy_info();
     if (!isset($dependencyInfo['state'])) {
@@ -98,8 +101,10 @@ function ttscast_update() {
     $pluginVersion = ttscast::getPluginVersion();
     config::save('pluginVersion', $pluginVersion, 'ttscast');
 
-    message::removeAll('ttscast');
-    message::add('ttscast', 'Mise à jour du plugin TTS Cast (Version : ' . $pluginVersion . ')', null, null);
+    if (config::byKey('disableUpdateMsg', 'ttscast', '0') == '0') {
+        message::removeAll('ttscast');
+        message::add('ttscast', 'Mise à jour du plugin TTS Cast (Version : ' . $pluginVersion . ')', null, null);
+    }
 
     ttscast::getPythonDepFromRequirements();
 
