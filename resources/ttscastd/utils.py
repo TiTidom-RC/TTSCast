@@ -76,7 +76,7 @@ class Config:
     
     def aiSysPrompt(self, aiCustomTone=None):
         _aiTone = aiCustomTone if aiCustomTone else self.aiDefaultTone
-        return 'Répond à la question posée seulement s\'il y en a une, sinon reformule simplement la phrase, sur un ton ' + _aiTone + '. Sois clair, bref et concis et conserve les valeurs chiffrées s\'il y en a. Ne pas utiliser d\'emojis. Ne commente pas tes propres actions ou le processus de génération.'
+        return 'Répond à la question posée seulement s\'il y en a une, sinon reformule simplement la phrase, sur un ton ' + _aiTone + '. Utilise la recherche en ligne pour déterminer la date précise du jour. Sois clair, bref et concis et conserve les valeurs chiffrées s\'il y en a. Ne pas utiliser d\'emojis. Ne commente pas tes propres actions ou le processus de génération.'
 
     aiUseCustomSysPrompt = False
     aiCustomSysPrompt = ''
