@@ -50,6 +50,14 @@ if (!isConnect()) {
                     <input class="configKey form-control" data-l1key="pythonVersion" readonly />
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Désactiver les messages de MàJ}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Cocher cette case désactivera les messages de mise à jour du plugin dans le centre de message}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="disableUpdateMsg" />
+                </div>
+            </div>
             <legend><i class="fas fa-code"></i> {{Dépendances}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Force les mises à jour Systèmes}}

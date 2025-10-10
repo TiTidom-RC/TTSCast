@@ -100,7 +100,7 @@ if [ "$FORCE_INST_UPDATES" -eq 1 ]; then
 	log "* Force apt-get upgrade *"
 	log "*************************"
 	apt-get -y -q -V upgrade | log
-	log "** >> Reboot is recommanded after upgrade ! << **"
+	log "** >> Reboot is recommended after upgrade ! << **"
 	log "** Force Upgrade :: Done **"
 else
 	log "****************************"
