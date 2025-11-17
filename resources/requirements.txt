@@ -1,6 +1,6 @@
 PyChromecast==14.0.9
-google-cloud-texttospeech==2.31.0
+google-cloud-texttospeech==2.33.0
 gTTS==2.5.4
-google-genai==1.41.0
-Markdown==3.9
+google-genai==1.50.1
+Markdown==3.10
 beautifulsoup4==4.14.2

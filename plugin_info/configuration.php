@@ -345,6 +345,7 @@ if (!isConnect()) {
                         <option value="fr-CA-Wavenet-A">Français (Canada) - Wavenet A Female (fr-CA-Wavenet-A)</option>
                         <option value="fr-CA-Wavenet-B">Français (Canada) - Wavenet B Male (fr-CA-Wavenet-B)</option>
                         <option value="fr-CA-Wavenet-C">Français (Canada) - Wavenet C Female (fr-CA-Wavenet-C)</option>
+                        <option value="fr-CA-Wavenet-D">Français (Canada) - Wavenet D Male (fr-CA-Wavenet-D)</option>
                         <!-- English (US) -->
                         <option disabled>--- Anglais (US) ---</option>
                         <option value="en-US-Casual-K">Anglais (US) - Casual K Male (en-US-Casual-K)</option>
@@ -628,6 +629,7 @@ if (!isConnect()) {
                         <option value="nl-BE-Chirp3-HD-Aoede">Néerlandais (Belgique) - Chirp3 HD Aoede Female (nl-BE-Chirp3-HD-Aoede)</option>
                         <option value="nl-BE-Chirp3-HD-Autonoe">Néerlandais (Belgique) - Chirp3 HD Autonoe Female (nl-BE-Chirp3-HD-Autonoe)</option>
                         <option value="nl-BE-Chirp3-HD-Callirrhoe">Néerlandais (Belgique) - Chirp3 HD Callirrhoe Female (nl-BE-Chirp3-HD-Callirrhoe)</option>
+                        <option value="nl-BE-Chirp3-HD-Charon">Néerlandais (Belgique) - Chirp3 HD Charon Male (nl-BE-Chirp3-HD-Charon)</option>
                         <option value="nl-BE-Chirp3-HD-Despina">Néerlandais (Belgique) - Chirp3 HD Despina Female (nl-BE-Chirp3-HD-Despina)</option>
                         <option value="nl-BE-Chirp3-HD-Enceladus">Néerlandais (Belgique) - Chirp3 HD Enceladus Male (nl-BE-Chirp3-HD-Enceladus)</option>
                         <option value="nl-BE-Chirp3-HD-Erinome">Néerlandais (Belgique) - Chirp3 HD Erinome Female (nl-BE-Chirp3-HD-Erinome)</option>
@@ -655,6 +657,36 @@ if (!isConnect()) {
                         <option value="nl-BE-Wavenet-D">Néerlandais (Belgique) - Wavenet D Male (nl-BE-Wavenet-D)</option>
                         <!-- Serbian -->
                         <option disabled>--- Serbe (Serbie) ---</option>
+                        <option value="sr-RS-Chirp3-HD-Achernar">Serbe (Serbie) - Chirp3 HD Achernar Female (sr-RS-Chirp3-HD-Achernar)</option>
+                        <option value="sr-RS-Chirp3-HD-Achird">Serbe (Serbie) - Chirp3 HD Achird Male (sr-RS-Chirp3-HD-Achird)</option>
+                        <option value="sr-RS-Chirp3-HD-Algenib">Serbe (Serbie) - Chirp3 HD Algenib Male (sr-RS-Chirp3-HD-Algenib)</option>
+                        <option value="sr-RS-Chirp3-HD-Algieba">Serbe (Serbie) - Chirp3 HD Algieba Male (sr-RS-Chirp3-HD-Algieba)</option>
+                        <option value="sr-RS-Chirp3-HD-Alnilam">Serbe (Serbie) - Chirp3 HD Alnilam Male (sr-RS-Chirp3-HD-Alnilam)</option>
+                        <option value="sr-RS-Chirp3-HD-Aoede">Serbe (Serbie) - Chirp3 HD Aoede Female (sr-RS-Chirp3-HD-Aoede)</option>
+                        <option value="sr-RS-Chirp3-HD-Autonoe">Serbe (Serbie) - Chirp3 HD Autonoe Female (sr-RS-Chirp3-HD-Autonoe)</option>
+                        <option value="sr-RS-Chirp3-HD-Callirrhoe">Serbe (Serbie) - Chirp3 HD Callirrhoe Female (sr-RS-Chirp3-HD-Callirrhoe)</option>
+                        <option value="sr-RS-Chirp3-HD-Charon">Serbe (Serbie) - Chirp3 HD Charon Male (sr-RS-Chirp3-HD-Charon)</option>
+                        <option value="sr-RS-Chirp3-HD-Despina">Serbe (Serbie) - Chirp3 HD Despina Female (sr-RS-Chirp3-HD-Despina)</option>
+                        <option value="sr-RS-Chirp3-HD-Enceladus">Serbe (Serbie) - Chirp3 HD Enceladus Male (sr-RS-Chirp3-HD-Enceladus)</option>
+                        <option value="sr-RS-Chirp3-HD-Erinome">Serbe (Serbie) - Chirp3 HD Erinome Female (sr-RS-Chirp3-HD-Erinome)</option>
+                        <option value="sr-RS-Chirp3-HD-Fenrir">Serbe (Serbie) - Chirp3 HD Fenrir Male (sr-RS-Chirp3-HD-Fenrir)</option>
+                        <option value="sr-RS-Chirp3-HD-Gacrux">Serbe (Serbie) - Chirp3 HD Gacrux Female (sr-RS-Chirp3-HD-Gacrux)</option>
+                        <option value="sr-RS-Chirp3-HD-Iapetus">Serbe (Serbie) - Chirp3 HD Iapetus Male (sr-RS-Chirp3-HD-Iapetus)</option>
+                        <option value="sr-RS-Chirp3-HD-Kore">Serbe (Serbie) - Chirp3 HD Kore Female (sr-RS-Chirp3-HD-Kore)</option>
+                        <option value="sr-RS-Chirp3-HD-Laomedeia">Serbe (Serbie) - Chirp3 HD Laomedeia Female (sr-RS-Chirp3-HD-Laomedeia)</option>
+                        <option value="sr-RS-Chirp3-HD-Leda">Serbe (Serbie) - Chirp3 HD Leda Female (sr-RS-Chirp3-HD-Leda)</option>
+                        <option value="sr-RS-Chirp3-HD-Orus">Serbe (Serbie) - Chirp3 HD Orus Male (sr-RS-Chirp3-HD-Orus)</option>
+                        <option value="sr-RS-Chirp3-HD-Puck">Serbe (Serbie) - Chirp3 HD Puck Male (sr-RS-Chirp3-HD-Puck)</option>
+                        <option value="sr-RS-Chirp3-HD-Pulcherrima">Serbe (Serbie) - Chirp3 HD Pulcherrima Female (sr-RS-Chirp3-HD-Pulcherrima)</option>
+                        <option value="sr-RS-Chirp3-HD-Rasalgethi">Serbe (Serbie) - Chirp3 HD Rasalgethi Male (sr-RS-Chirp3-HD-Rasalgethi)</option>
+                        <option value="sr-RS-Chirp3-HD-Sadachbia">Serbe (Serbie) - Chirp3 HD Sadachbia Male (sr-RS-Chirp3-HD-Sadachbia)</option>
+                        <option value="sr-RS-Chirp3-HD-Sadaltager">Serbe (Serbie) - Chirp3 HD Sadaltager Male (sr-RS-Chirp3-HD-Sadaltager)</option>
+                        <option value="sr-RS-Chirp3-HD-Schedar">Serbe (Serbie) - Chirp3 HD Schedar Male (sr-RS-Chirp3-HD-Schedar)</option>
+                        <option value="sr-RS-Chirp3-HD-Sulafat">Serbe (Serbie) - Chirp3 HD Sulafat Female (sr-RS-Chirp3-HD-Sulafat)</option>
+                        <option value="sr-RS-Chirp3-HD-Umbriel">Serbe (Serbie) - Chirp3 HD Umbriel Male (sr-RS-Chirp3-HD-Umbriel)</option>
+                        <option value="sr-RS-Chirp3-HD-Vindemiatrix">Serbe (Serbie) - Chirp3 HD Vindemiatrix Female (sr-RS-Chirp3-HD-Vindemiatrix)</option>
+                        <option value="sr-RS-Chirp3-HD-Zephyr">Serbe (Serbie) - Chirp3 HD Zephyr Female (sr-RS-Chirp3-HD-Zephyr)</option>
+                        <option value="sr-RS-Chirp3-HD-Zubenelgenubi">Serbe (Serbie) - Chirp3 HD Zubenelgenubi Male (sr-RS-Chirp3-HD-Zubenelgenubi)</option>
                         <option value="sr-RS-Standard-B">Serbe (Serbie) - Standard B Female (sr-RS-Standard-B)</option>
                     </select>
                 </div>
