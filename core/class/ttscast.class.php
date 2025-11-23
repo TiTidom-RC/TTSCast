@@ -650,9 +650,11 @@ class ttscast extends eqLogic
         }
         foreach(self::byType('ttscast', false) as $eqLogic) {
             if ($eqLogic->getIsEnable()) {
+                /** @var ttscast $eqLogic */
                 $eqLogic->enableCastToDaemon();
             }
             else {
+                /** @var ttscast $eqLogic */
                 $eqLogic->disableCastToDaemon();
             }   
         }
@@ -791,6 +793,7 @@ class ttscast extends eqLogic
             foreach(self::byType('ttscast', false) as $eqLogic) {
                 $cmd = $eqLogic->getCmd(null, 'radios');
                 if (is_object($cmd)) {
+                    /** @var ttscast $eqLogic */
                     $radioList = $eqLogic->getRadioList();
                     $cmd->setConfiguration('listValue', $radioList);
                     $cmd->save();
@@ -808,6 +811,7 @@ class ttscast extends eqLogic
             foreach(self::byType('ttscast', false) as $eqLogic) {
                 $cmd = $eqLogic->getCmd(null, 'customradios');
                 if (is_object($cmd)) {
+                    /** @var ttscast $eqLogic */
                     $customRadioList = $eqLogic->getCustomRadioList();
                     $cmd->setConfiguration('listValue', $customRadioList);
                     $cmd->save();
@@ -825,6 +829,7 @@ class ttscast extends eqLogic
             foreach(self::byType('ttscast', false) as $eqLogic) {
                 $cmd = $eqLogic->getCmd(null, 'sounds');
                 if (is_object($cmd)) {
+                    /** @var ttscast $eqLogic */
                     $soundList = $eqLogic->getSoundList();
                     $cmd->setConfiguration('listValue', $soundList);
                     $cmd->save();
@@ -842,6 +847,7 @@ class ttscast extends eqLogic
             foreach(self::byType('ttscast', false) as $eqLogic) {
                 $cmd = $eqLogic->getCmd(null, 'customsounds');
                 if (is_object($cmd)) {
+                    /** @var ttscast $eqLogic */
                     $customSoundList = $eqLogic->getCustomSoundList();
                     $cmd->setConfiguration('listValue', $customSoundList);
                     $cmd->save();
@@ -875,7 +881,7 @@ class ttscast extends eqLogic
         return parent::getImage();
     }
 
-    /* ************************ Methodes static : JEEDOM *************************** */
+    /* ************************ Static Methods : JEEDOM *************************** */
 
     /*
      * Fonction exécutée automatiquement toutes les minutes par Jeedom
@@ -1783,7 +1789,7 @@ class ttscast extends eqLogic
     public function toHtml($_version = 'dashboard') {}
     */
 
-    /* ***********************Getteur Setteur*************************** */
+    /* ***********************Getter Setter*************************** */
 }
 
 class ttscastCmd extends cmd
@@ -1792,10 +1798,10 @@ class ttscastCmd extends cmd
 
     public static $_widgetPossibility = array('custom' => true);
 
-    /* ************************Methode static*************************** */
+    /* ************************Static Method*************************** */
 
 
-    /* **********************Methode d'instance************************* */
+    /* **********************Instance Method************************* */
 
     /*
      * Permet d'empêcher la suppression des commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
