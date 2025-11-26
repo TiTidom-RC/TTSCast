@@ -3,5 +3,6 @@ data/config/*.json
 .DS_Store
 Thumbs.db
 *.php~
-.vscode
+.vscode/*
+!.vscode/settings.json
 .venv
