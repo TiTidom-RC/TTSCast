@@ -650,7 +650,7 @@ class ttscast extends eqLogic
         }
         foreach(self::byType('ttscast', false) as $eqLogic) {
             // Ignorer l'équipement virtuel AI Stats
-            if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+            if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
                 continue;
             }
             
@@ -797,7 +797,7 @@ class ttscast extends eqLogic
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
                 // Ignorer l'équipement virtuel AI Stats
-                if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
                     continue;
                 }
                 $cmd = $eqLogic->getCmd(null, 'radios');
@@ -819,7 +819,7 @@ class ttscast extends eqLogic
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
                 // Ignorer l'équipement virtuel AI Stats
-                if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
                     continue;
                 }
                 $cmd = $eqLogic->getCmd(null, 'customradios');
@@ -841,7 +841,7 @@ class ttscast extends eqLogic
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
                 // Ignorer l'équipement virtuel AI Stats
-                if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
                     continue;
                 }
                 $cmd = $eqLogic->getCmd(null, 'sounds');
@@ -863,7 +863,7 @@ class ttscast extends eqLogic
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
                 // Ignorer l'équipement virtuel AI Stats
-                if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
                     continue;
                 }
                 $cmd = $eqLogic->getCmd(null, 'customsounds');
@@ -892,7 +892,7 @@ class ttscast extends eqLogic
     public function getImage()
     {
         // Icône spécifique pour l'équipement virtuel AI Stats
-        if ($this->getLogicalId() == 'TTSCAST_AI_STATS') {
+        if ($this->getLogicalId() == 'TTSCast_AI_Stats') {
             if (file_exists(__DIR__ . "/../../data/images/ai_stats.png")) {
                 return 'plugins/ttscast/data/images/ai_stats.png';
             }
@@ -923,7 +923,7 @@ class ttscast extends eqLogic
         $currentTime = time();
         foreach(self::byType('ttscast', true) as $eqLogic) {
             // Ignorer l'équipement virtuel AI Stats
-            if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+            if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
                 continue;
             }
             
@@ -999,15 +999,15 @@ class ttscast extends eqLogic
      */
     public static function manageAIStatsEquipment() {
         $aiEnabled = config::byKey('ttsAIEnable', 'ttscast', '0');
-        $statsEq = self::byLogicalId('TTSCAST_AI_STATS', 'ttscast');
+        $statsEq = self::byLogicalId('TTSCast_AI_Stats', 'ttscast');
         
         if ($aiEnabled == '1') {
             // L'IA est activée, créer ou mettre à jour l'équipement de stats
             if (!is_object($statsEq)) {
                 log::add('ttscast', 'info', '[AI Stats] Création de l\'équipement virtuel TTSCast AI Stats');
                 $statsEq = new ttscast();
-                $statsEq->setLogicalId('TTSCAST_AI_STATS');
-                $statsEq->setName('TTSCast AI Stats');
+                $statsEq->setLogicalId('TTSCast_AI_Stats');
+                $statsEq->setName('TTSCast - Stats IA');
                 $statsEq->setEqType_name('ttscast');
                 $statsEq->setIsEnable(1);
                 $statsEq->setIsVisible(1);
@@ -1125,7 +1125,7 @@ class ttscast extends eqLogic
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
         // Ignorer l'équipement virtuel AI Stats (ses commandes sont gérées dans manageAIStatsEquipment)
-        if ($this->getLogicalId() == 'TTSCAST_AI_STATS') {
+        if ($this->getLogicalId() == 'TTSCast_AI_Stats') {
             return;
         }
         
@@ -1906,6 +1906,10 @@ class ttscast extends eqLogic
     
     // Fonction exécutée automatiquement avant la suppression de l'équipement
     public function preRemove() {
+        // Empêcher la suppression manuelle de l'équipement virtuel AI Stats
+        if ($this->getLogicalId() == 'TTSCast_AI_Stats') {
+            throw new Exception(__('Cet équipement ne peut pas être supprimé manuellement. Désactivez la fonction IA dans la configuration du plugin pour le supprimer automatiquement.', __FILE__));
+        }
         $this->disableCastToDaemon();
     }
 

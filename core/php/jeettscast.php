@@ -155,13 +155,13 @@ try {
     } elseif (isset($result['aiStats'])) {
         log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats');
         foreach ($result['aiStats'] as $key => $data) {
-            if ($key != 'TTSCAST_AI_STATS') {
+            if ($key != 'TTSCast_AI_Stats') {
                 log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: LogicalId non reconnu: ' . $key);
                 continue;
             }
             log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: Mise à jour des tokens');
             
-            $statsEq = ttscast::byLogicalId('TTSCAST_AI_STATS', 'ttscast');
+            $statsEq = ttscast::byLogicalId('TTSCast_AI_Stats', 'ttscast');
             if (!is_object($statsEq)) {
                 log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: Équipement virtuel non trouvé');
                 continue;

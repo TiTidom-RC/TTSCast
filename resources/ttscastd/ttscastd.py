@@ -1252,7 +1252,7 @@ class TTSCast:
                                 'ai_tokens_input': input_tokens,
                                 'ai_tokens_output': output_tokens
                             }
-                            Comm.sendToJeedom.add_changes('aiStats::TTSCAST_AI_STATS', data)  # type: ignore
+                            Comm.sendToJeedom.add_changes('aiStats::TTSCast_AI_Stats', data)  # type: ignore
                             logging.debug('[DAEMON][GenAI][TOKENS] Envoi des tokens à Jeedom')
                         except Exception as e:
                             logging.error('[DAEMON][GenAI][TOKENS] Erreur lors de l\'envoi des tokens à Jeedom: %s', e)
