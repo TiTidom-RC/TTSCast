@@ -796,6 +796,10 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
+                // Ignorer l'équipement virtuel AI Stats
+                if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+                    continue;
+                }
                 $cmd = $eqLogic->getCmd(null, 'radios');
                 if (is_object($cmd)) {
                     /** @var ttscast $eqLogic */
@@ -814,6 +818,10 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
+                // Ignorer l'équipement virtuel AI Stats
+                if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+                    continue;
+                }
                 $cmd = $eqLogic->getCmd(null, 'customradios');
                 if (is_object($cmd)) {
                     /** @var ttscast $eqLogic */
@@ -832,6 +840,10 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
+                // Ignorer l'équipement virtuel AI Stats
+                if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+                    continue;
+                }
                 $cmd = $eqLogic->getCmd(null, 'sounds');
                 if (is_object($cmd)) {
                     /** @var ttscast $eqLogic */
@@ -850,6 +862,10 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
+                // Ignorer l'équipement virtuel AI Stats
+                if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+                    continue;
+                }
                 $cmd = $eqLogic->getCmd(null, 'customsounds');
                 if (is_object($cmd)) {
                     /** @var ttscast $eqLogic */
@@ -875,6 +891,14 @@ class ttscast extends eqLogic
 
     public function getImage()
     {
+        // Icône spécifique pour l'équipement virtuel AI Stats
+        if ($this->getLogicalId() == 'TTSCAST_AI_STATS') {
+            if (file_exists(__DIR__ . "/../../data/images/ai_stats.png")) {
+                return 'plugins/ttscast/data/images/ai_stats.png';
+            }
+            return parent::getImage();
+        }
+        
         $model = $this->getConfiguration('model_name');
         if ($model != '') {
             $model = ttscast::cleanupFileName($model);
@@ -898,7 +922,16 @@ class ttscast extends eqLogic
     public static function cron5() {
         $currentTime = time();
         foreach(self::byType('ttscast', true) as $eqLogic) {
+            // Ignorer l'équipement virtuel AI Stats
+            if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+                continue;
+            }
+            
             $lastSchedule = $eqLogic->getCmd('info', 'lastschedulets');
+            if (!is_object($lastSchedule)) {
+                continue;
+            }
+            
             if ($currentTime - intval($lastSchedule->execCmd()) >= 180) {
                 log::add('ttscast', 'debug', '[CRON5][ONLINE] TTSCast :: ' . $eqLogic->getConfiguration('friendly_name') . ' is OFFLINE');
                 $cmd = $eqLogic->getCmd('info', 'online');
