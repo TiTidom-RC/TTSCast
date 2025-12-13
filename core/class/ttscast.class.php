@@ -956,6 +956,80 @@ class ttscast extends eqLogic
     }
     */
 
+    /**
+     * Gère l'équipement virtuel TTSCast AI Stats en fonction de l'activation de l'IA
+     */
+    public static function manageAIStatsEquipment() {
+        $aiEnabled = config::byKey('ttsAIEnable', 'ttscast', '0');
+        $statsEq = self::byLogicalId('TTSCAST_AI_STATS', 'ttscast');
+        
+        if ($aiEnabled == '1') {
+            // L'IA est activée, créer ou mettre à jour l'équipement de stats
+            if (!is_object($statsEq)) {
+                log::add('ttscast', 'info', '[AI Stats] Création de l\'équipement virtuel TTSCast AI Stats');
+                $statsEq = new ttscast();
+                $statsEq->setLogicalId('TTSCAST_AI_STATS');
+                $statsEq->setName('TTSCast AI Stats');
+                $statsEq->setEqType_name('ttscast');
+                $statsEq->setIsEnable(1);
+                $statsEq->setIsVisible(1);
+                $statsEq->save();
+            }
+            
+            // Créer/mettre à jour les commandes de tokens
+            $orderCmd = 1;
+            
+            // Commande: Tokens d'entrée
+            $cmd = $statsEq->getCmd(null, 'ai_tokens_input');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Tokens IA Entrée', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_tokens_input');
+                $cmd->setType('info');
+                $cmd->setSubType('numeric');
+                $cmd->setUnite('tokens');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                $cmd->setDisplay('forceReturnLineBefore', '1');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            // Commande: Tokens de sortie
+            $cmd = $statsEq->getCmd(null, 'ai_tokens_output');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Tokens IA Sortie', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_tokens_output');
+                $cmd->setType('info');
+                $cmd->setSubType('numeric');
+                $cmd->setUnite('tokens');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                $cmd->setDisplay('forceReturnLineAfter', '1');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            log::add('ttscast', 'debug', '[AI Stats] Équipement virtuel TTSCast AI Stats configuré');
+        } else {
+            // L'IA est désactivée, supprimer l'équipement s'il existe
+            if (is_object($statsEq)) {
+                log::add('ttscast', 'info', '[AI Stats] Suppression de l\'équipement virtuel TTSCast AI Stats (IA désactivée)');
+                $statsEq->remove();
+            }
+        }
+    }
+
+    /**
+     * Action après modification de la configuration ttsAIEnable
+     */
+    public static function postConfig_ttsAIEnable($value) {
+        self::manageAIStatsEquipment();
+    }
+
     /*
    * Permet d'indiquer des éléments supplémentaires à remonter dans les informations de configuration
    * lors de la création semi-automatique d'un post sur le forum community
