@@ -1944,12 +1944,15 @@ class ttscastCmd extends cmd
 
     /* **********************Instance Method************************* */
 
-    /*
-     * Permet d'empêcher la suppression des commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
+    // Permet d'empêcher la suppression des commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
     public function dontRemoveCmd() {
-        return true;
+        $eqLogic = $this->getEqLogic();
+        // Empêcher la suppression automatique des commandes de l'équipement virtuel AI Stats
+        if (is_object($eqLogic) && $eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+            return true;
+        }
+        return false;
     }
-    */
 
     // Fonction exécutée automatiquement avant la suppression de la commande
     public function preRemove() {
