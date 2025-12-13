@@ -1067,6 +1067,11 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
+        // Ignorer l'équipement virtuel AI Stats (ses commandes sont gérées dans manageAIStatsEquipment)
+        if ($this->getLogicalId() == 'TTSCAST_AI_STATS') {
+            return;
+        }
+        
         $orderCmd = 1;
 
         $cmd = $this->getCmd(null, 'refresh');
