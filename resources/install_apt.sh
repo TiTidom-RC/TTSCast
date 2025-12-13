@@ -19,7 +19,7 @@ REQUIREMENTS_FILE=${BASE_DIR}/requirements.txt
 VENV_DIR=${BASE_DIR}/venv
 PYENV_OLDDIR=${BASE_DIR}/pyenv
 PYENV_DIR=/opt/pyenv
-PYTHON_VERSION=3.11.14
+PYTHON_VERSION=3.12.12
 
 FORCE_INST_UPDATES=0
 FORCE_INIT_PYENV=0
@@ -129,14 +129,14 @@ else
 fi
 log "** Check Python3 Version :: Done **"
 echo 35 > ${PROGRESS_FILE}
-if [ "$versionPython" -lt 11 ]; then 
+if [ "$versionPython" -lt 12 ]; then 
 	log "******************************************************"
-	log "* Install apt-get packages for PyEnv (Python < 3.11) *"
+	log "* Install apt-get packages for PyEnv (Python < 3.12) *"
 	log "******************************************************"
 	apt-get install -y git build-essential libssl-dev zlib1g-dev libbz2-dev libreadline-dev libsqlite3-dev curl libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev | log
 	log "** Install packages for PyEnv :: Done **"
 	log "*********************************"
-	log "* Install PyEnv (Python < 3.11) *"
+	log "* Install PyEnv (Python < 3.12) *"
 	log "*********************************"
 	if [ -v PYENV_ROOT ]; then
 		log "** PYENV_ROOT (already set / Warning) :: ${PYENV_ROOT} **"
@@ -183,13 +183,13 @@ else
 	log "*********************"
 	log "* PyEnv Environment *"
 	log "*********************"
-	log "** PyEnv not required (Python >= 3.11) **"
+	log "** PyEnv not required (Python >= 3.12) **"
 fi
 echo 55 > ${PROGRESS_FILE}
 log "**************************"
-log "* Create Python3.11 venv *"
+log "* Create Python3.12 venv *"
 log "**************************"
-if [ "$versionPython" -ge 11 ]; then
+if [ "$versionPython" -ge 12 ]; then
 	if [ "$VenvToUpdate" -eq 1 ] || [ "$FORCE_INIT_VENV" -eq 1 ]; then
 		python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log 
 	else
@@ -203,8 +203,8 @@ else
 	else
 		log "Python3 (Venv) Version :: ${majorPythonVenv}.${minorPythonVenv}.${patchPythonVenv}"
 	fi
-	if [ "$minorPythonVenv" -ge 11 ]; then
-		log "Latest Python version installed with PyEnv :: $(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest 3.11)"
+	if [ "$minorPythonVenv" -ge 12 ]; then
+		log "Latest Python version installed with PyEnv :: $(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest 3.12)"
 		if [ "$VenvToUpdate" -eq 1 ] || [ "$FORCE_INIT_VENV" -eq 1 ]; then
 			# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 			${PYENV_DIR}/versions/${PYTHON_VERSION}/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
@@ -213,12 +213,12 @@ else
 			${PYENV_DIR}/versions/${PYTHON_VERSION}/bin/python3 -m venv --upgrade-deps ${VENV_DIR} | log
 		fi
 	else
-		log "Latest Python version installed with PyEnv :: $(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest 3.11)"
-		# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest 3.11)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
+		log "Latest Python version installed with PyEnv :: $(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest 3.12)"
+		# ${PYENV_DIR}/versions/$(PYENV_ROOT="${PYENV_DIR}" ${PYENV_DIR}/bin/pyenv latest 3.12)/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 		${PYENV_DIR}/versions/${PYTHON_VERSION}/bin/python3 -m venv --clear --upgrade-deps ${VENV_DIR} | log
 	fi
 fi
-log "** Create Python3.11 Venv :: Done **"
+log "** Create Python3.12 Venv :: Done **"
 echo 70 > ${PROGRESS_FILE}
 log "*****************************"
 log "* Install Python3 libraries *"
