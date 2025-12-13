@@ -1036,7 +1036,7 @@ class ttscast extends eqLogic
                 $cmd->setLogicalId('ai_tokens_input');
                 $cmd->setType('info');
                 $cmd->setSubType('numeric');
-                $cmd->setUnite('tokens');
+                $cmd->setUnite('Tokens');
                 $cmd->setIsVisible(1);
                 $cmd->setIsHistorized(1);
                 
@@ -1060,7 +1060,7 @@ class ttscast extends eqLogic
                 $cmd->setLogicalId('ai_tokens_output');
                 $cmd->setType('info');
                 $cmd->setSubType('numeric');
-                $cmd->setUnite('tokens');
+                $cmd->setUnite('Tokens');
                 $cmd->setIsVisible(1);
                 $cmd->setIsHistorized(1);
                 
