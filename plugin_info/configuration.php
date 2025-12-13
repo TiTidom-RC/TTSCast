@@ -734,9 +734,25 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsAIModel">
+                        <!-- Modèles Recommandés (Stables) -->
+                        <option disabled>--- {{Modèles Stables (Recommandés)}} ---</option>
                         <option value="gemini-2.5-flash-lite" selected>Gemini 2.5 Flash Lite</option>
                         <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                         <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                        <option value="gemini-3-pro">Gemini 3 Pro</option>
+                        <!-- Modèles Preview (Nouvelles fonctionnalités) -->
+                        <option disabled>--- {{Versions Preview (Beta)}} ---</option>
+                        <option value="gemini-2.5-flash-lite-preview">Gemini 2.5 Flash Lite Preview</option>
+                        <option value="gemini-2.5-flash-preview">Gemini 2.5 Flash Preview</option>
+                        <option value="gemini-2.5-pro-preview">Gemini 2.5 Pro Preview</option>
+                        <!-- Modèles Latest (Automatiques) -->
+                        <option disabled>--- {{Versions Latest (Mise à jour auto)}} ---</option>
+                        <option value="gemini-flash-latest">Gemini Flash Latest</option>
+                        <option value="gemini-pro-latest">Gemini Pro Latest</option>
+                        <!-- Modèles Génération 2.0 -->
+                        <option disabled>--- {{Génération 2.0}} ---</option>
+                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                        <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
                     </select>
                 </div>
             </div>
