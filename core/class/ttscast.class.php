@@ -649,6 +649,11 @@ class ttscast extends eqLogic
             return false;
         }
         foreach(self::byType('ttscast', false) as $eqLogic) {
+            // Ignorer l'équipement virtuel AI Stats
+            if ($eqLogic->getLogicalId() == 'TTSCAST_AI_STATS') {
+                continue;
+            }
+            
             if ($eqLogic->getIsEnable()) {
                 /** @var ttscast $eqLogic */
                 $eqLogic->enableCastToDaemon();
