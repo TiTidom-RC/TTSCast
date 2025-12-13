@@ -1906,10 +1906,6 @@ class ttscast extends eqLogic
     
     // Fonction exécutée automatiquement avant la suppression de l'équipement
     public function preRemove() {
-        // Empêcher la suppression manuelle de l'équipement virtuel AI Stats
-        if ($this->getLogicalId() == 'TTSCast_AI_Stats') {
-            throw new Exception(__('Cet équipement ne peut pas être supprimé manuellement. Désactivez la fonction IA dans la configuration du plugin pour le supprimer automatiquement.', __FILE__));
-        }
         $this->disableCastToDaemon();
     }
 
@@ -1954,6 +1950,16 @@ class ttscastCmd extends cmd
         return true;
     }
     */
+
+    // Fonction exécutée automatiquement avant la suppression de la commande
+    public function preRemove() {
+        $eqLogic = $this->getEqLogic();
+        // Empêcher la suppression des commandes de l'équipement virtuel AI Stats
+        if (is_object($eqLogic) && $eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+            message::add('ttscast', __('Les commandes de l\'équipement TTSCast AI Stats ne peuvent pas être supprimées. Désactivez la fonction IA dans la configuration du plugin pour supprimer l\'équipement complet.', __FILE__), '', 'TTSCast_AI_Stats_Command_Delete');
+            return false;
+        }
+    }
 
     // Exécution d'une commande
     public function execute($_options = array()) {
