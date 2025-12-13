@@ -168,19 +168,19 @@ try {
             }
             
             // Mise à jour des commandes de tokens (valeur de l'appel en cours)
-            if (isset($data['ai_tokens_input_total'])) {
+            if (isset($data['ai_tokens_input'])) {
                 $cmd = $statsEq->getCmd('info', 'ai_tokens_input');
                 if (is_object($cmd)) {
-                    $cmd->event(intval($data['ai_tokens_input_total']));
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Input tokens: ' . $data['ai_tokens_input_total']);
+                    $cmd->event(intval($data['ai_tokens_input']));
+                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Input tokens: ' . $data['ai_tokens_input']);
                 }
             }
             
-            if (isset($data['ai_tokens_output_total'])) {
+            if (isset($data['ai_tokens_output'])) {
                 $cmd = $statsEq->getCmd('info', 'ai_tokens_output');
                 if (is_object($cmd)) {
-                    $cmd->event(intval($data['ai_tokens_output_total']));
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Output tokens: ' . $data['ai_tokens_output_total']);
+                    $cmd->event(intval($data['ai_tokens_output']));
+                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Output tokens: ' . $data['ai_tokens_output']);
                 }
             }
         }
