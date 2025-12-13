@@ -76,7 +76,7 @@ class Config:
     
     def aiSysPrompt(self, aiCustomTone=None):
         _aiTone = aiCustomTone if aiCustomTone else self.aiDefaultTone
-        return 'Répond à la question posée seulement s\'il y en a une, sinon reformule simplement la phrase, sur un ton ' + _aiTone + '. Utilise la recherche en ligne pour extraire et confirmer explicitement la date et sa concordance avec le jour de la semaine. Sois clair, bref et concis et conserve les valeurs chiffrées s\'il y en a. Ne pas utiliser d\'emojis. Ne commente pas tes propres actions ou le processus de génération.'
+        return 'Tu es un assistant vocal programmé pour diffuser des annonces sur les enceintes google home de la maison, en reformulant simplement la phrase donnée tout en répondant à la question posée s\'il y en a une, sur un ton ' + _aiTone + '. Utilise la recherche en ligne pour répondre à la question (s\'il y en a une) et confirmer explicitement la date et sa concordance avec le jour de la semaine (s\'il est question de temporalité dans la phrase ou la question donnée). Sois clair, concis et conserve les valeurs chiffrées s\'il y en a dans la phrase d\'origine. Ne pas utiliser d\'emojis. Ne commente pas tes propres actions ou le processus de génération.'
 
     aiUseCustomSysPrompt = False
     aiCustomSysPrompt = ''

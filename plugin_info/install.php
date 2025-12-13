@@ -171,6 +171,9 @@ function ttscast_update() {
             message::add('ttscast', __('Une erreur est survenue à la mise à jour automatique des dépendances. Vérifiez les logs et relancez les dépendances manuellement', __FILE__));
         }
     }
+    
+    // Créer l'équipement AI Stats si l'IA est déjà activée
+    ttscast::manageAIStatsEquipment();
 }
 
 // Fonction exécutée automatiquement après la suppression du plugin

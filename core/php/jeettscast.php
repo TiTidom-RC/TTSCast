@@ -152,6 +152,38 @@ try {
                 $rtcast = ttscast::realtimeUpdateCast($data);
             }
         }
+    } elseif (isset($result['aiStats'])) {
+        log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats');
+        foreach ($result['aiStats'] as $key => $data) {
+            if ($key != 'TTSCast_AI_Stats') {
+                log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: LogicalId non reconnu: ' . $key);
+                continue;
+            }
+            log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: Mise à jour des tokens');
+            
+            $statsEq = ttscast::byLogicalId('TTSCast_AI_Stats', 'ttscast');
+            if (!is_object($statsEq)) {
+                log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: Équipement virtuel non trouvé');
+                continue;
+            }
+            
+            // Mise à jour des commandes de tokens (valeur de l'appel en cours)
+            if (isset($data['ai_tokens_input'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_tokens_input');
+                if (is_object($cmd)) {
+                    $cmd->event(intval($data['ai_tokens_input']));
+                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Input tokens: ' . $data['ai_tokens_input']);
+                }
+            }
+            
+            if (isset($data['ai_tokens_output'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_tokens_output');
+                if (is_object($cmd)) {
+                    $cmd->event(intval($data['ai_tokens_output']));
+                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Output tokens: ' . $data['ai_tokens_output']);
+                }
+            }
+        }
     } else {
         log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 
     }

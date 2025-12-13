@@ -1236,6 +1236,27 @@ class TTSCast:
                         tools=[GOOGLE_SEARCH_TOOL]
                     )
                 )
+                
+                # Logger l'utilisation des tokens et les envoyer à Jeedom
+                if hasattr(response, 'usage_metadata') and response.usage_metadata:
+                    usage = response.usage_metadata
+                    input_tokens = getattr(usage, 'prompt_token_count', 0)
+                    output_tokens = getattr(usage, 'candidates_token_count', 0)
+                    total_tokens = getattr(usage, 'total_token_count', 0)
+                    logging.info('[DAEMON][GenAI][TOKENS] Model: %s | Input: %d | Output: %d | Total: %d', MODEL_ID, input_tokens, output_tokens, total_tokens)
+                    
+                    # Envoyer les tokens à l'équipement virtuel TTSCast AI Stats uniquement si disponibles
+                    if input_tokens > 0 or output_tokens > 0:
+                        try:
+                            data = {
+                                'ai_tokens_input': input_tokens,
+                                'ai_tokens_output': output_tokens
+                            }
+                            Comm.sendToJeedom.add_changes('aiStats::TTSCast_AI_Stats', data)  # type: ignore
+                            logging.debug('[DAEMON][GenAI][TOKENS] Envoi des tokens à Jeedom')
+                        except Exception as e:
+                            logging.error('[DAEMON][GenAI][TOKENS] Erreur lors de l\'envoi des tokens à Jeedom: %s', e)
+                
                 if not response.text:
                     logging.warning('[DAEMON][GenAI] Aucune réponse générée par Gemini.')
                     return None
