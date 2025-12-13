@@ -1236,6 +1236,15 @@ class TTSCast:
                         tools=[GOOGLE_SEARCH_TOOL]
                     )
                 )
+                
+                # Logger l'utilisation des tokens
+                if hasattr(response, 'usage_metadata') and response.usage_metadata:
+                    usage = response.usage_metadata
+                    input_tokens = getattr(usage, 'prompt_token_count', 0)
+                    output_tokens = getattr(usage, 'candidates_token_count', 0)
+                    total_tokens = getattr(usage, 'total_token_count', 0)
+                    logging.info('[DAEMON][GenAI][TOKENS] Model: %s | Input: %d | Output: %d | Total: %d', MODEL_ID, input_tokens, output_tokens, total_tokens)
+                
                 if not response.text:
                     logging.warning('[DAEMON][GenAI] Aucune réponse générée par Gemini.')
                     return None
