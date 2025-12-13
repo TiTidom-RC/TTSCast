@@ -1017,6 +1017,16 @@ class ttscast extends eqLogic
             // Créer/mettre à jour les commandes de tokens
             $orderCmd = 1;
             
+            // Configuration display commune pour les commandes de tokens
+            $tokenDisplayConfig = [
+                'showNameOndashboard' => '1',
+                'showNameOnmobile' => '1',
+                'showIconAndNamedashboard' => '1',
+                'showIconAndNamemobile' => '1',
+                'showStatsOndashboard' => '1',
+                'showStatsOnmobile' => '1'
+            ];
+            
             // Commande: Tokens d'entrée
             $cmd = $statsEq->getCmd(null, 'ai_tokens_input');
             if (!is_object($cmd)) {
@@ -1029,7 +1039,14 @@ class ttscast extends eqLogic
                 $cmd->setUnite('tokens');
                 $cmd->setIsVisible(1);
                 $cmd->setIsHistorized(1);
-                $cmd->setDisplay('forceReturnLineBefore', '1');
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-arrow-circle-down"></i>');
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
                 $cmd->setOrder($orderCmd++);
                 $cmd->save();
             }
@@ -1046,7 +1063,14 @@ class ttscast extends eqLogic
                 $cmd->setUnite('tokens');
                 $cmd->setIsVisible(1);
                 $cmd->setIsHistorized(1);
-                $cmd->setDisplay('forceReturnLineAfter', '1');
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-arrow-circle-up"></i>');
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
                 $cmd->setOrder($orderCmd++);
                 $cmd->save();
             }
