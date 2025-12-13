@@ -1906,7 +1906,10 @@ class ttscast extends eqLogic
     
     // Fonction exécutée automatiquement avant la suppression de l'équipement
     public function preRemove() {
-        $this->disableCastToDaemon();
+        // Ne pas notifier le démon pour l'équipement virtuel AI Stats
+        if ($this->getLogicalId() != 'TTSCast_AI_Stats') {
+            $this->disableCastToDaemon();
+        }
     }
 
 
