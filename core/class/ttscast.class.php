@@ -2160,7 +2160,6 @@ class ttscastCmd extends cmd
         $eqLogic = $this->getEqLogic();
         // Empêcher la suppression automatique des commandes de l'équipement virtuel AI Stats
         if (is_object($eqLogic) && $eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
-            message::add('ttscast', __('La commande "' . $this->getName() . '" de l\'équipement TTSCast AI Stats ne peut pas être supprimée. Désactivez la fonction IA dans la configuration du plugin pour supprimer l\'équipement complet.', __FILE__));
             return true;
         }
         return false;
