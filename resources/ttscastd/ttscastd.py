@@ -1250,7 +1250,8 @@ class TTSCast:
                         try:
                             data = {
                                 'ai_tokens_input': input_tokens,
-                                'ai_tokens_output': output_tokens
+                                'ai_tokens_output': output_tokens,
+                                'ai_tokens_total': total_tokens
                             }
                             Comm.sendToJeedom.add_changes('aiStats::TTSCast_AI_Stats', data)  # type: ignore
                             logging.debug('[DAEMON][GenAI][TOKENS] Envoi des tokens à Jeedom')

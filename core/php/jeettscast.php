@@ -183,6 +183,14 @@ try {
                     log::add('ttscast','debug','[CALLBACK] AI Stats :: Output tokens: ' . $data['ai_tokens_output']);
                 }
             }
+            
+            if (isset($data['ai_tokens_total'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_tokens_total');
+                if (is_object($cmd)) {
+                    $cmd->event(intval($data['ai_tokens_total']));
+                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Total tokens: ' . $data['ai_tokens_total']);
+                }
+            }
         }
     } else {
         log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 

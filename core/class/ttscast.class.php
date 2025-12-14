@@ -1095,6 +1095,34 @@ class ttscast extends eqLogic
                 $cmd->save();
             }
             
+            // Commande: Tokens total
+            $cmd = $statsEq->getCmd(null, 'ai_tokens_total');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Tokens IA Total', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_tokens_total');
+                $cmd->setType('info');
+                $cmd->setSubType('numeric');
+                $cmd->setUnite('Tokens');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-calculator"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
             log::add('ttscast', 'debug', '[AI Stats] Équipement virtuel TTSCast AI Stats configuré');
         } else {
             // L'IA est désactivée, supprimer l'équipement s'il existe
