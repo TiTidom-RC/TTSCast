@@ -1240,17 +1240,49 @@ class TTSCast:
                 # Logger l'utilisation des tokens et les envoyer à Jeedom
                 if hasattr(response, 'usage_metadata') and response.usage_metadata:
                     usage = response.usage_metadata
-                    input_tokens = getattr(usage, 'prompt_token_count', 0)
-                    output_tokens = getattr(usage, 'candidates_token_count', 0)
-                    total_tokens = getattr(usage, 'total_token_count', 0)
+                    input_tokens = getattr(usage, 'prompt_token_count', 0) or 0
+                    output_tokens = getattr(usage, 'candidates_token_count', 0) or 0
+                    total_tokens = getattr(usage, 'total_token_count', 0) or 0
+                    # cache_tokens = getattr(usage, 'cached_content_token_count', 0) or 0
+                    # tool_tokens = getattr(usage, 'tool_use_prompt_token_count', 0) or 0
+                    # thoughts_tokens = getattr(usage, 'thoughts_token_count', 0) or 0
                     logging.info('[DAEMON][GenAI][TOKENS] Model: %s | Input: %d | Output: %d | Total: %d', MODEL_ID, input_tokens, output_tokens, total_tokens)
+                    
+                    # Extraire les métriques de qualité et sécurité
+                    finish_reason = ''
+                    # avg_logprobs = 0.0
+                    safety_blocked = 0
+                    
+                    if hasattr(response, 'candidates') and response.candidates:
+                        candidate = response.candidates[0]
+                        # Finish reason
+                        if hasattr(candidate, 'finish_reason') and candidate.finish_reason:
+                            finish_reason = str(candidate.finish_reason).replace('FinishReason.', '')
+                        # Avg logprobs
+                        # if hasattr(candidate, 'avg_logprobs') and candidate.avg_logprobs is not None:
+                        #     avg_logprobs = float(candidate.avg_logprobs)
+                        # Safety ratings
+                        if hasattr(candidate, 'safety_ratings') and candidate.safety_ratings:
+                            for rating in candidate.safety_ratings:
+                                if hasattr(rating, 'blocked') and rating.blocked:
+                                    safety_blocked = 1
+                                    break
+                    
+                    logging.debug('[DAEMON][GenAI][METRICS] FinishReason: %s | SafetyBlocked: %d', finish_reason, safety_blocked)
                     
                     # Envoyer les tokens à l'équipement virtuel TTSCast AI Stats uniquement si disponibles
                     if input_tokens > 0 or output_tokens > 0:
                         try:
                             data = {
                                 'ai_tokens_input': input_tokens,
-                                'ai_tokens_output': output_tokens
+                                'ai_tokens_output': output_tokens,
+                                'ai_tokens_total': total_tokens,
+                                # 'ai_cache_tokens': cache_tokens,
+                                # 'ai_tool_tokens': tool_tokens,
+                                # 'ai_thoughts_tokens': thoughts_tokens,
+                                'ai_finish_reason': finish_reason,
+                                # 'ai_avg_logprobs': avg_logprobs,
+                                'ai_safety_blocked': safety_blocked
                             }
                             Comm.sendToJeedom.add_changes('aiStats::TTSCast_AI_Stats', data)  # type: ignore
                             logging.debug('[DAEMON][GenAI][TOKENS] Envoi des tokens à Jeedom')
