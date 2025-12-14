@@ -192,29 +192,29 @@ try {
                 }
             }
             
-            if (isset($data['ai_cache_tokens'])) {
-                $cmd = $statsEq->getCmd('info', 'ai_cache_tokens');
-                if (is_object($cmd)) {
-                    $cmd->event(intval($data['ai_cache_tokens']));
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Cache tokens: ' . $data['ai_cache_tokens']);
-                }
-            }
+            // if (isset($data['ai_cache_tokens'])) {
+            //     $cmd = $statsEq->getCmd('info', 'ai_cache_tokens');
+            //     if (is_object($cmd)) {
+            //         $cmd->event(intval($data['ai_cache_tokens']));
+            //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Cache tokens: ' . $data['ai_cache_tokens']);
+            //     }
+            // }
             
-            if (isset($data['ai_tool_tokens'])) {
-                $cmd = $statsEq->getCmd('info', 'ai_tool_tokens');
-                if (is_object($cmd)) {
-                    $cmd->event(intval($data['ai_tool_tokens']));
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Tool tokens: ' . $data['ai_tool_tokens']);
-                }
-            }
+            // if (isset($data['ai_tool_tokens'])) {
+            //     $cmd = $statsEq->getCmd('info', 'ai_tool_tokens');
+            //     if (is_object($cmd)) {
+            //         $cmd->event(intval($data['ai_tool_tokens']));
+            //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Tool tokens: ' . $data['ai_tool_tokens']);
+            //     }
+            // }
             
-            if (isset($data['ai_thoughts_tokens'])) {
-                $cmd = $statsEq->getCmd('info', 'ai_thoughts_tokens');
-                if (is_object($cmd)) {
-                    $cmd->event(intval($data['ai_thoughts_tokens']));
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Thoughts tokens: ' . $data['ai_thoughts_tokens']);
-                }
-            }
+            // if (isset($data['ai_thoughts_tokens'])) {
+            //     $cmd = $statsEq->getCmd('info', 'ai_thoughts_tokens');
+            //     if (is_object($cmd)) {
+            //         $cmd->event(intval($data['ai_thoughts_tokens']));
+            //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Thoughts tokens: ' . $data['ai_thoughts_tokens']);
+            //     }
+            // }
             
             if (isset($data['ai_finish_reason'])) {
                 $cmd = $statsEq->getCmd('info', 'ai_finish_reason');
@@ -224,13 +224,13 @@ try {
                 }
             }
             
-            if (isset($data['ai_avg_logprobs'])) {
-                $cmd = $statsEq->getCmd('info', 'ai_avg_logprobs');
-                if (is_object($cmd)) {
-                    $cmd->event(floatval($data['ai_avg_logprobs']));
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Avg logprobs: ' . $data['ai_avg_logprobs']);
-                }
-            }
+            // if (isset($data['ai_avg_logprobs'])) {
+            //     $cmd = $statsEq->getCmd('info', 'ai_avg_logprobs');
+            //     if (is_object($cmd)) {
+            //         $cmd->event(floatval($data['ai_avg_logprobs']));
+            //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Avg logprobs: ' . $data['ai_avg_logprobs']);
+            //     }
+            // }
             
             if (isset($data['ai_safety_blocked'])) {
                 $cmd = $statsEq->getCmd('info', 'ai_safety_blocked');
