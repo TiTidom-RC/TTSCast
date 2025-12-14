@@ -1277,8 +1277,6 @@ class ttscast extends eqLogic
                     $cmd->setConfiguration($key, $value);
                 }
                 
-                $cmd->setTemplate('dashboard', 'core::tile');
-                $cmd->setTemplate('mobile', 'core::tile');
                 $cmd->setOrder($orderCmd++);
                 $cmd->save();
             }
