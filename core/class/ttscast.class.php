@@ -1211,7 +1211,7 @@ class ttscast extends eqLogic
             $cmd = $statsEq->getCmd(null, 'ai_finish_reason');
             if (!is_object($cmd)) {
                 $cmd = new ttscastCmd();
-                $cmd->setName(__('Raison Fin IA', __FILE__));
+                $cmd->setName(__('Msg Retour IA', __FILE__));
                 $cmd->setEqLogic_id($statsEq->getId());
                 $cmd->setLogicalId('ai_finish_reason');
                 $cmd->setType('info');
@@ -1260,7 +1260,7 @@ class ttscast extends eqLogic
             $cmd = $statsEq->getCmd(null, 'ai_safety_blocked');
             if (!is_object($cmd)) {
                 $cmd = new ttscastCmd();
-                $cmd->setName(__('Sécurité Bloquée', __FILE__));
+                $cmd->setName(__('Réponse IA Bloquée', __FILE__));
                 $cmd->setEqLogic_id($statsEq->getId());
                 $cmd->setLogicalId('ai_safety_blocked');
                 $cmd->setType('info');
