@@ -1024,7 +1024,19 @@ class ttscast extends eqLogic
                 'showIconAndNamedashboard' => '1',
                 'showIconAndNamemobile' => '1',
                 'showStatsOndashboard' => '1',
-                'showStatsOnmobile' => '1'
+                'showStatsOnmobile' => '1',
+                'graphType' => 'column',
+                'groupingType' => '',
+                'graphDerive' => '0',
+                'graphStep' => '0'
+            ];
+            
+            // Configuration commune pour les commandes de tokens
+            $tokenConfig = [
+                'historizeMode' => 'none',
+                'history::smooth' => '-1',
+                'historyPurge' => '-6 month',
+                'repeatEventManagement' => 'always'
             ];
             
             // Commande: Tokens d'entrée
@@ -1044,6 +1056,10 @@ class ttscast extends eqLogic
                     $cmd->setDisplay($key, $value);
                 }
                 $cmd->setDisplay('icon', '<i class="fas fa-arrow-circle-down"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
                 
                 $cmd->setTemplate('dashboard', 'core::tile');
                 $cmd->setTemplate('mobile', 'core::tile');
@@ -1068,6 +1084,10 @@ class ttscast extends eqLogic
                     $cmd->setDisplay($key, $value);
                 }
                 $cmd->setDisplay('icon', '<i class="fas fa-arrow-circle-up"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
                 
                 $cmd->setTemplate('dashboard', 'core::tile');
                 $cmd->setTemplate('mobile', 'core::tile');
