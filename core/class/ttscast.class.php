@@ -649,6 +649,11 @@ class ttscast extends eqLogic
             return false;
         }
         foreach(self::byType('ttscast', false) as $eqLogic) {
+            // Ignorer l'équipement virtuel AI Stats
+            if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+                continue;
+            }
+            
             if ($eqLogic->getIsEnable()) {
                 /** @var ttscast $eqLogic */
                 $eqLogic->enableCastToDaemon();
@@ -791,6 +796,10 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
+                // Ignorer l'équipement virtuel AI Stats
+                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+                    continue;
+                }
                 $cmd = $eqLogic->getCmd(null, 'radios');
                 if (is_object($cmd)) {
                     /** @var ttscast $eqLogic */
@@ -809,6 +818,10 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
+                // Ignorer l'équipement virtuel AI Stats
+                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+                    continue;
+                }
                 $cmd = $eqLogic->getCmd(null, 'customradios');
                 if (is_object($cmd)) {
                     /** @var ttscast $eqLogic */
@@ -827,6 +840,10 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
+                // Ignorer l'équipement virtuel AI Stats
+                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+                    continue;
+                }
                 $cmd = $eqLogic->getCmd(null, 'sounds');
                 if (is_object($cmd)) {
                     /** @var ttscast $eqLogic */
@@ -845,6 +862,10 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
+                // Ignorer l'équipement virtuel AI Stats
+                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+                    continue;
+                }
                 $cmd = $eqLogic->getCmd(null, 'customsounds');
                 if (is_object($cmd)) {
                     /** @var ttscast $eqLogic */
@@ -870,6 +891,14 @@ class ttscast extends eqLogic
 
     public function getImage()
     {
+        // Icône spécifique pour l'équipement virtuel AI Stats
+        if ($this->getLogicalId() == 'TTSCast_AI_Stats') {
+            if (file_exists(__DIR__ . "/../../data/images/ai_stats.png")) {
+                return 'plugins/ttscast/data/images/ai_stats.png';
+            }
+            return parent::getImage();
+        }
+        
         $model = $this->getConfiguration('model_name');
         if ($model != '') {
             $model = ttscast::cleanupFileName($model);
@@ -893,7 +922,16 @@ class ttscast extends eqLogic
     public static function cron5() {
         $currentTime = time();
         foreach(self::byType('ttscast', true) as $eqLogic) {
+            // Ignorer l'équipement virtuel AI Stats
+            if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+                continue;
+            }
+            
             $lastSchedule = $eqLogic->getCmd('info', 'lastschedulets');
+            if (!is_object($lastSchedule)) {
+                continue;
+            }
+            
             if ($currentTime - intval($lastSchedule->execCmd()) >= 180) {
                 log::add('ttscast', 'debug', '[CRON5][ONLINE] TTSCast :: ' . $eqLogic->getConfiguration('friendly_name') . ' is OFFLINE');
                 $cmd = $eqLogic->getCmd('info', 'online');
@@ -956,6 +994,310 @@ class ttscast extends eqLogic
     }
     */
 
+    /**
+     * Gère l'équipement virtuel TTSCast AI Stats en fonction de l'activation de l'IA
+     */
+    public static function manageAIStatsEquipment() {
+        $aiEnabled = config::byKey('ttsAIEnable', 'ttscast', '0');
+        $statsEq = self::byLogicalId('TTSCast_AI_Stats', 'ttscast');
+        
+        if ($aiEnabled == '1') {
+            // L'IA est activée, créer ou mettre à jour l'équipement de stats
+            if (!is_object($statsEq)) {
+                log::add('ttscast', 'info', '[AI Stats] Création de l\'équipement virtuel TTSCast AI Stats');
+                $statsEq = new ttscast();
+                $statsEq->setLogicalId('TTSCast_AI_Stats');
+                $statsEq->setName('TTSCast - Stats IA');
+                $statsEq->setEqType_name('ttscast');
+                $statsEq->setIsEnable(1);
+                $statsEq->setIsVisible(1);
+                $statsEq->save();
+            }
+            
+            // Créer/mettre à jour les commandes de tokens
+            $orderCmd = 1;
+            
+            // Configuration display commune pour les commandes de tokens
+            $tokenDisplayConfig = [
+                'showNameOndashboard' => '1',
+                'showNameOnmobile' => '1',
+                'showIconAndNamedashboard' => '1',
+                'showIconAndNamemobile' => '1',
+                'showStatsOndashboard' => '1',
+                'showStatsOnmobile' => '1',
+                'graphType' => 'column',
+                'groupingType' => '',
+                'graphDerive' => '0',
+                'graphStep' => '0'
+            ];
+            
+            // Configuration commune pour les commandes de tokens
+            $tokenConfig = [
+                'historizeMode' => 'none',
+                'history::smooth' => '-1',
+                'historyPurge' => '-6 month',
+                'repeatEventManagement' => 'always'
+            ];
+            
+            // Commande: Tokens d'entrée
+            $cmd = $statsEq->getCmd(null, 'ai_tokens_input');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Tokens IA Entrée', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_tokens_input');
+                $cmd->setType('info');
+                $cmd->setSubType('numeric');
+                $cmd->setUnite('Tokens');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-arrow-circle-down"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            // Commande: Tokens de sortie
+            $cmd = $statsEq->getCmd(null, 'ai_tokens_output');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Tokens IA Sortie', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_tokens_output');
+                $cmd->setType('info');
+                $cmd->setSubType('numeric');
+                $cmd->setUnite('Tokens');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-arrow-circle-up"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            // Commande: Tokens total
+            $cmd = $statsEq->getCmd(null, 'ai_tokens_total');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Tokens IA Total', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_tokens_total');
+                $cmd->setType('info');
+                $cmd->setSubType('numeric');
+                $cmd->setUnite('Tokens');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-calculator"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            // Commande: Tokens cache
+            // $cmd = $statsEq->getCmd(null, 'ai_cache_tokens');
+            // if (!is_object($cmd)) {
+            //     $cmd = new ttscastCmd();
+            //     $cmd->setName(__('Tokens Cache', __FILE__));
+            //     $cmd->setEqLogic_id($statsEq->getId());
+            //     $cmd->setLogicalId('ai_cache_tokens');
+            //     $cmd->setType('info');
+            //     $cmd->setSubType('numeric');
+            //     $cmd->setUnite('Tokens');
+            //     $cmd->setIsVisible(1);
+            //     $cmd->setIsHistorized(1);
+            //     
+            //     foreach ($tokenDisplayConfig as $key => $value) {
+            //         $cmd->setDisplay($key, $value);
+            //     }
+            //     $cmd->setDisplay('icon', '<i class="fas fa-database"></i>');
+            //     
+            //     foreach ($tokenConfig as $key => $value) {
+            //         $cmd->setConfiguration($key, $value);
+            //     }
+            //     
+            //     $cmd->setTemplate('dashboard', 'core::tile');
+            //     $cmd->setTemplate('mobile', 'core::tile');
+            //     $cmd->setOrder($orderCmd++);
+            //     $cmd->save();
+            // }
+            
+            // Commande: Tokens outils
+            // $cmd = $statsEq->getCmd(null, 'ai_tool_tokens');
+            // if (!is_object($cmd)) {
+            //     $cmd = new ttscastCmd();
+            //     $cmd->setName(__('Tokens Outils', __FILE__));
+            //     $cmd->setEqLogic_id($statsEq->getId());
+            //     $cmd->setLogicalId('ai_tool_tokens');
+            //     $cmd->setType('info');
+            //     $cmd->setSubType('numeric');
+            //     $cmd->setUnite('Tokens');
+            //     $cmd->setIsVisible(1);
+            //     $cmd->setIsHistorized(1);
+            //     
+            //     foreach ($tokenDisplayConfig as $key => $value) {
+            //         $cmd->setDisplay($key, $value);
+            //     }
+            //     $cmd->setDisplay('icon', '<i class="fas fa-wrench"></i>');
+            //     
+            //     foreach ($tokenConfig as $key => $value) {
+            //         $cmd->setConfiguration($key, $value);
+            //     }
+            //     
+            //     $cmd->setTemplate('dashboard', 'core::tile');
+            //     $cmd->setTemplate('mobile', 'core::tile');
+            //     $cmd->setOrder($orderCmd++);
+            //     $cmd->save();
+            // }
+            
+            // Commande: Tokens réflexion
+            // $cmd = $statsEq->getCmd(null, 'ai_thoughts_tokens');
+            // if (!is_object($cmd)) {
+            //     $cmd = new ttscastCmd();
+            //     $cmd->setName(__('Tokens Réflexion', __FILE__));
+            //     $cmd->setEqLogic_id($statsEq->getId());
+            //     $cmd->setLogicalId('ai_thoughts_tokens');
+            //     $cmd->setType('info');
+            //     $cmd->setSubType('numeric');
+            //     $cmd->setUnite('Tokens');
+            //     $cmd->setIsVisible(1);
+            //     $cmd->setIsHistorized(1);
+            //     
+            //     foreach ($tokenDisplayConfig as $key => $value) {
+            //         $cmd->setDisplay($key, $value);
+            //     }
+            //     $cmd->setDisplay('icon', '<i class="fas fa-brain"></i>');
+            //     
+            //     foreach ($tokenConfig as $key => $value) {
+            //         $cmd->setConfiguration($key, $value);
+            //     }
+            //     
+            //     $cmd->setTemplate('dashboard', 'core::tile');
+            //     $cmd->setTemplate('mobile', 'core::tile');
+            //     $cmd->setOrder($orderCmd++);
+            //     $cmd->save();
+            // }
+            
+            // Commande: Raison de fin
+            $cmd = $statsEq->getCmd(null, 'ai_finish_reason');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Msg Retour IA', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_finish_reason');
+                $cmd->setType('info');
+                $cmd->setSubType('string');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(0);
+                
+                $cmd->setDisplay('showNameOndashboard', 1);
+                $cmd->setDisplay('showNameOnmobile', 1);
+                $cmd->setDisplay('icon', '<i class="fas fa-flag-checkered"></i>');
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            // Commande: Score de confiance moyen
+            // $cmd = $statsEq->getCmd(null, 'ai_avg_logprobs');
+            // if (!is_object($cmd)) {
+            //     $cmd = new ttscastCmd();
+            //     $cmd->setName(__('Confiance IA', __FILE__));
+            //     $cmd->setEqLogic_id($statsEq->getId());
+            //     $cmd->setLogicalId('ai_avg_logprobs');
+            //     $cmd->setType('info');
+            //     $cmd->setSubType('numeric');
+            //     $cmd->setIsVisible(1);
+            //     $cmd->setIsHistorized(1);
+            //     
+            //     foreach ($tokenDisplayConfig as $key => $value) {
+            //         $cmd->setDisplay($key, $value);
+            //     }
+            //     $cmd->setDisplay('icon', '<i class="fas fa-chart-line"></i>');
+            //     
+            //     foreach ($tokenConfig as $key => $value) {
+            //         $cmd->setConfiguration($key, $value);
+            //     }
+            //     
+            //     $cmd->setTemplate('dashboard', 'core::tile');
+            //     $cmd->setTemplate('mobile', 'core::tile');
+            //     $cmd->setOrder($orderCmd++);
+            //     $cmd->save();
+            // }
+            
+            // Commande: Sécurité bloquée
+            $cmd = $statsEq->getCmd(null, 'ai_safety_blocked');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Réponse IA Bloquée', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_safety_blocked');
+                $cmd->setType('info');
+                $cmd->setSubType('binary');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-shield-alt"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
+                
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            log::add('ttscast', 'debug', '[AI Stats] Équipement virtuel TTSCast AI Stats configuré');
+        } else {
+            // L'IA est désactivée, supprimer l'équipement s'il existe
+            if (is_object($statsEq)) {
+                log::add('ttscast', 'info', '[AI Stats] Suppression de l\'équipement virtuel TTSCast AI Stats (IA désactivée)');
+                $statsEq->remove();
+            }
+        }
+    }
+
+    /**
+     * Action après modification de la configuration ttsAIEnable
+     */
+    public static function postConfig_ttsAIEnable($value) {
+        self::manageAIStatsEquipment();
+    }
+
     /*
    * Permet d'indiquer des éléments supplémentaires à remonter dans les informations de configuration
    * lors de la création semi-automatique d'un post sur le forum community
@@ -988,6 +1330,11 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
+        // Ignorer l'équipement virtuel AI Stats (ses commandes sont gérées dans manageAIStatsEquipment)
+        if ($this->getLogicalId() == 'TTSCast_AI_Stats') {
+            return;
+        }
+        
         $orderCmd = 1;
 
         $cmd = $this->getCmd(null, 'refresh');
@@ -1765,7 +2112,10 @@ class ttscast extends eqLogic
     
     // Fonction exécutée automatiquement avant la suppression de l'équipement
     public function preRemove() {
-        $this->disableCastToDaemon();
+        // Ne pas notifier le démon pour l'équipement virtuel AI Stats
+        if ($this->getLogicalId() != 'TTSCast_AI_Stats') {
+            $this->disableCastToDaemon();
+        }
     }
 
 
@@ -1803,12 +2153,20 @@ class ttscastCmd extends cmd
 
     /* **********************Instance Method************************* */
 
-    /*
-     * Permet d'empêcher la suppression des commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
+    // Permet d'empêcher la suppression des commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
     public function dontRemoveCmd() {
-        return true;
+        $eqLogic = $this->getEqLogic();
+        // Empêcher la suppression automatique des commandes de l'équipement virtuel AI Stats
+        if (is_object($eqLogic) && $eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+            return true;
+        }
+        return false;
     }
-    */
+
+    // Fonction exécutée automatiquement avant la suppression de la commande
+    public function preRemove() {
+        
+    }
 
     // Exécution d'une commande
     public function execute($_options = array()) {

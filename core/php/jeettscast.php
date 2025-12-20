@@ -152,6 +152,94 @@ try {
                 $rtcast = ttscast::realtimeUpdateCast($data);
             }
         }
+    } elseif (isset($result['aiStats'])) {
+        log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats');
+        foreach ($result['aiStats'] as $key => $data) {
+            if ($key != 'TTSCast_AI_Stats') {
+                log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: LogicalId non reconnu: ' . $key);
+                continue;
+            }
+            log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: Mise à jour des tokens');
+            
+            $statsEq = ttscast::byLogicalId('TTSCast_AI_Stats', 'ttscast');
+            if (!is_object($statsEq)) {
+                log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: Équipement virtuel non trouvé');
+                continue;
+            }
+            
+            // Mise à jour des commandes de tokens (valeur de l'appel en cours)
+            if (isset($data['ai_tokens_input'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_tokens_input');
+                if (is_object($cmd)) {
+                    $cmd->event(intval($data['ai_tokens_input']));
+                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Input tokens: ' . $data['ai_tokens_input']);
+                }
+            }
+            
+            if (isset($data['ai_tokens_output'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_tokens_output');
+                if (is_object($cmd)) {
+                    $cmd->event(intval($data['ai_tokens_output']));
+                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Output tokens: ' . $data['ai_tokens_output']);
+                }
+            }
+            
+            if (isset($data['ai_tokens_total'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_tokens_total');
+                if (is_object($cmd)) {
+                    $cmd->event(intval($data['ai_tokens_total']));
+                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Total tokens: ' . $data['ai_tokens_total']);
+                }
+            }
+            
+            // if (isset($data['ai_cache_tokens'])) {
+            //     $cmd = $statsEq->getCmd('info', 'ai_cache_tokens');
+            //     if (is_object($cmd)) {
+            //         $cmd->event(intval($data['ai_cache_tokens']));
+            //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Cache tokens: ' . $data['ai_cache_tokens']);
+            //     }
+            // }
+            
+            // if (isset($data['ai_tool_tokens'])) {
+            //     $cmd = $statsEq->getCmd('info', 'ai_tool_tokens');
+            //     if (is_object($cmd)) {
+            //         $cmd->event(intval($data['ai_tool_tokens']));
+            //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Tool tokens: ' . $data['ai_tool_tokens']);
+            //     }
+            // }
+            
+            // if (isset($data['ai_thoughts_tokens'])) {
+            //     $cmd = $statsEq->getCmd('info', 'ai_thoughts_tokens');
+            //     if (is_object($cmd)) {
+            //         $cmd->event(intval($data['ai_thoughts_tokens']));
+            //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Thoughts tokens: ' . $data['ai_thoughts_tokens']);
+            //     }
+            // }
+            
+            if (isset($data['ai_finish_reason'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_finish_reason');
+                if (is_object($cmd)) {
+                    $cmd->event($data['ai_finish_reason']);
+                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Finish reason: ' . $data['ai_finish_reason']);
+                }
+            }
+            
+            // if (isset($data['ai_avg_logprobs'])) {
+            //     $cmd = $statsEq->getCmd('info', 'ai_avg_logprobs');
+            //     if (is_object($cmd)) {
+            //         $cmd->event(floatval($data['ai_avg_logprobs']));
+            //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Avg logprobs: ' . $data['ai_avg_logprobs']);
+            //     }
+            // }
+            
+            if (isset($data['ai_safety_blocked'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_safety_blocked');
+                if (is_object($cmd)) {
+                    $cmd->event(intval($data['ai_safety_blocked']));
+                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Safety blocked: ' . $data['ai_safety_blocked']);
+                }
+            }
+        }
     } else {
         log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 
     }
