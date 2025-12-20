@@ -2694,8 +2694,11 @@ def shutdown():
     logging.debug("[DAEMON] Removing PID file %s", myConfig.pidFile)
     try:
         os.remove(myConfig.pidFile)
-    except Exception:
-        pass
+        logging.debug("[DAEMON] PID file removed successfully")
+    except FileNotFoundError:
+        logging.debug("[DAEMON] PID file does not exist")
+    except Exception as e:
+        logging.error("[DAEMON] Error removing PID file: %s", e)
     try:
         my_jeedom_socket.close()
     except Exception:
