@@ -24,9 +24,21 @@ try {
     }
 
     $url = base64_decode($_GET["img"]);
-    $file = file_get_contents($url, false, null, 0, 1000000);
+    
+    // Timeout de 10 secondes
+    $context = stream_context_create(['http' => ['timeout' => 10]]);
+    $file = @file_get_contents($url, false, $context, 0, 1000000);
 
-    if ($file === false) die();
+    // Si erreur, retourner l'image par défaut
+    if ($file === false) {
+        $defaultImage = dirname(__FILE__) . '/../../data/images/tts.png';
+        if (file_exists($defaultImage)) {
+            $file = file_get_contents($defaultImage);
+            header("Content-type: image/png");
+            echo $file;
+        }
+        die();
+    }
 
     $finfo = new finfo(FILEINFO_MIME_TYPE);
     $type = $finfo->buffer($file);
