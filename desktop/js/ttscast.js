@@ -14,12 +14,6 @@
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
 
-// Global cleanup: abort previous listeners before creating new IIFE instance
-if (window.__ttscastAbortController) {
-  window.__ttscastAbortController.abort()
-}
-window.__ttscastAbortController = new AbortController()
-
 // Store handlers globally to maintain references across script reloads
 if (!window.__ttscastHandlers) {
   window.__ttscastHandlers = {
@@ -83,15 +77,6 @@ if (!window.__ttscastHandlers) {
 // Protect against multiple script loads (Jeedom SPA navigation, cache, etc.)
 ;(function() {
 'use strict'
-
-// Skip listener registration if already done (but allow function execution for Jeedom compatibility)
-const alreadyInitialized = window.__ttscastListenersRegistered === true
-if (!alreadyInitialized) {
-  window.__ttscastListenersRegistered = true
-}
-
-// Use global AbortController signal
-const signal = window.__ttscastAbortController.signal
 
 // Constants for better maintainability and performance
 const AJAX_URL = 'plugins/ttscast/core/ajax/ttscast.ajax.php'
@@ -266,10 +251,12 @@ const changeScanState = (_scanState) => {
   })
 }
 
-// Only register listeners if not already done (use global handlers)
-if (!alreadyInitialized) {
-  document.body.addEventListener('ttscast::newdevice', window.__ttscastHandlers.newdevice, { signal })
-  document.body.addEventListener('ttscast::scanState', window.__ttscastHandlers.scanState, { signal })
-}
+// Always remove existing listeners before adding new ones (prevents duplicates)
+document.body.removeEventListener('ttscast::newdevice', window.__ttscastHandlers.newdevice)
+document.body.removeEventListener('ttscast::scanState', window.__ttscastHandlers.scanState)
+
+// Register listeners with global handlers
+document.body.addEventListener('ttscast::newdevice', window.__ttscastHandlers.newdevice)
+document.body.addEventListener('ttscast::scanState', window.__ttscastHandlers.scanState)
 
 })() // End IIFE protection
