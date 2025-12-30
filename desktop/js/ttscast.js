@@ -21,7 +21,7 @@ if (window.__ttscastAbortController) {
 window.__ttscastAbortController = new AbortController()
 
 // Protect against multiple script loads (Jeedom SPA navigation, cache, etc.)
-(function() {
+;(function() {
 'use strict'
 
 // Use global AbortController signal
