@@ -14,9 +14,18 @@
 * along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 */
 
+// Global cleanup: abort previous listeners before creating new IIFE instance
+if (window.__ttscastAbortController) {
+  window.__ttscastAbortController.abort()
+}
+window.__ttscastAbortController = new AbortController()
+
 // Protect against multiple script loads (Jeedom SPA navigation, cache, etc.)
 (function() {
 'use strict'
+
+// Use global AbortController signal
+const signal = window.__ttscastAbortController.signal
 
 // Constants for better maintainability and performance
 const AJAX_URL = 'plugins/ttscast/core/ajax/ttscast.ajax.php'
@@ -250,17 +259,10 @@ const handlers = {
   }
 }
 
-// Use AbortController to cleanly remove previous listeners on script reload
-if (window.__ttscastAbortController) {
-  window.__ttscastAbortController.abort()
-}
-window.__ttscastAbortController = new AbortController()
-const signal = window.__ttscastAbortController.signal
-
-// Listen to new device events with AbortController
+// Listen to new device events with AbortController (signal from global scope)
 document.body.addEventListener('ttscast::newdevice', handlers.newdevice, { signal })
 
-// Listen to scan state events with AbortController
+// Listen to scan state events with AbortController (signal from global scope)
 document.body.addEventListener('ttscast::scanState', handlers.scanState, { signal })
 
 })() // End IIFE protection
