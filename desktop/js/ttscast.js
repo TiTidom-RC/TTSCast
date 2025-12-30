@@ -76,8 +76,7 @@ function addCmdToTable(_cmd) {
     : ''
 
   // Build complete row HTML with template literals
-  const rowHtml = `
-    <td class="hidden-xs"><span class="cmdAttr" data-l1key="id"></span></td>
+  const rowHtml = `<td class="hidden-xs"><span class="cmdAttr" data-l1key="id"></span></td>
     <td>
       <div class="input-group">
         <input class="cmdAttr form-control input-sm roundedLeft" data-l1key="name" placeholder="{{Nom de la commande}}">
