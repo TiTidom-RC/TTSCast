@@ -41,3 +41,6 @@ cache/
 # Security & Credentials
 *.pem
 *.key
+
+# Documentation Interne
+resources/_docs/

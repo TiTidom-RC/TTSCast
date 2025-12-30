@@ -960,333 +960,375 @@ if (!isConnect()) {
 </form>
 
 <script>
-    function ttsEngineSelect() {
-        var val = $('.customform-ttsengine').val();
-        if (val == 'gcloudtts') {
-            $('.customform-gcloudtts').show();
-            $('.customform-gtts').hide();
-            $('.customform-lang').hide();
-            $('.customform-voicersstts').hide();
-        } else if (val == 'gtranslatetts') {
-            $('.customform-gcloudtts').hide();
-            $('.customform-gtts').show();
-            $('.customform-lang').show();
-            $('.customform-voicersstts').hide();
-        } else if (val == 'voicersstts') {
-            $('.customform-gcloudtts').hide();
-            $('.customform-gtts').hide();
-            $('.customform-lang').hide();
-            $('.customform-voicersstts').show();
-        } else {
-            $('.customform-gcloudtts').hide();
-            $('.customform-gtts').hide();
-            $('.customform-lang').show();
-            $('.customform-voicersstts').hide();
-        }
-    }
+(function() {
+'use strict'
 
-    function aiAuthModeSelect() {
-        var val = $('.customform-ai-authmode').val();
-        if (val == 'apikey') {
-            $('.customform-ai-apikey').show();
-            $('.customform-ai-oauth2').hide();
-        } else if (val == 'oauth2') {
-            $('.customform-ai-apikey').hide();
-            $('.customform-ai-oauth2').show();
-        }
-    }
+// DOM Selectors constants (cache for performance)
+const SELECTORS = Object.freeze({
+  TTS_ENGINE: '.customform-ttsengine',
+  GCLOUD_TTS: '.customform-gcloudtts',
+  GTTS: '.customform-gtts',
+  LANG: '.customform-lang',
+  VOICERSS_TTS: '.customform-voicersstts',
+  AI_AUTH_MODE: '.customform-ai-authmode',
+  AI_APIKEY: '.customform-ai-apikey',
+  AI_OAUTH2: '.customform-ai-oauth2',
+  ADDRESS_CHECKBOX: '.customform-address',
+  ADDRESS_TEST_URL: '.addressTestURL',
+  API_KEY_INPUT: '.custominput-apikey',
+  UPLOAD_API_KEY: '.pluginAction[data-action=uploadAPIKey]',
+  UPLOAD_CUSTOM_SOUND: '.pluginAction[data-action=uploadCustomSound]',
+  UPLOAD_CUSTOM_RADIOS: '.pluginAction[data-action=uploadCustomRadios]',
+  BTN_PURGE_CACHE: '.customclass-purgettscache',
+  BTN_UPDATE_RADIOS: '.customclass-updateradios',
+  BTN_UPDATE_CUSTOM_RADIOS: '.customclass-updatecustomradios',
+  BTN_UPDATE_SOUNDS: '.customclass-updatesounds',
+  BTN_UPDATE_CUSTOM_SOUNDS: '.customclass-updatecustomsounds',
+  BTN_TEST_PLAY: '.customclass-ttstestplay',
+  BTN_RESET_API_KEY: '.customclass-resetapikey'
+})
 
-    $(document).ready(function() {
-        ttsEngineSelect();
-        aiAuthModeSelect();
-    });
-    $('.customform-ttsengine').on('change', ttsEngineSelect);
-    $('.customform-ai-authmode').on('change', aiAuthModeSelect);
+// AJAX URL constant
+const AJAX_URL = 'plugins/ttscast/core/ajax/ttscast.ajax.php'
 
-    $('.customclass-resetapikey').on('click', function () {
-        const fileName = $('.custominput-apikey').val();
-        $('.custominput-apikey').val('');
-        jeedom.config.save({ 
-            plugin: 'ttscast', 
-            configuration: { 
-                gCloudAPIKey: ''
-            },
-            error: function (error) {
-                $('#div_alert').showAlert({ message: error.message, level: 'danger' });
-                return;
-            },
-            success: function () {
-                $('#div_alert').showAlert({ message: '{{Reset Clé API :: Sauvegarde OK}}', level: 'success' });
-            }
-        });
-        $.ajax({
-            type: "POST",
-            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
-            data: {
-                action: "resetAPIKey",
-                filename: fileName
-            },
-            dataType: 'json',
-            error: function (request, status, error) {
-                handleAjaxError(request, status, error);
-            },
-            success: function (data) {
-                if (data.state != 'ok') {
-                    $('#div_alert').showAlert({ message: data.result, level: 'danger' });
-                    return;
-                }
-                $('#div_alert').showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' });
-            }
-        });
-    });
+// ============================================================================
+// SECTION 1: TTS Engine & AI Auth Mode - Show/Hide Configuration
+// ============================================================================
 
-    $('.pluginAction[data-action=uploadAPIKey]').on('click', function () {
-        $(this).fileupload({
-            replaceFileInput: false,
-            url: 'plugins/ttscast/core/ajax/ttscast.ajax.php?action=uploadAPIKey',
-            dataType: 'json',
-            done: function (e, data) {
-                if (data.result.state != 'ok') {
-                    $('#div_alert').showAlert({ message: data.result.result, level: 'danger' });
-                    return;
-                }
-                $('#div_alert').showAlert({
-                    message: '{{Upload Clé API (OK) :: }}' + data.result.result,
-                    level: 'success'
-                });
-                $('.custominput-apikey').val(data.result.result);
-                jeedom.config.save({ 
-                    plugin: 'ttscast', 
-                    configuration: { 
-                        gCloudAPIKey: $('.custominput-apikey').val()
-                    },
-                    error: function (error) {
-                        $('#div_alert').showAlert({ message: error.message, level: 'danger' });
-                        return;
-                    },
-                    success: function () {
-                        $('#div_alert').showAlert({ message: '{{Upload Clé API :: Sauvegarde OK}}', level: 'success' });
-                    }
-                });
-            }
-        });
-    });
+/**
+ * Show/hide configuration sections based on selected TTS engine
+ * Sections are cached outside function to avoid repeated DOM queries
+ */
+const ttsSections = {
+  gcloudtts: null,
+  gtts: null,
+  lang: null,
+  voicersstts: null
+}
 
-    $('.pluginAction[data-action=uploadCustomSound]').on('click', function () {
-        $(this).fileupload({
-            replaceFileInput: false,
-            url: 'plugins/ttscast/core/ajax/ttscast.ajax.php?action=uploadCustomSound',
-            dataType: 'json',
-            done: function (e, data) {
-                if (data.result.state != 'ok') {
-                    $('#div_alert').showAlert({ message: data.result.result, level: 'danger' });
-                    return;
-                }
-                $('#div_alert').showAlert({
-                    message: '{{Upload Custom Sound (OK) :: }}' + data.result.result,
-                    level: 'success'
-                });
-            }
-        });
-    });
+function ttsEngineSelect() {
+  const ttsEngineEl = document.querySelector(SELECTORS.TTS_ENGINE)
+  if (!ttsEngineEl) return
+  
+  const engine = ttsEngineEl.value
+  
+  // Cache sections on first call (lazy initialization)
+  if (!ttsSections.gcloudtts) {
+    ttsSections.gcloudtts = document.querySelector(SELECTORS.GCLOUD_TTS)
+    ttsSections.gtts = document.querySelector(SELECTORS.GTTS)
+    ttsSections.lang = document.querySelector(SELECTORS.LANG)
+    ttsSections.voicersstts = document.querySelector(SELECTORS.VOICERSS_TTS)
+  }
+  
+  // Hide all sections first (more efficient than checking each time)
+  for (const section of Object.values(ttsSections)) {
+    if (section) section.style.display = 'none'
+  }
+  
+  // Show relevant sections based on engine
+  switch(engine) {
+    case 'gcloudtts':
+      if (ttsSections.gcloudtts) ttsSections.gcloudtts.style.display = ''
+      break
+    case 'gtranslatetts':
+      if (ttsSections.gtts) ttsSections.gtts.style.display = ''
+      if (ttsSections.lang) ttsSections.lang.style.display = ''
+      break
+    case 'voicersstts':
+      if (ttsSections.voicersstts) ttsSections.voicersstts.style.display = ''
+      break
+    default:
+      if (ttsSections.lang) ttsSections.lang.style.display = ''
+      break
+  }
+}
 
-    $('.pluginAction[data-action=uploadCustomRadios]').on('click', function () {
-        $(this).fileupload({
-            replaceFileInput: false,
-            url: 'plugins/ttscast/core/ajax/ttscast.ajax.php?action=uploadCustomRadios',
-            dataType: 'json',
-            done: function (e, data) {
-                if (data.result.state != 'ok') {
-                    $('#div_alert').showAlert({ message: data.result.result, level: 'danger' });
-                    return;
-                }
-                $('#div_alert').showAlert({
-                    message: '{{Upload Custom Radios (OK) :: }}' + data.result.result,
-                    level: 'success'
-                });
-            }
-        });
-    });
+/**
+ * Show/hide AI auth configuration based on selected mode
+ * Sections are cached outside function to avoid repeated DOM queries
+ */
+const aiSections = {
+  apikey: null,
+  oauth2: null
+}
 
-    $('.customclass-purgettscache').on('click', function() {
-        $.ajax({
-            type: "POST",
-            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
-            data: {
-                action: "purgeTTSCache"
-            },
-            dataType: 'json',
-            error: function(request, status, error) {
-                handleAjaxError(request, status, error);
-            },
-            success: function(data) {
-                if (data.state != 'ok') {
-                    $('#div_alert').showAlert({
-                        message: data.result,
-                        level: 'danger'
-                    });
-                    return;
-                }
-                $('#div_alert').showAlert({
-                    message: '{{Demande de purge du cache envoyée (voir les logs du démon pour le résultat)}}',
-                    level: 'success'
-                });
-            }
-        });
-    });
+function aiAuthModeSelect() {
+  const authModeEl = document.querySelector(SELECTORS.AI_AUTH_MODE)
+  if (!authModeEl) return
+  
+  const mode = authModeEl.value
+  
+  // Cache sections on first call (lazy initialization)
+  if (!aiSections.apikey) {
+    aiSections.apikey = document.querySelector(SELECTORS.AI_APIKEY)
+    aiSections.oauth2 = document.querySelector(SELECTORS.AI_OAUTH2)
+  }
+  
+  if (!aiSections.apikey || !aiSections.oauth2) return
+  
+  // More efficient using ternary for both at once
+  const isApiKey = mode === 'apikey'
+  aiSections.apikey.style.display = isApiKey ? '' : 'none'
+  aiSections.oauth2.style.display = isApiKey ? 'none' : ''
+}
 
-    $('.customclass-updateradios').on('click', function() {
-        $.ajax({
-            type: "POST",
-            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
-            data: {
-                action: "updateRadios"
-            },
-            dataType: 'json',
-            error: function(request, status, error) {
-                handleAjaxError(request, status, error);
-            },
-            success: function(data) {
-                if (data.state != 'ok') {
-                    $('#div_alert').showAlert({
-                        message: data.result,
-                        level: 'danger'
-                    });
-                    return;
-                }
-                $('#div_alert').showAlert({
-                    message: '{{Demande de mise à jour des listes :: Radios :: envoyée (voir les logs ttscast)}}',
-                    level: 'success'
-                });
-            }
-        });
-    });
+// ============================================================================
+// SECTION 2: Event Listeners & Initialization
+// ============================================================================
 
-    $('.customclass-updatecustomradios').on('click', function() {
-        $.ajax({
-            type: "POST",
-            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
-            data: {
-                action: "updateCustomRadios"
-            },
-            dataType: 'json',
-            error: function(request, status, error) {
-                handleAjaxError(request, status, error);
-            },
-            success: function(data) {
-                if (data.state != 'ok') {
-                    $('#div_alert').showAlert({
-                        message: data.result,
-                        level: 'danger'
-                    });
-                    return;
-                }
-                $('#div_alert').showAlert({
-                    message: '{{Demande de mise à jour des listes :: CustomRadios :: envoyée (voir les logs ttscast)}}',
-                    level: 'success'
-                });
-            }
-        });
-    });
+/**
+ * Initialize configuration page
+ */
+function initConfigurationPage() {
+  // Initialize TTS engine and AI auth mode display
+  ttsEngineSelect()
+  aiAuthModeSelect()
+  
+  // Listen for TTS engine changes
+  const ttsEngineEl = document.querySelector(SELECTORS.TTS_ENGINE)
+  if (ttsEngineEl) {
+    ttsEngineEl.addEventListener('change', ttsEngineSelect)
+  }
+  
+  // Listen for AI auth mode changes
+  const aiAuthModeEl = document.querySelector(SELECTORS.AI_AUTH_MODE)
+  if (aiAuthModeEl) {
+    aiAuthModeEl.addEventListener('change', aiAuthModeSelect)
+  }
+}
 
-    $('.customclass-updatesounds').on('click', function() {
-        $.ajax({
-            type: "POST",
-            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
-            data: {
-                action: "updateSounds"
-            },
-            dataType: 'json',
-            error: function(request, status, error) {
-                handleAjaxError(request, status, error);
-            },
-            success: function(data) {
-                if (data.state != 'ok') {
-                    $('#div_alert').showAlert({
-                        message: data.result,
-                        level: 'danger'
-                    });
-                    return;
-                }
-                $('#div_alert').showAlert({
-                    message: '{{Demande de mise à jour des listes :: Sounds :: envoyée (voir les logs ttscast)}}',
-                    level: 'success'
-                });
-            }
-        });
-    });
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initConfigurationPage)
+} else {
+  initConfigurationPage()
+}
 
-    $('.customclass-updatecustomsounds').on('click', function() {
-        $.ajax({
-            type: "POST",
-            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
-            data: {
-                action: "updateCustomSounds"
-            },
-            dataType: 'json',
-            error: function(request, status, error) {
-                handleAjaxError(request, status, error);
-            },
-            success: function(data) {
-                if (data.state != 'ok') {
-                    $('#div_alert').showAlert({
-                        message: data.result,
-                        level: 'danger'
-                    });
-                    return;
-                }
-                $('#div_alert').showAlert({
-                    message: '{{Demande de mise à jour des listes :: Custom Sounds :: envoyée (voir les logs ttscast)}}',
-                    level: 'success'
-                });
-            }
-        });
-    });
+// ============================================================================
+// SECTION 3: Test External Address
+// ============================================================================
+
+const addressCheckbox = document.querySelector(SELECTORS.ADDRESS_CHECKBOX)
+if (addressCheckbox) {
+  addressCheckbox.addEventListener('change', function() {
+    const addressTestURL = document.querySelector(SELECTORS.ADDRESS_TEST_URL)
     
-    $('.customclass-ttstestplay').on('click', function() {
-        $.ajax({
-            type: "POST",
-            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
-            data: {
-                action: "playTestTTS"
-            },
-            dataType: 'json',
-            error: function(request, status, error) {
-                handleAjaxError(request, status, error);
-            },
-            success: function(data) {
-                if (data.state != 'ok') {
-                    $('#div_alert').showAlert({
-                        message: data.result,
-                        level: 'danger'
-                    });
-                    return;
-                }
-                $('#div_alert').showAlert({
-                    message: '{{Demande de génération du TTS de test envoyée (voir les logs du démon pour le résultat)}}',
-                    level: 'success'
-                });
-            }
-        });
-    });
+    domUtils.ajax({
+      type: 'POST',
+      url: AJAX_URL,
+      data: {
+        action: 'testExternalAddress',
+        value: this.checked
+      },
+      success: (data) => {
+        if (addressTestURL) {
+          const link = ` <a class="btn btn-info btn-xs" href="${data.result}" target="_blank">TEST (Lecture .mp3)</a>`
+          addressTestURL.innerHTML = link
+        }
+      },
+      error: (error) => {
+        if (addressTestURL) addressTestURL.textContent = ''
+        handleAjaxError(error)
+      }
+    })
+  })
+}
 
-    $('.customform-address').on('change', function() {
-        $.ajax({
-            type: "POST",
-            url: "plugins/ttscast/core/ajax/ttscast.ajax.php",
-            data: {
-                action: "testExternalAddress",
-                value: $('.customform-address').prop('checked')
-            },
-            dataType: 'json',
-            error: function(request, status, error) {
-                $('.addressTestURL').text("");
-                handleAjaxError(request, status, error);
-            },
-            success: function(data) {
-                var spanContent = ' <a class="btn btn-info btn-xs" href="' + data.result + '" target="_blank">TEST (Lecture .mp3)</a>';
-                $('.addressTestURL').html(spanContent);
-            }
-        });
-    });
+// ============================================================================
+// SECTION 4: Simple AJAX Buttons (Purge Cache, Update Lists, Test TTS)
+// ============================================================================
+
+/**
+ * Helper function for simple AJAX POST requests using Jeedom native domUtils
+ */
+function simpleAjaxPost(action, successMessage) {
+  domUtils.ajax({
+    type: 'POST',
+    url: AJAX_URL,
+    data: { action },
+    success: (data) => {
+      if (data.state !== 'ok') {
+        jeedomUtils.showAlert({ message: data.result, level: 'danger' })
+        return
+      }
+      jeedomUtils.showAlert({ message: successMessage, level: 'success' })
+    },
+    error: (error) => handleAjaxError(error)
+  })
+}
+
+// Purge TTS Cache
+const btnPurgeCache = document.querySelector(SELECTORS.BTN_PURGE_CACHE)
+if (btnPurgeCache) {
+  btnPurgeCache.addEventListener('click', () => {
+    simpleAjaxPost('purgeTTSCache', '{{Demande de purge du cache envoyée (voir les logs du démon pour le résultat)}}')
+  })
+}
+
+// Update Radios
+const btnUpdateRadios = document.querySelector(SELECTORS.BTN_UPDATE_RADIOS)
+if (btnUpdateRadios) {
+  btnUpdateRadios.addEventListener('click', () => {
+    simpleAjaxPost('updateRadios', '{{Demande de mise à jour des listes :: Radios :: envoyée (voir les logs ttscast)}}')
+  })
+}
+
+// Update Custom Radios
+const btnUpdateCustomRadios = document.querySelector(SELECTORS.BTN_UPDATE_CUSTOM_RADIOS)
+if (btnUpdateCustomRadios) {
+  btnUpdateCustomRadios.addEventListener('click', () => {
+    simpleAjaxPost('updateCustomRadios', '{{Demande de mise à jour des listes :: CustomRadios :: envoyée (voir les logs ttscast)}}')
+  })
+}
+
+// Update Sounds
+const btnUpdateSounds = document.querySelector(SELECTORS.BTN_UPDATE_SOUNDS)
+if (btnUpdateSounds) {
+  btnUpdateSounds.addEventListener('click', () => {
+    simpleAjaxPost('updateSounds', '{{Demande de mise à jour des listes :: Sounds :: envoyée (voir les logs ttscast)}}')
+  })
+}
+
+// Update Custom Sounds
+const btnUpdateCustomSounds = document.querySelector(SELECTORS.BTN_UPDATE_CUSTOM_SOUNDS)
+if (btnUpdateCustomSounds) {
+  btnUpdateCustomSounds.addEventListener('click', () => {
+    simpleAjaxPost('updateCustomSounds', '{{Demande de mise à jour des listes :: Custom Sounds :: envoyée (voir les logs ttscast)}}')
+  })
+}
+
+// Test TTS Play
+const btnTestPlay = document.querySelector(SELECTORS.BTN_TEST_PLAY)
+if (btnTestPlay) {
+  btnTestPlay.addEventListener('click', () => {
+    simpleAjaxPost('playTestTTS', '{{Demande de génération du TTS de test envoyée (voir les logs du démon pour le résultat)}}')
+
+  })
+}
+
+// ============================================================================
+// SECTION 5: Reset API Key (Double Save + AJAX)
+// ============================================================================
+
+const btnResetApiKey = document.querySelector(SELECTORS.BTN_RESET_API_KEY)
+if (btnResetApiKey) {
+  btnResetApiKey.addEventListener('click', function() {
+    const apiKeyInput = document.querySelector(SELECTORS.API_KEY_INPUT)
+    if (!apiKeyInput) return
+    
+    const fileName = apiKeyInput.value
+    apiKeyInput.value = ''
+    
+    // First: Save empty config to Jeedom
+    jeedom.config.save({
+      plugin: 'ttscast',
+      configuration: { gCloudAPIKey: '' },
+      error: (error) => {
+        jeedomUtils.showAlert({ message: error.message, level: 'danger' })
+      },
+      success: () => {
+        jeedomUtils.showAlert({ message: '{{Reset Clé API :: Sauvegarde OK}}', level: 'success' })
+      }
+    })
+    
+    // Second: Delete file on server
+    domUtils.ajax({
+      type: 'POST',
+      url: AJAX_URL,
+      data: {
+        action: 'resetAPIKey',
+        filename: fileName
+      },
+      success: (data) => {
+        if (data.state !== 'ok') {
+          jeedomUtils.showAlert({ message: data.result, level: 'danger' })
+          return
+        }
+        jeedomUtils.showAlert({ message: '{{Reset Clé API (OK) :: }}' + data.result, level: 'success' })
+      },
+      error: (error) => handleAjaxError(error)
+    })
+  })
+}
+
+// ============================================================================
+// SECTION 6: File Uploads (FormData + domUtils.ajax)
+// ============================================================================
+
+/**
+ * Helper function for file upload handling using Jeedom native domUtils.ajax
+ * Note: processData and contentType must be false to handle FormData correctly
+ */
+function handleFileUpload(inputElement, action, successMessage, additionalCallback = null) {
+  inputElement.addEventListener('change', function(event) {
+    const file = event.target.files[0]
+    if (!file) return
+    
+    const formData = new FormData()
+    const fileInputName = this.getAttribute('name')
+    formData.append(fileInputName, file)
+    
+    domUtils.ajax({
+      type: 'POST',
+      url: `${AJAX_URL}?action=${action}`,
+      data: formData,
+      processData: false,  // Don't process FormData (keep it as is)
+      contentType: false,  // Let browser set Content-Type with boundary
+      success: (data) => {
+        if (data.state !== 'ok') {
+          jeedomUtils.showAlert({ message: data.result, level: 'danger' })
+          return
+        }
+        jeedomUtils.showAlert({ message: successMessage + data.result, level: 'success' })
+        
+        // Execute additional callback if provided
+        if (additionalCallback) {
+          additionalCallback(data.result)
+        }
+        
+        // Reset input for re-upload
+        event.target.value = ''
+      },
+      error: (error) => handleAjaxError(error)
+    })
+  })
+}
+
+// Upload API Key (with config save)
+const uploadAPIKeyInput = document.querySelector(SELECTORS.UPLOAD_API_KEY)
+if (uploadAPIKeyInput) {
+  handleFileUpload(uploadAPIKeyInput, 'uploadAPIKey', '{{Upload Clé API (OK) :: }}', (fileName) => {
+    const apiKeyInput = document.querySelector(SELECTORS.API_KEY_INPUT)
+    if (apiKeyInput) {
+      apiKeyInput.value = fileName
+      
+      jeedom.config.save({
+        plugin: 'ttscast',
+        configuration: { gCloudAPIKey: fileName },
+        error: (error) => {
+          jeedomUtils.showAlert({ message: error.message, level: 'danger' })
+        },
+        success: () => {
+          jeedomUtils.showAlert({ message: '{{Upload Clé API :: Sauvegarde OK}}', level: 'success' })
+        }
+      })
+    }
+  })
+}
+
+// Upload Custom Sound
+const uploadCustomSoundInput = document.querySelector(SELECTORS.UPLOAD_CUSTOM_SOUND)
+if (uploadCustomSoundInput) {
+  handleFileUpload(uploadCustomSoundInput, 'uploadCustomSound', '{{Upload Custom Sound (OK) :: }}')
+}
+
+// Upload Custom Radios
+const uploadCustomRadiosInput = document.querySelector(SELECTORS.UPLOAD_CUSTOM_RADIOS)
+if (uploadCustomRadiosInput) {
+  handleFileUpload(uploadCustomRadiosInput, 'uploadCustomRadios', '{{Upload Custom Radios (OK) :: }}')
+}
+
+})()
+
+
 </script>
