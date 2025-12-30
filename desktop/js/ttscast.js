@@ -32,7 +32,7 @@ const SELECTORS = Object.freeze({
   OPEN_LOCATION: '.pluginAction[data-action=openLocation]'
 })
 
-// Bridge jQuery events to native CustomEvents (bidirectional, if jQuery is available)
+// Bridge jQuery events to native CustomEvents (unidirectional: jQuery → CustomEvents)
 if (typeof jQuery !== 'undefined') {
   const eventsToBridge = [
     'ttscast::newdevice',
@@ -51,15 +51,6 @@ if (typeof jQuery !== 'undefined') {
       })
       customEvent.__bridged = true
       document.body.dispatchEvent(customEvent)
-    })
-    
-    // CustomEvents → jQuery (bidirectional bridge)
-    document.body.addEventListener(eventName, (event) => {
-      if (event.__jQueryBridged) return  // Prevent infinite loop
-      
-      const jQueryEvent = $.Event(eventName)
-      jQueryEvent.__jQueryBridged = true
-      $('body').trigger(jQueryEvent, event.detail)
     })
   })
 }
