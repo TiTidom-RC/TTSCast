@@ -24,6 +24,12 @@ window.__ttscastAbortController = new AbortController()
 ;(function() {
 'use strict'
 
+// Skip listener registration if already done (but allow function execution for Jeedom compatibility)
+const alreadyInitialized = window.__ttscastListenersRegistered === true
+if (!alreadyInitialized) {
+  window.__ttscastListenersRegistered = true
+}
+
 // Use global AbortController signal
 const signal = window.__ttscastAbortController.signal
 
@@ -259,10 +265,13 @@ const handlers = {
   }
 }
 
-// Listen to new device events with AbortController (signal from global scope)
-document.body.addEventListener('ttscast::newdevice', handlers.newdevice, { signal })
+// Only register listeners if not already done
+if (!alreadyInitialized) {
+  // Listen to new device events with AbortController (signal from global scope)
+  document.body.addEventListener('ttscast::newdevice', handlers.newdevice, { signal })
 
-// Listen to scan state events with AbortController (signal from global scope)
-document.body.addEventListener('ttscast::scanState', handlers.scanState, { signal })
+  // Listen to scan state events with AbortController (signal from global scope)
+  document.body.addEventListener('ttscast::scanState', handlers.scanState, { signal })
+}
 
 })() // End IIFE protection
