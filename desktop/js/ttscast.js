@@ -39,12 +39,15 @@ if (typeof jQuery !== 'undefined') {
     'ttscast::scanState'
   ]
   
+  // Use namespace to prevent conflicts and allow specific cleanup
+  const namespace = '.ttscastBridge'
+  
   eventsToBridge.forEach(eventName => {
-    // Clean existing handlers before adding new ones to prevent duplicates
-    $('body').off(eventName)
+    // Clean existing handlers with namespace before adding new ones
+    $('body').off(`${eventName}${namespace}`)
     
     // jQuery → CustomEvents
-    $('body').on(eventName, function(event, data) {
+    $('body').on(`${eventName}${namespace}`, function(event, data) {
       if (event.originalEvent?.__bridged) return  // Prevent infinite loop
       
       const customEvent = new CustomEvent(eventName, {
