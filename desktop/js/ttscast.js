@@ -15,6 +15,9 @@
 */
 
 // Protect against multiple script loads (Jeedom SPA navigation, cache, etc.)
+if (window.ttscastLoaded) return
+window.ttscastLoaded = true
+
 (function() {
 'use strict'
 
@@ -50,7 +53,8 @@ if (typeof jQuery !== 'undefined') {
       document.body.dispatchEvent(customEvent)
     })
     
-    // CustomEvents → jQuery (bidirectional bridge)
+    // CustomEvents → jQuery (bidirectional bridge) - DISABLED
+    /*
     document.body.addEventListener(eventName, (event) => {
       if (event.__jQueryBridged) return  // Prevent infinite loop
       
@@ -58,6 +62,7 @@ if (typeof jQuery !== 'undefined') {
       jQueryEvent.__jQueryBridged = true
       $('body').trigger(jQueryEvent, event.detail)
     })
+    */
   })
 }
 
