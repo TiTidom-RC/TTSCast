@@ -54,6 +54,8 @@ if (typeof jQuery !== 'undefined') {
     })
     
     // CustomEvents → jQuery (bidirectional bridge)
+    // DISABLED: Causes infinite loop in TTSCast (works fine in TVRemote)
+    /*
     document.body.addEventListener(eventName, (event) => {
       if (event.__jQueryBridged) return  // Prevent infinite loop
       
@@ -61,6 +63,7 @@ if (typeof jQuery !== 'undefined') {
       jQueryEvent.__jQueryBridged = true
       $('body').trigger(jQueryEvent, event.detail)
     })
+    */
   })
 }
 
