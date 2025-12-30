@@ -15,9 +15,6 @@
 */
 
 // Protect against multiple script loads (Jeedom SPA navigation, cache, etc.)
-if (window.ttscastLoaded) return
-window.ttscastLoaded = true
-
 (function() {
 'use strict'
 
