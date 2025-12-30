@@ -34,7 +34,10 @@ const SELECTORS = Object.freeze({
 
 // Bridge jQuery events to native CustomEvents (bidirectional, if jQuery is available)
 if (typeof jQuery !== 'undefined') {
-  const eventsToBridge = ['ttscast::newdevice', 'ttscast::scanState']
+  const eventsToBridge = [
+    'ttscast::newdevice',
+    'ttscast::scanState'
+  ]
   
   eventsToBridge.forEach(eventName => {
     // jQuery → CustomEvents
@@ -50,8 +53,7 @@ if (typeof jQuery !== 'undefined') {
       document.body.dispatchEvent(customEvent)
     })
     
-    // CustomEvents → jQuery (bidirectional bridge) - DISABLED
-    /*
+    // CustomEvents → jQuery (bidirectional bridge)
     document.body.addEventListener(eventName, (event) => {
       if (event.__jQueryBridged) return  // Prevent infinite loop
       
@@ -59,7 +61,6 @@ if (typeof jQuery !== 'undefined') {
       jQueryEvent.__jQueryBridged = true
       $('body').trigger(jQueryEvent, event.detail)
     })
-    */
   })
 }
 
