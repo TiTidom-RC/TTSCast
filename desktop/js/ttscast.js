@@ -20,6 +20,66 @@ if (window.__ttscastAbortController) {
 }
 window.__ttscastAbortController = new AbortController()
 
+// Store handlers globally to maintain references across script reloads
+if (!window.__ttscastHandlers) {
+  window.__ttscastHandlers = {
+    newdevice: (event) => {
+      const _option = event.detail
+      if (!_option) return
+
+      const { friendly_name, newone } = _option
+      
+      if (friendly_name && newone === '1') {
+        jeedomUtils.showAlert({ message: `[SCAN] NEW TTSCast détecté :: ${friendly_name}`, level: 'warning' })
+      } else if (friendly_name && newone === '0') {
+        jeedomUtils.showAlert({ message: `[SCAN] TTSCast MAJ :: ${friendly_name}`, level: 'warning' })
+      }
+    },
+    
+    scanState: (event) => {
+      const scanState = event.detail?.scanState
+
+      const scanButtons = document.querySelectorAll('.customclass-scanState')
+      const scanIcons = document.querySelectorAll('.customicon-scanState')
+      const scanTexts = document.querySelectorAll('.customtext-scanState')
+
+      jeedomUtils.hideAlert()
+
+      const isScanOn = scanState === 'scanOn'
+
+      for (const el of scanButtons) {
+        const currentState = el.getAttribute('data-scanState')
+        
+        if (isScanOn && currentState === 'scanOn') {
+          el.setAttribute('data-scanState', 'scanOff')
+          el.removeClass('logoPrimary').addClass('logoSecondary')
+        } else if (!isScanOn && currentState === 'scanOff') {
+          el.setAttribute('data-scanState', 'scanOn')
+          el.removeClass('logoSecondary').addClass('logoPrimary')
+        }
+      }
+
+      for (const el of scanIcons) {
+        if (isScanOn) {
+          el.addClass('icon_red')
+        } else {
+          el.removeClass('icon_red')
+        }
+      }
+
+      for (const el of scanTexts) {
+        el.textContent = isScanOn ? '{{Stop Scan}}' : '{{Scan}}'
+      }
+
+      if (isScanOn) {
+        jeedomUtils.showAlert({ message: '{{Mode SCAN actif pendant 60 secondes. (Cliquez sur STOP SCAN pour arrêter la découverte des équipements)}}', level: 'warning' })
+      } else {
+        window.location.reload()
+      }
+    }
+  }
+}
+
 // Protect against multiple script loads (Jeedom SPA navigation, cache, etc.)
 ;(function() {
 'use strict'
@@ -206,72 +266,10 @@ const changeScanState = (_scanState) => {
   })
 }
 
-// Store handlers to allow cleanup on re-initialization
-const handlers = {
-  newdevice: (event) => {
-    const _option = event.detail
-    if (!_option) return
-
-    const { friendly_name, newone } = _option
-    
-    if (friendly_name && newone === '1') {
-      jeedomUtils.showAlert({ message: `[SCAN] NEW TTSCast détecté :: ${friendly_name}`, level: 'warning' })
-    } else if (friendly_name && newone === '0') {
-      jeedomUtils.showAlert({ message: `[SCAN] TTSCast MAJ :: ${friendly_name}`, level: 'warning' })
-    }
-  },
-  
-  scanState: (event) => {
-    const scanState = event.detail?.scanState
-
-    const scanButtons = document.querySelectorAll(SELECTORS.SCAN_BUTTONS)
-    const scanIcons = document.querySelectorAll(SELECTORS.SCAN_ICONS)
-    const scanTexts = document.querySelectorAll(SELECTORS.SCAN_TEXTS)
-
-    jeedomUtils.hideAlert()
-
-    const isScanOn = scanState === 'scanOn'
-
-    // Batch DOM updates with for...of (optimal performance)
-    for (const el of scanButtons) {
-      const currentState = el.getAttribute('data-scanState')
-      
-      if (isScanOn && currentState === 'scanOn') {
-        el.setAttribute('data-scanState', 'scanOff')
-        el.removeClass('logoPrimary').addClass('logoSecondary')
-      } else if (!isScanOn && currentState === 'scanOff') {
-        el.setAttribute('data-scanState', 'scanOn')
-        el.removeClass('logoSecondary').addClass('logoPrimary')
-      }
-    }
-
-    for (const el of scanIcons) {
-      if (isScanOn) {
-        el.addClass('icon_red')
-      } else {
-        el.removeClass('icon_red')
-      }
-    }
-
-    for (const el of scanTexts) {
-      el.textContent = isScanOn ? '{{Stop Scan}}' : '{{Scan}}'
-    }
-
-    if (isScanOn) {
-      jeedomUtils.showAlert({ message: '{{Mode SCAN actif pendant 60 secondes. (Cliquez sur STOP SCAN pour arrêter la découverte des équipements)}}', level: 'warning' })
-    } else {
-      window.location.reload()
-    }
-  }
-}
-
-// Only register listeners if not already done
+// Only register listeners if not already done (use global handlers)
 if (!alreadyInitialized) {
-  // Listen to new device events with AbortController (signal from global scope)
-  document.body.addEventListener('ttscast::newdevice', handlers.newdevice, { signal })
-
-  // Listen to scan state events with AbortController (signal from global scope)
-  document.body.addEventListener('ttscast::scanState', handlers.scanState, { signal })
+  document.body.addEventListener('ttscast::newdevice', window.__ttscastHandlers.newdevice, { signal })
+  document.body.addEventListener('ttscast::scanState', window.__ttscastHandlers.scanState, { signal })
 }
 
 })() // End IIFE protection
