@@ -250,17 +250,17 @@ const handlers = {
   }
 }
 
-// Clean existing handlers before adding new ones (prevent duplicates on script reload)
-document.body.removeEventListener('ttscast::newdevice', window.__ttscastHandlers?.newdevice)
-document.body.removeEventListener('ttscast::scanState', window.__ttscastHandlers?.scanState)
+// Use AbortController to cleanly remove previous listeners on script reload
+if (window.__ttscastAbortController) {
+  window.__ttscastAbortController.abort()
+}
+window.__ttscastAbortController = new AbortController()
+const signal = window.__ttscastAbortController.signal
 
-// Store handlers globally for cleanup on next reload
-window.__ttscastHandlers = handlers
+// Listen to new device events with AbortController
+document.body.addEventListener('ttscast::newdevice', handlers.newdevice, { signal })
 
-// Listen to new device events
-document.body.addEventListener('ttscast::newdevice', handlers.newdevice)
-
-// Listen to scan state events
-document.body.addEventListener('ttscast::scanState', handlers.scanState)
+// Listen to scan state events with AbortController
+document.body.addEventListener('ttscast::scanState', handlers.scanState, { signal })
 
 })() // End IIFE protection
