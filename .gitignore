@@ -1,7 +1,46 @@
+# Plugin Configuration
 data/config/*.json
+
+# IDE & Editors
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
 .project
-.DS_Store
+
+# OS Generated Files
+# Windows
 Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+# macOS
+.DS_Store
+
+# Editor Temporary Files
+*.swp
+*.swo
+*~
+*.bak
+*.orig
 *.php~
-.vscode
+
+# Python
 .venv
+__pycache__/
+*.pyc
+
+# Logs
+logs/
+*.log
+
+# Temporary Directories
+tmp/
+temp/
+cache/
+
+# Security & Credentials
+*.pem
+*.key
+
+# Documentation Interne
+resources/_docs/
