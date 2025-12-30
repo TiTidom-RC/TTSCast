@@ -998,6 +998,7 @@ const AJAX_URL = 'plugins/ttscast/core/ajax/ttscast.ajax.php'
 /**
  * Show/hide configuration sections based on selected TTS engine
  * Sections are cached outside function to avoid repeated DOM queries
+ * Note: Some engines have multiple form sections (e.g., voicersstts has 3)
  */
 const ttsSections = {
   gcloudtts: null,
@@ -1013,32 +1014,45 @@ function ttsEngineSelect() {
   const engine = ttsEngineEl.value
   
   // Cache sections on first call (lazy initialization)
+  // Use querySelectorAll for engines with multiple sections
   if (!ttsSections.gcloudtts) {
-    ttsSections.gcloudtts = document.querySelector(SELECTORS.GCLOUD_TTS)
-    ttsSections.gtts = document.querySelector(SELECTORS.GTTS)
-    ttsSections.lang = document.querySelector(SELECTORS.LANG)
-    ttsSections.voicersstts = document.querySelector(SELECTORS.VOICERSS_TTS)
+    ttsSections.gcloudtts = document.querySelectorAll(SELECTORS.GCLOUD_TTS)
+    ttsSections.gtts = document.querySelectorAll(SELECTORS.GTTS)
+    ttsSections.lang = document.querySelectorAll(SELECTORS.LANG)
+    ttsSections.voicersstts = document.querySelectorAll(SELECTORS.VOICERSS_TTS)
   }
   
   // Hide all sections first (more efficient than checking each time)
-  for (const section of Object.values(ttsSections)) {
-    if (section) section.style.display = 'none'
+  for (const sectionList of Object.values(ttsSections)) {
+    if (sectionList) {
+      for (const section of sectionList) {
+        section.style.display = 'none'
+      }
+    }
   }
   
   // Show relevant sections based on engine
+  const showSections = (sectionList) => {
+    if (sectionList) {
+      for (const section of sectionList) {
+        section.style.display = ''
+      }
+    }
+  }
+  
   switch(engine) {
     case 'gcloudtts':
-      if (ttsSections.gcloudtts) ttsSections.gcloudtts.style.display = ''
+      showSections(ttsSections.gcloudtts)
       break
     case 'gtranslatetts':
-      if (ttsSections.gtts) ttsSections.gtts.style.display = ''
-      if (ttsSections.lang) ttsSections.lang.style.display = ''
+      showSections(ttsSections.gtts)
+      showSections(ttsSections.lang)
       break
     case 'voicersstts':
-      if (ttsSections.voicersstts) ttsSections.voicersstts.style.display = ''
+      showSections(ttsSections.voicersstts)
       break
     default:
-      if (ttsSections.lang) ttsSections.lang.style.display = ''
+      showSections(ttsSections.lang)
       break
   }
 }
