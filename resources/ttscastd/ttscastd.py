@@ -28,7 +28,7 @@ import datetime
 import requests
 import re
 
-from urllib.parse import urljoin, urlencode, urlparse
+from urllib.parse import urlencode, urlparse
 from uuid import UUID
 
 # Import pour Jeedom
@@ -278,9 +278,9 @@ class TTSCast:
     def jeedomTTS(ttsText, ttsLang):
         filecontent = None
         try:
-            # ttsParams = 'tts.php?apikey=' + myConfig.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
-            # ttsFullURI = urljoin(myConfig.ttsWebSrvJeeTTS, ttsParams)
-            ttsFullURI = urljoin(myConfig.ttsWebSrvJeeTTS, 'tts.php')
+            # ttsParams = f'tts.php?apikey={myConfig.apiTTSKey}&voice={ttsLang}&path=1&text={quote(ttsText, safe="")}'
+            # ttsFullURI = f'{myConfig.ttsWebSrvJeeTTS}{ttsParams}'
+            ttsFullURI = f'{myConfig.ttsWebSrvJeeTTS}tts.php'
             logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
             logging.debug('[DAEMON][JeedomTTS] ttsText Length :: %s', str(len(ttsText)))
             
@@ -423,7 +423,7 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
-                urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
@@ -459,7 +459,7 @@ class TTSCast:
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
-            urlFileToPlay = urljoin(ttsSrvWeb, filename)
+            urlFileToPlay = f'{ttsSrvWeb}{filename}'
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
@@ -489,7 +489,7 @@ class TTSCast:
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
-            urlFileToPlay = urljoin(ttsSrvWeb, filename)
+            urlFileToPlay = f'{ttsSrvWeb}{filename}'
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
@@ -520,7 +520,7 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
-                urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
@@ -828,7 +828,7 @@ class TTSCast:
                     else:
                         logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
-                    urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                    urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce)
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
@@ -864,7 +864,7 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
-                urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
                 res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
@@ -895,7 +895,7 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
-                urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
                 res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
@@ -927,7 +927,7 @@ class TTSCast:
                     else:
                         logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
-                    urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                    urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                     
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
@@ -966,7 +966,7 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     cast.set_volume(volume=volumeForPlay / 100)
                 
-                urlThumb = urljoin(myConfig.ttsWebSrvImages, "tts.png")
+                urlThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
                 
                 app_name = "default_media_receiver"
@@ -1100,7 +1100,7 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     cast.set_volume(volume=volumeForPlay / 100)
             
-                urlThumb = urljoin(myConfig.ttsWebSrvImages, "tts.png")
+                urlThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
             
                 app_name = "default_media_receiver"
@@ -1792,7 +1792,7 @@ class Functions:
                             if _value in radiosArray:
                                 radio = radiosArray[_value]
                                 if "NoLogo" in radio['image']:
-                                    radioThumb = urljoin(myConfig.ttsWebSrvImages, "tts.png")
+                                    radioThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                                 else:
                                     radioThumb = radio['image']
                                 radioUrl = radio['location']
@@ -1917,12 +1917,12 @@ class Functions:
                             cast.set_volume(volume=_volume / 100)
                         
                         if (_controller == 'customsounds'):
-                            soundURL = urljoin(myConfig.ttsWebSrvMedia, 'custom/' + _value)
+                            soundURL = f'{myConfig.ttsWebSrvMedia}custom/{_value}'
                         else:
-                            soundURL = urljoin(myConfig.ttsWebSrvMedia, _value)
+                            soundURL = f'{myConfig.ttsWebSrvMedia}{_value}'
                         logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: FilePath :: %s', soundURL)
 
-                        soundThumb = urljoin(myConfig.ttsWebSrvImages, "tts.png")
+                        soundThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                         soundAlbumName = "Jeedom"
                         soundTitle = "TTSCast Sound"
                         soundArtist = _value
@@ -2078,7 +2078,7 @@ class Functions:
                             metadataType = 1  # type METADATA_TYPE_MOVIE
                         
                         media = _value    
-                        mediaImage = urljoin(myConfig.ttsWebSrvImages, "tts.png")
+                        mediaImage = f'{myConfig.ttsWebSrvImages}tts.png'
                         mediaTitle = "TTSCast Media"
                         mediaSubTitle = _value
                         mediaAlbumName = "Jeedom"
@@ -2808,10 +2808,12 @@ if args.cyclefactor:
 if args.socketport:
     myConfig.socketPort = int(args.socketport)
 if args.ttsweb:
-    myConfig.ttsWebSrvCache = urljoin(args.ttsweb, 'plugins/ttscast/data/cache/')
-    myConfig.ttsWebSrvMedia = urljoin(args.ttsweb, 'plugins/ttscast/data/media/')
-    myConfig.ttsWebSrvImages = urljoin(args.ttsweb, 'plugins/ttscast/data/images/')
-    myConfig.ttsWebSrvJeeTTS = urljoin(args.ttsweb, 'core/api/')
+    # Normalize base URL once for all paths (supports Jeedom in subdirectories)
+    ttsweb_base_url = args.ttsweb.rstrip('/')
+    myConfig.ttsWebSrvCache = f'{ttsweb_base_url}/plugins/ttscast/data/cache/'
+    myConfig.ttsWebSrvMedia = f'{ttsweb_base_url}/plugins/ttscast/data/media/'
+    myConfig.ttsWebSrvImages = f'{ttsweb_base_url}/plugins/ttscast/data/images/'
+    myConfig.ttsWebSrvJeeTTS = f'{ttsweb_base_url}/core/api/'
 
 jeedom_utils.set_log_level(myConfig.logLevel)
 

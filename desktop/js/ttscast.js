@@ -33,9 +33,11 @@ const SELECTORS = Object.freeze({
 })
 
 // Bridge jQuery events to native CustomEvents (unidirectional: jQuery → CustomEvents)
-if (typeof jQuery !== 'undefined') {
+if (typeof jQuery !== 'undefined' && !window.ttscastBridgeAttached) {
+  window.ttscastBridgeAttached = true
+  
   const eventsToBridge = [
-    'ttscast::newdevice',
+    'ttscast::newDevice',
     'ttscast::scanState'
   ]
   
@@ -183,62 +185,82 @@ const changeScanState = (_scanState) => {
   })
 }
 
-// Listen to new device events
-document.body.addEventListener('ttscast::newdevice', (event) => {
-  const _option = event.detail
-  if (!_option) return
-
-  const { friendly_name, newone } = _option
+// Event handlers initialization (IIFE pattern for encapsulation)
+// In Jeedom context, this script may be reloaded when navigating between pages
+;(function() {
+  // Initialize handlers object only once
+  if (!window.ttscastEventHandlers) {
+    window.ttscastEventHandlers = {}
+  }
   
-  if (friendly_name && newone === '1') {
-    jeedomUtils.showAlert({ message: `[SCAN] NEW TTSCast détecté :: ${friendly_name}`, level: 'warning' })
-  } else if (friendly_name && newone === '0') {
-    jeedomUtils.showAlert({ message: `[SCAN] TTSCast MAJ :: ${friendly_name}`, level: 'warning' })
-  }
-})
+  // Define handler functions only if not already defined (persistent across page reloads)
+  if (!window.ttscastEventHandlers.newDevice) {
+    window.ttscastEventHandlers.newDevice = function(event) {
+      const _option = event.detail
+      if (!_option) return
 
-// Listen to scan state events
-document.body.addEventListener('ttscast::scanState', (event) => {
-  const scanState = event.detail?.scanState
-
-  const scanButtons = document.querySelectorAll(SELECTORS.SCAN_BUTTONS)
-  const scanIcons = document.querySelectorAll(SELECTORS.SCAN_ICONS)
-  const scanTexts = document.querySelectorAll(SELECTORS.SCAN_TEXTS)
-
-  jeedomUtils.hideAlert()
-
-  const isScanOn = scanState === 'scanOn'
-
-  // Batch DOM updates with for...of (optimal performance)
-  for (const el of scanButtons) {
-    const currentState = el.getAttribute('data-scanState')
-    
-    if (isScanOn && currentState === 'scanOn') {
-      el.setAttribute('data-scanState', 'scanOff')
-      el.removeClass('logoPrimary').addClass('logoSecondary')
-    } else if (!isScanOn && currentState === 'scanOff') {
-      el.setAttribute('data-scanState', 'scanOn')
-      el.removeClass('logoSecondary').addClass('logoPrimary')
+      const { friendly_name, newone } = _option
+      
+      if (friendly_name && newone === '1') {
+        jeedomUtils.showAlert({ message: `[SCAN] NEW TTSCast détecté :: ${friendly_name}`, level: 'warning' })
+      } else if (friendly_name && newone === '0') {
+        jeedomUtils.showAlert({ message: `[SCAN] TTSCast MAJ :: ${friendly_name}`, level: 'warning' })
+      }
     }
   }
+  
+  if (!window.ttscastEventHandlers.scanState) {
+    window.ttscastEventHandlers.scanState = function(event) {
+      const scanState = event.detail?.scanState
 
-  for (const el of scanIcons) {
-    if (isScanOn) {
-      el.addClass('icon_red')
-    } else {
-      el.removeClass('icon_red')
+      const scanButtons = document.querySelectorAll(SELECTORS.SCAN_BUTTONS)
+      const scanIcons = document.querySelectorAll(SELECTORS.SCAN_ICONS)
+      const scanTexts = document.querySelectorAll(SELECTORS.SCAN_TEXTS)
+
+      jeedomUtils.hideAlert()
+
+      const isScanOn = scanState === 'scanOn'
+
+      // Batch DOM updates with for...of (optimal performance)
+      for (const el of scanButtons) {
+        const currentState = el.getAttribute('data-scanState')
+        
+        if (isScanOn && currentState === 'scanOn') {
+          el.setAttribute('data-scanState', 'scanOff')
+          el.removeClass('logoPrimary').addClass('logoSecondary')
+        } else if (!isScanOn && currentState === 'scanOff') {
+          el.setAttribute('data-scanState', 'scanOn')
+          el.removeClass('logoSecondary').addClass('logoPrimary')
+        }
+      }
+
+      for (const el of scanIcons) {
+        if (isScanOn) {
+          el.addClass('icon_red')
+        } else {
+          el.removeClass('icon_red')
+        }
+      }
+
+      for (const el of scanTexts) {
+        el.textContent = isScanOn ? '{{Stop Scan}}' : '{{Scan}}'
+      }
+
+      if (isScanOn) {
+        jeedomUtils.showAlert({ message: '{{Mode SCAN actif pendant 60 secondes. (Cliquez sur STOP SCAN pour arrêter la découverte des équipements)}}', level: 'warning' })
+      } else {
+        window.location.reload()
+      }
     }
   }
-
-  for (const el of scanTexts) {
-    el.textContent = isScanOn ? '{{Stop Scan}}' : '{{Scan}}'
-  }
-
-  if (isScanOn) {
-    jeedomUtils.showAlert({ message: '{{Mode SCAN actif pendant 60 secondes. (Cliquez sur STOP SCAN pour arrêter la découverte des équipements)}}', level: 'warning' })
-  } else {
-    window.location.reload()
-  }
-})
+  
+  // Remove existing listeners to avoid duplicates (in case of page reload in Jeedom)
+  document.body.removeEventListener('ttscast::newDevice', window.ttscastEventHandlers.newDevice)
+  document.body.removeEventListener('ttscast::scanState', window.ttscastEventHandlers.scanState)
+  
+  // Attach event listeners (always executed on script load to ensure listeners are active)
+  document.body.addEventListener('ttscast::newDevice', window.ttscastEventHandlers.newDevice)
+  document.body.addEventListener('ttscast::scanState', window.ttscastEventHandlers.scanState)
+})()
 
 })() // End IIFE protection
