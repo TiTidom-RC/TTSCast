@@ -261,36 +261,6 @@ const changeScanState = (_scanState) => {
   // Attach event listeners (always executed on script load to ensure listeners are active)
   document.body.addEventListener('ttscast::newDevice', window.ttscastEventHandlers.newDevice)
   document.body.addEventListener('ttscast::scanState', window.ttscastEventHandlers.scanState)
-  
-  // Cleanup function to remove listeners when leaving the plugin page
-  if (!window.ttscastEventHandlers.cleanup) {
-    window.ttscastEventHandlers.cleanup = function() {
-      document.body.removeEventListener('ttscast::newDevice', window.ttscastEventHandlers.newDevice)
-      document.body.removeEventListener('ttscast::scanState', window.ttscastEventHandlers.scanState)
-    }
-  }
-  
-  // Listen for page changes to cleanup when leaving the plugin
-  if (!window.ttscastEventHandlers.pageChangeHandler) {
-    window.ttscastEventHandlers.pageChangeHandler = function() {
-      // Check if we're NOT on the ttscast plugin page anymore
-      // Note: Opening configuration modal/overlay keeps us on the same page (modifyWithoutSave unchanged)
-      // We only cleanup when actually navigating away to a different page
-      const currentPage = jeeFrontEnd?.modifyWithoutSave || ''
-      const isPluginContext = document.querySelector('[data-page="plugin"]')
-      
-      if (currentPage && !currentPage.includes('ttscast') && isPluginContext === null) {
-        // We've truly left the plugin page (not just opened a modal), cleanup listeners
-        window.ttscastEventHandlers.cleanup()
-        // Also remove the pageChange listener itself to avoid memory leaks
-        document.body.removeEventListener('jeedom::pageChange', window.ttscastEventHandlers.pageChangeHandler)
-      }
-    }
-  }
-  
-  // Always ensure pageChange listener is attached (remove first to avoid duplicates)
-  document.body.removeEventListener('jeedom::pageChange', window.ttscastEventHandlers.pageChangeHandler)
-  document.body.addEventListener('jeedom::pageChange', window.ttscastEventHandlers.pageChangeHandler)
 })()
 
 })() // End IIFE protection
