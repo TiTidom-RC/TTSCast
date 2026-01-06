@@ -14,20 +14,30 @@
     </template>
     <script>
         jeedom.cmd.addUpdateFunction('#id#', function (_options) {
-            if (is_object(cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]'))) {
-                cmd.querySelector('.content-sm').setAttribute('title', '{{Date de valeur}} : ' + _options.valueDate + '<br>{{Date de collecte}} : ' + _options.collectDate)
-                if ('#time#' == 'duration' || '#time#' == 'date') {
-                    jeedom.cmd.displayDuration(_options.valueDate, cmd.querySelector('.timeCmd'), '#time#')
-                }
+            const cmd = document.querySelector('.cmd[data-cmd_uid="#uid#"]')
+            if (!cmd) return
 
-                if (_options.value != '') {
-                    cmd.querySelector('.content-sm img').src = './plugins/ttscast/core/php/ttscast.img.proxy.php?img=' + btoa(_options.value)
+            const contentSm = cmd.querySelector('.content-sm')
+            const imgElement = contentSm?.querySelector('img')
+            const timeCmd = cmd.querySelector('.timeCmd')
+
+            if (contentSm) {
+                contentSm.setAttribute('title', `{{Date de valeur}} : ${_options.valueDate}<br>{{Date de collecte}} : ${_options.collectDate}`)
+            }
+
+            if (timeCmd && ('#time#' === 'duration' || '#time#' === 'date')) {
+                jeedom.cmd.displayDuration(_options.valueDate, timeCmd, '#time#')
+            }
+
+            if (imgElement) {
+                if (_options.value !== '') {
+                    imgElement.src = `./plugins/ttscast/core/php/ttscast.img.proxy.php?img=${btoa(_options.value)}`
                 } else {
-                    cmd.querySelector('.content-sm img').src = './plugins/ttscast/data/images/ttscast-200.png'
+                    imgElement.src = './plugins/ttscast/data/images/ttscast-200.png'
                 }
 
-                if ('#max-width#' != '') {
-                    cmd.querySelector('.content-sm img').style.maxWidth = '#max-width#px'
+                if ('#max-width#' !== '') {
+                    imgElement.style.maxWidth = '#max-width#px'
                 }
             }
         })
