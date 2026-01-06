@@ -93,7 +93,7 @@ try {
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
             if (!is_object($ttscast)) {    
                 log::add('ttscast','debug','[CALLBACK] NEW TTSCast détecté :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
-                /* event::add('ttscast::newdevice', array(
+                /* event::add('ttscast::newDevice', array(
                     'friendly_name' => $data['friendly_name'],
                     'newone' => '1'
                 )); */
@@ -101,7 +101,7 @@ try {
             }
             else {
                 log::add('ttscast','debug','[CALLBACK] TTSCast Update :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
-                /* event::add('ttscast::newdevice', array(
+                /* event::add('ttscast::newDevice', array(
                     'friendly_name' => $data['friendly_name'],
                     'newone' => '0'
                 )); */

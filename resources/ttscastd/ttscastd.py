@@ -28,7 +28,7 @@ import datetime
 import requests
 import re
 
-from urllib.parse import urljoin, urlencode, urlparse
+from urllib.parse import urlencode, urlparse
 from uuid import UUID
 
 # Import pour Jeedom
@@ -278,9 +278,9 @@ class TTSCast:
     def jeedomTTS(ttsText, ttsLang):
         filecontent = None
         try:
-            # ttsParams = 'tts.php?apikey=' + myConfig.apiTTSKey + '&voice=' + ttsLang + '&path=1&text=' + quote(ttsText, safe='')
-            # ttsFullURI = urljoin(myConfig.ttsWebSrvJeeTTS, ttsParams)
-            ttsFullURI = urljoin(myConfig.ttsWebSrvJeeTTS, 'tts.php')
+            # ttsParams = f'tts.php?apikey={myConfig.apiTTSKey}&voice={ttsLang}&path=1&text={quote(ttsText, safe="")}'
+            # ttsFullURI = f'{myConfig.ttsWebSrvJeeTTS}{ttsParams}'
+            ttsFullURI = f'{myConfig.ttsWebSrvJeeTTS}tts.php'
             logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
             logging.debug('[DAEMON][JeedomTTS] ttsText Length :: %s', str(len(ttsText)))
             
@@ -423,7 +423,7 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
-                urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
@@ -459,7 +459,7 @@ class TTSCast:
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
-            urlFileToPlay = urljoin(ttsSrvWeb, filename)
+            urlFileToPlay = f'{ttsSrvWeb}{filename}'
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
@@ -489,7 +489,7 @@ class TTSCast:
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
-            urlFileToPlay = urljoin(ttsSrvWeb, filename)
+            urlFileToPlay = f'{ttsSrvWeb}{filename}'
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
@@ -520,7 +520,7 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
-                urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
@@ -828,7 +828,7 @@ class TTSCast:
                     else:
                         logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
-                    urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                    urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce)
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
@@ -864,7 +864,7 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
-                urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
                 res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
@@ -895,7 +895,7 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
-                urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
                 res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
@@ -927,7 +927,7 @@ class TTSCast:
                     else:
                         logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
-                    urlFileToPlay = urljoin(ttsSrvWeb, filename)
+                    urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                     
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
@@ -966,7 +966,7 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     cast.set_volume(volume=volumeForPlay / 100)
                 
-                urlThumb = urljoin(myConfig.ttsWebSrvImages, "tts.png")
+                urlThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
                 
                 app_name = "default_media_receiver"
@@ -1100,7 +1100,7 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     cast.set_volume(volume=volumeForPlay / 100)
             
-                urlThumb = urljoin(myConfig.ttsWebSrvImages, "tts.png")
+                urlThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
             
                 app_name = "default_media_receiver"
@@ -1238,6 +1238,13 @@ class TTSCast:
                 )
                 
                 # Logger l'utilisation des tokens et les envoyer à Jeedom
+                # Initialisation des variables par défaut
+                input_tokens = 0
+                output_tokens = 0
+                total_tokens = 0
+                finish_reason = ''
+                safety_blocked = 0
+                
                 if hasattr(response, 'usage_metadata') and response.usage_metadata:
                     usage = response.usage_metadata
                     input_tokens = getattr(usage, 'prompt_token_count', 0) or 0
@@ -1246,48 +1253,49 @@ class TTSCast:
                     # cache_tokens = getattr(usage, 'cached_content_token_count', 0) or 0
                     # tool_tokens = getattr(usage, 'tool_use_prompt_token_count', 0) or 0
                     # thoughts_tokens = getattr(usage, 'thoughts_token_count', 0) or 0
-                    logging.info('[DAEMON][GenAI][TOKENS] Model: %s | Input: %d | Output: %d | Total: %d', MODEL_ID, input_tokens, output_tokens, total_tokens)
-                    
-                    # Extraire les métriques de qualité et sécurité
-                    finish_reason = ''
-                    # avg_logprobs = 0.0
-                    safety_blocked = 0
-                    
-                    if hasattr(response, 'candidates') and response.candidates:
-                        candidate = response.candidates[0]
-                        # Finish reason
-                        if hasattr(candidate, 'finish_reason') and candidate.finish_reason:
-                            finish_reason = str(candidate.finish_reason).replace('FinishReason.', '')
-                        # Avg logprobs
-                        # if hasattr(candidate, 'avg_logprobs') and candidate.avg_logprobs is not None:
-                        #     avg_logprobs = float(candidate.avg_logprobs)
-                        # Safety ratings
-                        if hasattr(candidate, 'safety_ratings') and candidate.safety_ratings:
-                            for rating in candidate.safety_ratings:
-                                if hasattr(rating, 'blocked') and rating.blocked:
-                                    safety_blocked = 1
-                                    break
-                    
-                    logging.debug('[DAEMON][GenAI][METRICS] FinishReason: %s | SafetyBlocked: %d', finish_reason, safety_blocked)
-                    
-                    # Envoyer les tokens à l'équipement virtuel TTSCast AI Stats uniquement si disponibles
-                    if input_tokens > 0 or output_tokens > 0:
-                        try:
-                            data = {
-                                'ai_tokens_input': input_tokens,
-                                'ai_tokens_output': output_tokens,
-                                'ai_tokens_total': total_tokens,
-                                # 'ai_cache_tokens': cache_tokens,
-                                # 'ai_tool_tokens': tool_tokens,
-                                # 'ai_thoughts_tokens': thoughts_tokens,
-                                'ai_finish_reason': finish_reason,
-                                # 'ai_avg_logprobs': avg_logprobs,
-                                'ai_safety_blocked': safety_blocked
-                            }
-                            Comm.sendToJeedom.add_changes('aiStats::TTSCast_AI_Stats', data)  # type: ignore
-                            logging.debug('[DAEMON][GenAI][TOKENS] Envoi des tokens à Jeedom')
-                        except Exception as e:
-                            logging.error('[DAEMON][GenAI][TOKENS] Erreur lors de l\'envoi des tokens à Jeedom: %s', e)
+                else:
+                    logging.warning('[DAEMON][GenAI][TOKENS] usage_metadata absent ou vide dans la réponse - stats à 0')
+                
+                # Extraire les métriques de qualité et sécurité
+                if hasattr(response, 'candidates') and response.candidates:
+                    candidate = response.candidates[0]
+                    # Finish reason
+                    if hasattr(candidate, 'finish_reason') and candidate.finish_reason:
+                        finish_reason = str(candidate.finish_reason).replace('FinishReason.', '')
+                    # Avg logprobs
+                    # if hasattr(candidate, 'avg_logprobs') and candidate.avg_logprobs is not None:
+                    #     avg_logprobs = float(candidate.avg_logprobs)
+                    # Safety ratings
+                    if hasattr(candidate, 'safety_ratings') and candidate.safety_ratings:
+                        for rating in candidate.safety_ratings:
+                            if hasattr(rating, 'blocked') and rating.blocked:
+                                safety_blocked = 1
+                                break
+                
+                # Log complet des stats IA
+                logging.info('[DAEMON][GenAI][TOKENS] Model: %s | Input: %d | Output: %d | Total: %d | FinishReason: %s | SafetyBlocked: %d', MODEL_ID, input_tokens, output_tokens, total_tokens, finish_reason, safety_blocked)
+                
+                # Envoyer les tokens à l'équipement virtuel TTSCast AI Stats uniquement si input_tokens > 0
+                # (car input_tokens devrait toujours être > 0 si l'API a fonctionné normalement)
+                if input_tokens > 0:
+                    try:
+                        data = {
+                            'ai_tokens_input': input_tokens,
+                            'ai_tokens_output': output_tokens,
+                            'ai_tokens_total': total_tokens,
+                            # 'ai_cache_tokens': cache_tokens,
+                            # 'ai_tool_tokens': tool_tokens,
+                            # 'ai_thoughts_tokens': thoughts_tokens,
+                            'ai_finish_reason': finish_reason,
+                            # 'ai_avg_logprobs': avg_logprobs,
+                            'ai_safety_blocked': safety_blocked
+                        }
+                        Comm.sendToJeedom.add_changes('aiStats::TTSCast_AI_Stats', data)  # type: ignore
+                        logging.debug('[DAEMON][GenAI][TOKENS] Stats envoyées à Jeedom')
+                    except Exception as e:
+                        logging.error('[DAEMON][GenAI][TOKENS] Erreur lors de l\'envoi des tokens à Jeedom: %s', e)
+                else:
+                    logging.warning('[DAEMON][GenAI][TOKENS] Aucun token reçu (input=0) - stats non envoyées à Jeedom')
                 
                 if not response.text:
                     logging.warning('[DAEMON][GenAI] Aucune réponse générée par Gemini.')
@@ -1784,7 +1792,7 @@ class Functions:
                             if _value in radiosArray:
                                 radio = radiosArray[_value]
                                 if "NoLogo" in radio['image']:
-                                    radioThumb = urljoin(myConfig.ttsWebSrvImages, "tts.png")
+                                    radioThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                                 else:
                                     radioThumb = radio['image']
                                 radioUrl = radio['location']
@@ -1909,12 +1917,12 @@ class Functions:
                             cast.set_volume(volume=_volume / 100)
                         
                         if (_controller == 'customsounds'):
-                            soundURL = urljoin(myConfig.ttsWebSrvMedia, 'custom/' + _value)
+                            soundURL = f'{myConfig.ttsWebSrvMedia}custom/{_value}'
                         else:
-                            soundURL = urljoin(myConfig.ttsWebSrvMedia, _value)
+                            soundURL = f'{myConfig.ttsWebSrvMedia}{_value}'
                         logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: FilePath :: %s', soundURL)
 
-                        soundThumb = urljoin(myConfig.ttsWebSrvImages, "tts.png")
+                        soundThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                         soundAlbumName = "Jeedom"
                         soundTitle = "TTSCast Sound"
                         soundArtist = _value
@@ -2070,7 +2078,7 @@ class Functions:
                             metadataType = 1  # type METADATA_TYPE_MOVIE
                         
                         media = _value    
-                        mediaImage = urljoin(myConfig.ttsWebSrvImages, "tts.png")
+                        mediaImage = f'{myConfig.ttsWebSrvImages}tts.png'
                         mediaTitle = "TTSCast Media"
                         mediaSubTitle = _value
                         mediaAlbumName = "Jeedom"
@@ -2800,10 +2808,12 @@ if args.cyclefactor:
 if args.socketport:
     myConfig.socketPort = int(args.socketport)
 if args.ttsweb:
-    myConfig.ttsWebSrvCache = urljoin(args.ttsweb, 'plugins/ttscast/data/cache/')
-    myConfig.ttsWebSrvMedia = urljoin(args.ttsweb, 'plugins/ttscast/data/media/')
-    myConfig.ttsWebSrvImages = urljoin(args.ttsweb, 'plugins/ttscast/data/images/')
-    myConfig.ttsWebSrvJeeTTS = urljoin(args.ttsweb, 'core/api/')
+    # Normalize base URL once for all paths (supports Jeedom in subdirectories)
+    ttsweb_base_url = args.ttsweb.rstrip('/')
+    myConfig.ttsWebSrvCache = f'{ttsweb_base_url}/plugins/ttscast/data/cache/'
+    myConfig.ttsWebSrvMedia = f'{ttsweb_base_url}/plugins/ttscast/data/media/'
+    myConfig.ttsWebSrvImages = f'{ttsweb_base_url}/plugins/ttscast/data/images/'
+    myConfig.ttsWebSrvJeeTTS = f'{ttsweb_base_url}/core/api/'
 
 jeedom_utils.set_log_level(myConfig.logLevel)
 
