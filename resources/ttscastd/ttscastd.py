@@ -992,6 +992,26 @@ class TTSCast:
             t.join()
 
     @staticmethod
+    def getGroupSnapshot(cast):
+        """
+        Récupère les volumes actuels des membres d'un groupe.
+        Args:
+            cast: L'objet chromecast (groupe).
+        Returns:
+            dict: { uuid: volume_float } ou vide si ce n'est pas un groupe.
+        """
+        groupMembersVolumes = {}
+        if cast.cast_info.cast_type == 'group' and cast.uuid in myConfig.NETCAST_GROUPS:
+            mz = myConfig.NETCAST_GROUPS[cast.uuid]
+            for member_uuid in mz.members:
+                if member_uuid in myConfig.NETCAST_DEVICES:
+                    m_cast = myConfig.NETCAST_DEVICES[member_uuid]
+                    if m_cast.status:
+                        groupMembersVolumes[member_uuid] = m_cast.status.volume_level
+                        logging.debug('[DAEMON][GroupSnapshot] Member %s vol: %s', m_cast.name, str(m_cast.status.volume_level))
+        return groupMembersVolumes
+
+    @staticmethod
     def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None, cmdForce=False):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion (Test) sur le Google Home :: %s', googleName)
@@ -999,6 +1019,8 @@ class TTSCast:
             chromecasts = None
             cast = None
             volumeBeforePlay = None
+            groupSnapshot = None
+            isGroup = False
             
             try:
                 chromecasts = [mycast for mycast in myConfig.NETCAST_DEVICES.values() if mycast.name == googleName]
@@ -1012,11 +1034,21 @@ class TTSCast:
                 Functions.checkIfDashCast(cast)
             
                 volumeBeforePlay = cast.status.volume_level
+
+                groupSnapshot = TTSCast.getGroupSnapshot(cast)
+                isGroup = bool(groupSnapshot)
+
                 if not appDing:
-                    cast.set_volume(volume=0)
+                    if isGroup:
+                        TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                    else:
+                        cast.set_volume(volume=0)
                 elif volumeForPlay is not None:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
-                    cast.set_volume(volume=volumeForPlay / 100)
+                    if isGroup:
+                        TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
+                    else:
+                        cast.set_volume(volume=volumeForPlay / 100)
                 
                 urlThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -1039,9 +1071,15 @@ class TTSCast:
                 
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
-                    cast.set_volume(volume=volumeForPlay / 100)
+                    if isGroup and bool(groupSnapshot):
+                        TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
+                    else:
+                        cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
-                    cast.set_volume(volume=volumeBeforePlay)
+                    if isGroup and bool(groupSnapshot):
+                        TTSCast.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
                 
                 cast.media_controller.block_until_active()
                 
@@ -1063,7 +1101,10 @@ class TTSCast:
                 cast.quit_app()
                 
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
-                    cast.set_volume(volume=volumeBeforePlay)
+                    if isGroup and bool(groupSnapshot):
+                        TTSCast.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
                 cast = None
@@ -1074,7 +1115,10 @@ class TTSCast:
                 logging.debug(traceback.format_exc())
                 
                 if volumeBeforePlay is not None:
-                    cast.set_volume(volume=volumeBeforePlay)  # type: ignore
+                    if isGroup and groupSnapshot:
+                        TTSCast.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)  # type: ignore
                 
                 # Libération de la mémoire
                 cast = None
@@ -1086,6 +1130,8 @@ class TTSCast:
             
             cast = None
             volumeBeforePlay = None
+            groupSnapshot = None
+            isGroup = False
             
             try:
                 _uuid = UUID(googleUUID)
@@ -1147,27 +1193,18 @@ class TTSCast:
                 
                 volumeBeforePlay = cast.status.volume_level
 
-                # Snapshot logic for Group Members
-                groupMembersVolumes = {}
-                isGroup = (cast.cast_info.cast_type == 'group')
-                if isGroup and cast.uuid in myConfig.NETCAST_GROUPS:
-                    mz = myConfig.NETCAST_GROUPS[cast.uuid]
-                    for member_uuid in mz.members:
-                        if member_uuid in myConfig.NETCAST_DEVICES:
-                            m_cast = myConfig.NETCAST_DEVICES[member_uuid]
-                            if m_cast.status:
-                                groupMembersVolumes[member_uuid] = m_cast.status.volume_level
-                                logging.debug('[DAEMON][Cast] Member %s volume snapshot: %s', m_cast.name, str(m_cast.status.volume_level))
+                groupSnapshot = TTSCast.getGroupSnapshot(cast)
+                isGroup = bool(groupSnapshot)
 
                 if not appDing:
-                    if isGroup and groupMembersVolumes:
-                        TTSCast.setGroupMembersVolume(list(groupMembersVolumes.keys()), 0.0)
+                    if isGroup:
+                        TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
                     else:
                         cast.set_volume(volume=0)
                 elif volumeForPlay is not None:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
-                    if isGroup and groupMembersVolumes:
-                        TTSCast.setGroupMembersVolume(list(groupMembersVolumes.keys()), volumeForPlay / 100)
+                    if isGroup:
+                        TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
                     else:
                         cast.set_volume(volume=volumeForPlay / 100)
             
@@ -1193,13 +1230,13 @@ class TTSCast:
                 
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
-                    if isGroup and groupMembersVolumes:
-                        TTSCast.setGroupMembersVolume(list(groupMembersVolumes.keys()), volumeForPlay / 100)
+                    if isGroup and bool(groupSnapshot):
+                        TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
                     else:
                         cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
-                    if isGroup and groupMembersVolumes:
-                        TTSCast.restoreGroupMembersVolume(groupMembersVolumes)
+                    if isGroup and bool(groupSnapshot):
+                        TTSCast.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
@@ -1223,8 +1260,8 @@ class TTSCast:
                 cast.quit_app()
                 
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
-                    if isGroup and groupMembersVolumes:
-                        TTSCast.restoreGroupMembersVolume(groupMembersVolumes)
+                    if isGroup and bool(groupSnapshot):
+                        TTSCast.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
@@ -1242,8 +1279,8 @@ class TTSCast:
                 logging.debug(traceback.format_exc())
                 
                 if volumeBeforePlay is not None:
-                    if isGroup and groupMembersVolumes:
-                        TTSCast.restoreGroupMembersVolume(groupMembersVolumes)
+                    if isGroup and groupSnapshot:
+                        TTSCast.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)  # type: ignore
                 
@@ -1560,19 +1597,36 @@ class Functions:
                         # Si DashCast alors sortir de l'appli avant sinon cela plante    
                         Functions.checkIfDashCast(cast)
                     
+                    volumeBeforePlay = cast.status.volume_level
+
+                    groupSnapshot = TTSCast.getGroupSnapshot(cast)
+                    isGroup = bool(groupSnapshot)
+                    
                     if not _appDing:
-                        cast.set_volume(volume=0)
+                        if isGroup:
+                            TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                        else:
+                            cast.set_volume(volume=0)
                     elif (_volume is not None):
                         logging.debug('[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                        cast.set_volume(volume=_volume / 100)
+                        if isGroup:
+                            TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                        else:
+                            cast.set_volume(volume=_volume / 100)
                     
                     cast.start_app(_value)
                     
                     if (not _appDing and _volume is not None):
                         logging.debug('[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                        cast.set_volume(volume=_volume / 100)
+                        if isGroup:
+                            TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                        else:
+                            cast.set_volume(volume=_volume / 100)
                     elif (not _appDing):
-                        cast.set_volume(volume=volumeBeforePlay)
+                        if isGroup:
+                            TTSCast.restoreGroupMembersVolume(groupSnapshot)
+                        else:
+                            cast.set_volume(volume=volumeBeforePlay)
                     
                     cast.media_controller.block_until_active()
                     
@@ -1662,11 +1716,21 @@ class Functions:
                         Functions.checkIfDashCast(cast)
                     
                     volumeBeforePlay = cast.status.volume_level
+                    
+                    groupSnapshot = TTSCast.getGroupSnapshot(cast)
+                    isGroup = bool(groupSnapshot)
+                    
                     if not _appDing:
-                        cast.set_volume(volume=0)
+                        if isGroup:
+                            TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                        else:
+                            cast.set_volume(volume=0)
                     elif (_volume is not None):
                         logging.debug('[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                        cast.set_volume(volume=_volume / 100)
+                        if isGroup:
+                            TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                        else:
+                            cast.set_volume(volume=_volume / 100)
 
                     app_name = "youtube"
                     app_data = {
@@ -1678,9 +1742,15 @@ class Functions:
                     
                     if (not _appDing and _volume is not None):
                         logging.debug('[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                        cast.set_volume(volume=_volume / 100)
+                        if isGroup:
+                            TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                        else:
+                            cast.set_volume(volume=_volume / 100)
                     elif (not _appDing):
-                        cast.set_volume(volume=volumeBeforePlay)
+                        if isGroup:
+                            TTSCast.restoreGroupMembersVolume(groupSnapshot)
+                        else:
+                            cast.set_volume(volume=volumeBeforePlay)
                     
                     cast.media_controller.block_until_active()
                     
@@ -1863,11 +1933,21 @@ class Functions:
                                 Functions.checkIfDashCast(cast)
                             
                             volumeBeforePlay = cast.status.volume_level
+                            
+                            groupSnapshot = TTSCast.getGroupSnapshot(cast)
+                            isGroup = bool(groupSnapshot)
+
                             if not _appDing:
-                                cast.set_volume(volume=0)
+                                if isGroup:
+                                    TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                                else:
+                                    cast.set_volume(volume=0)
                             elif (_volume is not None):
                                 logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                                cast.set_volume(volume=_volume / 100)
+                                if isGroup:
+                                    TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                                else:
+                                    cast.set_volume(volume=_volume / 100)
                             
                             f = open(_RadiosFilePath, "r")
                             radiosArray = json.loads(f.read())
@@ -1902,9 +1982,15 @@ class Functions:
                                 
                                 if (not _appDing and _volume is not None):
                                     logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                                    cast.set_volume(volume=_volume / 100)
+                                    if isGroup:
+                                        TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                                    else:
+                                        cast.set_volume(volume=_volume / 100)
                                 elif (not _appDing):
-                                    cast.set_volume(volume=volumeBeforePlay)
+                                    if isGroup:
+                                        TTSCast.restoreGroupMembersVolume(groupSnapshot)
+                                    else:
+                                        cast.set_volume(volume=volumeBeforePlay)
                                 
                                 cast.media_controller.block_until_active()
                                 
@@ -1993,11 +2079,21 @@ class Functions:
                             Functions.checkIfDashCast(cast)
                         
                         volumeBeforePlay = cast.status.volume_level
+
+                        groupSnapshot = TTSCast.getGroupSnapshot(cast)
+                        isGroup = bool(groupSnapshot)
+
                         if not _appDing:
-                            cast.set_volume(volume=0)
+                            if isGroup:
+                                TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                            else:
+                                cast.set_volume(volume=0)
                         elif (_volume is not None):
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                            cast.set_volume(volume=_volume / 100)
+                            if isGroup:
+                                TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                            else:
+                                cast.set_volume(volume=_volume / 100)
                         
                         if (_controller == 'customsounds'):
                             soundURL = f'{myConfig.ttsWebSrvMedia}custom/{_value}'
@@ -2030,9 +2126,15 @@ class Functions:
                         
                         if (not _appDing and _volume is not None):
                             logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                            cast.set_volume(volume=_volume / 100)
+                            if isGroup:
+                                TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                            else:
+                                cast.set_volume(volume=_volume / 100)
                         elif (not _appDing):
-                            cast.set_volume(volume=volumeBeforePlay)
+                            if isGroup:
+                                TTSCast.restoreGroupMembersVolume(groupSnapshot)
+                            else:
+                                cast.set_volume(volume=volumeBeforePlay)
                         
                         cast.media_controller.block_until_active()
                         
@@ -2053,7 +2155,10 @@ class Functions:
             
                         cast.quit_app()
                         if (_volume is not None):
-                            cast.set_volume(volume=volumeBeforePlay)
+                            if isGroup:
+                                TTSCast.restoreGroupMembersVolume(groupSnapshot)
+                            else:
+                                cast.set_volume(volume=volumeBeforePlay)
                     
                         # Mise à jour de la WaitQueue
                         if _cmdWait is not None and _cmdForce is False:
@@ -2139,11 +2244,21 @@ class Functions:
                             Functions.checkIfDashCast(cast)
                         
                         volumeBeforePlay = cast.status.volume_level
+
+                        groupSnapshot = TTSCast.getGroupSnapshot(cast)
+                        isGroup = bool(groupSnapshot)
+
                         if not _appDing:
-                            cast.set_volume(volume=0)
+                            if isGroup:
+                                TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                            else:
+                                cast.set_volume(volume=0)
                         elif (_volume is not None):
                             logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                            cast.set_volume(volume=_volume / 100)
+                            if isGroup:
+                                TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                            else:
+                                cast.set_volume(volume=_volume / 100)
                         
                         if _mediaType is not None:
                             mediaType = _mediaType
@@ -2186,9 +2301,15 @@ class Functions:
                             
                         if (not _appDing and _volume is not None):
                             logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                            cast.set_volume(volume=_volume / 100)
+                            if isGroup:
+                                TTSCast.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                            else:
+                                cast.set_volume(volume=_volume / 100)
                         elif (not _appDing):
-                            cast.set_volume(volume=volumeBeforePlay)
+                            if isGroup:
+                                TTSCast.restoreGroupMembersVolume(groupSnapshot)
+                            else:
+                                cast.set_volume(volume=volumeBeforePlay)
                         
                         cast.media_controller.block_until_active()
                         
@@ -2209,7 +2330,10 @@ class Functions:
                 logging.debug(traceback.format_exc())
                 
                 if volumeBeforePlay is not None:
-                    cast.set_volume(volume=volumeBeforePlay)  # type: ignore
+                    if isGroup and groupSnapshot:
+                        TTSCast.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)  # type: ignore
 
                 # TODO : Mise à jour de la WaitQueue en cas d'erreur ???
                 
