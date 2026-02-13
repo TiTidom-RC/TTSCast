@@ -56,6 +56,7 @@ try:
     from pychromecast.controllers.receiver import CastStatusListener
     from pychromecast.socket_client import ConnectionStatusListener
     from pychromecast.controllers import dashcast
+    from pychromecast.controllers.multizone import MultizoneController
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
     sys.exit(1)
@@ -940,6 +941,57 @@ class TTSCast:
             logging.debug(traceback.format_exc())
 
     @staticmethod
+    def setGroupMembersVolume(membersUUIDs, targetVolume):
+        """
+        Définit le volume sur une liste de UUIDs (membres d'un groupe) en parallèle.
+        Args:
+            membersUUIDs (list): Liste des UUIDs des membres.
+            targetVolume (float): Volume cible (0.0 à 1.0).
+        """
+        def _setVol(uuid_dev, vol):
+            if uuid_dev in myConfig.NETCAST_DEVICES:
+                try:
+                    dev = myConfig.NETCAST_DEVICES[uuid_dev]
+                    dev.set_volume(vol)
+                    logging.debug(f'[DAEMON][GroupVol] Set {vol} on {dev.name}')
+                except Exception as ex:
+                    logging.error(f'[DAEMON][GroupVol] Error on {uuid_dev}: {ex}')
+
+        threads = []
+        for member_uuid in membersUUIDs:
+            t = threading.Thread(target=_setVol, args=(member_uuid, targetVolume))
+            t.start()
+            threads.append(t)
+        
+        for t in threads:
+            t.join()
+
+    @staticmethod
+    def restoreGroupMembersVolume(volumeSnapshot):
+        """
+        Restaure les volumes mémorisés pour chaque membre en parallèle.
+        Args:
+           volumeSnapshot (dict): { uuid: volume_float }
+        """
+        def _resVol(uuid_dev, vol):
+            if uuid_dev in myConfig.NETCAST_DEVICES:
+                try:
+                    dev = myConfig.NETCAST_DEVICES[uuid_dev]
+                    dev.set_volume(vol)
+                    logging.debug(f'[DAEMON][GroupVol] Restored {vol} on {dev.name}')
+                except Exception as ex:
+                    logging.error(f'[DAEMON][GroupVol] Error restoring {uuid_dev}: {ex}')
+
+        threads = []
+        for m_uuid, m_vol in volumeSnapshot.items():
+            t = threading.Thread(target=_resVol, args=(m_uuid, m_vol))
+            t.start()
+            threads.append(t)
+        
+        for t in threads:
+            t.join()
+
+    @staticmethod
     def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None, cmdForce=False):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion (Test) sur le Google Home :: %s', googleName)
@@ -1094,11 +1146,30 @@ class TTSCast:
                     Functions.checkIfDashCast(cast)
                 
                 volumeBeforePlay = cast.status.volume_level
+
+                # Snapshot logic for Group Members
+                groupMembersVolumes = {}
+                isGroup = (cast.cast_info.cast_type == 'group')
+                if isGroup and cast.uuid in myConfig.NETCAST_GROUPS:
+                    mz = myConfig.NETCAST_GROUPS[cast.uuid]
+                    for member_uuid in mz.members:
+                        if member_uuid in myConfig.NETCAST_DEVICES:
+                            m_cast = myConfig.NETCAST_DEVICES[member_uuid]
+                            if m_cast.status:
+                                groupMembersVolumes[member_uuid] = m_cast.status.volume_level
+                                logging.debug('[DAEMON][Cast] Member %s volume snapshot: %s', m_cast.name, str(m_cast.status.volume_level))
+
                 if not appDing:
-                    cast.set_volume(volume=0)
+                    if isGroup and groupMembersVolumes:
+                        TTSCast.setGroupMembersVolume(list(groupMembersVolumes.keys()), 0.0)
+                    else:
+                        cast.set_volume(volume=0)
                 elif volumeForPlay is not None:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
-                    cast.set_volume(volume=volumeForPlay / 100)
+                    if isGroup and groupMembersVolumes:
+                        TTSCast.setGroupMembersVolume(list(groupMembersVolumes.keys()), volumeForPlay / 100)
+                    else:
+                        cast.set_volume(volume=volumeForPlay / 100)
             
                 urlThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -1122,12 +1193,18 @@ class TTSCast:
                 
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
-                    cast.set_volume(volume=volumeForPlay / 100)
+                    if isGroup and groupMembersVolumes:
+                        TTSCast.setGroupMembersVolume(list(groupMembersVolumes.keys()), volumeForPlay / 100)
+                    else:
+                        cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
-                    cast.set_volume(volume=volumeBeforePlay)
+                    if isGroup and groupMembersVolumes:
+                        TTSCast.restoreGroupMembersVolume(groupMembersVolumes)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
                 
                 cast.media_controller.block_until_active()
-                    
+
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
                 media_player_state = None
@@ -1146,7 +1223,10 @@ class TTSCast:
                 cast.quit_app()
                 
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
-                    cast.set_volume(volume=volumeBeforePlay)
+                    if isGroup and groupMembersVolumes:
+                        TTSCast.restoreGroupMembersVolume(groupMembersVolumes)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
                 
                 # Mise à jour de la WaitQueue
                 if cmdWait is not None and cmdForce is False:
@@ -1162,7 +1242,10 @@ class TTSCast:
                 logging.debug(traceback.format_exc())
                 
                 if volumeBeforePlay is not None:
-                    cast.set_volume(volume=volumeBeforePlay)  # type: ignore
+                    if isGroup and groupMembersVolumes:
+                        TTSCast.restoreGroupMembersVolume(groupMembersVolumes)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)  # type: ignore
                 
                 # Mise à jour de la WaitQueue
                 if cmdWait is not None and cmdForce is False:
@@ -2465,6 +2548,13 @@ class myCast:
                 logging.debug(traceback.format_exc())
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Connect Listener already deleted', str(chromecast.name))
+
+        if (uuid in myConfig.NETCAST_GROUPS):
+            try:
+                del myConfig.NETCAST_GROUPS[uuid]
+                logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: MultizoneController deleted', str(chromecast.name))
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][CastRemove][Multizone] Exception (%s) :: %s', str(chromecast.name), e)
         
         logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Listeners Removed', str(chromecast.name))
 
@@ -2486,6 +2576,18 @@ class myCast:
             try:
                 chromecast.wait(timeout=30)
                 logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
+
+                # Ajout Gestion Multizone pour les groupes
+                if chromecast.cast_info.cast_type == 'group':
+                    if chromecast.uuid not in myConfig.NETCAST_GROUPS:
+                        logging.debug('[DAEMON][NETCAST][CastCallBack] Group detected, adding MultizoneController :: %s', str(chromecast.name))
+                        mz = MultizoneController(chromecast.uuid)
+                        chromecast.register_handler(mz)
+                        # On force une update pour peupler la liste initialement
+                        mz.update_members()
+                        myConfig.NETCAST_GROUPS[chromecast.uuid] = mz
+                        logging.debug('[DAEMON][NETCAST][CastCallBack] MultizoneController added for %s', str(chromecast.name))
+
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][CastCallBack] Chromecast Exception (%s) :: %s', str(chromecast.name), e)
                 # logging.debug(traceback.format_exc())
