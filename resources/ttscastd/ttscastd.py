@@ -1451,20 +1451,28 @@ class Functions:
         groupMembersVolumes = {}
         if cast.cast_info.cast_type == 'group' and cast.uuid in myConfig.NETCAST_GROUPS:
             mz = myConfig.NETCAST_GROUPS[cast.uuid]
-            # mz.update_members() # Avoid calling update_members() on every snapshot, rely on listener updates
+            
             for member_uuid in mz.members:
                 if member_uuid in myConfig.NETCAST_DEVICES:
                     m_cast = myConfig.NETCAST_DEVICES[member_uuid]
                     if m_cast.status:
                         groupMembersVolumes[member_uuid] = m_cast.status.volume_level
                         logging.debug('[DAEMON][GroupSnapshot] Member %s vol: %s', m_cast.name, str(m_cast.status.volume_level))
-        
-        # Check if all members are present in the snapshot
-        if cast.uuid in myConfig.NETCAST_GROUPS:
-            _mz = myConfig.NETCAST_GROUPS[cast.uuid]
-            if len(groupMembersVolumes) != len(_mz.members):
-                logging.debug('[DAEMON][GroupSnapshot] Group members incomplete (%s / %s), returning empty so it treats as single device', len(groupMembersVolumes), len(_mz.members))
-                return {}
+            
+            # Si incomplet, on tente une mise à jour manuelle
+            if len(groupMembersVolumes) != len(mz.members):
+                logging.debug('[DAEMON][GroupSnapshot] Membres incomplets (%s / %s), tentative update_members', len(groupMembersVolumes), len(mz.members))
+                try:
+                    mz.update_members()
+                    # Re-essai apres update
+                    groupMembersVolumes = {}
+                    for member_uuid in mz.members:
+                        if member_uuid in myConfig.NETCAST_DEVICES:
+                            m_cast = myConfig.NETCAST_DEVICES[member_uuid]
+                            if m_cast.status:
+                                groupMembersVolumes[member_uuid] = m_cast.status.volume_level
+                except Exception as e:
+                    logging.debug('[DAEMON][GroupSnapshot] Erreur update_members: %s', e)
         
         return groupMembersVolumes
 
