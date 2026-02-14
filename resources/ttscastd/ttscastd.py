@@ -1912,7 +1912,8 @@ class Functions:
             
     @staticmethod
     def controllerRadios(cast, _googleUUID, _value, _options, _controller):
-        logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+        radioType = 'CustomRadios' if _controller == 'customradios' else 'Radios'
+        logging.debug(f'[DAEMON][controllerActions] {radioType} Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
         
         if _value == '':
             cast.quit_app()
@@ -1925,7 +1926,7 @@ class Functions:
                 _RadiosFilePath = myConfig.radiosFilePath
             
             if not os.path.isfile(_RadiosFilePath):
-                logging.error('[DAEMON][controllerActions] Radio/CustomRadio JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
+                logging.error(f'[DAEMON][controllerActions] {radioType} JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
                 return False
             else:
                 _volume = None
@@ -1939,9 +1940,9 @@ class Functions:
                         _appDing = options_json.get('ding', True)
                         _cmdForce = options_json.get('force', False)
                         _cmdWait = options_json.get('wait', None)
-                        logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options :: %s', str(options_json))
+                        logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options :: %s', str(options_json))
                 except ValueError as e:
-                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options mal formatées (Json KO) :: %s', e)
+                    logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options mal formatées (Json KO) :: %s', e)
 
                 _appDing = False if myConfig.appDisableDing else _appDing
                 
@@ -1949,7 +1950,7 @@ class Functions:
                 _targetWaitUUID = _googleUUID
                 
                 # --- Wait Queue Management (Entrance) ---
-                allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, _controller.title())
+                allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, radioType)
                 if not allowed:
                     return False
                 # ----------------------------------------
@@ -1978,6 +1979,7 @@ class Functions:
                     
                     f = open(_RadiosFilePath, "r")
                     radiosArray = json.loads(f.read())
+                    f.close()
                     
                     if _value in radiosArray:
                         radio = radiosArray[_value]
@@ -2008,7 +2010,7 @@ class Functions:
                         quick_play.quick_play(cast, app_name, app_data)
                         
                         if (not _appDing and _volume is not None):
-                            logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                            logging.debug(f'[DAEMON][controllerActions] {radioType} :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
                             if isGroup:
                                 Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                             else:
@@ -2021,14 +2023,14 @@ class Functions:
                         
                         cast.media_controller.block_until_active()
                         
-                        logging.debug('[DAEMON][controllerActions] Diffusion Radio/CustomRadio lancée :: %s', str(cast.media_controller.status))
+                        logging.debug(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: %s', str(cast.media_controller.status))
                     
                     # --- Wait Queue Management (Exit - Success) ---
-                    Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, _controller.title())
+                    Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, radioType)
                     
                     return True
                 except Exception as e:
-                    logging.error('[DAEMON][controllerRadios] Exception (%s) :: %s', _googleUUID, e)
+                    logging.error(f'[DAEMON][controllerRadios] Exception ({_googleUUID}) :: {e}')
                     if volumeBeforePlay is not None:
                         if isGroup and groupSnapshot:
                             Functions.restoreGroupMembersVolume(groupSnapshot)
@@ -2036,13 +2038,13 @@ class Functions:
                             cast.set_volume(volume=volumeBeforePlay)
                     
                     # --- Wait Queue Management (Exit - Error) ---
-                    Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, _controller.title())
+                    Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, radioType)
 
                     return False
 
     @staticmethod
     def controllerSounds(cast, _googleUUID, _value, _options, _controller):
-        soundType = 'CustomSound' if _controller == 'customsounds' else 'Sound'
+        soundType = 'CustomSounds' if _controller == 'customsounds' else 'Sounds'
         logging.debug(f'[DAEMON][controllerActions] {soundType} Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
         
         if _value == '':
@@ -2072,7 +2074,7 @@ class Functions:
             _targetWaitUUID = _googleUUID
 
             # --- Wait Queue Management (Entrance) ---
-            allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, _controller.title())
+            allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, soundType)
             if not allowed:
                 return False
             # ----------------------------------------
@@ -2165,7 +2167,7 @@ class Functions:
                         cast.set_volume(volume=volumeBeforePlay)
             
                 # --- Wait Queue Management (Exit - Success) ---
-                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, _controller.title())
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, soundType)
                 
                 return True
             except Exception as e:
@@ -2177,7 +2179,7 @@ class Functions:
                         cast.set_volume(volume=volumeBeforePlay)
                 
                 # --- Wait Queue Management (Exit - Error) ---
-                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, _controller.title())
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, soundType)
 
                 return False
 
