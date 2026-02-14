@@ -79,6 +79,9 @@ function ttscast_install() {
     if (config::byKey('debugRestoreVenv', 'ttscast') == '') {
         config::save('debugRestoreVenv', '0', 'ttscast');
     }
+    if (config::byKey('ttsAIDefault', 'ttscast') == '') {
+        config::save('ttsAIDefault', '0', 'ttscast');
+    }
     if (config::byKey('disableUpdateMsg', 'ttscast') == '') {
         config::save('disableUpdateMsg', '0', 'ttscast');
     }
@@ -161,6 +164,9 @@ function ttscast_update() {
     }
     if (config::byKey('ttsAIDefault', 'ttscast') == '') {
         config::save('ttsAIDefault', '0', 'ttscast');
+    }
+    if (config::byKey('disableUpdateMsg', 'ttscast') == '') {
+        config::save('disableUpdateMsg', '0', 'ttscast');
     }
 
     $dependencyInfo = ttscast::dependancy_info();
