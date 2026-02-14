@@ -964,8 +964,8 @@ class TTSCast:
             
                 volumeBeforePlay = cast.status.volume_level
 
-                groupSnapshot = Functions.getGroupSnapshot(cast)
-                isGroup = bool(groupSnapshot)
+                # groupSnapshot = Functions.getGroupSnapshot(cast)
+                # isGroup = bool(groupSnapshot)
 
                 if not appDing:
                     if isGroup:
@@ -1122,8 +1122,8 @@ class TTSCast:
                 
                 volumeBeforePlay = cast.status.volume_level
 
-                groupSnapshot = Functions.getGroupSnapshot(cast)
-                isGroup = bool(groupSnapshot)
+                # groupSnapshot = Functions.getGroupSnapshot(cast)
+                # isGroup = bool(groupSnapshot)
 
                 if not appDing:
                     if isGroup:
