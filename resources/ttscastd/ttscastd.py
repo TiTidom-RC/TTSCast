@@ -56,7 +56,7 @@ try:
     from pychromecast.controllers.receiver import CastStatusListener
     from pychromecast.socket_client import ConnectionStatusListener
     from pychromecast.controllers import dashcast
-    from pychromecast.controllers.multizone import MultizoneController
+    from pychromecast.controllers.multizone import MultizoneController, MultiZoneControllerListener
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
     sys.exit(1)
@@ -85,6 +85,20 @@ except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module config ::", e)
     sys.exit(1)
 
+class MyMultizoneStatusListener(MultiZoneControllerListener):
+    def __init__(self, name, cast):
+        self.name = name
+        self.cast = cast
+
+    def multizone_member_added(self, uuid):
+        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Added :: %s', self.name, uuid)
+
+    def multizone_member_removed(self, uuid):
+        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Removed :: %s', self.name, uuid)
+
+    def multizone_status_received(self):
+        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Status Received', self.name)
+        
 class Loops:
     # *** Boucle events from Jeedom ***
     @staticmethod
@@ -964,17 +978,19 @@ class TTSCast:
             
                 volumeBeforePlay = cast.status.volume_level
 
-                # groupSnapshot = Functions.getGroupSnapshot(cast)
-                # isGroup = bool(groupSnapshot)
+                groupSnapshot = Functions.getGroupSnapshot(cast)
+                isGroup = bool(groupSnapshot)
 
                 if not appDing:
                     if isGroup:
+                        cast.set_volume(volume=0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
                     else:
                         cast.set_volume(volume=0)
                 elif volumeForPlay is not None:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     if isGroup:
+                        cast.set_volume(volume=1.0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
                     else:
                         cast.set_volume(volume=volumeForPlay / 100)
@@ -1001,12 +1017,15 @@ class TTSCast:
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     if isGroup and bool(groupSnapshot):
+                        cast.set_volume(volume=1.0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
                     else:
                         cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
+                        if volumeBeforePlay is not None:
+                            cast.set_volume(volume=volumeBeforePlay)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
@@ -1032,6 +1051,7 @@ class TTSCast:
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
+                        cast.set_volume(volume=volumeBeforePlay)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
@@ -1046,6 +1066,7 @@ class TTSCast:
                 if volumeBeforePlay is not None:
                     if isGroup and groupSnapshot:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
+                        cast.set_volume(volume=volumeBeforePlay)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)  # type: ignore
                 
@@ -1122,17 +1143,19 @@ class TTSCast:
                 
                 volumeBeforePlay = cast.status.volume_level
 
-                # groupSnapshot = Functions.getGroupSnapshot(cast)
-                # isGroup = bool(groupSnapshot)
+                groupSnapshot = Functions.getGroupSnapshot(cast)
+                isGroup = bool(groupSnapshot)
 
                 if not appDing:
                     if isGroup:
+                        cast.set_volume(volume=0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
                     else:
                         cast.set_volume(volume=0)
                 elif volumeForPlay is not None:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     if isGroup:
+                        cast.set_volume(volume=1.0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
                     else:
                         cast.set_volume(volume=volumeForPlay / 100)
@@ -1160,12 +1183,15 @@ class TTSCast:
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     if isGroup and bool(groupSnapshot):
+                        cast.set_volume(volume=1.0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
                     else:
                         cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
+                        if volumeBeforePlay is not None:
+                            cast.set_volume(volume=volumeBeforePlay)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
@@ -1191,6 +1217,7 @@ class TTSCast:
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
+                        cast.set_volume(volume=volumeBeforePlay)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
@@ -1210,6 +1237,7 @@ class TTSCast:
                 if volumeBeforePlay is not None:
                     if isGroup and groupSnapshot:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
+                        cast.set_volume(volume=volumeBeforePlay)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)  # type: ignore
                 
@@ -1425,6 +1453,7 @@ class Functions:
         groupMembersVolumes = {}
         if cast.cast_info.cast_type == 'group' and cast.uuid in myConfig.NETCAST_GROUPS:
             mz = myConfig.NETCAST_GROUPS[cast.uuid]
+            # mz.update_members() # Avoid calling update_members() on every snapshot, rely on listener updates
             for member_uuid in mz.members:
                 if member_uuid in myConfig.NETCAST_DEVICES:
                     m_cast = myConfig.NETCAST_DEVICES[member_uuid]
@@ -2804,6 +2833,7 @@ class myCast:
                         logging.debug('[DAEMON][NETCAST][CastCallBack] Group detected, adding MultizoneController :: %s', str(chromecast.name))
                         mz = MultizoneController(chromecast.uuid)
                         chromecast.register_handler(mz)
+                        mz.register_listener(MyMultizoneStatusListener(chromecast.name, chromecast))
                         # On force une update pour peupler la liste initialement
                         mz.update_members()
                         myConfig.NETCAST_GROUPS[chromecast.uuid] = mz
@@ -2997,6 +3027,25 @@ class myCast:
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Connect_Status] Exception :: %s', e)
                 logging.debug(traceback.format_exc())
+
+    class MyMultizoneStatusListener(MultiZoneControllerListener):
+        """Listener for Multizone Controller events."""
+
+        def __init__(self, name, cast):
+            self.name = name
+            self.cast = cast
+
+        def multizone_member_added(self, uuid):
+            """Called when a member is added to the group."""
+            logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Added :: %s', self.name, uuid)
+
+        def multizone_member_removed(self, uuid):
+            """Called when a member is removed from the group."""
+            logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Removed :: %s', self.name, uuid)
+
+        def multizone_status_received(self):
+            """Called when multizone status is received."""
+            logging.debug('[DAEMON][NETCAST][Multizone] %s :: Status Received', self.name)
 
 # ----------------------------------------------------------------------------
 
