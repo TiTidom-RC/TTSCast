@@ -1538,8 +1538,6 @@ class Functions:
         try:
             if cast.uuid in myConfig.NETCAST_GROUPS:
                 mz = myConfig.NETCAST_GROUPS[cast.uuid]
-                # On met a jour la liste des membres si besoin
-                mz.update_members()
                 logging.debug(f"[DAEMON][GroupSnapshot] Members found for {cast.name}: {mz.members}")
                 
                 # Detection Paire Stéréo (multichannelDevices)
