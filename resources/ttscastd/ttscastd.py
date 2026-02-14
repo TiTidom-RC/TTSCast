@@ -2300,6 +2300,7 @@ class Functions:
                 else:
                     mediaType = "video/mp4"
                     metadataType = 1  # type METADATA_TYPE_MOVIE
+                    mediaStreamType = "BUFFERED"
                 
                 media = _value    
                 mediaImage = f'{myConfig.ttsWebSrvImages}tts.png'
