@@ -1560,7 +1560,7 @@ class Functions:
                             else:
                                 logging.warning(f"[DAEMON][GroupSnapshot] Stereo member {sub_uuid} not found in NETCAST_DEVICES")
                         except ValueError as ve:
-                             logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID in multichannel: {ve}")
+                            logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID in multichannel: {ve}")
 
                 for member_uuid_str in mz.members:
                     # Convert string UUID (no dashes) to UUID object used in NETCAST_DEVICES

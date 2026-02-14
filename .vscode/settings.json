@@ -85,6 +85,7 @@
         "signum",
         "ssml",
         "stype",
+        "subdevices",
         "ttsaiapikey",
         "ttsaiauthmode",
         "ttsaicustomsysprompt",
