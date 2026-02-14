@@ -1024,9 +1024,8 @@ class TTSCast:
                 elif (not appDing):
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
-                        if volumeBeforePlay is not None:
-                            cast.set_volume(volume=volumeBeforePlay)
-                    else:
+                    
+                    if volumeBeforePlay is not None:
                         cast.set_volume(volume=volumeBeforePlay)
                 
                 cast.media_controller.block_until_active()
@@ -1066,7 +1065,7 @@ class TTSCast:
                 if volumeBeforePlay is not None:
                     if isGroup and groupSnapshot:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
-                        cast.set_volume(volume=volumeBeforePlay)
+                        cast.set_volume(volume=volumeBeforePlay)  # type: ignore
                     else:
                         cast.set_volume(volume=volumeBeforePlay)  # type: ignore
                 
@@ -1190,9 +1189,8 @@ class TTSCast:
                 elif (not appDing):
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
-                        if volumeBeforePlay is not None:
-                            cast.set_volume(volume=volumeBeforePlay)
-                    else:
+                    
+                    if volumeBeforePlay is not None:
                         cast.set_volume(volume=volumeBeforePlay)
                 
                 cast.media_controller.block_until_active()
@@ -1237,7 +1235,7 @@ class TTSCast:
                 if volumeBeforePlay is not None:
                     if isGroup and groupSnapshot:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
-                        cast.set_volume(volume=volumeBeforePlay)
+                        cast.set_volume(volume=volumeBeforePlay) # type: ignore
                     else:
                         cast.set_volume(volume=volumeBeforePlay)  # type: ignore
                 
@@ -1460,6 +1458,14 @@ class Functions:
                     if m_cast.status:
                         groupMembersVolumes[member_uuid] = m_cast.status.volume_level
                         logging.debug('[DAEMON][GroupSnapshot] Member %s vol: %s', m_cast.name, str(m_cast.status.volume_level))
+        
+        # Check if all members are present in the snapshot
+        if cast.uuid in myConfig.NETCAST_GROUPS:
+            _mz = myConfig.NETCAST_GROUPS[cast.uuid]
+            if len(groupMembersVolumes) != len(_mz.members):
+                logging.debug('[DAEMON][GroupSnapshot] Group members incomplete (%s / %s), returning empty so it treats as single device', len(groupMembersVolumes), len(_mz.members))
+                return {}
+        
         return groupMembersVolumes
 
     @staticmethod
