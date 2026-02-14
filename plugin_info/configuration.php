@@ -728,9 +728,9 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Utiliser la reformulation IA par défaut}}
+                <label class="col-lg-3 control-label">{{Utiliser la Reformulation IA par défaut}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de reformuler toutes les notifications TTS avec l'IA, sauf si l'option '\"genAI\": false' est passée dans les options de la commande.}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de reformuler toutes les notifications TTS avec l'IA, sauf si l'option <b>&quot;genAI&quot;: false</b> est passée dans les options de la commande.}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsAIDefault" />
