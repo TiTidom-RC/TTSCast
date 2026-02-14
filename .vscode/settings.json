@@ -5,6 +5,7 @@
         "aiapikey",
         "aiauthmode",
         "aicustomsysprompt",
+        "aidefault",
         "aidefaulttone",
         "aienabled",
         "aimodel",

@@ -575,7 +575,7 @@ class TTSCast:
                     
                     # AI
                     if myConfig.aiEnabled:
-                        _useAI = options_json.get('genai', False)
+                        _useAI = options_json.get('genai', myConfig.aiDefault)
                         _aiCustomTone = options_json.get('aitone', None)
                         _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
                         _aiCustomTemp = options_json.get('aitemp', None)
@@ -761,7 +761,7 @@ class TTSCast:
 
                     # AI
                     if myConfig.aiEnabled:
-                        _useAI = options_json.get('genai', False)
+                        _useAI = options_json.get('genai', myConfig.aiDefault)
                         _aiCustomTone = options_json.get('aitone', None)
                         _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
                         _aiCustomTemp = options_json.get('aitemp', None)
@@ -3040,6 +3040,7 @@ parser.add_argument("--cmdwaittimeout", help="Cmd Wait Timeout Parameter", type=
 parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 parser.add_argument("--aienabled", help="Enable AI", type=str, default='0')
+parser.add_argument("--aidefault", help="AI Use By Default", type=str, default='0')
 parser.add_argument("--aiauthmode", help="AI Auth Mode", type=str, default='noMode')
 parser.add_argument("--aiprojectid", help="AI Project ID", type=str, default='noProjectId')
 parser.add_argument("--aiapikey", help="AI ApiKey", type=str, default='noKey')
@@ -3083,6 +3084,11 @@ if args.aienabled:
         myConfig.aiEnabled = False
     else:
         myConfig.aiEnabled = True
+if args.aidefault:
+    if (args.aidefault == '0'):
+        myConfig.aiDefault = False
+    else:
+        myConfig.aiDefault = True
 if args.aiauthmode:
     myConfig.aiAuthMode = args.aiauthmode
 if args.aiprojectid and args.aiprojectid != 'noProjectId':
@@ -3155,6 +3161,7 @@ logging.info('[DAEMON][MAIN] TTS Disable Cache: %s', str(myConfig.ttsDisableCach
 logging.info('[DAEMON][MAIN] App Disable Ding: %s', str(myConfig.appDisableDing))
 logging.info('[DAEMON][MAIN] App Convert Single Quote: %s', str(myConfig.appConvertSingleQuote))
 logging.info('[DAEMON][MAIN] AI Enabled: %s', str(myConfig.aiEnabled))
+logging.info('[DAEMON][MAIN] AI Default: %s', str(myConfig.aiDefault))
 logging.info('[DAEMON][MAIN] AI Auth Mode: %s', myConfig.aiAuthMode)
 logging.info('[DAEMON][MAIN] AI Project ID: %s', myConfig.aiProjectID)
 logging.info('[DAEMON][MAIN] AI ApiKey: %s', "***" if myConfig.aiApiKey else "N/A")

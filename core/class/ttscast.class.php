@@ -180,6 +180,7 @@ class ttscast extends eqLogic
         $cmd .= ' --appconvertsinglequote ' . config::byKey('appConvertSingleQuote', __CLASS__, '0');
         $cmd .= ' --cmdwaittimeout ' . config::byKey('cmdWaitTimeout', __CLASS__, '60');
         $cmd .= ' --aienabled ' . config::byKey('ttsAIEnable', __CLASS__, '0');
+        $cmd .= ' --aidefault ' . config::byKey('ttsAIDefault', __CLASS__, '0');
         $cmd .= ' --aiauthmode ' . config::byKey('ttsAIAuthMode', __CLASS__, 'noMode');
         $cmd .= ' --aiprojectid ' . config::byKey('ttsAIProjectID', __CLASS__, 'noProjectID');
         $cmd .= ' --aiapikey ' . config::byKey('ttsAIAPIKey', __CLASS__, 'noKey');

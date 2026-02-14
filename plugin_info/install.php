@@ -159,6 +159,9 @@ function ttscast_update() {
     if (config::byKey('debugRestoreVenv', 'ttscast') == '') {
         config::save('debugRestoreVenv', '0', 'ttscast');
     }
+    if (config::byKey('ttsAIDefault', 'ttscast') == '') {
+        config::save('ttsAIDefault', '0', 'ttscast');
+    }
 
     $dependencyInfo = ttscast::dependancy_info();
     if (!isset($dependencyInfo['state'])) {

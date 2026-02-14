@@ -69,6 +69,7 @@ class Config:
     
     # AI Configuration
     aiEnabled = False
+    aiDefault = False
     aiAuthMode = 'noMode'  # 'noMode', 'apikey', 'oauth2'
     aiProjectID = 'noProjectID'  # Google Cloud Project ID for AI
     aiApiKey = ''
