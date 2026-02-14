@@ -1476,6 +1476,8 @@ class Functions:
                             if m_cast.status:
                                 groupMembersVolumes[member_uuid] = m_cast.status.volume_level
                                 logging.debug('[DAEMON][GroupSnapshot] Member (updated) %s vol: %s', m_cast.name, str(m_cast.status.volume_level))
+                        elif member_uuid not in myConfig.NETCAST_DEVICES:
+                            logging.debug('[DAEMON][GroupSnapshot] Member (updated) %s still NOT in NETCAST_DEVICES', member_uuid)
                 except Exception as e:
                     logging.debug('[DAEMON][GroupSnapshot] Erreur update_members: %s', e)
         
