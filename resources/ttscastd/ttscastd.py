@@ -1092,6 +1092,9 @@ class TTSCast:
             groupSnapshot = None
             isGroup = False
             
+            # Default target is the googleUUID until resolved by Queue logic
+            _targetWaitUUID = googleUUID
+            
             try:
                 _uuid = UUID(googleUUID)
                 if _uuid in myConfig.NETCAST_DEVICES:
@@ -1101,55 +1104,11 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID nom :: %s', googleUUID)
                     return False
                 
-                if cmdForce:
-                    # Tester le paramètre cmdForce pour forcer à quitter l'appli en cours de lecture
-                    Functions.forceQuitApp(cast)
-                    if googleUUID in myConfig.cmdWaitQueue:
-                        myConfig.cmdWaitQueue[googleUUID] = 0
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
-                elif cmdWait is not None:
-                    # WaitQueue if option defined
-                    targetWaitUUID = Functions.resolveWaitQueueUUID(googleUUID)
-                    if targetWaitUUID != googleUUID:
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Resolved Linked UUID %s -> %s', googleUUID, targetWaitUUID)
-                    
-                    # Initialisation si clé manquante pour le target
-                    if targetWaitUUID not in myConfig.cmdWaitQueue:
-                        myConfig.cmdWaitQueue[targetWaitUUID] = 0
-
-                    if int(cmdWait) == 1:
-                        myConfig.cmdWaitQueue[targetWaitUUID] = 0
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Reset %s (%s)', cmdWait, targetWaitUUID) 
-                    elif int(cmdWait) > 1 and myConfig.cmdWaitQueue[targetWaitUUID] == 0:
-                        t = 10
-                        while (myConfig.cmdWaitQueue[targetWaitUUID] == 0 and t > 0):
-                            time.sleep(0.1)
-                            t -= 1
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue (t) :: %s ', str(t))
-                        if myConfig.cmdWaitQueue[targetWaitUUID] == 0:
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancelled %s (%s)', cmdWait, targetWaitUUID)
-                            return False
-                            
-                    myConfig.cmdWaitQueue[targetWaitUUID] += 2 ** int(cmdWait)
-
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[targetWaitUUID]), targetWaitUUID)
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: Start Waiting %s (%s)', cmdWait, targetWaitUUID)
-                    queue_start_time = int(time.time())
-                    while myConfig.cmdWaitQueue[targetWaitUUID] % (2 ** int(cmdWait)) != 0:
-                        queue_current_time = int(time.time())
-                        if (queue_start_time + (myConfig.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Timeout %s (%s)', cmdWait, targetWaitUUID)
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[targetWaitUUID]), targetWaitUUID)
-                            return False
-                        time.sleep(0.1)
-                    if myConfig.cmdWaitQueue[targetWaitUUID] == 0:
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancel/Force %s (%s)', cmdWait, targetWaitUUID)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[targetWaitUUID]), targetWaitUUID)
-                        return False
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: End Waiting %s (%s)', cmdWait, targetWaitUUID)
-                else:
-                    if googleUUID in myConfig.cmdWaitQueue:
-                        myConfig.cmdWaitQueue[googleUUID] = 0
+                # --- Wait Queue Management (Entrance) ---
+                allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, googleUUID, cmdWait, cmdForce, 'Cast')
+                if not allowed:
+                    return False
+                # ----------------------------------------
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante 
                 if not cmdForce: 
@@ -1231,12 +1190,8 @@ class TTSCast:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                # Mise à jour de la WaitQueue
-                if cmdWait is not None and cmdForce is False:
-                    _targetUUID = Functions.resolveWaitQueueUUID(googleUUID)
-                    if _targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[_targetUUID] > 0:
-                        myConfig.cmdWaitQueue[_targetUUID] -= 2 ** int(cmdWait)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
+                # --- Wait Queue Management (Exit - Success) ---
+                Functions.waitQueueExit(_targetWaitUUID, cmdWait, cmdForce, 'Cast')
                 
                 # Libération de la mémoire
                 cast = None
@@ -1252,12 +1207,8 @@ class TTSCast:
                         if cast is not None:
                             cast.set_volume(volume=volumeBeforePlay)
                 
-                # Mise à jour de la WaitQueue
-                if cmdWait is not None and cmdForce is False:
-                    _targetUUID = Functions.resolveWaitQueueUUID(googleUUID)
-                    if _targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[_targetUUID] > 0:
-                        myConfig.cmdWaitQueue[_targetUUID] -= 2 ** int(cmdWait)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
+                # --- Wait Queue Management (Exit - Error) ---
+                Functions.waitQueueExit(_targetWaitUUID, cmdWait, cmdForce, 'Cast')
                 
                 # Libération de la mémoire
                 cast = None
@@ -1449,6 +1400,78 @@ class Functions:
                 pass
 
         return current_uuid_str
+
+    @staticmethod
+    def waitQueueEnter(cast, googleUUID, cmdWait, cmdForce, callerName="Unknown"):
+        """ Gère l'entrée dans la file d'attente. Retourne (allowed: bool, targetUUID: str) """
+        
+        # 1. Gestion du FORCE (Prioritaire)
+        if cmdForce:
+            Functions.forceQuitApp(cast)
+            targetUUID = Functions.resolveWaitQueueUUID(googleUUID)
+            if targetUUID in myConfig.cmdWaitQueue:
+                myConfig.cmdWaitQueue[targetUUID] = 0
+                logging.debug(f'[DAEMON][WaitQueue][{callerName}] Force Reset {targetUUID} (origin: {googleUUID})')
+            return True, targetUUID
+
+        # 2. Gestion SANS WAIT
+        if cmdWait is None:
+            if googleUUID in myConfig.cmdWaitQueue:
+                myConfig.cmdWaitQueue[googleUUID] = 0
+            return True, googleUUID
+
+        # 3. Gestion AVEC WAIT
+        targetUUID = Functions.resolveWaitQueueUUID(googleUUID)
+        if targetUUID != googleUUID:
+            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Resolved Linked UUID {googleUUID} -> {targetUUID}')
+
+        # Init queue si inexistante
+        if targetUUID not in myConfig.cmdWaitQueue:
+            myConfig.cmdWaitQueue[targetUUID] = 0
+
+        # Wait = 1 : Reset manuel
+        if int(cmdWait) == 1:
+            myConfig.cmdWaitQueue[targetUUID] = 0
+            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Reset requested for {targetUUID}')
+        
+        # Wait > 1 : Attendre que la file soit vide (0) avant de prendre un ticket
+        elif int(cmdWait) > 1 and myConfig.cmdWaitQueue[targetUUID] == 0:
+            t = 10
+            while (myConfig.cmdWaitQueue[targetUUID] == 0 and t > 0):
+                time.sleep(0.1)
+                t -= 1
+            if myConfig.cmdWaitQueue[targetUUID] == 0:
+                logging.debug(f'[DAEMON][WaitQueue][{callerName}] Cancelled (Wait > 1 timeout) for {targetUUID}')
+                return False, targetUUID
+
+        # Prise de ticket (Bitmask logic: 2^wait)
+        myConfig.cmdWaitQueue[targetUUID] += 2 ** int(cmdWait)
+        logging.debug(f'[DAEMON][WaitQueue][{callerName}] Start Waiting {cmdWait} for {targetUUID} (Queue: {myConfig.cmdWaitQueue[targetUUID]})')
+
+        # Boucle d'attente
+        queue_start_time = int(time.time())
+        while myConfig.cmdWaitQueue[targetUUID] % (2 ** int(cmdWait)) != 0:
+            queue_current_time = int(time.time())
+            if (queue_start_time + (myConfig.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
+                logging.debug(f'[DAEMON][WaitQueue][{callerName}] Timeout for {targetUUID}')
+                return False, targetUUID
+            time.sleep(0.1)
+
+        # Vérification finale (si annulé/forcé pendant l'attente)
+        if myConfig.cmdWaitQueue[targetUUID] == 0:
+            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Aborted/Forced during wait for {targetUUID}')
+            return False, targetUUID
+
+        logging.debug(f'[DAEMON][WaitQueue][{callerName}] End Waiting {cmdWait} for {targetUUID}')
+        return True, targetUUID
+
+    @staticmethod
+    def waitQueueExit(targetUUID, cmdWait, cmdForce, callerName="Unknown"):
+        """ Gère la sortie de la file d'attente (libération du token) """
+        if cmdWait is not None and cmdForce is False:
+            if targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[targetUUID] > 0:
+                myConfig.cmdWaitQueue[targetUUID] -= 2 ** int(cmdWait)
+                logging.debug(f'[DAEMON][WaitQueue][{callerName}] Out {cmdWait} for {targetUUID} (Queue: {myConfig.cmdWaitQueue[targetUUID]})')
 
     @staticmethod
     def setGroupMembersVolume(membersUUIDs, targetVolume):
@@ -1666,55 +1689,14 @@ class Functions:
         
         _appDing = False if myConfig.appDisableDing else _appDing
         
-        if _cmdForce:
-            # Si cmdForce alors forcer la sortie de l'appli avant
-            Functions.forceQuitApp(cast)
-            _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-            if _targetUUID in myConfig.cmdWaitQueue:
-                myConfig.cmdWaitQueue[_targetUUID] = 0
-                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-        elif _cmdWait is not None:
-            # WaitQueue if option defined
-            _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-            if _targetUUID != _googleUUID:
-                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Resolved Linked UUID %s -> %s', _googleUUID, _targetUUID)
-
-            if _targetUUID not in myConfig.cmdWaitQueue:
-                myConfig.cmdWaitQueue[_targetUUID] = 0
-
-            if int(_cmdWait) == 1:
-                myConfig.cmdWaitQueue[_targetUUID] = 0
-                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Reset %s (%s)', _cmdWait, _targetUUID)
-            elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_targetUUID] == 0:
-                t = 10
-                while (myConfig.cmdWaitQueue[_targetUUID] == 0 and t > 0):
-                    time.sleep(0.1)
-                    t -= 1
-                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue (t) :: %s ', str(t))
-                if myConfig.cmdWaitQueue[_targetUUID] == 0:
-                    logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Cancelled %s (%s)', _cmdWait, _targetUUID)
-                    return False
-            
-            myConfig.cmdWaitQueue[_targetUUID] += 2 ** int(_cmdWait)
-
-            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Start Waiting %s (%s)', _cmdWait, _targetUUID)
-            queue_start_time = int(time.time())
-            while myConfig.cmdWaitQueue[_targetUUID] % (2 ** int(_cmdWait)) != 0:
-                queue_current_time = int(time.time())
-                if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                    logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Timeout %s (%s)', _cmdWait, _targetUUID)
-                    logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-                    return False
-                time.sleep(0.1)
-            if myConfig.cmdWaitQueue[_targetUUID] == 0:
-                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _targetUUID)
-                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-                return False
-            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: End Waiting %s (%s)', _cmdWait, _targetUUID)
-        else:
-            if _googleUUID in myConfig.cmdWaitQueue:
-                myConfig.cmdWaitQueue[_googleUUID] = 0
+        # Default target is the googleUUID until resolved by Queue logic
+        _targetWaitUUID = _googleUUID
+        
+        # --- Wait Queue Management (Entrance) ---
+        allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, 'StartApp')
+        if not allowed:
+            return False
+        # ----------------------------------------
         
         if not _cmdForce:
             # Si DashCast alors sortir de l'appli avant sinon cela plante    
@@ -1756,14 +1738,10 @@ class Functions:
             
             logging.debug('[DAEMON][controllerActions] StartApp :: Application lancée :: %s', str(_value))
             
-            # Mise à jour de la WaitQueue
-            if _cmdWait is not None and _cmdForce is False:
-                _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-                if _targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[_targetUUID] > 0:
-                    myConfig.cmdWaitQueue[_targetUUID] -= 2 ** int(_cmdWait)
-                    logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-            
+            # --- Wait Queue Management (Exit - Success) ---
+            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'StartApp')
             return True
+            
         except Exception as e:
             logging.error('[DAEMON][controllerStartApp] Exception (%s) :: %s', _googleUUID, e)
             if volumeBeforePlay is not None:
@@ -1773,13 +1751,8 @@ class Functions:
                     if cast is not None:
                         cast.set_volume(volume=volumeBeforePlay)
             
-            # Mise à jour de la WaitQueue
-            if _cmdWait is not None and _cmdForce is False:
-                _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-                if _targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[_targetUUID] > 0:
-                    myConfig.cmdWaitQueue[_targetUUID] -= 2 ** int(_cmdWait)
-                    logging.debug('[DAEMON][controllerStartApp] Exception Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-            
+            # --- Wait Queue Management (Exit - Error) ---
+            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'StartApp')
             return False
 
     @staticmethod
@@ -1808,56 +1781,14 @@ class Functions:
         
         _appDing = False if myConfig.appDisableDing else _appDing
         
-        # Si cmdForce alors forcer la sortie de l'appli avant
-        # Sinon si DashCast alors sortir de l'appli avant sinon cela plante
-        if _cmdForce:
-            Functions.forceQuitApp(cast)
-            _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-            if _targetUUID in myConfig.cmdWaitQueue:
-                myConfig.cmdWaitQueue[_targetUUID] = 0
-                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-        elif _cmdWait is not None:
-            # WaitQueue if option defined
-            _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-            if _targetUUID != _googleUUID:
-                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Resolved Linked UUID %s -> %s', _googleUUID, _targetUUID)
-
-            if _targetUUID not in myConfig.cmdWaitQueue:
-                myConfig.cmdWaitQueue[_targetUUID] = 0
-
-            if int(_cmdWait) == 1:
-                myConfig.cmdWaitQueue[_targetUUID] = 0
-                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Reset %s (%s)', _cmdWait, _targetUUID)
-            elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_targetUUID] == 0:
-                t = 10
-                while (myConfig.cmdWaitQueue[_targetUUID] == 0 and t > 0):
-                    time.sleep(0.1)
-                    t -= 1
-                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue (t) :: %s ', str(t))
-                if myConfig.cmdWaitQueue[_targetUUID] == 0:
-                    logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Cancelled %s (%s)', _cmdWait, _targetUUID)
-                    return False
-            
-            myConfig.cmdWaitQueue[_targetUUID] += 2 ** int(_cmdWait)
-
-            logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-            logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Start Waiting %s (%s)', _cmdWait, _targetUUID)
-            queue_start_time = int(time.time())
-            while myConfig.cmdWaitQueue[_targetUUID] % (2 ** int(_cmdWait)) != 0:
-                queue_current_time = int(time.time())
-                if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                    logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Timeout %s (%s)', _cmdWait, _targetUUID)
-                    logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-                    return False
-                time.sleep(0.1)
-            if myConfig.cmdWaitQueue[_targetUUID] == 0:
-                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _targetUUID)
-                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-                return False
-            logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: End Waiting %s (%s)', _cmdWait, _targetUUID)
-        else:
-            if _googleUUID in myConfig.cmdWaitQueue:
-                myConfig.cmdWaitQueue[_googleUUID] = 0
+        # Default target is the googleUUID until resolved by Queue logic
+        _targetWaitUUID = _googleUUID
+        
+        # --- Wait Queue Management (Entrance) ---
+        allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, 'YouTube')
+        if not allowed:
+            return False
+        # ----------------------------------------
         
         if not _cmdForce:
             Functions.checkIfDashCast(cast)
@@ -1904,14 +1835,10 @@ class Functions:
             
             logging.debug('[DAEMON][controllerActions] YouTube :: Diffusion lancée :: %s', str(cast.media_controller.status))
             
-            # Mise à jour de la WaitQueue
-            if _cmdWait is not None and _cmdForce is False:
-                _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-                if _targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[_targetUUID] > 0:
-                    myConfig.cmdWaitQueue[_targetUUID] -= 2 ** int(_cmdWait)
-                    logging.debug('[DAEMON][controllerActions] YouTube Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-            
+            # --- Wait Queue Management (Exit - Success) ---
+            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'YouTube')
             return True
+            
         except Exception as e:
             logging.error('[DAEMON][controllerYoutube] Exception (%s) :: %s', _googleUUID, e)
             if volumeBeforePlay is not None:
@@ -1921,13 +1848,8 @@ class Functions:
                     if cast is not None:
                         cast.set_volume(volume=volumeBeforePlay)
             
-            # Mise à jour de la WaitQueue
-            if _cmdWait is not None and _cmdForce is False:
-                _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-                if _targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[_targetUUID] > 0:
-                    myConfig.cmdWaitQueue[_targetUUID] -= 2 ** int(_cmdWait)
-                    logging.debug('[DAEMON][controllerYoutube] Exception Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-            
+            # --- Wait Queue Management (Exit - Error) ---
+            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'YouTube')
             return False
 
     @staticmethod
@@ -1951,51 +1873,14 @@ class Functions:
             logging.debug('[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: %s', e)
         
         try:
-            # waitQueue if option defined
-            if _cmdWait is not None:
-                _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-                if _targetUUID != _googleUUID:
-                    logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Resolved Linked UUID %s -> %s', _googleUUID, _targetUUID)
-                
-                if _targetUUID not in myConfig.cmdWaitQueue:
-                    myConfig.cmdWaitQueue[_targetUUID] = 0
+            # Default target is the googleUUID until resolved by Queue logic
+            _targetWaitUUID = _googleUUID 
 
-                if _targetUUID in myConfig.cmdWaitQueue:
-                    if int(_cmdWait) == 1:
-                        myConfig.cmdWaitQueue[_targetUUID] = 0
-                        logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Reset %s (%s)', _cmdWait, _targetUUID)
-                    elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_targetUUID] == 0:
-                        t = 10
-                        while (myConfig.cmdWaitQueue[_targetUUID] == 0 and t > 0):
-                            time.sleep(0.1)
-                            t -= 1
-                        logging.debug('[DAEMON][controllerActions] DashCast Wait Queue (t) :: %s ', str(t))
-                        if myConfig.cmdWaitQueue[_targetUUID] == 0:
-                            logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Cancelled %s (%s)', _cmdWait, _targetUUID)
-                            return False
-                    
-                if _targetUUID in myConfig.cmdWaitQueue:
-                    myConfig.cmdWaitQueue[_targetUUID] += 2 ** int(_cmdWait)
-                else:
-                    myConfig.cmdWaitQueue[_targetUUID] = 2 ** int(_cmdWait)
-                logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-                logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Start Waiting %s (%s)', _cmdWait, _targetUUID)
-                queue_start_time = int(time.time())
-                while myConfig.cmdWaitQueue[_targetUUID] % (2 ** int(_cmdWait)) != 0:
-                    queue_current_time = int(time.time())
-                    if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                        logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Timeout %s (%s)', _cmdWait, _targetUUID)
-                        logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-                        return False
-                    time.sleep(0.1)
-                if myConfig.cmdWaitQueue[_targetUUID] == 0:
-                    logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _targetUUID)
-                    logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-                    return False
-                logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: End Waiting %s (%s)', _cmdWait, _targetUUID)
-            else:
-                if _googleUUID in myConfig.cmdWaitQueue:
-                    myConfig.cmdWaitQueue[_googleUUID] = 0
+            # --- Wait Queue Management (Entrance) ---
+            allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _force, 'DashCast')
+            if not allowed:
+                return False
+            # ----------------------------------------
 
             if options_json.get('quit_app', False):
                 logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
@@ -2013,25 +1898,16 @@ class Functions:
             cast.unregister_handler(player)
             time.sleep(1)
             
-            # Mise à jour de la WaitQueue
-            if _cmdWait is not None:
-                _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-                if _targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[_targetUUID] > 0:
-                    myConfig.cmdWaitQueue[_targetUUID] -= 2 ** int(_cmdWait)
-                    logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-            
+            # --- Wait Queue Management (Exit - Success) ---
+            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _force, 'DashCast')
             return True
+            
         except Exception as e:
             logging.error('[DAEMON][controllerDashCast] Exception (%s) :: %s', _googleUUID, e)
             player = None
             
-            # Mise à jour de la WaitQueue
-            if _cmdWait is not None:
-                _targetUUID = Functions.resolveWaitQueueUUID(_googleUUID)
-                if _targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[_targetUUID] > 0:
-                    myConfig.cmdWaitQueue[_targetUUID] -= 2 ** int(_cmdWait)
-                    logging.debug('[DAEMON][controllerDashCast] Exception Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
-
+            # --- Wait Queue Management (Exit - Error) ---
+            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _force, 'DashCast')
             return False
             
     @staticmethod
@@ -2069,50 +1945,14 @@ class Functions:
 
                 _appDing = False if myConfig.appDisableDing else _appDing
                 
-                if _cmdForce:
-                    # Si cmdForce alors forcer la sortie de l'appli avant
-                    Functions.forceQuitApp(cast)
-                    if _googleUUID in myConfig.cmdWaitQueue:
-                        myConfig.cmdWaitQueue[_googleUUID] = 0
-                        logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                elif _cmdWait is not None:
-                    # WaitQueue if option defined
-                    if _googleUUID in myConfig.cmdWaitQueue:
-                        if int(_cmdWait) == 1:
-                            myConfig.cmdWaitQueue[_googleUUID] = 0
-                            logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
-                        elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_googleUUID] == 0:
-                            t = 10
-                            while (myConfig.cmdWaitQueue[_googleUUID] == 0 and t > 0):
-                                time.sleep(0.1)
-                                t -= 1
-                            logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue (t) :: %s', str(t))
-                            if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
-                                return False
-                        
-                    if _googleUUID in myConfig.cmdWaitQueue:
-                        myConfig.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
-                    else:
-                        myConfig.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
-                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
-                    queue_start_time = int(time.time())
-                    while myConfig.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
-                        queue_current_time = int(time.time())
-                        if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                            logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Timeout %s (%s)', _cmdWait, _googleUUID)
-                            logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            return False
-                        time.sleep(0.1)
-                    if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                        logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                        logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        return False
-                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: End %s (%s)', _cmdWait, _googleUUID)
-                else:
-                    if _googleUUID in myConfig.cmdWaitQueue:
-                        myConfig.cmdWaitQueue[_googleUUID] = 0
+                # Default target is the googleUUID until resolved by Queue logic
+                _targetWaitUUID = _googleUUID
+                
+                # --- Wait Queue Management (Entrance) ---
+                allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, _controller.title())
+                if not allowed:
+                    return False
+                # ----------------------------------------
                 
                 if not _cmdForce:
                     # Si DashCast alors sortir de l'appli avant sinon cela plante
@@ -2183,11 +2023,8 @@ class Functions:
                         
                         logging.debug('[DAEMON][controllerActions] Diffusion Radio/CustomRadio lancée :: %s', str(cast.media_controller.status))
                     
-                    # Mise à jour de la WaitQueue
-                    if _cmdWait is not None and _cmdForce is False:
-                        if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                            myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
+                    # --- Wait Queue Management (Exit - Success) ---
+                    Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, _controller.title())
                     
                     return True
                 except Exception as e:
@@ -2198,11 +2035,8 @@ class Functions:
                         else:
                             cast.set_volume(volume=volumeBeforePlay)
                     
-                    # Mise à jour de la WaitQueue
-                    if _cmdWait is not None and _cmdForce is False:
-                        if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                            myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerRadios] Exception Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
+                    # --- Wait Queue Management (Exit - Error) ---
+                    Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, _controller.title())
 
                     return False
 
@@ -2234,48 +2068,14 @@ class Functions:
 
             _appDing = False if myConfig.appDisableDing else _appDing
 
-            if _cmdForce:
-                Functions.forceQuitApp(cast)
-                if _googleUUID in myConfig.cmdWaitQueue:
-                    myConfig.cmdWaitQueue[_googleUUID] = 0
-                    logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-            elif _cmdWait is not None:
-                if _googleUUID in myConfig.cmdWaitQueue:
-                    if int(_cmdWait) == 1:
-                        myConfig.cmdWaitQueue[_googleUUID] = 0
-                        logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
-                    elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_googleUUID] == 0:
-                        t = 10
-                        while (myConfig.cmdWaitQueue[_googleUUID] == 0 and t > 0):
-                            time.sleep(0.1)
-                            t -= 1
-                        logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue (t) :: %s', str(t))
-                        if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                            logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
-                            return False
-                # WaitQueue if option defined
-                if _googleUUID in myConfig.cmdWaitQueue:
-                    myConfig.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
-                else:
-                    myConfig.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
-                logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
-                queue_start_time = int(time.time())
-                while myConfig.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
-                    queue_current_time = int(time.time())
-                    if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                        logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: Timeout %s (%s)', _cmdWait, _googleUUID)
-                        logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        return False
-                    time.sleep(0.1)
-                if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                    logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                    logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                    return False
-                logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: End Waiting %s (%s)', _cmdWait, _googleUUID)
-            else:
-                if _googleUUID in myConfig.cmdWaitQueue:
-                    myConfig.cmdWaitQueue[_googleUUID] = 0
+            # Default target is the googleUUID until resolved by Queue logic
+            _targetWaitUUID = _googleUUID
+
+            # --- Wait Queue Management (Entrance) ---
+            allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, _controller.title())
+            if not allowed:
+                return False
+            # ----------------------------------------
             
             if not _cmdForce:
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
@@ -2364,11 +2164,8 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
             
-                # Mise à jour de la WaitQueue
-                if _cmdWait is not None and _cmdForce is False:
-                    if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                        myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                        logging.debug(f'[DAEMON][controllerActions] {soundType} Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
+                # --- Wait Queue Management (Exit - Success) ---
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, _controller.title())
                 
                 return True
             except Exception as e:
@@ -2379,11 +2176,8 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                # Mise à jour de la WaitQueue
-                if _cmdWait is not None and _cmdForce is False:
-                    if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                        myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                        logging.debug(f'[DAEMON][controllerSounds] Exception Wait Queue :: Out {myConfig.cmdWaitQueue[_googleUUID]} ({_googleUUID})')
+                # --- Wait Queue Management (Exit - Error) ---
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, _controller.title())
 
                 return False
 
@@ -2415,48 +2209,14 @@ class Functions:
 
             _appDing = False if myConfig.appDisableDing else _appDing
             
-            if _cmdForce:
-                Functions.forceQuitApp(cast)
-                if _googleUUID in myConfig.cmdWaitQueue:
-                    myConfig.cmdWaitQueue[_googleUUID] = 0
-                    logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-            elif _cmdWait is not None:
-                if _googleUUID in myConfig.cmdWaitQueue:
-                    if int(_cmdWait) == 1:
-                        myConfig.cmdWaitQueue[_googleUUID] = 0
-                        logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
-                    elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_googleUUID] == 0:
-                        t = 10
-                        while (myConfig.cmdWaitQueue[_googleUUID] == 0 and t > 0):
-                            time.sleep(0.1)
-                            t -= 1
-                        logging.debug('[DAEMON][controllerActions] Media Wait Queue (t) :: %s', str(t))
-                        if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                            logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
-                            return False
-                # WaitQueue if option defined
-                if _googleUUID in myConfig.cmdWaitQueue:
-                    myConfig.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
-                else:
-                    myConfig.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
-                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
-                queue_start_time = int(time.time())
-                while myConfig.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
-                    queue_current_time = int(time.time())
-                    if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                        logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Timeout %s (%s)', _cmdWait, _googleUUID)
-                        logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        return False
-                    time.sleep(0.1)
-                if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                    logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                    logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                    return False
-                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: End Waiting %s (%s)', _cmdWait, _googleUUID)
-            else:
-                if _googleUUID in myConfig.cmdWaitQueue:
-                    myConfig.cmdWaitQueue[_googleUUID] = 0
+            # Default target is the googleUUID until resolved by Queue logic
+            _targetWaitUUID = _googleUUID
+            
+            # --- Wait Queue Management (Entrance) ---
+            allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, 'Media')
+            if not allowed:
+                return False
+            # ----------------------------------------
             
             if not _cmdForce:
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
@@ -2535,11 +2295,8 @@ class Functions:
                 
                 logging.debug('[DAEMON][controllerActions] Diffusion Media lancée :: %s', str(cast.media_controller.status))
                 
-                # Mise à jour de la WaitQueue
-                if _cmdWait is not None and _cmdForce is False:
-                    if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                        myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                        logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
+                # --- Wait Queue Management (Exit - Success) ---
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'Media')
                         
                 return True
             except Exception as e:
@@ -2550,11 +2307,8 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                # Mise à jour de la WaitQueue
-                if _cmdWait is not None and _cmdForce is False:
-                    if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                        myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                        logging.debug('[DAEMON][controllerMedia] Exception Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
+                # --- Wait Queue Management (Exit - Error) ---
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'Media')
 
                 return False
 
