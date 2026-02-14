@@ -1458,6 +1458,10 @@ class Functions:
                     if m_cast.status:
                         groupMembersVolumes[member_uuid] = m_cast.status.volume_level
                         logging.debug('[DAEMON][GroupSnapshot] Member %s vol: %s', m_cast.name, str(m_cast.status.volume_level))
+                    else:
+                        logging.debug('[DAEMON][GroupSnapshot] Member %s has no status', m_cast.name)
+                else:
+                    logging.debug('[DAEMON][GroupSnapshot] Member UUID %s not in NETCAST_DEVICES', member_uuid)
             
             # Si incomplet, on tente une mise à jour manuelle
             if len(groupMembersVolumes) != len(mz.members):
@@ -1465,12 +1469,13 @@ class Functions:
                 try:
                     mz.update_members()
                     # Re-essai apres update
-                    groupMembersVolumes = {}
+                    # groupMembersVolumes = {} # Ne pas écraser les volumes deja récupérés
                     for member_uuid in mz.members:
-                        if member_uuid in myConfig.NETCAST_DEVICES:
+                        if member_uuid not in groupMembersVolumes and member_uuid in myConfig.NETCAST_DEVICES:
                             m_cast = myConfig.NETCAST_DEVICES[member_uuid]
                             if m_cast.status:
                                 groupMembersVolumes[member_uuid] = m_cast.status.volume_level
+                                logging.debug('[DAEMON][GroupSnapshot] Member (updated) %s vol: %s', m_cast.name, str(m_cast.status.volume_level))
                 except Exception as e:
                     logging.debug('[DAEMON][GroupSnapshot] Erreur update_members: %s', e)
         
