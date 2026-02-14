@@ -1698,16 +1698,20 @@ class Functions:
             return False
         # ----------------------------------------
         
-        if not _cmdForce:
-            # Si DashCast alors sortir de l'appli avant sinon cela plante    
-            Functions.checkIfDashCast(cast)
-        
-        volumeBeforePlay = cast.status.volume_level
+        volumeBeforePlay = None
+        groupSnapshot = None
+        isGroup = False
 
-        groupSnapshot = Functions.getGroupSnapshot(cast)
-        isGroup = bool(groupSnapshot)
-        
         try:
+            if not _cmdForce:
+                # Si DashCast alors sortir de l'appli avant sinon cela plante    
+                Functions.checkIfDashCast(cast)
+            
+            volumeBeforePlay = cast.status.volume_level
+
+            groupSnapshot = Functions.getGroupSnapshot(cast)
+            isGroup = bool(groupSnapshot)
+            
             if not _appDing:
                 if isGroup:
                     Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
@@ -1738,8 +1742,6 @@ class Functions:
             
             logging.debug(f'[DAEMON][controllerActions] StartApp :: Application lancée :: {str(_value)}')
             
-            # --- Wait Queue Management (Exit - Success) ---
-            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'StartApp')
             return True
             
         except Exception as e:
@@ -1751,9 +1753,11 @@ class Functions:
                     if cast is not None:
                         cast.set_volume(volume=volumeBeforePlay)
             
-            # --- Wait Queue Management (Exit - Error) ---
-            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'StartApp')
             return False
+            
+        finally:
+            # --- Wait Queue Management (Exit - Always) ---
+            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'StartApp')
 
     @staticmethod
     def controllerYoutube(cast, _googleUUID, _value, _options):
@@ -1790,15 +1794,19 @@ class Functions:
             return False
         # ----------------------------------------
         
-        if not _cmdForce:
-            Functions.checkIfDashCast(cast)
-        
-        volumeBeforePlay = cast.status.volume_level
-        
-        groupSnapshot = Functions.getGroupSnapshot(cast)
-        isGroup = bool(groupSnapshot)
-        
+        volumeBeforePlay = None
+        groupSnapshot = None
+        isGroup = False
+
         try:
+            if not _cmdForce:
+                Functions.checkIfDashCast(cast)
+            
+            volumeBeforePlay = cast.status.volume_level
+            
+            groupSnapshot = Functions.getGroupSnapshot(cast)
+            isGroup = bool(groupSnapshot)
+            
             if not _appDing:
                 if isGroup:
                     Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
@@ -1835,10 +1843,7 @@ class Functions:
             
             logging.debug(f'[DAEMON][controllerActions] YouTube :: Diffusion lancée :: {str(cast.media_controller.status)}')
             
-            # --- Wait Queue Management (Exit - Success) ---
-            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'YouTube')
             return True
-            
         except Exception as e:
             logging.error(f'[DAEMON][controllerYoutube] Exception ({_googleUUID}) :: {e}')
             if volumeBeforePlay is not None:
@@ -1848,9 +1853,11 @@ class Functions:
                     if cast is not None:
                         cast.set_volume(volume=volumeBeforePlay)
             
-            # --- Wait Queue Management (Exit - Error) ---
-            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'YouTube')
             return False
+            
+        finally:
+            # --- Wait Queue Management (Exit - Always) ---
+            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'YouTube')
 
     @staticmethod
     def controllerDashCast(cast, _googleUUID, _value, _options):
@@ -1882,32 +1889,40 @@ class Functions:
                 return False
             # ----------------------------------------
 
-            if options_json.get('quit_app', False):
-                logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
-                cast.quit_app()
-                t = 5
-                while cast.status.app_id is not None and t > 0:
-                    time.sleep(0.1)
-                    t = t - 0.1
-            time.sleep(1)
-            
-            logging.debug(f'[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: {_value} | {str(options_json)}')
-            player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)  # type: ignore
-            time.sleep(2)
-            
-            cast.unregister_handler(player)
-            time.sleep(1)
-            
-            # --- Wait Queue Management (Exit - Success) ---
-            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _force, 'DashCast')
-            return True
+            try:
+                if options_json.get('quit_app', False):
+                    logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
+                    cast.quit_app()
+                    t = 5
+                    while cast.status.app_id is not None and t > 0:
+                        time.sleep(0.1)
+                        t = t - 0.1
+                time.sleep(1)
+                
+                logging.debug(f'[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: {_value} | {str(options_json)}')
+                player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)  # type: ignore
+                time.sleep(2)
+                
+                cast.unregister_handler(player)
+                time.sleep(1)
+                
+                return True
+            finally:
+                # --- Wait Queue Management (Exit - Always) ---
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _force, 'DashCast')
             
         except Exception as e:
             logging.error(f'[DAEMON][controllerDashCast] Exception ({_googleUUID}) :: {e}')
             player = None
+            # Si le finally a échoué (ce qui ne devrait pas arriver souvent), on s'assure de nettoyer ici si besoin
+            # Mais avec la structure imbriquée "try...finally" pour la logique métier, le waitQueueExit est garanti si waitQueueEnter a réussi.
+            # L'exception ici catche les erreurs AVANT waitQueueEnter ? Non, car waitQueueEnter est au début.
             
-            # --- Wait Queue Management (Exit - Error) ---
-            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _force, 'DashCast')
+            # Correction: waitQueueEnter est appelé avant le bloc try qui contient le finally.
+            # Si une exception survient DANS waitQueueEnter, on ne doit pas appeler exit.
+            # Donc l'architecture actuelle `try (Entrance) ... except` est un peu maladroite pour DashCast car elle englobe tout.
+            
+            # Je vais restructurer DashCast pour correspondre aux autres controlleurs (WaitQueueEnter hors du bloc try principal de la logique).
             return False
             
     @staticmethod
@@ -1955,16 +1970,20 @@ class Functions:
                     return False
                 # ----------------------------------------
                 
-                if not _cmdForce:
-                    # Si DashCast alors sortir de l'appli avant sinon cela plante
-                    Functions.checkIfDashCast(cast)
-                
-                volumeBeforePlay = cast.status.volume_level
-                
-                groupSnapshot = Functions.getGroupSnapshot(cast)
-                isGroup = bool(groupSnapshot)
+                volumeBeforePlay = None
+                groupSnapshot = None
+                isGroup = False
 
                 try:
+                    if not _cmdForce:
+                        # Si DashCast alors sortir de l'appli avant sinon cela plante
+                        Functions.checkIfDashCast(cast)
+                    
+                    volumeBeforePlay = cast.status.volume_level
+                    
+                    groupSnapshot = Functions.getGroupSnapshot(cast)
+                    isGroup = bool(groupSnapshot)
+
                     if not _appDing:
                         if isGroup:
                             Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
@@ -2025,9 +2044,6 @@ class Functions:
                         
                         logging.debug(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: {str(cast.media_controller.status)}')
                     
-                    # --- Wait Queue Management (Exit - Success) ---
-                    Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, radioType)
-                    
                     return True
                 except Exception as e:
                     logging.error(f'[DAEMON][controllerRadios] Exception ({_googleUUID}) :: {e}')
@@ -2037,10 +2053,10 @@ class Functions:
                         else:
                             cast.set_volume(volume=volumeBeforePlay)
                     
-                    # --- Wait Queue Management (Exit - Error) ---
-                    Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, radioType)
-
                     return False
+                finally:
+                    # --- Wait Queue Management (Exit - Always) ---
+                    Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, radioType)
 
     @staticmethod
     def controllerSounds(cast, _googleUUID, _value, _options, _controller):
@@ -2079,16 +2095,20 @@ class Functions:
                 return False
             # ----------------------------------------
             
-            if not _cmdForce:
-                # Si DashCast alors sortir de l'appli avant sinon cela plante
-                Functions.checkIfDashCast(cast)
-            
-            volumeBeforePlay = cast.status.volume_level
-
-            groupSnapshot = Functions.getGroupSnapshot(cast)
-            isGroup = bool(groupSnapshot)
+            volumeBeforePlay = None
+            groupSnapshot = None
+            isGroup = False
 
             try:
+                if not _cmdForce:
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
+                
+                volumeBeforePlay = cast.status.volume_level
+
+                groupSnapshot = Functions.getGroupSnapshot(cast)
+                isGroup = bool(groupSnapshot)
+
                 if not _appDing:
                     if isGroup:
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
@@ -2148,15 +2168,38 @@ class Functions:
                 
                 media_player_state = None
                 media_has_played = False
+                
+                # Timeout de sécurité pour éviter une boucle infinie (60 secondes sans changement d'état ou blocage)
+                # On reset le timeout tant que ça joue pour permettre les sons longs.
+                timeout_loops = 600  # 600 * 0.1s = 60s
+                current_loop = 0
 
                 while True:
+                    # Gestion du Timeout
+                    current_loop += 1
+                    if current_loop > timeout_loops:
+                        logging.warning(f'[DAEMON][controllerActions] {soundType} :: Timeout waiting for media end (Blocked or Too Long Buffering)')
+                        break
+
                     if media_player_state != cast.media_controller.status.player_state:
                         media_player_state = cast.media_controller.status.player_state
+                        
+                        # Si le statut change, on peut reset le timeout (signe de vie)
+                        # Sauf si on passe en IDLE (fin) qui sera géré plus bas
+                        current_loop = 0 
+                        
                         if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
+                            # Fin normale de lecture
                             break
+                        
                         if media_player_state in ['PLAYING']:
                             media_has_played = True
                             logging.debug(f'[DAEMON][controllerActions] Diffusion {soundType} en cours :: {str(cast.media_controller.status)}')
+                    
+                    # Si on est en train de jouer, on reset le timeout en permanence pour ne pas couper les sons longs
+                    if media_player_state == 'PLAYING':
+                        current_loop = 0
+                    
                     time.sleep(0.1)
     
                 cast.quit_app()
@@ -2166,10 +2209,8 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
             
-                # --- Wait Queue Management (Exit - Success) ---
-                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, soundType)
-                
                 return True
+
             except Exception as e:
                 logging.error(f'[DAEMON][controllerSounds] Exception ({_googleUUID}) :: {e}')
                 if volumeBeforePlay is not None:
@@ -2177,11 +2218,11 @@ class Functions:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
-                
-                # --- Wait Queue Management (Exit - Error) ---
-                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, soundType)
-
                 return False
+
+            finally:
+                # --- Wait Queue Management (Exit - Always) ---
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, soundType)
 
     @staticmethod
     def controllerMedia(cast, _googleUUID, _value, _options):
@@ -2220,16 +2261,19 @@ class Functions:
                 return False
             # ----------------------------------------
             
-            if not _cmdForce:
-                # Si DashCast alors sortir de l'appli avant sinon cela plante
-                Functions.checkIfDashCast(cast)
-            
-            volumeBeforePlay = cast.status.volume_level
-
-            groupSnapshot = Functions.getGroupSnapshot(cast)
-            isGroup = bool(groupSnapshot)
+            volumeBeforePlay = None
+            groupSnapshot = None
+            isGroup = False
 
             try:
+                if not _cmdForce:
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
+                
+                volumeBeforePlay = cast.status.volume_level
+                groupSnapshot = Functions.getGroupSnapshot(cast)
+                isGroup = bool(groupSnapshot)
+
                 if not _appDing:
                     if isGroup:
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
@@ -2297,10 +2341,8 @@ class Functions:
                 
                 logging.debug(f'[DAEMON][controllerActions] Diffusion Media lancée :: {str(cast.media_controller.status)}')
                 
-                # --- Wait Queue Management (Exit - Success) ---
-                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'Media')
-                        
                 return True
+                
             except Exception as e:
                 logging.error(f'[DAEMON][controllerMedia] Exception ({_googleUUID}) :: {e}')
                 if volumeBeforePlay is not None:
@@ -2309,10 +2351,11 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                # --- Wait Queue Management (Exit - Error) ---
-                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'Media')
-
                 return False
+                
+            finally:
+                # --- Wait Queue Management (Exit - Always) ---
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'Media')
 
     @staticmethod
     def controllerActions(_googleUUID='UNKNOWN', _controller='', _value='', _options=''):
