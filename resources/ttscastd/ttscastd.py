@@ -1669,7 +1669,7 @@ class Functions:
 
     @staticmethod
     def controllerStartApp(cast, _googleUUID, _value, _options):
-        logging.debug('[DAEMON][controllerActions] Lancement de l\'application :: %s', _value)
+        logging.debug(f'[DAEMON][controllerActions] Lancement de l\'application :: {_value}')
         
         _volume = None
         _appDing = True
@@ -1683,9 +1683,9 @@ class Functions:
                 _appDing = options_json.get('ding', True)
                 _cmdForce = options_json.get('force', False)
                 _cmdWait = options_json.get('wait', None)
-                logging.debug('[DAEMON][controllerActions] StartApp :: Options :: %s', str(options_json))
+                logging.debug(f'[DAEMON][controllerActions] StartApp :: Options :: {str(options_json)}')
         except ValueError as e:
-            logging.debug('[DAEMON][controllerActions] StartApp :: Options mal formatées (Json KO) :: %s', e)
+            logging.debug(f'[DAEMON][controllerActions] StartApp :: Options mal formatées (Json KO) :: {e}')
         
         _appDing = False if myConfig.appDisableDing else _appDing
         
@@ -1714,7 +1714,7 @@ class Functions:
                 else:
                     cast.set_volume(volume=0)
             elif (_volume is not None):
-                logging.debug('[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                logging.debug(f'[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                 if isGroup:
                     Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                 else:
@@ -1723,7 +1723,7 @@ class Functions:
             cast.start_app(_value)
             
             if (not _appDing and _volume is not None):
-                logging.debug('[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                logging.debug(f'[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                 if isGroup:
                     Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                 else:
@@ -1736,14 +1736,14 @@ class Functions:
             
             cast.media_controller.block_until_active()
             
-            logging.debug('[DAEMON][controllerActions] StartApp :: Application lancée :: %s', str(_value))
+            logging.debug(f'[DAEMON][controllerActions] StartApp :: Application lancée :: {str(_value)}')
             
             # --- Wait Queue Management (Exit - Success) ---
             Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'StartApp')
             return True
             
         except Exception as e:
-            logging.error('[DAEMON][controllerStartApp] Exception (%s) :: %s', _googleUUID, e)
+            logging.error(f'[DAEMON][controllerStartApp] Exception ({_googleUUID}) :: {e}')
             if volumeBeforePlay is not None:
                 if isGroup and groupSnapshot:
                     Functions.restoreGroupMembersVolume(groupSnapshot)
@@ -1757,7 +1757,7 @@ class Functions:
 
     @staticmethod
     def controllerYoutube(cast, _googleUUID, _value, _options):
-        logging.debug('[DAEMON][controllerActions] YouTube Id @ UUID :: %s @ %s', _value, _googleUUID)
+        logging.debug(f'[DAEMON][controllerActions] YouTube Id @ UUID :: {_value} @ {_googleUUID}')
         
         _playlist = None
         _enqueue = False
@@ -1775,9 +1775,9 @@ class Functions:
                 _appDing = options_json.get('ding', True)
                 _cmdForce = options_json.get('force', False)
                 _cmdWait = options_json.get('wait', None)
-                logging.debug('[DAEMON][controllerActions] YouTube :: Options :: %s', str(options_json))
+                logging.debug(f'[DAEMON][controllerActions] YouTube :: Options :: {str(options_json)}')
         except ValueError as e:
-            logging.debug('[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: %s', e)
+            logging.debug(f'[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: {e}')
         
         _appDing = False if myConfig.appDisableDing else _appDing
         
@@ -1805,7 +1805,7 @@ class Functions:
                 else:
                     cast.set_volume(volume=0)
             elif (_volume is not None):
-                logging.debug('[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                logging.debug(f'[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                 if isGroup:
                     Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                 else:
@@ -1820,7 +1820,7 @@ class Functions:
             quick_play.quick_play(cast, app_name, app_data)
             
             if (not _appDing and _volume is not None):
-                logging.debug('[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                logging.debug(f'[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                 if isGroup:
                     Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                 else:
@@ -1833,14 +1833,14 @@ class Functions:
             
             cast.media_controller.block_until_active()
             
-            logging.debug('[DAEMON][controllerActions] YouTube :: Diffusion lancée :: %s', str(cast.media_controller.status))
+            logging.debug(f'[DAEMON][controllerActions] YouTube :: Diffusion lancée :: {str(cast.media_controller.status)}')
             
             # --- Wait Queue Management (Exit - Success) ---
             Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'YouTube')
             return True
             
         except Exception as e:
-            logging.error('[DAEMON][controllerYoutube] Exception (%s) :: %s', _googleUUID, e)
+            logging.error(f'[DAEMON][controllerYoutube] Exception ({_googleUUID}) :: {e}')
             if volumeBeforePlay is not None:
                 if isGroup and groupSnapshot:
                     Functions.restoreGroupMembersVolume(groupSnapshot)
@@ -1854,7 +1854,7 @@ class Functions:
 
     @staticmethod
     def controllerDashCast(cast, _googleUUID, _value, _options):
-        logging.debug('[DAEMON][controllerActions] DashCast URL / Options @ UUID :: %s / %s @ %s', _value, _options, _googleUUID)
+        logging.debug(f'[DAEMON][controllerActions] DashCast URL / Options @ UUID :: {_value} / {_options} @ {_googleUUID}')
         
         player = dashcast.DashCastController()
         cast.register_handler(player)
@@ -1870,7 +1870,7 @@ class Functions:
                 _reload_seconds = options_json.get('reload_seconds', None)
                 _cmdWait = options_json.get('wait', None)
         except ValueError as e:
-            logging.debug('[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: %s', e)
+            logging.debug(f'[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: {e}')
         
         try:
             # Default target is the googleUUID until resolved by Queue logic
@@ -1891,7 +1891,7 @@ class Functions:
                     t = t - 0.1
             time.sleep(1)
             
-            logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: %s | %s', _value, str(options_json))
+            logging.debug(f'[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: {_value} | {str(options_json)}')
             player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)  # type: ignore
             time.sleep(2)
             
@@ -1903,7 +1903,7 @@ class Functions:
             return True
             
         except Exception as e:
-            logging.error('[DAEMON][controllerDashCast] Exception (%s) :: %s', _googleUUID, e)
+            logging.error(f'[DAEMON][controllerDashCast] Exception ({_googleUUID}) :: {e}')
             player = None
             
             # --- Wait Queue Management (Exit - Error) ---
@@ -1913,7 +1913,7 @@ class Functions:
     @staticmethod
     def controllerRadios(cast, _googleUUID, _value, _options, _controller):
         radioType = 'CustomRadios' if _controller == 'customradios' else 'Radios'
-        logging.debug(f'[DAEMON][controllerActions] {radioType} Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+        logging.debug(f'[DAEMON][controllerActions] {radioType} Streaming ID @ UUID :: {_value} @ {_googleUUID}')
         
         if _value == '':
             cast.quit_app()
@@ -1926,7 +1926,7 @@ class Functions:
                 _RadiosFilePath = myConfig.radiosFilePath
             
             if not os.path.isfile(_RadiosFilePath):
-                logging.error(f'[DAEMON][controllerActions] {radioType} JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
+                logging.error(f'[DAEMON][controllerActions] {radioType} JSON GetFile ERROR :: {_value} @ {_googleUUID}')
                 return False
             else:
                 _volume = None
@@ -1940,9 +1940,9 @@ class Functions:
                         _appDing = options_json.get('ding', True)
                         _cmdForce = options_json.get('force', False)
                         _cmdWait = options_json.get('wait', None)
-                        logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options :: %s', str(options_json))
+                        logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options :: {str(options_json)}')
                 except ValueError as e:
-                    logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options mal formatées (Json KO) :: %s', e)
+                    logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options mal formatées (Json KO) :: {e}')
 
                 _appDing = False if myConfig.appDisableDing else _appDing
                 
@@ -1971,7 +1971,7 @@ class Functions:
                         else:
                             cast.set_volume(volume=0)
                     elif (_volume is not None):
-                        logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                        logging.debug(f'[DAEMON][controllerActions] {radioType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                         if isGroup:
                             Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                         else:
@@ -2010,7 +2010,7 @@ class Functions:
                         quick_play.quick_play(cast, app_name, app_data)
                         
                         if (not _appDing and _volume is not None):
-                            logging.debug(f'[DAEMON][controllerActions] {radioType} :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                            logging.debug(f'[DAEMON][controllerActions] {radioType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                             if isGroup:
                                 Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                             else:
@@ -2023,7 +2023,7 @@ class Functions:
                         
                         cast.media_controller.block_until_active()
                         
-                        logging.debug(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: %s', str(cast.media_controller.status))
+                        logging.debug(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: {str(cast.media_controller.status)}')
                     
                     # --- Wait Queue Management (Exit - Success) ---
                     Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, radioType)
@@ -2045,7 +2045,7 @@ class Functions:
     @staticmethod
     def controllerSounds(cast, _googleUUID, _value, _options, _controller):
         soundType = 'CustomSounds' if _controller == 'customsounds' else 'Sounds'
-        logging.debug(f'[DAEMON][controllerActions] {soundType} Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+        logging.debug(f'[DAEMON][controllerActions] {soundType} Streaming ID @ UUID :: {_value} @ {_googleUUID}')
         
         if _value == '':
             cast.quit_app()
@@ -2064,9 +2064,9 @@ class Functions:
                     _appDing = options_json.get('ding', True)
                     _cmdWait = options_json.get('wait', None)
                     _cmdForce = options_json.get('force', False)
-                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Options :: %s', str(options_json))
+                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Options :: {str(options_json)}')
             except ValueError as e:
-                logging.debug(f'[DAEMON][controllerActions] {soundType} :: Options mal formatées (Json KO) :: %s', e)
+                logging.debug(f'[DAEMON][controllerActions] {soundType} :: Options mal formatées (Json KO) :: {e}')
 
             _appDing = False if myConfig.appDisableDing else _appDing
 
@@ -2095,7 +2095,7 @@ class Functions:
                     else:
                         cast.set_volume(volume=0)
                 elif (_volume is not None):
-                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                     if isGroup:
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                     else:
@@ -2105,7 +2105,7 @@ class Functions:
                     soundURL = f'{myConfig.ttsWebSrvMedia}custom/{_value}'
                 else:
                     soundURL = f'{myConfig.ttsWebSrvMedia}{_value}'
-                logging.debug(f'[DAEMON][controllerActions] {soundType} :: FilePath :: %s', soundURL)
+                logging.debug(f'[DAEMON][controllerActions] {soundType} :: FilePath :: {soundURL}')
 
                 soundThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                 soundAlbumName = "Jeedom"
@@ -2131,7 +2131,7 @@ class Functions:
                 quick_play.quick_play(cast, app_name, app_data)
                 
                 if (not _appDing and _volume is not None):
-                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                     if isGroup:
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                     else:
@@ -2144,7 +2144,7 @@ class Functions:
                 
                 cast.media_controller.block_until_active()
                 
-                logging.debug(f'[DAEMON][controllerActions] Diffusion {soundType} lancée :: %s', str(cast.media_controller.status))
+                logging.debug(f'[DAEMON][controllerActions] Diffusion {soundType} lancée :: {str(cast.media_controller.status)}')
                 
                 media_player_state = None
                 media_has_played = False
@@ -2156,7 +2156,7 @@ class Functions:
                             break
                         if media_player_state in ['PLAYING']:
                             media_has_played = True
-                            logging.debug(f'[DAEMON][controllerActions] Diffusion {soundType} en cours :: %s', str(cast.media_controller.status))
+                            logging.debug(f'[DAEMON][controllerActions] Diffusion {soundType} en cours :: {str(cast.media_controller.status)}')
                     time.sleep(0.1)
     
                 cast.quit_app()
@@ -2185,10 +2185,10 @@ class Functions:
 
     @staticmethod
     def controllerMedia(cast, _googleUUID, _value, _options):
-        logging.debug('[DAEMON][controllerActions] Media Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
+        logging.debug(f'[DAEMON][controllerActions] Media Streaming ID @ UUID :: {_value} @ {_googleUUID}')
         
         if not Functions.isURL(_value):
-            logging.error('[DAEMON][controllerActions] Media ERROR (not URL) :: %s @ %s', _value, _googleUUID)
+            logging.error(f'[DAEMON][controllerActions] Media ERROR (not URL) :: {_value} @ {_googleUUID}')
             return False
         else:
             _volume = None
@@ -2205,9 +2205,9 @@ class Functions:
                     _cmdForce = options_json.get('force', False)
                     _cmdWait = options_json.get('wait', None)
 
-                    logging.debug('[DAEMON][controllerActions] Media :: Options :: %s', str(options_json))
+                    logging.debug(f'[DAEMON][controllerActions] Media :: Options :: {str(options_json)}')
             except ValueError as e:
-                logging.debug('[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: %s', e)
+                logging.debug(f'[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: {e}')
 
             _appDing = False if myConfig.appDisableDing else _appDing
             
@@ -2236,7 +2236,7 @@ class Functions:
                     else:
                         cast.set_volume(volume=0)
                 elif (_volume is not None):
-                    logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                    logging.debug(f'[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                     if isGroup:
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                     else:
@@ -2282,7 +2282,7 @@ class Functions:
                 quick_play.quick_play(cast, app_name, app_data)
                     
                 if (not _appDing and _volume is not None):
-                    logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
+                    logging.debug(f'[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                     if isGroup:
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                     else:
@@ -2295,14 +2295,14 @@ class Functions:
                 
                 cast.media_controller.block_until_active()
                 
-                logging.debug('[DAEMON][controllerActions] Diffusion Media lancée :: %s', str(cast.media_controller.status))
+                logging.debug(f'[DAEMON][controllerActions] Diffusion Media lancée :: {str(cast.media_controller.status)}')
                 
                 # --- Wait Queue Management (Exit - Success) ---
                 Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'Media')
                         
                 return True
             except Exception as e:
-                logging.error('[DAEMON][controllerMedia] Exception (%s) :: %s', _googleUUID, e)
+                logging.error(f'[DAEMON][controllerMedia] Exception ({_googleUUID}) :: {e}')
                 if volumeBeforePlay is not None:
                     if isGroup and groupSnapshot:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
@@ -2324,7 +2324,7 @@ class Functions:
                     cast = myConfig.NETCAST_DEVICES[_uuid]    
                     logging.debug('[DAEMON][controllerActions] Chromecast trouvé, lancement des actions')
                 else:
-                    logging.debug('[DAEMON][controllerActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][controllerActions] Aucun Chromecast avec cet UUID :: {_googleUUID}')
                     return False
                 
                 if (_controller == 'start_app'):
@@ -2362,7 +2362,7 @@ class Functions:
                     cast = myConfig.NETCAST_DEVICES[_uuid]
                     logging.debug('[DAEMON][mediaActions] Chromecast trouvé, lancement des actions')
                 else:
-                    logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: {_googleUUID}')
                     return False
                 
                 if (_mode in ('volumeset', 'volumeup', 'volumedown')):
@@ -2373,40 +2373,40 @@ class Functions:
                         castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
                     elif (_mode == 'volumedown'): 
                         castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
-                    logging.debug('[DAEMON][mediaActions] Chromecast Volume @ UUID :: %s @ %s', str(castVolumeLevel), _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] Chromecast Volume @ UUID :: {str(castVolumeLevel)} @ {_googleUUID}')
                 elif (_mode == 'media_pause'):
                     cast.media_controller.pause()
-                    logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] PAUSE :: {_googleUUID}')
                 elif (_mode == 'media_play'):
                     cast.media_controller.play()
-                    logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] PLAY :: {_googleUUID}')
                 elif (_mode == 'media_stop'): 
                     cast.media_controller.stop()
-                    logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] STOP :: {_googleUUID}')
                 elif (_mode == 'media_quit'): 
                     cast.quit_app()
-                    logging.debug('[DAEMON][mediaActions] QUIT :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] QUIT :: {_googleUUID}')
                 elif (_mode == 'media_next'): 
                     cast.media_controller.queue_next()
-                    logging.debug('[DAEMON][mediaActions] NEXT :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] NEXT :: {_googleUUID}')
                 elif (_mode == 'media_previous'): 
                     cast.media_controller.queue_prev()
-                    logging.debug('[DAEMON][mediaActions] PREVIOUS :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] PREVIOUS :: {_googleUUID}')
                 elif (_mode == 'media_rewind'): 
                     cast.media_controller.rewind()
-                    logging.debug('[DAEMON][mediaActions] REWIND :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] REWIND :: {_googleUUID}')
                 elif (_mode == 'mute_on'): 
                     cast.set_volume_muted(True)
-                    logging.debug('[DAEMON][mediaActions] MUTE ON :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] MUTE ON :: {_googleUUID}')
                 elif (_mode == 'mute_off'): 
                     cast.set_volume_muted(False)
-                    logging.debug('[DAEMON][mediaActions] MUTE OFF :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] MUTE OFF :: {_googleUUID}')
                     
                 # Libération de la mémoire
                 cast = None
                 return True
             except Exception as e:
-                logging.error('[DAEMON][mediaActions] Exception on mediaActions (%s) :: %s', _googleUUID, e)
+                logging.error(f'[DAEMON][mediaActions] Exception on mediaActions ({_googleUUID}) :: {e}')
                 logging.debug(traceback.format_exc())
                 
                 # Libération de la mémoire
