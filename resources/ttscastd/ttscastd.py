@@ -1542,44 +1542,37 @@ class Functions:
                 mz.update_members()
                 logging.debug(f"[DAEMON][GroupSnapshot] Members found for {cast.name}: {mz.members}")
                 
-                # Check for stereo pairs / subdevices in status
+                # Detection Paire Stéréo (multichannelDevices)
+                # Si présent, on traite le groupe comme un appareil unique (la Paire) et non comme une liste de membres.
+                isStereoPair = False
                 if hasattr(mz, 'multizone_status') and 'multichannelDevices' in mz.multizone_status and mz.multizone_status['multichannelDevices']:
-                    logging.debug(f"[DAEMON][GroupSnapshot] Stereo Pair/Multichannel detected: {mz.multizone_status['multichannelDevices']}")
-                    for channel_dev in mz.multizone_status['multichannelDevices']:
-                        try:
-                            # Use deviceId from sub-device
-                            sub_uuid_str = channel_dev.get('deviceId')
-                            if not sub_uuid_str: 
-                                continue
-                            sub_uuid = UUID(sub_uuid_str)
-                            
-                            if sub_uuid in myConfig.NETCAST_DEVICES:
-                                dev = myConfig.NETCAST_DEVICES[sub_uuid]
-                                snapshot[sub_uuid] = dev.status.volume_level
-                                logging.debug(f"[DAEMON][GroupSnapshot] Added stereo member {dev.name} ({sub_uuid}) with volume {dev.status.volume_level}")
-                            else:
-                                logging.warning(f"[DAEMON][GroupSnapshot] Stereo member {sub_uuid} not found in NETCAST_DEVICES")
-                        except ValueError as ve:
-                            logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID in multichannel: {ve}")
-
-                for member_uuid_str in mz.members:
-                    # Convert string UUID (no dashes) to UUID object used in NETCAST_DEVICES
-                    try:
-                        member_uuid = UUID(member_uuid_str)
-                    except ValueError:
-                        logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID string: {member_uuid_str}")
-                        continue
+                    isStereoPair = True
+                    logging.debug(f"[DAEMON][GroupSnapshot] Stereo Pair detected (multichannelDevices). Treating {cast.name} as single device.")
                     
-                    # Avoid duplicates if already added via multichannel
-                    if member_uuid in snapshot:
-                        continue
+                    # On ajoute uniquement l'UUID de la paire elle-même au snapshot
+                    if cast.uuid in myConfig.NETCAST_DEVICES:
+                        snapshot[cast.uuid] = cast.status.volume_level
+                        logging.debug(f"[DAEMON][GroupSnapshot] Added Pair Device {cast.name} ({cast.uuid}) to snapshot")
 
-                    if member_uuid in myConfig.NETCAST_DEVICES:
-                        dev = myConfig.NETCAST_DEVICES[member_uuid]
-                        snapshot[member_uuid] = dev.status.volume_level
-                        logging.debug(f"[DAEMON][GroupSnapshot] Added member {dev.name} ({member_uuid}) with volume {dev.status.volume_level}")
-                    else:
-                        logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
+                if not isStereoPair:
+                    for member_uuid_str in mz.members:
+                        # Convert string UUID (no dashes) to UUID object used in NETCAST_DEVICES
+                        try:
+                            member_uuid = UUID(member_uuid_str)
+                        except ValueError:
+                            logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID string: {member_uuid_str}")
+                            continue
+                        
+                        # Avoid duplicates if already added via multichannel
+                        if member_uuid in snapshot:
+                            continue
+
+                        if member_uuid in myConfig.NETCAST_DEVICES:
+                            dev = myConfig.NETCAST_DEVICES[member_uuid]
+                            snapshot[member_uuid] = dev.status.volume_level
+                            logging.debug(f"[DAEMON][GroupSnapshot] Added member {dev.name} ({member_uuid}) with volume {dev.status.volume_level}")
+                        else:
+                            logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
             else:
                 logging.debug(f"[DAEMON][GroupSnapshot] Cast {cast.name} ({cast.uuid}) not in NETCAST_GROUPS")
         except Exception as e:
