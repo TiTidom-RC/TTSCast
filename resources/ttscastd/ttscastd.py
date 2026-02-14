@@ -85,6 +85,19 @@ except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module config ::", e)
     sys.exit(1)
 
+
+class MyMultizoneController(MultizoneController):
+    def __init__(self, uuid):
+        super().__init__(uuid)
+        self.multizone_status = {}
+
+    def receive_message(self, message, data):
+        # Capture the status message if it is a MULTIZONE_STATUS
+        if data.get("type") == "MULTIZONE_STATUS":
+            self.multizone_status = data.get("status", {})
+            
+        return super().receive_message(message, data)
+        
 class MyMultizoneStatusListener(MultiZoneControllerListener):
     def __init__(self, name, cast):
         self.name = name
@@ -980,17 +993,16 @@ class TTSCast:
 
                 groupSnapshot = Functions.getGroupSnapshot(cast)
                 isGroup = bool(groupSnapshot)
+                logging.debug(f'[DAEMON][Cast] isGroup : {isGroup} :: {cast.name}')
 
                 if not appDing:
                     if isGroup:
-                        cast.set_volume(volume=0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
                     else:
                         cast.set_volume(volume=0)
                 elif volumeForPlay is not None:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     if isGroup:
-                        cast.set_volume(volume=1.0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
                     else:
                         cast.set_volume(volume=volumeForPlay / 100)
@@ -1017,8 +1029,8 @@ class TTSCast:
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     if isGroup and bool(groupSnapshot):
-                        cast.set_volume(volume=1.0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
+                        # cast.set_volume(volume=1.0)
                     else:
                         cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
@@ -1099,39 +1111,44 @@ class TTSCast:
                         logging.debug('[DAEMON][Cast] TTS Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
                 elif cmdWait is not None:
                     # WaitQueue if option defined
-                    if googleUUID in myConfig.cmdWaitQueue:
-                        if int(cmdWait) == 1:
-                            myConfig.cmdWaitQueue[googleUUID] = 0
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Reset %s (%s)', cmdWait, googleUUID) 
-                        elif int(cmdWait) > 1 and myConfig.cmdWaitQueue[googleUUID] == 0:
-                            t = 10
-                            while (myConfig.cmdWaitQueue[googleUUID] == 0 and t > 0):
-                                time.sleep(0.1)
-                                t -= 1
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue (t) :: %s ', str(t))
-                            if myConfig.cmdWaitQueue[googleUUID] == 0:
-                                logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancelled %s (%s)', cmdWait, googleUUID)
-                                return False
+                    targetWaitUUID = Functions.resolveWaitQueueUUID(googleUUID)
+                    if targetWaitUUID != googleUUID:
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Resolved Linked UUID %s -> %s', googleUUID, targetWaitUUID)
+                    
+                    # Initialisation si clé manquante pour le target
+                    if targetWaitUUID not in myConfig.cmdWaitQueue:
+                        myConfig.cmdWaitQueue[targetWaitUUID] = 0
+
+                    if int(cmdWait) == 1:
+                        myConfig.cmdWaitQueue[targetWaitUUID] = 0
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Reset %s (%s)', cmdWait, targetWaitUUID) 
+                    elif int(cmdWait) > 1 and myConfig.cmdWaitQueue[targetWaitUUID] == 0:
+                        t = 10
+                        while (myConfig.cmdWaitQueue[targetWaitUUID] == 0 and t > 0):
+                            time.sleep(0.1)
+                            t -= 1
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue (t) :: %s ', str(t))
+                        if myConfig.cmdWaitQueue[targetWaitUUID] == 0:
+                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancelled %s (%s)', cmdWait, targetWaitUUID)
+                            return False
                             
-                    if googleUUID in myConfig.cmdWaitQueue:
-                        myConfig.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait)
-                    else:
-                        myConfig.cmdWaitQueue[googleUUID] = 2 ** int(cmdWait)
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: Start Waiting %s (%s)', cmdWait, googleUUID)
+                    myConfig.cmdWaitQueue[targetWaitUUID] += 2 ** int(cmdWait)
+
+                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[targetWaitUUID]), targetWaitUUID)
+                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: Start Waiting %s (%s)', cmdWait, targetWaitUUID)
                     queue_start_time = int(time.time())
-                    while myConfig.cmdWaitQueue[googleUUID] % (2 ** int(cmdWait)) != 0:
+                    while myConfig.cmdWaitQueue[targetWaitUUID] % (2 ** int(cmdWait)) != 0:
                         queue_current_time = int(time.time())
                         if (queue_start_time + (myConfig.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Timeout %s (%s)', cmdWait, googleUUID)
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
+                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Timeout %s (%s)', cmdWait, targetWaitUUID)
+                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[targetWaitUUID]), targetWaitUUID)
                             return False
                         time.sleep(0.1)
-                    if myConfig.cmdWaitQueue[googleUUID] == 0:
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancel/Force %s (%s)', cmdWait, googleUUID)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
+                    if myConfig.cmdWaitQueue[targetWaitUUID] == 0:
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancel/Force %s (%s)', cmdWait, targetWaitUUID)
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[targetWaitUUID]), targetWaitUUID)
                         return False
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: End Waiting %s (%s)', cmdWait, googleUUID)
+                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: End Waiting %s (%s)', cmdWait, targetWaitUUID)
                 else:
                     if googleUUID in myConfig.cmdWaitQueue:
                         myConfig.cmdWaitQueue[googleUUID] = 0
@@ -1144,17 +1161,16 @@ class TTSCast:
 
                 groupSnapshot = Functions.getGroupSnapshot(cast)
                 isGroup = bool(groupSnapshot)
+                logging.debug(f'[DAEMON][Cast] isGroup : {isGroup} :: {cast.name}')
 
                 if not appDing:
                     if isGroup:
-                        cast.set_volume(volume=0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
                     else:
                         cast.set_volume(volume=0)
                 elif volumeForPlay is not None:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     if isGroup:
-                        cast.set_volume(volume=1.0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
                     else:
                         cast.set_volume(volume=volumeForPlay / 100)
@@ -1182,8 +1198,8 @@ class TTSCast:
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     if isGroup and bool(groupSnapshot):
-                        cast.set_volume(volume=1.0)
                         Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
+                        # cast.set_volume(volume=1.0)
                     else:
                         cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
@@ -1221,9 +1237,10 @@ class TTSCast:
                 
                 # Mise à jour de la WaitQueue
                 if cmdWait is not None and cmdForce is False:
-                    if myConfig.cmdWaitQueue[googleUUID] > 0:
-                        myConfig.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
+                    _targetUUID = Functions.resolveWaitQueueUUID(googleUUID)
+                    if _targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[_targetUUID] > 0:
+                        myConfig.cmdWaitQueue[_targetUUID] -= 2 ** int(cmdWait)
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
                 
                 # Libération de la mémoire
                 cast = None
@@ -1235,15 +1252,16 @@ class TTSCast:
                 if volumeBeforePlay is not None:
                     if isGroup and groupSnapshot:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
-                        cast.set_volume(volume=volumeBeforePlay) # type: ignore
+                        cast.set_volume(volume=volumeBeforePlay)  # type: ignore
                     else:
                         cast.set_volume(volume=volumeBeforePlay)  # type: ignore
                 
                 # Mise à jour de la WaitQueue
                 if cmdWait is not None and cmdForce is False:
-                    if myConfig.cmdWaitQueue[googleUUID] > 0:
-                        myConfig.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
+                    _targetUUID = Functions.resolveWaitQueueUUID(googleUUID)
+                    if _targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[_targetUUID] > 0:
+                        myConfig.cmdWaitQueue[_targetUUID] -= 2 ** int(cmdWait)
+                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_targetUUID]), _targetUUID)
                 
                 # Libération de la mémoire
                 cast = None
@@ -1389,6 +1407,54 @@ class Functions:
     """ Class Functions """
 
     @staticmethod
+    def resolveWaitQueueUUID(current_uuid_str):
+        """
+        Trouve un UUID 'canonique' pour la file d'attente (WaitQueue).
+        Permet de lier Member -> Group ou Group -> Member si une file est déjà active.
+        """
+        try:
+            current_uuid = UUID(current_uuid_str)
+        except ValueError:
+            return current_uuid_str
+
+        # 1. Si la queue existe déjà pour cet UUID et est active, on l'utilise (Priorité locale)
+        if myConfig.cmdWaitQueue.get(current_uuid_str, 0) > 0:
+            return current_uuid_str
+
+        # 2. Si c'est un membre, est-il dans un groupe actif ?
+        for group_uuid, mz in myConfig.NETCAST_GROUPS.items():
+            # mz.members contient des chaines UUID (parfois sans tirets)
+            member_found = False
+            try:
+                for m_str in mz.members:
+                    if UUID(m_str) == current_uuid:
+                        member_found = True
+                        break
+            except Exception:
+                pass
+            
+            if member_found:
+                # Si ce groupe a une file active, on s'y greffe
+                if myConfig.cmdWaitQueue.get(str(group_uuid), 0) > 0:
+                    logging.debug(f'[DAEMON][ResolveWait] Redirected Member {current_uuid_str} to Group {str(group_uuid)}')
+                    return str(group_uuid)
+
+        # 3. Si c'est un groupe, est-ce qu'un membre est actif ?
+        if current_uuid in myConfig.NETCAST_GROUPS:
+            mz = myConfig.NETCAST_GROUPS[current_uuid]
+            try:
+                for m_str in mz.members:
+                    m_uuid = UUID(m_str)
+                    m_key = str(m_uuid)
+                    if myConfig.cmdWaitQueue.get(m_key, 0) > 0:
+                        logging.debug(f'[DAEMON][ResolveWait] Redirected Group {current_uuid_str} to Member {m_key}')
+                        return m_key
+            except Exception:
+                pass
+
+        return current_uuid_str
+
+    @staticmethod
     def setGroupMembersVolume(membersUUIDs, targetVolume):
         """
         Définit le volume sur une liste de UUIDs (membres d'un groupe) en parallèle.
@@ -1448,40 +1514,60 @@ class Functions:
         Returns:
             dict: { uuid: volume_float } ou vide si ce n'est pas un groupe.
         """
-        groupMembersVolumes = {}
-        if cast.cast_info.cast_type == 'group' and cast.uuid in myConfig.NETCAST_GROUPS:
-            mz = myConfig.NETCAST_GROUPS[cast.uuid]
-            
-            for member_uuid in mz.members:
-                if member_uuid in myConfig.NETCAST_DEVICES:
-                    m_cast = myConfig.NETCAST_DEVICES[member_uuid]
-                    if m_cast.status:
-                        groupMembersVolumes[member_uuid] = m_cast.status.volume_level
-                        logging.debug('[DAEMON][GroupSnapshot] Member %s vol: %s', m_cast.name, str(m_cast.status.volume_level))
+        snapshot = {}
+        logging.debug(f"[DAEMON][GroupSnapshot] Start for cast: {cast.name} ({cast.uuid})")
+        try:
+            if cast.uuid in myConfig.NETCAST_GROUPS:
+                mz = myConfig.NETCAST_GROUPS[cast.uuid]
+                # On met a jour la liste des membres si besoin
+                mz.update_members()
+                logging.debug(f"[DAEMON][GroupSnapshot] Members found for {cast.name}: {mz.members}")
+                
+                # Check for stereo pairs / subdevices in status
+                if hasattr(mz, 'multizone_status') and 'multichannelDevices' in mz.multizone_status and mz.multizone_status['multichannelDevices']:
+                    logging.debug(f"[DAEMON][GroupSnapshot] Stereo Pair/Multichannel detected: {mz.multizone_status['multichannelDevices']}")
+                    for channel_dev in mz.multizone_status['multichannelDevices']:
+                        try:
+                            # Use deviceId from sub-device
+                            sub_uuid_str = channel_dev.get('deviceId')
+                            if not sub_uuid_str: 
+                                continue
+                            sub_uuid = UUID(sub_uuid_str)
+                            
+                            if sub_uuid in myConfig.NETCAST_DEVICES:
+                                dev = myConfig.NETCAST_DEVICES[sub_uuid]
+                                snapshot[sub_uuid] = dev.status.volume_level
+                                logging.debug(f"[DAEMON][GroupSnapshot] Added stereo member {dev.name} ({sub_uuid}) with volume {dev.status.volume_level}")
+                            else:
+                                logging.warning(f"[DAEMON][GroupSnapshot] Stereo member {sub_uuid} not found in NETCAST_DEVICES")
+                        except ValueError as ve:
+                             logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID in multichannel: {ve}")
+
+                for member_uuid_str in mz.members:
+                    # Convert string UUID (no dashes) to UUID object used in NETCAST_DEVICES
+                    try:
+                        member_uuid = UUID(member_uuid_str)
+                    except ValueError:
+                        logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID string: {member_uuid_str}")
+                        continue
+                    
+                    # Avoid duplicates if already added via multichannel
+                    if member_uuid in snapshot:
+                        continue
+
+                    if member_uuid in myConfig.NETCAST_DEVICES:
+                        dev = myConfig.NETCAST_DEVICES[member_uuid]
+                        snapshot[member_uuid] = dev.status.volume_level
+                        logging.debug(f"[DAEMON][GroupSnapshot] Added member {dev.name} ({member_uuid}) with volume {dev.status.volume_level}")
                     else:
-                        logging.debug('[DAEMON][GroupSnapshot] Member %s has no status', m_cast.name)
-                else:
-                    logging.debug('[DAEMON][GroupSnapshot] Member UUID %s not in NETCAST_DEVICES', member_uuid)
-            
-            # Si incomplet, on tente une mise à jour manuelle
-            if len(groupMembersVolumes) != len(mz.members):
-                logging.debug('[DAEMON][GroupSnapshot] Membres incomplets (%s / %s), tentative update_members', len(groupMembersVolumes), len(mz.members))
-                try:
-                    mz.update_members()
-                    # Re-essai apres update
-                    # groupMembersVolumes = {} # Ne pas écraser les volumes deja récupérés
-                    for member_uuid in mz.members:
-                        if member_uuid not in groupMembersVolumes and member_uuid in myConfig.NETCAST_DEVICES:
-                            m_cast = myConfig.NETCAST_DEVICES[member_uuid]
-                            if m_cast.status:
-                                groupMembersVolumes[member_uuid] = m_cast.status.volume_level
-                                logging.debug('[DAEMON][GroupSnapshot] Member (updated) %s vol: %s', m_cast.name, str(m_cast.status.volume_level))
-                        elif member_uuid not in myConfig.NETCAST_DEVICES:
-                            logging.debug('[DAEMON][GroupSnapshot] Member (updated) %s still NOT in NETCAST_DEVICES', member_uuid)
-                except Exception as e:
-                    logging.debug('[DAEMON][GroupSnapshot] Erreur update_members: %s', e)
+                        logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
+            else:
+                logging.debug(f"[DAEMON][GroupSnapshot] Cast {cast.name} ({cast.uuid}) not in NETCAST_GROUPS")
+        except Exception as e:
+            logging.error(f"[DAEMON][GroupSnapshot] Error: {e}")
         
-        return groupMembersVolumes
+        logging.debug(f"[DAEMON][GroupSnapshot] Final snapshot: {snapshot}")
+        return snapshot
 
     @staticmethod
     def markdownToPlainText(text):
@@ -2852,7 +2938,7 @@ class myCast:
                 if chromecast.cast_info.cast_type == 'group':
                     if chromecast.uuid not in myConfig.NETCAST_GROUPS:
                         logging.debug('[DAEMON][NETCAST][CastCallBack] Group detected, adding MultizoneController :: %s', str(chromecast.name))
-                        mz = MultizoneController(chromecast.uuid)
+                        mz = MyMultizoneController(chromecast.uuid)
                         chromecast.register_handler(mz)
                         mz.register_listener(MyMultizoneStatusListener(chromecast.name, chromecast))
                         # On force une update pour peupler la liste initialement
