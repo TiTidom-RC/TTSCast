@@ -410,8 +410,8 @@ class TTSCast:
             if myConfig.gCloudApiKey != 'noKey':
                 credentials = service_account.Credentials.from_service_account_file(os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey))
 
-                logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3/ogg)')
-                _ext = ".ogg" if myConfig.gCloudAudioEncoding == "OGG_OPUS" else ".mp3"
+                logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3/wav)')
+                _ext = ".wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else ".mp3"
                 raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + ttsSSML + "|" + myConfig.gCloudAudioEncoding
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + _ext
                 filepath = os.path.join(symLinkPath, filename)
