@@ -409,8 +409,8 @@ class TTSCast:
             if myConfig.gCloudApiKey != 'noKey':
                 credentials = service_account.Credentials.from_service_account_file(os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey))
 
-                logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3/wav)')
-                _ext = ".wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else ".mp3"
+                logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3/ogg)')
+                _ext = ".ogg" if myConfig.gCloudAudioEncoding == "OGG_OPUS" else ".mp3"
                 raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + ttsSSML + "|" + myConfig.gCloudAudioEncoding
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + _ext
                 filepath = os.path.join(symLinkPath, filename)
@@ -446,8 +446,8 @@ class TTSCast:
                     # Audio encoding possibles : LINEAR16, OGG_OPUS, MP3
                     # Sample rate possibles : 8000, 16000, 22050, 24000, 44100, 48000
                     
-                    if myConfig.gCloudAudioEncoding == "LINEAR16":
-                        _audio_encoding = googleCloudTTS.AudioEncoding.LINEAR16
+                    if myConfig.gCloudAudioEncoding == "OGG_OPUS":
+                        _audio_encoding = googleCloudTTS.AudioEncoding.OGG_OPUS
                     else:
                         _audio_encoding = googleCloudTTS.AudioEncoding.MP3
 
@@ -469,7 +469,7 @@ class TTSCast:
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
-                _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                _mimeType = "audio/ogg" if myConfig.gCloudAudioEncoding == "OGG_OPUS" else "audio/mp3"
 
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType=_mimeType)
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
@@ -666,8 +666,8 @@ class TTSCast:
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         
-                        if myConfig.gCloudAudioEncoding == "LINEAR16":
-                            _audio_encoding = googleCloudTTS.AudioEncoding.LINEAR16
+                        if myConfig.gCloudAudioEncoding == "OGG_OPUS":
+                            _audio_encoding = googleCloudTTS.AudioEncoding.OGG_OPUS
                         else:
                             _audio_encoding = googleCloudTTS.AudioEncoding.MP3
 
@@ -1947,15 +1947,8 @@ class Functions:
         except Exception as e:
             logging.error(f'[DAEMON][controllerDashCast] Exception ({_googleUUID}) :: {e}')
             player = None
-            # Si le finally a échoué (ce qui ne devrait pas arriver souvent), on s'assure de nettoyer ici si besoin
-            # Mais avec la structure imbriquée "try...finally" pour la logique métier, le waitQueueExit est garanti si waitQueueEnter a réussi.
-            # L'exception ici catche les erreurs AVANT waitQueueEnter ? Non, car waitQueueEnter est au début.
+            # TODO : Si une exception survient, est-ce que DashCast peut rester dans un état "bloqué" ? Faut-il tenter un quit_app de secours ici ?
             
-            # Correction: waitQueueEnter est appelé avant le bloc try qui contient le finally.
-            # Si une exception survient DANS waitQueueEnter, on ne doit pas appeler exit.
-            # Donc l'architecture actuelle `try (Entrance) ... except` est un peu maladroite pour DashCast car elle englobe tout.
-            
-            # Je vais restructurer DashCast pour correspondre aux autres controlleurs (WaitQueueEnter hors du bloc try principal de la logique).
             return False
             
     @staticmethod
