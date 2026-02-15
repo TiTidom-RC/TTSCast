@@ -440,7 +440,15 @@ class TTSCast:
                             ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
                         text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-                    audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
+                    # TODO Ajouter les effets possibles : https://cloud.google.com/text-to-speech/docs/audio-profiles
+                    # Effets possibles : 'headphone-class-device', 'small-bluetooth-speaker-class-device', 'medium-bluetooth-speaker-class-device', 'large-home-entertainment-class-device', 'large-automotive-class-device', 'telephony-class-application'
+                    # Ajouter l'audio encoding possible : LINEAR16, OGG_OPUS, MP3
+                    # Sample rate possibles : 8000, 16000, 22050, 24000, 44100, 48000
+                    audio_config = googleCloudTTS.AudioConfig(
+                        audio_encoding=googleCloudTTS.AudioEncoding.MP3,
+                        effects_profile_id=['medium-bluetooth-speaker-class-device'],
+                        speaking_rate=float(ttsSpeed)
+                    )
 
                     client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
                     response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
