@@ -15,7 +15,7 @@
       "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Europe_1_logo_2022.svg/1200px-Europe_1_logo_2022.svg.png"
    },
    "europe_2":{
-      "location":"https://stream.europe2.fr/europe2.mp3",
+      "location":"https://europe2.lmn.fm/europe2.mp3",
       "title":"Europe 2",
       "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/3/3e/Europe_2_logo_2023.svg/1200px-Europe_2_logo_2023.svg.png"
    },
@@ -60,7 +60,7 @@
       "image":"https://www.fip.fr/sites/default/files/asset/2021-02/FIP_Jazz.png"
    },
    "fip_monde":{
-      "location":"https://icecast.radiofrance.fr/fipmonde-midfi.mp3",
+      "location":"https://icecast.radiofrance.fr/fipworld-midfi.mp3",
       "title":"FIP Monde",
       "image":"https://www.fip.fr/sites/default/files/asset/2021-02/FIP_Monde.png"
    },
@@ -80,53 +80,53 @@
       "image":"http://www.jazzradio.fr/media/radio/thumb/90x90_ladies-and-crooners.png"
    },
    "pulsradio_trance":{
-      "location":"https://pulstrance.ice.infomaniak.ch/pulstrance.mp3",
+      "location":"https://icecast.pulsradio.com/pulstranceHD.mp3",
       "title":"PulsRadio Trance",
       "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
    },
    "pulsradio_lounge":{
-      "location":"https://pulslounge.ice.infomaniak.ch/pulslounge.mp3",
+      "location":"https://icecast.pulsradio.com/pulsloungeHD.mp3",
       "title":"PulsRadio Lounge",
       "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
    },
    "pulsradio_dance":{
-      "location":"https://pulsradio.ice.infomaniak.ch/pulsradio.mp3",
+      "location":"https://icecast.pulsradio.com/pulsHD.mp3",
       "title":"PulsRadio Dance",
       "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
    },
    "pulsradio_club":{
-      "location":"https://pulsclub.ice.infomaniak.ch/pulsclub.mp3",
+      "location":"https://icecast.pulsradio.com/pulsclubHD.mp3",
       "title":"PulsRadio Club",
       "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
    },
    "pulsradio_hits":{
-      "location":"https://pulshits.ice.infomaniak.ch/pulshits.mp3",
+      "location":"https://icecast.pulsradio.com/hitpartyHD.mp3",
       "title":"PulsRadio Hits",
       "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
    },
    "pulsradio_80":{
-      "location":"https://puls80.ice.infomaniak.ch/puls80.mp3",
+      "location":"https://icecast.pulsradio.com/puls80HD.mp3",
       "title":"PulsRadio 80",
       "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
    },
    "pulsradio_90":{
-      "location":"https://puls90.ice.infomaniak.ch/puls90.mp3",
+      "location":"https://icecast.pulsradio.com/puls90HD.mp3",
       "title":"PulsRadio 90",
       "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
    },
    "pulsradio_2000":{
-      "location":"https://puls2000.ice.infomaniak.ch/puls2000.mp3",
+      "location":"https://icecast.pulsradio.com/puls2000HD.mp3",
       "title":"PulsRadio 2000",
       "image":"https://www.pulsradio.com/img/logo-pulsradio.png"
    },
    "mix_x_fm":{
-      "location":"https://mixxfmfr.ice.infomaniak.ch/mixxfmfr-192.mp3",
+      "location":"https://mixxfm2.ice.infomaniak.ch/mixxfmnet.mp3",
       "title":"MIX X FM",
       "image":"http://ecouter.lesindesradios.fr/logos/orange48.png"
    },
-   "sweet_fm":{
-      "location":"https://sweetfm.ice.infomaniak.ch/sweetfm-192.mp3",
-      "title":"Sweet FM",
+   "sweet_fm_orleans":{
+      "location":"http://stream.rcs.revma.com/c741z6vstk3vv",
+      "title":"Sweet FM Orléans",
       "image":"https://images.lesindesradios.fr/fit-in/300x2000/filters:format(webp)/filters:quality(100)/radios/sweetfm/images/logo_GYAPPbBOZO.png"
    },
    "rtl_2":{
@@ -140,23 +140,18 @@
       "image":"https://upload.wikimedia.org/wikipedia/fr/4/46/BFM_Business_2019.png"
    },
    "cherie_fm":{
-      "location":"https://scdn.nrjaudio.fm/audio1/fr/30201/mp3_128.mp3",
+      "location":"https://streaming.nrjaudio.fm/ouuku85n3nje",
       "title":"Cherie FM",
       "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/1/1d/Logo_Ch%C3%A9rie_FM_2019.svg/1200px-Logo_Ch%C3%A9rie_FM_2019.svg.png"
    },
-   "cherie_fm_80":{
-      "location":"https://scdn.nrjaudio.fm/adwz1/fr/30237/mp3_128.mp3",
-      "title":"Cherie 80",
-      "image":"https://zupimages.net/up/23/37/ofi4.png"
-   },
    "cherie_fm_90":{
-      "location":"https://scdn.nrjaudio.fm/adwz1/fr/30239/mp3_128.mp3",
-      "title":"Cherie 90",
+      "location":"https://streaming.nrjaudio.fm/ou6p4cxp336f",
+      "title":"Cherie FM 90",
       "image":"https://zupimages.net/up/23/37/ofi4.png"
    },
    "cherie_fm_acoustic":{
-      "location":"https://scdn.nrjaudio.fm/adwz1/fr/30269/mp3_128.mp3",
-      "title":"Cherie Acoustic",
+      "location":"https://streaming.nrjaudio.fm/ouw8wysk6j4d",
+      "title":"Cherie FM Acoustic",
       "image":"https://zupimages.net/up/23/37/ofi4.png"
    },
    "fun_radio":{
@@ -180,7 +175,7 @@
       "image":"https://www.jazzradio.fr/media/pochette.jpg"
    },
    "latina":{
-      "location":"https://latina.ice.infomaniak.ch/latina-high.mp3",
+      "location":"https://start-latina.ice.infomaniak.ch/start-latina-high.mp3",
       "title":"Latina",
       "image":"https://upload.wikimedia.org/wikipedia/fr/f/f6/Logo_Latina_2020.png"
    },
@@ -195,7 +190,7 @@
       "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/0/04/Mouv%27_logo_2021.svg/1200px-Mouv%27_logo_2021.svg.png"
    },
    "nostalgie":{
-      "location":"https://scdn.nrjaudio.fm/audio1/fr/30601/mp3_128.mp3",
+      "location":"https://streaming.nrjaudio.fm/oug7girb92oc",
       "title":"Nostalgie France",
       "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/1/18/Logo_Nostalgie_2015.svg/1200px-Logo_Nostalgie_2015.svg.png"
    },
@@ -205,7 +200,7 @@
       "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/f/f5/Radio_Nova_logo_2018.svg/1200px-Radio_Nova_logo_2018.svg.png"
    },
    "nrj":{
-      "location":"https://scdn.nrjaudio.fm/audio1/fr/30001/mp3_128.mp3",
+      "location":"https://streaming.nrjaudio.fm/oumvmk8fnozc",
       "title":"NRJ France",
       "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/6/62/Logo_NRJ.svg/1200px-Logo_NRJ.svg.png"
    },
@@ -215,7 +210,7 @@
       "image":"https://images.lesindesradios.fr/fit-in/300x2000/filters:format(webp)/filters:quality(100)/radios/oui-fm/images/logo_KoooUByHla.png"
    },
    "phare_fm":{
-      "location":"http://str0.creacast.com/pharefm",
+      "location":"https://str0.creacast.com/pharefm",
       "title":"Phare FM",
       "image":"http://pharefm.com/favicon.ico"
    },
@@ -230,17 +225,17 @@
       "image":"https://www.rcf.fr/favicon.ico"
    },
    "rfi_monde":{
-      "location":"https://live02.rfi.fr/rfimonde-96k.mp3",
+      "location":"http://live02.rfi.fr/rfimonde-96k.mp3",
       "title":"RFI Monde",
       "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/b/b8/RFI_logo.svg/1024px-RFI_logo.svg.png"
    },
    "rfm":{
-      "location":"https://stream.rfm.fr/rfm.mp3",
+      "location":"https://rfm.lmn.fm/rfm.mp3",
       "title":"RFM",
       "image":"http://cdn-rfm.lanmedia.fr/apple-touch-icon-120x120.png"
    },
    "rire_et_chansons":{
-      "location":"https://scdn.nrjaudio.fm/audio1/fr/30401/mp3_128.mp3",
+      "location":"https://streaming.nrjaudio.fm/oug7girb92oc",
       "title":"Rire & Chansons",
       "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/9/9b/Logo_Rire_%26_Chansons_2012.svg/1200px-Logo_Rire_%26_Chansons_2012.svg.png"
    },
@@ -275,7 +270,7 @@
       "image":"https://www.virageradio.com/apple-touch-icon-120x120.png"
    },
    "voltage":{
-      "location":"https://voltage.ice.infomaniak.ch/voltage-high.mp3",
+      "location":"https://start-voltage.ice.infomaniak.ch/start-voltage-high.mp3",
       "title":"Voltage",
       "image":"https://radiofrench.fr/wp-content/uploads/2021/03/voltage.jpg"
    },
@@ -310,8 +305,18 @@
       "image":"https://radiofrench.fr/wp-content/uploads/2021/03/voltage.jpg"
    },
    "wit_fm":{
-      "location":"https://witfm.ice.infomaniak.ch/witfm-high.mp3",
+      "location":"https://witenfrancais.ice.infomaniak.ch/witenfrancais-128.mp3",
       "title":"Wit FM",
+      "image":"https://www.witfm.fr/assets/images/logo.png"
+   },
+   "wit_fm_2000":{
+      "location":"https://wit2000.ice.infomaniak.ch/wit2000.mp3",
+      "title":"Wit FM 2000",
+      "image":"https://www.witfm.fr/assets/images/logo.png"
+   },
+   "wit_fm_80":{
+      "location":"https://wit80s.ice.infomaniak.ch/wit80-128.mp3",
+      "title":"Wit FM 80",
       "image":"https://www.witfm.fr/assets/images/logo.png"
    }
 }
