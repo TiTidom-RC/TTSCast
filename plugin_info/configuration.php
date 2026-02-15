@@ -172,7 +172,7 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-3">
                     <select class="configKey form-control" data-l1key="gCloudAudioEncoding">
-                        <option value="MP3">{{MP3 (Défaut)}}</option>
+                        <option value="MP3" selected>{{MP3 (Défaut)}}</option>
                         <option value="LINEAR16">{{LINEAR16 (WAV)}}</option>
                     </select>
                 </div>
