@@ -17,6 +17,7 @@ import logging
 import resource
 import sys
 import os
+import platform
 import time
 import hashlib
 import traceback
@@ -3174,6 +3175,10 @@ logging.info('[DAEMON][MAIN] Socket port: %s', myConfig.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', myConfig.socketHost)
 logging.info('[DAEMON][MAIN] CycleFactor: %s', myConfig.cycleFactor)
 
+logging.info('[DAEMON][MAIN] Python Version: %s', sys.version)
+logging.info('[DAEMON][MAIN] Python Executable: %s', sys.executable)
+logging.info('[DAEMON][MAIN] Platform: %s | %s', platform.system(), platform.release())
+
 if myConfig.cycleFactor == 0:
     logging.warning('[DAEMON][MAIN][CYCLE] CycleFactor à 0 => Main à 2.0 / Comm à 0.5 / Event à 0.5')
 elif myConfig.cycleFactor < 0.5:
@@ -3186,6 +3191,7 @@ logging.info('[DAEMON][MAIN] PID file: %s', myConfig.pidFile)
 logging.info('[DAEMON][MAIN] ApiKey: %s', "***" if myConfig.apiKey else "N/A")
 logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***" if myConfig.apiTTSKey else "N/A")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', myConfig.gCloudApiKey)
+logging.info('[DAEMON][MAIN] Google Cloud Audio Encoding: %s', myConfig.gCloudAudioEncoding)
 logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', "***" if myConfig.apiRSSKey else "N/A")
 logging.info('[DAEMON][MAIN] TTS Disable Cache: %s', str(myConfig.ttsDisableCache))
 logging.info('[DAEMON][MAIN] App Disable Ding: %s', str(myConfig.appDisableDing))
