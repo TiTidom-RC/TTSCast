@@ -17,7 +17,6 @@ import logging
 import resource
 import sys
 import os
-import platform
 import time
 import hashlib
 import traceback
@@ -3170,14 +3169,11 @@ else:
 
 logging.info('[DAEMON][MAIN] Start Daemon')
 logging.info('[DAEMON][MAIN] Plugin Version: %s', myConfig.pluginVersion)
+logging.info('[DAEMON][MAIN] Python Version: %s', sys.version)
 logging.info('[DAEMON][MAIN] Log level: %s', myConfig.logLevel)
 logging.info('[DAEMON][MAIN] Socket port: %s', myConfig.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', myConfig.socketHost)
 logging.info('[DAEMON][MAIN] CycleFactor: %s', myConfig.cycleFactor)
-
-logging.info('[DAEMON][MAIN] Python Version: %s', sys.version)
-logging.info('[DAEMON][MAIN] Python Executable: %s', sys.executable)
-logging.info('[DAEMON][MAIN] Platform: %s | %s', platform.system(), platform.release())
 
 if myConfig.cycleFactor == 0:
     logging.warning('[DAEMON][MAIN][CYCLE] CycleFactor à 0 => Main à 2.0 / Comm à 0.5 / Event à 0.5')
