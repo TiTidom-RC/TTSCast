@@ -480,7 +480,9 @@ class TTSCast:
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
-                _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                # _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                # Force mimetype MP3 to ensure playback on all devices even if content is WAV
+                _mimeType = "audio/mp3" 
 
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType=_mimeType)
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
@@ -899,10 +901,13 @@ class TTSCast:
                             _audio_encoding = googleCloudTTS.AudioEncoding.LINEAR16
                         else:
                             _audio_encoding = googleCloudTTS.AudioEncoding.MP3
+                        
+                        _useLinear16 = (_audio_encoding == googleCloudTTS.AudioEncoding.LINEAR16)
 
                         audio_config = googleCloudTTS.AudioConfig(
                             audio_encoding=_audio_encoding, 
                             effects_profile_id=['medium-bluetooth-speaker-class-device'], 
+                            sample_rate_hertz=48000 if _useLinear16 else None,
                             speaking_rate=float(ttsSpeed)
                         )
 
@@ -910,7 +915,14 @@ class TTSCast:
                         response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
                         with open(filepath, "wb") as out:
-                            out.write(response.audio_content)
+                            if _useLinear16:
+                                with wave.open(out, 'wb') as wav_file:
+                                    wav_file.setnchannels(1)  # Mono
+                                    wav_file.setsampwidth(2)  # 16-bit
+                                    wav_file.setframerate(48000)
+                                    wav_file.writeframes(response.audio_content)
+                            else:
+                                out.write(response.audio_content)
                             logging.debug('[DAEMON][TTS] Fichier TTS généré :: %s', filepath)
                     else:
                         logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
@@ -918,7 +930,9 @@ class TTSCast:
                     urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                     
-                    _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                    # _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                    # Force mimetype MP3 to ensure playback on all devices even if content is WAV
+                    _mimeType = "audio/mp3" 
 
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType=_mimeType)
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
