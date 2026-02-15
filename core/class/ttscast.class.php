@@ -174,6 +174,7 @@ class ttscast extends eqLogic
         $cmd .= ' --apikey ' . jeedom::getApiKey(__CLASS__);
         $cmd .= ' --apittskey ' . jeedom::getApiKey("apitts");
         $cmd .= ' --gcloudapikey ' . config::byKey('gCloudAPIKey', __CLASS__, 'noKey');
+        $cmd .= ' --gcloudaudioencoding ' . config::byKey('gCloudAudioEncoding', __CLASS__, 'MP3');
         $cmd .= ' --voicerssapikey ' . config::byKey('voiceRSSAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --ttsdisablecache ' . config::byKey('ttsDisableCache', __CLASS__, '0');
         $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, '0');

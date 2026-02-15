@@ -166,6 +166,17 @@ if (!isConnect()) {
                     <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-trash-alt"></i> {{Effacer Clé}}</a>
                 </div>
             </div>
+            <div class="form-group customform-gcloudtts">
+                <label class="col-lg-3 control-label">{{Encodage Audio (gCloud TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Format d'encodage audio pour le moteur Google Cloud TTS (MP3 ou LINEAR16). LINEAR16 offre une meilleure qualité (WAV) mais les fichiers sont plus volumineux.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <select class="configKey form-control" data-l1key="gCloudAudioEncoding">
+                        <option value="MP3">{{MP3 (Défaut)}}</option>
+                        <option value="LINEAR16">{{LINEAR16 (WAV)}}</option>
+                    </select>
+                </div>
+            </div>
             <div class="form-group customform-voicersstts">
                 <label class="col-lg-3 control-label">{{Langue/Voix TTS (Voice RSS TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Voice RSS TTS}}"></i></sup>

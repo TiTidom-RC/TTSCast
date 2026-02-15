@@ -66,6 +66,7 @@ class Config:
     # ttsVoiceRSSUrl = 'api.voicerss.org:443'
 
     gCloudApiKey = ''
+    gCloudAudioEncoding = 'MP3'
     
     # AI Configuration
     aiEnabled = False
