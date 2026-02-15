@@ -25,8 +25,16 @@ try {
 
     $url = base64_decode($_GET["img"]);
     
-    // Timeout de 10 secondes
-    $context = stream_context_create(['http' => ['timeout' => 10]]);
+    // Timeout de 10 secondes et User-Agent pour éviter les blocages (ex: Wikimedia)
+    $opts = [
+        "http" => [
+            "method" => "GET",
+            "header" => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36\r\n",
+            "timeout" => 10
+        ]
+    ];
+    $context = stream_context_create($opts);
+    
     $file = @file_get_contents($url, false, $context, 0, 1000000);
 
     // Si erreur, retourner l'image par défaut
