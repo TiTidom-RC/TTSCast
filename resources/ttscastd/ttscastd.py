@@ -597,7 +597,7 @@ class TTSCast:
             
             _useAI = myConfig.aiDefault if myConfig.aiEnabled else False
             _aiCustomTone = None
-            _aiCustomSysPrompt = None
+            _aiCustomSysPrompt = myConfig.aiCustomSysPrompt if (myConfig.aiEnabled and myConfig.aiUseCustomSysPrompt) else None
             _aiCustomTemp = None
             _useSSML = False
             _silenceBefore = None
@@ -796,7 +796,7 @@ class TTSCast:
             _cmdWait = None
             _useAI = myConfig.aiDefault if myConfig.aiEnabled else False
             _aiCustomTone = None
-            _aiCustomSysPrompt = None
+            _aiCustomSysPrompt = myConfig.aiCustomSysPrompt if (myConfig.aiEnabled and myConfig.aiUseCustomSysPrompt) else None
             _aiCustomTemp = None
             _useSSML = False
             _silenceBefore = None
@@ -1340,10 +1340,12 @@ class TTSCast:
                 TEMPERATURE = 1.0 if _aiCustomTemp is None else float(_aiCustomTemp)
                 logging.debug('[DAEMON][GenAI] Température :: %s', TEMPERATURE)
 
-                if _aiCustomTone is not None:
+                if _aiCustomSysPrompt is not None:
+                    SYSTEM_INSTRUCTION = _aiCustomSysPrompt
+                elif _aiCustomTone is not None:
                     SYSTEM_INSTRUCTION = myConfig.aiSysPrompt(_aiCustomTone)
                 else:
-                    SYSTEM_INSTRUCTION = myConfig.aiSysPrompt() if _aiCustomSysPrompt is None else _aiCustomSysPrompt
+                    SYSTEM_INSTRUCTION = myConfig.aiSysPrompt()
                 logging.debug('[DAEMON][GenAI] Instructions Système :: %s', SYSTEM_INSTRUCTION)
                 
                 response = client.models.generate_content(

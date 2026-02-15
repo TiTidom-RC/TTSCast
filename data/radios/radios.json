@@ -10,14 +10,14 @@
       "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://africaradio.com&size=256#.png"
    },
    "europe_1":{
-      "location":"https://stream.europe1.fr/europe1.mp3",
+      "location":"https://europe1.lmn.fm/europe1.mp3",
       "title":"Europe 1",
       "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://europe1.fr&size=256#.png"
    },
    "europe_2":{
       "location":"https://europe2.lmn.fm/europe2.mp3",
       "title":"Europe 2",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://europe2.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Europe_2_PNG_en_noir.png/250px-Europe_2_PNG_en_noir.png"
    },
    "france_bleue_paris":{
       "location":"https://icecast.radiofrance.fr/fb1071-midfi.mp3",
@@ -42,12 +42,12 @@
    "voltage_lounge":{
       "location":"https://voltagelounge.ice.infomaniak.ch/voltagelounge-128.mp3",
       "title":"Voltage Lounge",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://voltage.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Voltage_logo_2018.png/250px-Voltage_logo_2018.png"
    },
    "rtl":{
       "location":"http://icecast.rtl.fr/rtl-1-44-128",
       "title":"RTL",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://rtl.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/RTL_logo.svg/langfr-250px-RTL_logo.svg.png"
    },
    "fip_nouveaute":{
       "location":"https://icecast.radiofrance.fr/fipnouveautes-midfi.mp3",
@@ -67,17 +67,17 @@
    "france_culture":{
       "location":"https://icecast.radiofrance.fr/franceculture-midfi.mp3",
       "title":"France Culture",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://franceculture.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/France_Culture_logo_2021.svg/langfr-250px-France_Culture_logo_2021.svg.png"
    },
    "radio_suisse_classique":{
       "location":"http://stream.srg-ssr.ch/m/rsc_fr/mp3_128",
       "title":"Radio Suisse Classique",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://radioswissclassic.ch&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Radio_Swiss_Classic_Logo_2018.svg/langfr-250px-Radio_Swiss_Classic_Logo_2018.svg.png"
    },
    "jazz_ladies_crooners":{
       "location":"https://jazzladiescrooners.ice.infomaniak.ch/jazzladiescrooners-high.mp3",
       "title":"Jazz Ladies-Crooners",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://jazzradio.fr&size=256#.png"
+      "image":"https://static.mytuner.mobi/media/tvos_radios/340/jazz-radio-ladies-crooners.fdf43a23.png"
    },
    "pulsradio_trance":{
       "location":"https://icecast.pulsradio.com/pulstranceHD.mp3",
@@ -132,7 +132,7 @@
    "rtl_2":{
       "location":"http://icecast.rtl2.fr/rtl2-1-44-128",
       "title":"RTL 2",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://rtl2.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/5/51/RTL2.png/250px-RTL2.png"
    },
    "bfm_business":{
       "location":"https://audio.bfmtv.com/bfmbusiness_128.mp3",
@@ -157,7 +157,7 @@
    "fun_radio":{
       "location":"http://icecast.funradio.fr/fun-1-44-128",
       "title":"Fun Radio",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://funradio.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Logo_Fun_Radio_%282021%29.svg/langfr-250px-Logo_Fun_Radio_%282021%29.svg.png"
    },
    "france_info":{
       "location":"https://icecast.radiofrance.fr/franceinfo-midfi.mp3",
@@ -167,7 +167,7 @@
    "france_musique":{
       "location":"https://icecast.radiofrance.fr/francemusique-midfi.mp3",
       "title":"France Musique",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://francemusique.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/6/6c/France_Musique_logo_2021.svg/langfr-250px-France_Musique_logo_2021.svg.png"
    },
    "jazz_radio":{
       "location":"https://jazzradio.ice.infomaniak.ch/jazzradio-high.mp3",
@@ -177,7 +177,7 @@
    "latina":{
       "location":"https://start-latina.ice.infomaniak.ch/start-latina-high.mp3",
       "title":"Latina",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://latina.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/fr/c/c4/Latina_1.jpg"
    },
    "m_radio":{
       "location":"https://mfm.ice.infomaniak.ch/mfm-128.mp3",
@@ -187,7 +187,7 @@
    "mouv":{
       "location":"https://icecast.radiofrance.fr/mouv-midfi.mp3",
       "title":"Mouv",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://mouv.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/f/ff/Logo_de_Mouv%27_2021.svg/langfr-250px-Logo_de_Mouv%27_2021.svg.png"
    },
    "nostalgie":{
       "location":"https://streaming.nrjaudio.fm/oug7girb92oc",
@@ -207,7 +207,7 @@
    "oui_fm":{
       "location":"https://ouifm.ice.infomaniak.ch/ouifm-high.mp3",
       "title":"Oui FM",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://ouifm.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/3/33/Oui_FM_2014_logo.png/250px-Oui_FM_2014_logo.png"
    },
    "phare_fm":{
       "location":"https://str0.creacast.com/pharefm",
@@ -217,12 +217,7 @@
    "fg":{
       "location":"https://radiofg.impek.com/fg",
       "title":"Radio FG",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://radiofg.com&size=256#.png"
-   },
-   "rcf":{
-      "location":"https://rcf.streamakaci.com/rcf.mp3",
-      "title":"RCF",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://rcf.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/fr/thumb/1/10/Logo_radio-fg-2019.svg/langfr-250px-Logo_radio-fg-2019.svg.png"
    },
    "rfi_monde":{
       "location":"http://live02.rfi.fr/rfimonde-96k.mp3",
@@ -247,7 +242,7 @@
    "skyrock":{
       "location":"https://icecast.skyrock.net/s/natio_mp3_128k",
       "title":"Skyrock",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://skyrock.com&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/SKYROCK_FM_LOGO.svg/langfr-250px-SKYROCK_FM_LOGO.svg.png"
    },
    "sud_radio":{
       "location":"https://start-sud.ice.infomaniak.ch/start-sud-high.mp3",
@@ -262,7 +257,7 @@
    "vibration":{
       "location":"https://vibration.ice.infomaniak.ch/vibration-high.mp3",
       "title":"Vibration",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://vibration.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/fr/1/14/Logo_vibration.JPG"
    },
    "virage":{
       "location":"https://virageradio.ice.infomaniak.ch/virageradio-high.mp3",
@@ -272,51 +267,51 @@
    "voltage":{
       "location":"https://start-voltage.ice.infomaniak.ch/start-voltage-high.mp3",
       "title":"Voltage",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://voltage.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Voltage_logo_2018.png/250px-Voltage_logo_2018.png"
    },
    "voltage_work":{
       "location":"https://voltagework.ice.infomaniak.ch/voltagework-128.mp3",
       "title":"Voltage @Work",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://voltage.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Voltage_logo_2018.png/250px-Voltage_logo_2018.png"
    },
    "voltage_2000":{
       "location":"https://voltage2000.ice.infomaniak.ch/voltage2000-128.mp3",
       "title":"Voltage 2000",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://voltage.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Voltage_logo_2018.png/250px-Voltage_logo_2018.png"
    },
    "voltage_80":{
       "location":"https://voltage80s.ice.infomaniak.ch/voltage80s-128.mp3",
       "title":"Voltage 80's",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://voltage.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Voltage_logo_2018.png/250px-Voltage_logo_2018.png"
    },
    "voltage_90":{
       "location":"https://voltage90s.ice.infomaniak.ch/voltage90s-128.mp3",
       "title":"Voltage 90's",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://voltage.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Voltage_logo_2018.png/250px-Voltage_logo_2018.png"
    },
    "voltage_club":{
       "location":"https://voltageclub.ice.infomaniak.ch/voltageclub-128.mp3",
       "title":"Voltage Club",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://voltage.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Voltage_logo_2018.png/250px-Voltage_logo_2018.png"
    },
    "voltage_love":{
       "location":"https://voltagelove.ice.infomaniak.ch/voltagelove-128.mp3",
       "title":"Voltage Love",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://voltage.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Voltage_logo_2018.png/250px-Voltage_logo_2018.png"
    },
    "wit_fm":{
       "location":"https://witenfrancais.ice.infomaniak.ch/witenfrancais-128.mp3",
       "title":"Wit FM",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://witfm.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/fr/f/fb/Wit.png"
    },
    "wit_fm_2000":{
       "location":"https://wit2000.ice.infomaniak.ch/wit2000.mp3",
       "title":"Wit FM 2000",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://witfm.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/fr/f/fb/Wit.png"
    },
    "wit_fm_80":{
       "location":"https://wit80s.ice.infomaniak.ch/wit80-128.mp3",
       "title":"Wit FM 80",
-      "image":"https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://witfm.fr&size=256#.png"
+      "image":"https://upload.wikimedia.org/wikipedia/fr/f/fb/Wit.png"
    }
 }
