@@ -458,7 +458,7 @@ class TTSCast:
 
                     audio_config = googleCloudTTS.AudioConfig(
                         audio_encoding=_audio_encoding,
-                        sample_rate_hertz=48000 if _useLinear16 else None,
+                        sample_rate_hertz=myConfig.gCloudSampleRate if _useLinear16 else None,
                         effects_profile_id=['medium-bluetooth-speaker-class-device'],
                         speaking_rate=float(ttsSpeed)
                     )
@@ -471,7 +471,7 @@ class TTSCast:
                             with wave.open(out, 'wb') as wav_file:
                                 wav_file.setnchannels(1)  # Mono
                                 wav_file.setsampwidth(2)  # 16-bit
-                                wav_file.setframerate(48000)
+                                wav_file.setframerate(myConfig.gCloudSampleRate)
                                 wav_file.writeframes(response.audio_content)
                         else:
                             out.write(response.audio_content)
@@ -689,7 +689,7 @@ class TTSCast:
 
                         audio_config = googleCloudTTS.AudioConfig(
                             audio_encoding=_audio_encoding, 
-                            sample_rate_hertz=48000 if _useLinear16 else None,
+                            sample_rate_hertz=myConfig.gCloudSampleRate if _useLinear16 else None,
                             effects_profile_id=['medium-bluetooth-speaker-class-device'], 
                             speaking_rate=float(ttsSpeed)
                         )
@@ -702,7 +702,7 @@ class TTSCast:
                                 with wave.open(out, 'wb') as wav_file:
                                     wav_file.setnchannels(1)  # Mono
                                     wav_file.setsampwidth(2)  # 16-bit
-                                    wav_file.setframerate(48000)
+                                    wav_file.setframerate(myConfig.gCloudSampleRate)
                                     wav_file.writeframes(response.audio_content)
                             else:
                                 out.write(response.audio_content)
@@ -3128,7 +3128,14 @@ if args.apittskey:
 if args.gcloudapikey:
     myConfig.gCloudApiKey = args.gcloudapikey
 if args.gcloudaudioencoding:
-    myConfig.gCloudAudioEncoding = args.gcloudaudioencoding
+    if args.gcloudaudioencoding == "LINEAR16_48K":
+        myConfig.gCloudAudioEncoding = "LINEAR16"
+        myConfig.gCloudSampleRate = 48000
+    elif args.gcloudaudioencoding == "LINEAR16_24K":
+        myConfig.gCloudAudioEncoding = "LINEAR16"
+        myConfig.gCloudSampleRate = 24000
+    else:
+        myConfig.gCloudAudioEncoding = args.gcloudaudioencoding
 if args.voicerssapikey:
     myConfig.apiRSSKey = args.voicerssapikey
 if args.ttsdisablecache:

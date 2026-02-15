@@ -67,6 +67,7 @@ class Config:
 
     gCloudApiKey = ''
     gCloudAudioEncoding = 'MP3'
+    gCloudSampleRate = 24000
     
     # AI Configuration
     aiEnabled = False
