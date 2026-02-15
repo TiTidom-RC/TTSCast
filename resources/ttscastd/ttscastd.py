@@ -411,7 +411,9 @@ class TTSCast:
                 credentials = service_account.Credentials.from_service_account_file(os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey))
 
                 logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3/wav)')
-                _ext = ".wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else ".mp3"
+                # _ext = ".wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else ".mp3"
+                # Force extension MP3 to ensure playback on all devices even if content is WAV
+                _ext = ".mp3"
                 raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + ttsSSML + "|" + myConfig.gCloudAudioEncoding
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + _ext
                 filepath = os.path.join(symLinkPath, filename)
@@ -866,7 +868,9 @@ class TTSCast:
                         return False
 
                     logging.debug('[DAEMON][TTS] Génération du fichier TTS (mp3/wav)')
-                    _ext = ".wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else ".mp3"
+                    # _ext = ".wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else ".mp3"
+                    # Force extension MP3 to ensure playback on all devices even if content is WAV
+                    _ext = ".mp3"
                     raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + str(_useSSML) + "|" + myConfig.gCloudAudioEncoding
                     filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + _ext
                     filepath = os.path.join(symLinkPath, filename)
