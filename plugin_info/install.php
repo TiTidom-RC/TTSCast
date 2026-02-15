@@ -49,6 +49,9 @@ function ttscast_install() {
     if (config::byKey('gCloudTTSSpeed', 'ttscast') == '') {
         config::save('gCloudTTSSpeed', '1.0', 'ttscast');
     }
+    if (config::byKey('gCloudAudioEncoding', 'ttscast') == '') {
+        config::save('gCloudAudioEncoding', 'MP3', 'ttscast');
+    }
     if (config::byKey('gCloudTTSVoice', 'ttscast') == '') {
         config::save('gCloudTTSVoice', 'fr-FR-Standard-A', 'ttscast');
     }
@@ -131,6 +134,9 @@ function ttscast_update() {
     }
     if (config::byKey('gCloudTTSSpeed', 'ttscast') == '') {
         config::save('gCloudTTSSpeed', '1.0', 'ttscast');
+    }
+    if (config::byKey('gCloudAudioEncoding', 'ttscast') == '') {
+        config::save('gCloudAudioEncoding', 'MP3', 'ttscast');
     }
     if (config::byKey('gCloudTTSVoice', 'ttscast') == '') {
         config::save('gCloudTTSVoice', 'fr-FR-Standard-A', 'ttscast');

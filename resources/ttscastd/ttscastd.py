@@ -27,6 +27,7 @@ import threading
 import datetime
 import requests
 import re
+import wave
 
 from urllib.parse import urlencode, urlparse
 from uuid import UUID
@@ -409,9 +410,12 @@ class TTSCast:
             if myConfig.gCloudApiKey != 'noKey':
                 credentials = service_account.Credentials.from_service_account_file(os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey))
 
-                logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
-                raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + ttsSSML
-                filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+                logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3/wav)')
+                # _ext = ".wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else ".mp3"
+                # Force extension MP3 to ensure playback on all devices even if content is WAV
+                _ext = ".mp3"
+                raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + ttsSSML + "|" + myConfig.gCloudAudioEncoding
+                filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + _ext
                 filepath = os.path.join(symLinkPath, filename)
                 
                 logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
@@ -440,20 +444,49 @@ class TTSCast:
                             ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
                         text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-                    audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
+                    # TODO Ajouter les effets possibles : https://cloud.google.com/text-to-speech/docs/audio-profiles
+                    # Effets possibles : 'headphone-class-device', 'small-bluetooth-speaker-class-device', 'medium-bluetooth-speaker-class-device', 'large-home-entertainment-class-device', 'large-automotive-class-device', 'telephony-class-application'
+                    # Audio encoding possibles : LINEAR16, OGG_OPUS, MP3
+                    # Sample rate possibles : 8000, 16000, 22050, 24000, 44100, 48000
+                    
+                    if myConfig.gCloudAudioEncoding == "LINEAR16":
+                        _audio_encoding = googleCloudTTS.AudioEncoding.LINEAR16
+                    else:
+                        _audio_encoding = googleCloudTTS.AudioEncoding.MP3
+
+                    _useLinear16 = (_audio_encoding == googleCloudTTS.AudioEncoding.LINEAR16)
+
+                    audio_config = googleCloudTTS.AudioConfig(
+                        audio_encoding=_audio_encoding,
+                        sample_rate_hertz=myConfig.gCloudSampleRate if _useLinear16 else None,
+                        effects_profile_id=['medium-bluetooth-speaker-class-device'],
+                        speaking_rate=float(ttsSpeed)
+                    )
 
                     client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
                     response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
                     with open(filepath, "wb") as out:
-                        out.write(response.audio_content)
+                        if _useLinear16:
+                            with wave.open(out, 'wb') as wav_file:
+                                wav_file.setnchannels(1)  # Mono
+                                wav_file.setsampwidth(2)  # 16-bit
+                                wav_file.setframerate(myConfig.gCloudSampleRate)
+                                wav_file.writeframes(response.audio_content)
+                        else:
+                            out.write(response.audio_content)
                         logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+                
+                # _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                # Force mimetype MP3 to ensure playback on all devices even if content is WAV
+                _mimeType = "audio/mp3" 
+
+                res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType=_mimeType)
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Google Cloud TTS) invalide :: ' + myConfig.gCloudApiKey)
@@ -620,7 +653,7 @@ class TTSCast:
                         logging.error('[DAEMON][GenerateTTS] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return False
 
-                    logging.debug('[DAEMON][GenerateTTS] Génération du fichier TTS (mp3)')
+                    logging.debug('[DAEMON][GenerateTTS] Génération du fichier TTS (mp3/wav)')
                     filepath = ttsFile
                     logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
 
@@ -647,13 +680,32 @@ class TTSCast:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-                        audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
+                        
+                        _useLinear16 = (myConfig.gCloudAudioEncoding == "LINEAR16")
+                        if _useLinear16:
+                            _audio_encoding = googleCloudTTS.AudioEncoding.LINEAR16
+                        else:
+                            _audio_encoding = googleCloudTTS.AudioEncoding.MP3
+
+                        audio_config = googleCloudTTS.AudioConfig(
+                            audio_encoding=_audio_encoding, 
+                            sample_rate_hertz=myConfig.gCloudSampleRate if _useLinear16 else None,
+                            effects_profile_id=['medium-bluetooth-speaker-class-device'], 
+                            speaking_rate=float(ttsSpeed)
+                        )
 
                         client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
                         response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
                         with open(filepath, "wb") as out:
-                            out.write(response.audio_content)
+                            if _useLinear16:
+                                with wave.open(out, 'wb') as wav_file:
+                                    wav_file.setnchannels(1)  # Mono
+                                    wav_file.setsampwidth(2)  # 16-bit
+                                    wav_file.setframerate(myConfig.gCloudSampleRate)
+                                    wav_file.writeframes(response.audio_content)
+                            else:
+                                out.write(response.audio_content)
                             logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
                     else:
                         logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
@@ -815,9 +867,12 @@ class TTSCast:
                         logging.error('[DAEMON][TTS] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return False
 
-                    logging.debug('[DAEMON][TTS] Génération du fichier TTS (mp3)')
-                    raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + str(_useSSML)
-                    filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+                    logging.debug('[DAEMON][TTS] Génération du fichier TTS (mp3/wav)')
+                    # _ext = ".wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else ".mp3"
+                    # Force extension MP3 to ensure playback on all devices even if content is WAV
+                    _ext = ".mp3"
+                    raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + str(_useSSML) + "|" + myConfig.gCloudAudioEncoding
+                    filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + _ext
                     filepath = os.path.join(symLinkPath, filename)
                     
                     logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
@@ -845,20 +900,45 @@ class TTSCast:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-                        audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
+
+                        if myConfig.gCloudAudioEncoding == "LINEAR16":
+                            _audio_encoding = googleCloudTTS.AudioEncoding.LINEAR16
+                        else:
+                            _audio_encoding = googleCloudTTS.AudioEncoding.MP3
+                        
+                        _useLinear16 = (_audio_encoding == googleCloudTTS.AudioEncoding.LINEAR16)
+
+                        audio_config = googleCloudTTS.AudioConfig(
+                            audio_encoding=_audio_encoding, 
+                            effects_profile_id=['medium-bluetooth-speaker-class-device'], 
+                            sample_rate_hertz=48000 if _useLinear16 else None,
+                            speaking_rate=float(ttsSpeed)
+                        )
 
                         client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
                         response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
                         with open(filepath, "wb") as out:
-                            out.write(response.audio_content)
+                            if _useLinear16:
+                                with wave.open(out, 'wb') as wav_file:
+                                    wav_file.setnchannels(1)  # Mono
+                                    wav_file.setsampwidth(2)  # 16-bit
+                                    wav_file.setframerate(48000)
+                                    wav_file.writeframes(response.audio_content)
+                            else:
+                                out.write(response.audio_content)
                             logging.debug('[DAEMON][TTS] Fichier TTS généré :: %s', filepath)
                     else:
                         logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
                     urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce)
+                    
+                    # _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                    # Force mimetype MP3 to ensure playback on all devices even if content is WAV
+                    _mimeType = "audio/mp3" 
+
+                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType=_mimeType)
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
                     logging.warning('[DAEMON][TTS] Clé API invalide :: ' + myConfig.gCloudApiKey)
@@ -968,7 +1048,7 @@ class TTSCast:
             logging.debug(traceback.format_exc())
 
     @staticmethod
-    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None, cmdForce=False):
+    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None, cmdForce=False, mimeType='audio/mp3'):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion (Test) sur le Google Home :: %s', googleName)
             
@@ -1013,7 +1093,7 @@ class TTSCast:
                 app_name = "default_media_receiver"
                 app_data = {
                     "media_id": urltoplay,
-                    "media_type": "audio/mp3",
+                    "media_type": mimeType,
                     "stream_type": "BUFFERED",
                     # "stream_type": "LIVE",
                     "title": "TTSCast",
@@ -1138,7 +1218,7 @@ class TTSCast:
                 app_name = "default_media_receiver"
                 app_data = {
                     "media_id": urltoplay, 
-                    "media_type": "audio/mp3", 
+                    "media_type": mimeType, 
                     "stream_type": "BUFFERED",
                     # "stream_type": "LIVE",
                     "title": "TTSCast", 
@@ -1905,15 +1985,8 @@ class Functions:
         except Exception as e:
             logging.error(f'[DAEMON][controllerDashCast] Exception ({_googleUUID}) :: {e}')
             player = None
-            # Si le finally a échoué (ce qui ne devrait pas arriver souvent), on s'assure de nettoyer ici si besoin
-            # Mais avec la structure imbriquée "try...finally" pour la logique métier, le waitQueueExit est garanti si waitQueueEnter a réussi.
-            # L'exception ici catche les erreurs AVANT waitQueueEnter ? Non, car waitQueueEnter est au début.
+            # TODO : Si une exception survient, est-ce que DashCast peut rester dans un état "bloqué" ? Faut-il tenter un quit_app de secours ici ?
             
-            # Correction: waitQueueEnter est appelé avant le bloc try qui contient le finally.
-            # Si une exception survient DANS waitQueueEnter, on ne doit pas appeler exit.
-            # Donc l'architecture actuelle `try (Entrance) ... except` est un peu maladroite pour DashCast car elle englobe tout.
-            
-            # Je vais restructurer DashCast pour correspondre aux autres controlleurs (WaitQueueEnter hors du bloc try principal de la logique).
             return False
             
     @staticmethod
@@ -3021,6 +3094,7 @@ parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="ApiKey", type=str)
 parser.add_argument("--apittskey", help="ApiTTS Key", type=str)
 parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
+parser.add_argument("--gcloudaudioencoding", help="Google Cloud Audio Encoding", type=str, default='MP3')
 parser.add_argument("--voicerssapikey", help="Voice RSS ApiKey", type=str)
 parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
 parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
@@ -3053,6 +3127,15 @@ if args.apittskey:
     myConfig.apiTTSKey = args.apittskey
 if args.gcloudapikey:
     myConfig.gCloudApiKey = args.gcloudapikey
+if args.gcloudaudioencoding:
+    if args.gcloudaudioencoding == "LINEAR16_48K":
+        myConfig.gCloudAudioEncoding = "LINEAR16"
+        myConfig.gCloudSampleRate = 48000
+    elif args.gcloudaudioencoding == "LINEAR16_24K":
+        myConfig.gCloudAudioEncoding = "LINEAR16"
+        myConfig.gCloudSampleRate = 24000
+    else:
+        myConfig.gCloudAudioEncoding = args.gcloudaudioencoding
 if args.voicerssapikey:
     myConfig.apiRSSKey = args.voicerssapikey
 if args.ttsdisablecache:
@@ -3130,6 +3213,7 @@ else:
 
 logging.info('[DAEMON][MAIN] Start Daemon')
 logging.info('[DAEMON][MAIN] Plugin Version: %s', myConfig.pluginVersion)
+logging.info('[DAEMON][MAIN] Python Version: %s', sys.version)
 logging.info('[DAEMON][MAIN] Log level: %s', myConfig.logLevel)
 logging.info('[DAEMON][MAIN] Socket port: %s', myConfig.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', myConfig.socketHost)
@@ -3147,6 +3231,8 @@ logging.info('[DAEMON][MAIN] PID file: %s', myConfig.pidFile)
 logging.info('[DAEMON][MAIN] ApiKey: %s', "***" if myConfig.apiKey else "N/A")
 logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***" if myConfig.apiTTSKey else "N/A")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', myConfig.gCloudApiKey)
+logging.info('[DAEMON][MAIN] Google Cloud Audio Encoding: %s', myConfig.gCloudAudioEncoding)
+logging.info('[DAEMON][MAIN] Google Cloud Sample Rate (Linear16 only): %s', myConfig.gCloudSampleRate)
 logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', "***" if myConfig.apiRSSKey else "N/A")
 logging.info('[DAEMON][MAIN] TTS Disable Cache: %s', str(myConfig.ttsDisableCache))
 logging.info('[DAEMON][MAIN] App Disable Ding: %s', str(myConfig.appDisableDing))
