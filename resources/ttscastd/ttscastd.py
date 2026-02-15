@@ -595,7 +595,7 @@ class TTSCast:
             if not ttsOptions:
                 ttsOptions = None
             
-            _useAI = False
+            _useAI = myConfig.aiDefault if myConfig.aiEnabled else False
             _aiCustomTone = None
             _aiCustomSysPrompt = None
             _aiCustomTemp = None
@@ -794,7 +794,7 @@ class TTSCast:
             _ttsVolume = None
             _appDing = True
             _cmdWait = None
-            _useAI = False
+            _useAI = myConfig.aiDefault if myConfig.aiEnabled else False
             _aiCustomTone = None
             _aiCustomSysPrompt = None
             _aiCustomTemp = None
