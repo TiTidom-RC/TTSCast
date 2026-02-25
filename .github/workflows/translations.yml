@@ -18,7 +18,7 @@ jobs:
   auto-translate:
     runs-on: ubuntu-latest
     steps:
-      - uses: Mips2648/plugins-translations@main
+      - uses: TiTidom-RC/plugins-translations@beta
         with:
           target_languages: ${{ inputs.languages || 'en_US,es_ES,de_DE,it_IT,pt_PT' }}
           use_core_translations: false
