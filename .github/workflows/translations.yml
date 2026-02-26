@@ -1,18 +1,26 @@
-name: Translations
+name: Build Translations
 
-# Controls when the workflow will run
 on:
-  workflow_dispatch:
   push:
     branches:
       - beta
+    paths-ignore:
+      - 'core/i18n/**'
+      - 'plugin_info/info.json'
+  workflow_dispatch:
+    inputs:
+      languages:
+        description: 'Langues cibles (séparées par des virgules)'
+        required: true
+        default: 'en_US,es_ES,de_DE,it_IT,pt_PT'
 
 jobs:
   auto-translate:
     runs-on: ubuntu-latest
     steps:
-      - uses: Mips2648/plugins-translations@main
+      - uses: TiTidom-RC/plugins-translations@beta
         with:
-          target_languages: "en_US,es_ES,de_DE,it_IT,pt_PT"
+          target_languages: ${{ inputs.languages || 'en_US,es_ES,de_DE,it_IT,pt_PT' }}
           use_core_translations: false
+          include_empty_translation: false
           deepl_api_key: ${{ secrets.DEEPL_API_KEY }}

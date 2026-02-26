@@ -166,6 +166,19 @@ if (!isConnect()) {
                     <a class="btn btn-danger customclass-resetapikey"><i class="fas fa-trash-alt"></i> {{Effacer Clé}}</a>
                 </div>
             </div>
+            <div class="form-group customform-gcloudtts">
+                <label class="col-lg-3 control-label">{{Format Audio (gCloud TTS)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Format d'encodage audio pour le moteur Google Cloud TTS (MP3 ou LINEAR16). LINEAR16 offre une meilleure qualité (WAV) mais les fichiers sont plus volumineux.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <select class="configKey form-control" data-l1key="gCloudAudioEncoding">
+                        <option value="MP3" selected>{{MP3 (Défaut)}}</option>
+                        <option value="LINEAR16_24K" disabled>{{LINEAR16 (WAV - 24kHz)}}</option>
+                        <option value="LINEAR16_48K" disabled>{{LINEAR16 (WAV - 48kHz)}}</option>
+                    </select>
+                </div>
+            </div>
             <div class="form-group customform-voicersstts">
                 <label class="col-lg-3 control-label">{{Langue/Voix TTS (Voice RSS TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Voice RSS TTS}}"></i></sup>
@@ -725,6 +738,15 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsAIEnable" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Utiliser la Reformulation IA par défaut}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de reformuler toutes les notifications TTS avec l'IA, sauf si l'option <b>&quot;genAI&quot;: false</b> est passée dans les options de la commande.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsAIDefault" />
                 </div>
             </div>
             <div class="form-group">

@@ -49,6 +49,9 @@ function ttscast_install() {
     if (config::byKey('gCloudTTSSpeed', 'ttscast') == '') {
         config::save('gCloudTTSSpeed', '1.0', 'ttscast');
     }
+    if (config::byKey('gCloudAudioEncoding', 'ttscast') == '') {
+        config::save('gCloudAudioEncoding', 'MP3', 'ttscast');
+    }
     if (config::byKey('gCloudTTSVoice', 'ttscast') == '') {
         config::save('gCloudTTSVoice', 'fr-FR-Standard-A', 'ttscast');
     }
@@ -78,6 +81,9 @@ function ttscast_install() {
     }
     if (config::byKey('debugRestoreVenv', 'ttscast') == '') {
         config::save('debugRestoreVenv', '0', 'ttscast');
+    }
+    if (config::byKey('ttsAIDefault', 'ttscast') == '') {
+        config::save('ttsAIDefault', '0', 'ttscast');
     }
     if (config::byKey('disableUpdateMsg', 'ttscast') == '') {
         config::save('disableUpdateMsg', '0', 'ttscast');
@@ -129,6 +135,9 @@ function ttscast_update() {
     if (config::byKey('gCloudTTSSpeed', 'ttscast') == '') {
         config::save('gCloudTTSSpeed', '1.0', 'ttscast');
     }
+    if (config::byKey('gCloudAudioEncoding', 'ttscast') == '') {
+        config::save('gCloudAudioEncoding', 'MP3', 'ttscast');
+    }
     if (config::byKey('gCloudTTSVoice', 'ttscast') == '') {
         config::save('gCloudTTSVoice', 'fr-FR-Standard-A', 'ttscast');
     }
@@ -158,6 +167,12 @@ function ttscast_update() {
     }
     if (config::byKey('debugRestoreVenv', 'ttscast') == '') {
         config::save('debugRestoreVenv', '0', 'ttscast');
+    }
+    if (config::byKey('ttsAIDefault', 'ttscast') == '') {
+        config::save('ttsAIDefault', '0', 'ttscast');
+    }
+    if (config::byKey('disableUpdateMsg', 'ttscast') == '') {
+        config::save('disableUpdateMsg', '0', 'ttscast');
     }
 
     $dependencyInfo = ttscast::dependancy_info();

@@ -174,12 +174,14 @@ class ttscast extends eqLogic
         $cmd .= ' --apikey ' . jeedom::getApiKey(__CLASS__);
         $cmd .= ' --apittskey ' . jeedom::getApiKey("apitts");
         $cmd .= ' --gcloudapikey ' . config::byKey('gCloudAPIKey', __CLASS__, 'noKey');
+        $cmd .= ' --gcloudaudioencoding ' . config::byKey('gCloudAudioEncoding', __CLASS__, 'MP3');
         $cmd .= ' --voicerssapikey ' . config::byKey('voiceRSSAPIKey', __CLASS__, 'noKey');
         $cmd .= ' --ttsdisablecache ' . config::byKey('ttsDisableCache', __CLASS__, '0');
         $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, '0');
         $cmd .= ' --appconvertsinglequote ' . config::byKey('appConvertSingleQuote', __CLASS__, '0');
         $cmd .= ' --cmdwaittimeout ' . config::byKey('cmdWaitTimeout', __CLASS__, '60');
         $cmd .= ' --aienabled ' . config::byKey('ttsAIEnable', __CLASS__, '0');
+        $cmd .= ' --aidefault ' . config::byKey('ttsAIDefault', __CLASS__, '0');
         $cmd .= ' --aiauthmode ' . config::byKey('ttsAIAuthMode', __CLASS__, 'noMode');
         $cmd .= ' --aiprojectid ' . config::byKey('ttsAIProjectID', __CLASS__, 'noProjectID');
         $cmd .= ' --aiapikey ' . config::byKey('ttsAIAPIKey', __CLASS__, 'noKey');
@@ -214,11 +216,16 @@ class ttscast extends eqLogic
         $pid_file = jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // Ne PAS modifier
         if (file_exists($pid_file)) {
             $pid = intval(trim(file_get_contents($pid_file)));
-            system::kill($pid);
+            if ($pid > 0) {
+                system::kill($pid, false); // SIGTERM seul, sans SIGKILL immédiat
+                for ($i = 0; $i < 30 && file_exists($pid_file); $i++) {
+                    usleep(100000); // Attend max 3s que le processus meure
+                }
+            }
+            @unlink($pid_file);
         }
-        system::kill('ttscastd.py');
+        system::kill('ttscastd.py'); // SIGKILL de sécurité si zombie
         system::fuserk(config::byKey('socketport', __CLASS__, '55111'));
-        sleep(1);
     }
 
     public static function sendToDaemon($params) {

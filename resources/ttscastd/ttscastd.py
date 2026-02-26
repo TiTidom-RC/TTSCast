@@ -27,6 +27,7 @@ import threading
 import datetime
 import requests
 import re
+import wave
 
 from urllib.parse import urlencode, urlparse
 from uuid import UUID
@@ -56,6 +57,7 @@ try:
     from pychromecast.controllers.receiver import CastStatusListener
     from pychromecast.socket_client import ConnectionStatusListener
     from pychromecast.controllers import dashcast
+    from pychromecast.controllers.multizone import MultizoneController, MultiZoneControllerListener
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
     sys.exit(1)
@@ -84,6 +86,33 @@ except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module config ::", e)
     sys.exit(1)
 
+
+class MyMultizoneController(MultizoneController):
+    def __init__(self, uuid):
+        super().__init__(uuid)
+        self.multizone_status = {}
+
+    def receive_message(self, message, data):
+        # Capture the status message if it is a MULTIZONE_STATUS
+        if data.get("type") == "MULTIZONE_STATUS":
+            self.multizone_status = data.get("status", {})
+            
+        return super().receive_message(message, data)
+        
+class MyMultizoneStatusListener(MultiZoneControllerListener):
+    def __init__(self, name, cast):
+        self.name = name
+        self.cast = cast
+
+    def multizone_member_added(self, uuid):
+        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Added :: %s', self.name, uuid)
+
+    def multizone_member_removed(self, uuid):
+        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Removed :: %s', self.name, uuid)
+
+    def multizone_status_received(self):
+        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Status Received', self.name)
+        
 class Loops:
     # *** Boucle events from Jeedom ***
     @staticmethod
@@ -381,9 +410,12 @@ class TTSCast:
             if myConfig.gCloudApiKey != 'noKey':
                 credentials = service_account.Credentials.from_service_account_file(os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey))
 
-                logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3)')
-                raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + ttsSSML
-                filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+                logging.debug('[DAEMON][TestTTS] Test et génération du fichier TTS (mp3/wav)')
+                # _ext = ".wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else ".mp3"
+                # Force extension MP3 to ensure playback on all devices even if content is WAV
+                _ext = ".mp3"
+                raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + ttsSSML + "|" + myConfig.gCloudAudioEncoding
+                filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + _ext
                 filepath = os.path.join(symLinkPath, filename)
                 
                 logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
@@ -412,20 +444,49 @@ class TTSCast:
                             ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
                         text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-                    audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
+                    # TODO Ajouter les effets possibles : https://cloud.google.com/text-to-speech/docs/audio-profiles
+                    # Effets possibles : 'headphone-class-device', 'small-bluetooth-speaker-class-device', 'medium-bluetooth-speaker-class-device', 'large-home-entertainment-class-device', 'large-automotive-class-device', 'telephony-class-application'
+                    # Audio encoding possibles : LINEAR16, OGG_OPUS, MP3
+                    # Sample rate possibles : 8000, 16000, 22050, 24000, 44100, 48000
+                    
+                    if myConfig.gCloudAudioEncoding == "LINEAR16":
+                        _audio_encoding = googleCloudTTS.AudioEncoding.LINEAR16
+                    else:
+                        _audio_encoding = googleCloudTTS.AudioEncoding.MP3
+
+                    _useLinear16 = (_audio_encoding == googleCloudTTS.AudioEncoding.LINEAR16)
+
+                    audio_config = googleCloudTTS.AudioConfig(
+                        audio_encoding=_audio_encoding,
+                        sample_rate_hertz=myConfig.gCloudSampleRate if _useLinear16 else None,
+                        effects_profile_id=['medium-bluetooth-speaker-class-device'],
+                        speaking_rate=float(ttsSpeed)
+                    )
 
                     client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
                     response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
                     with open(filepath, "wb") as out:
-                        out.write(response.audio_content)
+                        if _useLinear16:
+                            with wave.open(out, 'wb') as wav_file:
+                                wav_file.setnchannels(1)  # Mono
+                                wav_file.setsampwidth(2)  # 16-bit
+                                wav_file.setframerate(myConfig.gCloudSampleRate)
+                                wav_file.writeframes(response.audio_content)
+                        else:
+                            out.write(response.audio_content)
                         logging.debug('[DAEMON][TestTTS] Fichier TTS généré :: %s', filepath)
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+                
+                # _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                # Force mimetype MP3 to ensure playback on all devices even if content is WAV
+                _mimeType = "audio/mp3" 
+
+                res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType=_mimeType)
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Google Cloud TTS) invalide :: ' + myConfig.gCloudApiKey)
@@ -534,9 +595,9 @@ class TTSCast:
             if not ttsOptions:
                 ttsOptions = None
             
-            _useAI = False
+            _useAI = myConfig.aiDefault if myConfig.aiEnabled else False
             _aiCustomTone = None
-            _aiCustomSysPrompt = None
+            _aiCustomSysPrompt = myConfig.aiCustomSysPrompt if (myConfig.aiEnabled and myConfig.aiUseCustomSysPrompt) else None
             _aiCustomTemp = None
             _useSSML = False
             _silenceBefore = None
@@ -547,7 +608,7 @@ class TTSCast:
                     
                     # AI
                     if myConfig.aiEnabled:
-                        _useAI = options_json.get('genai', False)
+                        _useAI = options_json.get('genai', myConfig.aiDefault)
                         _aiCustomTone = options_json.get('aitone', None)
                         _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
                         _aiCustomTemp = options_json.get('aitemp', None)
@@ -592,7 +653,7 @@ class TTSCast:
                         logging.error('[DAEMON][GenerateTTS] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return False
 
-                    logging.debug('[DAEMON][GenerateTTS] Génération du fichier TTS (mp3)')
+                    logging.debug('[DAEMON][GenerateTTS] Génération du fichier TTS (mp3/wav)')
                     filepath = ttsFile
                     logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
 
@@ -619,13 +680,32 @@ class TTSCast:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-                        audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
+                        
+                        _useLinear16 = (myConfig.gCloudAudioEncoding == "LINEAR16")
+                        if _useLinear16:
+                            _audio_encoding = googleCloudTTS.AudioEncoding.LINEAR16
+                        else:
+                            _audio_encoding = googleCloudTTS.AudioEncoding.MP3
+
+                        audio_config = googleCloudTTS.AudioConfig(
+                            audio_encoding=_audio_encoding, 
+                            sample_rate_hertz=myConfig.gCloudSampleRate if _useLinear16 else None,
+                            effects_profile_id=['medium-bluetooth-speaker-class-device'], 
+                            speaking_rate=float(ttsSpeed)
+                        )
 
                         client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
                         response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
                         with open(filepath, "wb") as out:
-                            out.write(response.audio_content)
+                            if _useLinear16:
+                                with wave.open(out, 'wb') as wav_file:
+                                    wav_file.setnchannels(1)  # Mono
+                                    wav_file.setsampwidth(2)  # 16-bit
+                                    wav_file.setframerate(myConfig.gCloudSampleRate)
+                                    wav_file.writeframes(response.audio_content)
+                            else:
+                                out.write(response.audio_content)
                             logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
                     else:
                         logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
@@ -714,9 +794,9 @@ class TTSCast:
             _ttsVolume = None
             _appDing = True
             _cmdWait = None
-            _useAI = False
+            _useAI = myConfig.aiDefault if myConfig.aiEnabled else False
             _aiCustomTone = None
-            _aiCustomSysPrompt = None
+            _aiCustomSysPrompt = myConfig.aiCustomSysPrompt if (myConfig.aiEnabled and myConfig.aiUseCustomSysPrompt) else None
             _aiCustomTemp = None
             _useSSML = False
             _silenceBefore = None
@@ -733,7 +813,7 @@ class TTSCast:
 
                     # AI
                     if myConfig.aiEnabled:
-                        _useAI = options_json.get('genai', False)
+                        _useAI = options_json.get('genai', myConfig.aiDefault)
                         _aiCustomTone = options_json.get('aitone', None)
                         _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
                         _aiCustomTemp = options_json.get('aitemp', None)
@@ -787,9 +867,12 @@ class TTSCast:
                         logging.error('[DAEMON][TTS] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return False
 
-                    logging.debug('[DAEMON][TTS] Génération du fichier TTS (mp3)')
-                    raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + str(_useSSML)
-                    filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+                    logging.debug('[DAEMON][TTS] Génération du fichier TTS (mp3/wav)')
+                    # _ext = ".wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else ".mp3"
+                    # Force extension MP3 to ensure playback on all devices even if content is WAV
+                    _ext = ".mp3"
+                    raw_filename = ttsText + "|gCloudTTS|" + ttsVoiceName + "|" + ttsSpeed + "|" + str(_useSSML) + "|" + myConfig.gCloudAudioEncoding
+                    filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + _ext
                     filepath = os.path.join(symLinkPath, filename)
                     
                     logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
@@ -817,20 +900,45 @@ class TTSCast:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
-                        audio_config = googleCloudTTS.AudioConfig(audio_encoding=googleCloudTTS.AudioEncoding.MP3, effects_profile_id=['small-bluetooth-speaker-class-device'], speaking_rate=float(ttsSpeed))
+
+                        if myConfig.gCloudAudioEncoding == "LINEAR16":
+                            _audio_encoding = googleCloudTTS.AudioEncoding.LINEAR16
+                        else:
+                            _audio_encoding = googleCloudTTS.AudioEncoding.MP3
+                        
+                        _useLinear16 = (_audio_encoding == googleCloudTTS.AudioEncoding.LINEAR16)
+
+                        audio_config = googleCloudTTS.AudioConfig(
+                            audio_encoding=_audio_encoding, 
+                            effects_profile_id=['medium-bluetooth-speaker-class-device'], 
+                            sample_rate_hertz=48000 if _useLinear16 else None,
+                            speaking_rate=float(ttsSpeed)
+                        )
 
                         client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
                         response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
 
                         with open(filepath, "wb") as out:
-                            out.write(response.audio_content)
+                            if _useLinear16:
+                                with wave.open(out, 'wb') as wav_file:
+                                    wav_file.setnchannels(1)  # Mono
+                                    wav_file.setsampwidth(2)  # 16-bit
+                                    wav_file.setframerate(48000)
+                                    wav_file.writeframes(response.audio_content)
+                            else:
+                                out.write(response.audio_content)
                             logging.debug('[DAEMON][TTS] Fichier TTS généré :: %s', filepath)
                     else:
                         logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
                     urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce)
+                    
+                    # _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                    # Force mimetype MP3 to ensure playback on all devices even if content is WAV
+                    _mimeType = "audio/mp3" 
+
+                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType=_mimeType)
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
                     logging.warning('[DAEMON][TTS] Clé API invalide :: ' + myConfig.gCloudApiKey)
@@ -940,13 +1048,15 @@ class TTSCast:
             logging.debug(traceback.format_exc())
 
     @staticmethod
-    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None, cmdForce=False):
+    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None, cmdForce=False, mimeType='audio/mp3'):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion (Test) sur le Google Home :: %s', googleName)
             
             chromecasts = None
             cast = None
             volumeBeforePlay = None
+            groupSnapshot = None
+            isGroup = False
             
             try:
                 chromecasts = [mycast for mycast in myConfig.NETCAST_DEVICES.values() if mycast.name == googleName]
@@ -960,11 +1070,22 @@ class TTSCast:
                 Functions.checkIfDashCast(cast)
             
                 volumeBeforePlay = cast.status.volume_level
+
+                groupSnapshot = Functions.getGroupSnapshot(cast)
+                isGroup = bool(groupSnapshot)
+                logging.debug(f'[DAEMON][Cast] isGroup : {isGroup} :: {cast.name}')
+
                 if not appDing:
-                    cast.set_volume(volume=0)
+                    if isGroup:
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                    else:
+                        cast.set_volume(volume=0)
                 elif volumeForPlay is not None:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
-                    cast.set_volume(volume=volumeForPlay / 100)
+                    if isGroup:
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
+                    else:
+                        cast.set_volume(volume=volumeForPlay / 100)
                 
                 urlThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -972,7 +1093,7 @@ class TTSCast:
                 app_name = "default_media_receiver"
                 app_data = {
                     "media_id": urltoplay,
-                    "media_type": "audio/mp3",
+                    "media_type": mimeType,
                     "stream_type": "BUFFERED",
                     # "stream_type": "LIVE",
                     "title": "TTSCast",
@@ -987,9 +1108,16 @@ class TTSCast:
                 
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
-                    cast.set_volume(volume=volumeForPlay / 100)
+                    if isGroup and bool(groupSnapshot):
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
+                    else:
+                        cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
-                    cast.set_volume(volume=volumeBeforePlay)
+                    if isGroup and bool(groupSnapshot):
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    
+                    if volumeBeforePlay is not None:
+                        cast.set_volume(volume=volumeBeforePlay)
                 
                 cast.media_controller.block_until_active()
                 
@@ -1011,7 +1139,10 @@ class TTSCast:
                 cast.quit_app()
                 
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
-                    cast.set_volume(volume=volumeBeforePlay)
+                    if isGroup and bool(groupSnapshot):
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
                 cast = None
@@ -1022,7 +1153,11 @@ class TTSCast:
                 logging.debug(traceback.format_exc())
                 
                 if volumeBeforePlay is not None:
-                    cast.set_volume(volume=volumeBeforePlay)  # type: ignore
+                    if isGroup and groupSnapshot:
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        if cast is not None:
+                            cast.set_volume(volume=volumeBeforePlay)
                 
                 # Libération de la mémoire
                 cast = None
@@ -1034,6 +1169,11 @@ class TTSCast:
             
             cast = None
             volumeBeforePlay = None
+            groupSnapshot = None
+            isGroup = False
+            
+            # Default target is the googleUUID until resolved by Queue logic
+            _targetWaitUUID = googleUUID
             
             try:
                 _uuid = UUID(googleUUID)
@@ -1044,61 +1184,33 @@ class TTSCast:
                     logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID nom :: %s', googleUUID)
                     return False
                 
-                if cmdForce:
-                    # Tester le paramètre cmdForce pour forcer à quitter l'appli en cours de lecture
-                    Functions.forceQuitApp(cast)
-                    if googleUUID in myConfig.cmdWaitQueue:
-                        myConfig.cmdWaitQueue[googleUUID] = 0
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
-                elif cmdWait is not None:
-                    # WaitQueue if option defined
-                    if googleUUID in myConfig.cmdWaitQueue:
-                        if int(cmdWait) == 1:
-                            myConfig.cmdWaitQueue[googleUUID] = 0
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Reset %s (%s)', cmdWait, googleUUID) 
-                        elif int(cmdWait) > 1 and myConfig.cmdWaitQueue[googleUUID] == 0:
-                            t = 10
-                            while (myConfig.cmdWaitQueue[googleUUID] == 0 and t > 0):
-                                time.sleep(0.1)
-                                t -= 1
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue (t) :: %s ', str(t))
-                            if myConfig.cmdWaitQueue[googleUUID] == 0:
-                                logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancelled %s (%s)', cmdWait, googleUUID)
-                                return False
-                            
-                    if googleUUID in myConfig.cmdWaitQueue:
-                        myConfig.cmdWaitQueue[googleUUID] += 2 ** int(cmdWait)
-                    else:
-                        myConfig.cmdWaitQueue[googleUUID] = 2 ** int(cmdWait)
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: Start Waiting %s (%s)', cmdWait, googleUUID)
-                    queue_start_time = int(time.time())
-                    while myConfig.cmdWaitQueue[googleUUID] % (2 ** int(cmdWait)) != 0:
-                        queue_current_time = int(time.time())
-                        if (queue_start_time + (myConfig.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Timeout %s (%s)', cmdWait, googleUUID)
-                            logging.debug('[DAEMON][Cast] TTS Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
-                            return False
-                        time.sleep(0.1)
-                    if myConfig.cmdWaitQueue[googleUUID] == 0:
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Cancel/Force %s (%s)', cmdWait, googleUUID)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
-                        return False
-                    logging.debug('[DAEMON][Cast] TTS Wait Queue :: End Waiting %s (%s)', cmdWait, googleUUID)
-                else:
-                    if googleUUID in myConfig.cmdWaitQueue:
-                        myConfig.cmdWaitQueue[googleUUID] = 0
+                # --- Wait Queue Management (Entrance) ---
+                allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, googleUUID, cmdWait, cmdForce, 'Cast')
+                if not allowed:
+                    return False
+                # ----------------------------------------
                 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante 
                 if not cmdForce: 
                     Functions.checkIfDashCast(cast)
                 
                 volumeBeforePlay = cast.status.volume_level
+
+                groupSnapshot = Functions.getGroupSnapshot(cast)
+                isGroup = bool(groupSnapshot)
+                logging.debug(f'[DAEMON][Cast] isGroup : {isGroup} :: {cast.name}')
+
                 if not appDing:
-                    cast.set_volume(volume=0)
+                    if isGroup:
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                    else:
+                        cast.set_volume(volume=0)
                 elif volumeForPlay is not None:
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
-                    cast.set_volume(volume=volumeForPlay / 100)
+                    if isGroup:
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
+                    else:
+                        cast.set_volume(volume=volumeForPlay / 100)
             
                 urlThumb = f'{myConfig.ttsWebSrvImages}tts.png'
                 logging.debug('[DAEMON][Cast] Thumb path :: %s', urlThumb)
@@ -1106,7 +1218,7 @@ class TTSCast:
                 app_name = "default_media_receiver"
                 app_data = {
                     "media_id": urltoplay, 
-                    "media_type": "audio/mp3", 
+                    "media_type": mimeType, 
                     "stream_type": "BUFFERED",
                     # "stream_type": "LIVE",
                     "title": "TTSCast", 
@@ -1122,12 +1234,19 @@ class TTSCast:
                 
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
-                    cast.set_volume(volume=volumeForPlay / 100)
+                    if isGroup and bool(groupSnapshot):
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), volumeForPlay / 100)
+                    else:
+                        cast.set_volume(volume=volumeForPlay / 100)
                 elif (not appDing):
-                    cast.set_volume(volume=volumeBeforePlay)
+                    if isGroup and bool(groupSnapshot):
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    
+                    if volumeBeforePlay is not None:
+                        cast.set_volume(volume=volumeBeforePlay)
                 
                 cast.media_controller.block_until_active()
-                    
+
                 logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
                 media_player_state = None
@@ -1146,13 +1265,13 @@ class TTSCast:
                 cast.quit_app()
                 
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
-                    cast.set_volume(volume=volumeBeforePlay)
+                    if isGroup and bool(groupSnapshot):
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
                 
-                # Mise à jour de la WaitQueue
-                if cmdWait is not None and cmdForce is False:
-                    if myConfig.cmdWaitQueue[googleUUID] > 0:
-                        myConfig.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
+                # --- Wait Queue Management (Exit - Success) ---
+                Functions.waitQueueExit(_targetWaitUUID, cmdWait, cmdForce, 'Cast')
                 
                 # Libération de la mémoire
                 cast = None
@@ -1162,13 +1281,14 @@ class TTSCast:
                 logging.debug(traceback.format_exc())
                 
                 if volumeBeforePlay is not None:
-                    cast.set_volume(volume=volumeBeforePlay)  # type: ignore
+                    if isGroup and groupSnapshot:
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        if cast is not None:
+                            cast.set_volume(volume=volumeBeforePlay)
                 
-                # Mise à jour de la WaitQueue
-                if cmdWait is not None and cmdForce is False:
-                    if myConfig.cmdWaitQueue[googleUUID] > 0:
-                        myConfig.cmdWaitQueue[googleUUID] -= 2 ** int(cmdWait)
-                        logging.debug('[DAEMON][Cast] TTS Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[googleUUID]), googleUUID)
+                # --- Wait Queue Management (Exit - Error) ---
+                Functions.waitQueueExit(_targetWaitUUID, cmdWait, cmdForce, 'Cast')
                 
                 # Libération de la mémoire
                 cast = None
@@ -1220,10 +1340,12 @@ class TTSCast:
                 TEMPERATURE = 1.0 if _aiCustomTemp is None else float(_aiCustomTemp)
                 logging.debug('[DAEMON][GenAI] Température :: %s', TEMPERATURE)
 
-                if _aiCustomTone is not None:
+                if _aiCustomSysPrompt is not None:
+                    SYSTEM_INSTRUCTION = _aiCustomSysPrompt
+                elif _aiCustomTone is not None:
                     SYSTEM_INSTRUCTION = myConfig.aiSysPrompt(_aiCustomTone)
                 else:
-                    SYSTEM_INSTRUCTION = myConfig.aiSysPrompt() if _aiCustomSysPrompt is None else _aiCustomSysPrompt
+                    SYSTEM_INSTRUCTION = myConfig.aiSysPrompt()
                 logging.debug('[DAEMON][GenAI] Instructions Système :: %s', SYSTEM_INSTRUCTION)
                 
                 response = client.models.generate_content(
@@ -1314,6 +1436,232 @@ class Functions:
     """ Class Functions """
 
     @staticmethod
+    def resolveWaitQueueUUID(current_uuid_str):
+        """
+        Trouve un UUID 'canonique' pour la file d'attente (WaitQueue).
+        Permet de lier Member -> Group ou Group -> Member si une file est déjà active.
+        """
+        try:
+            current_uuid = UUID(current_uuid_str)
+        except ValueError:
+            return current_uuid_str
+
+        # 1. Si la queue existe déjà pour cet UUID et est active, on l'utilise (Priorité locale)
+        if myConfig.cmdWaitQueue.get(current_uuid_str, 0) > 0:
+            return current_uuid_str
+
+        # 2. Si c'est un membre, est-il dans un groupe actif ?
+        for group_uuid, mz in myConfig.NETCAST_GROUPS.items():
+            # mz.members contient des chaines UUID (parfois sans tirets)
+            member_found = False
+            try:
+                for m_str in mz.members:
+                    if UUID(m_str) == current_uuid:
+                        member_found = True
+                        break
+            except Exception:
+                pass
+            
+            if member_found:
+                # Si ce groupe a une file active, on s'y greffe
+                if myConfig.cmdWaitQueue.get(str(group_uuid), 0) > 0:
+                    logging.debug(f'[DAEMON][ResolveWait] Redirected Member {current_uuid_str} to Group {str(group_uuid)}')
+                    return str(group_uuid)
+
+        # 3. Si c'est un groupe, est-ce qu'un membre est actif ?
+        if current_uuid in myConfig.NETCAST_GROUPS:
+            mz = myConfig.NETCAST_GROUPS[current_uuid]
+            try:
+                for m_str in mz.members:
+                    m_uuid = UUID(m_str)
+                    m_key = str(m_uuid)
+                    if myConfig.cmdWaitQueue.get(m_key, 0) > 0:
+                        logging.debug(f'[DAEMON][ResolveWait] Redirected Group {current_uuid_str} to Member {m_key}')
+                        return m_key
+            except Exception:
+                pass
+
+        return current_uuid_str
+
+    @staticmethod
+    def waitQueueEnter(cast, googleUUID, cmdWait, cmdForce, callerName="Unknown"):
+        """ Gère l'entrée dans la file d'attente. Retourne (allowed: bool, targetUUID: str) """
+        
+        # 1. Gestion du FORCE (Prioritaire)
+        if cmdForce:
+            Functions.forceQuitApp(cast)
+            targetUUID = Functions.resolveWaitQueueUUID(googleUUID)
+            if targetUUID in myConfig.cmdWaitQueue:
+                myConfig.cmdWaitQueue[targetUUID] = 0
+                logging.debug(f'[DAEMON][WaitQueue][{callerName}] Force Reset {targetUUID} (origin: {googleUUID})')
+            return True, targetUUID
+
+        # 2. Gestion SANS WAIT
+        if cmdWait is None:
+            if googleUUID in myConfig.cmdWaitQueue:
+                myConfig.cmdWaitQueue[googleUUID] = 0
+            return True, googleUUID
+
+        # 3. Gestion AVEC WAIT
+        targetUUID = Functions.resolveWaitQueueUUID(googleUUID)
+        if targetUUID != googleUUID:
+            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Resolved Linked UUID {googleUUID} -> {targetUUID}')
+
+        # Init queue si inexistante
+        if targetUUID not in myConfig.cmdWaitQueue:
+            myConfig.cmdWaitQueue[targetUUID] = 0
+
+        # Wait = 1 : Reset manuel
+        if int(cmdWait) == 1:
+            myConfig.cmdWaitQueue[targetUUID] = 0
+            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Reset requested for {targetUUID}')
+        
+        # Wait > 1 : Attendre que la file soit vide (0) avant de prendre un ticket
+        elif int(cmdWait) > 1 and myConfig.cmdWaitQueue[targetUUID] == 0:
+            t = 10
+            while (myConfig.cmdWaitQueue[targetUUID] == 0 and t > 0):
+                time.sleep(0.1)
+                t -= 1
+            if myConfig.cmdWaitQueue[targetUUID] == 0:
+                logging.debug(f'[DAEMON][WaitQueue][{callerName}] Cancelled (Wait > 1 timeout) for {targetUUID}')
+                return False, targetUUID
+
+        # Prise de ticket (Bitmask logic: 2^wait)
+        myConfig.cmdWaitQueue[targetUUID] += 2 ** int(cmdWait)
+        logging.debug(f'[DAEMON][WaitQueue][{callerName}] Start Waiting {cmdWait} for {targetUUID} (Queue: {myConfig.cmdWaitQueue[targetUUID]})')
+
+        # Boucle d'attente
+        queue_start_time = int(time.time())
+        while myConfig.cmdWaitQueue[targetUUID] % (2 ** int(cmdWait)) != 0:
+            queue_current_time = int(time.time())
+            if (queue_start_time + (myConfig.cmdWaitTimeout * int(cmdWait)) <= queue_current_time):
+                logging.debug(f'[DAEMON][WaitQueue][{callerName}] Timeout for {targetUUID}')
+                return False, targetUUID
+            time.sleep(0.1)
+
+        # Vérification finale (si annulé/forcé pendant l'attente)
+        if myConfig.cmdWaitQueue[targetUUID] == 0:
+            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Aborted/Forced during wait for {targetUUID}')
+            return False, targetUUID
+
+        logging.debug(f'[DAEMON][WaitQueue][{callerName}] End Waiting {cmdWait} for {targetUUID}')
+        return True, targetUUID
+
+    @staticmethod
+    def waitQueueExit(targetUUID, cmdWait, cmdForce, callerName="Unknown"):
+        """ Gère la sortie de la file d'attente (libération du token) """
+        if cmdWait is not None and cmdForce is False:
+            if targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[targetUUID] > 0:
+                myConfig.cmdWaitQueue[targetUUID] -= 2 ** int(cmdWait)
+                logging.debug(f'[DAEMON][WaitQueue][{callerName}] Out {cmdWait} for {targetUUID} (Queue: {myConfig.cmdWaitQueue[targetUUID]})')
+
+    @staticmethod
+    def setGroupMembersVolume(membersUUIDs, targetVolume):
+        """
+        Définit le volume sur une liste de UUIDs (membres d'un groupe) en parallèle.
+        Args:
+            membersUUIDs (list): Liste des UUIDs des membres.
+            targetVolume (float): Volume cible (0.0 à 1.0).
+        """
+        def _setVol(uuid_dev, vol):
+            if uuid_dev in myConfig.NETCAST_DEVICES:
+                try:
+                    dev = myConfig.NETCAST_DEVICES[uuid_dev]
+                    dev.set_volume(vol)
+                    logging.debug(f'[DAEMON][GroupVol] Set {vol} on {dev.name}')
+                except Exception as ex:
+                    logging.error(f'[DAEMON][GroupVol] Error on {uuid_dev}: {ex}')
+
+        threads = []
+        for member_uuid in membersUUIDs:
+            t = threading.Thread(target=_setVol, args=(member_uuid, targetVolume))
+            t.start()
+            threads.append(t)
+        
+        for t in threads:
+            t.join()
+
+    @staticmethod
+    def restoreGroupMembersVolume(volumeSnapshot):
+        """
+        Restaure les volumes mémorisés pour chaque membre en parallèle.
+        Args:
+           volumeSnapshot (dict): { uuid: volume_float }
+        """
+        def _resVol(uuid_dev, vol):
+            if uuid_dev in myConfig.NETCAST_DEVICES:
+                try:
+                    dev = myConfig.NETCAST_DEVICES[uuid_dev]
+                    dev.set_volume(vol)
+                    logging.debug(f'[DAEMON][GroupVol] Restored {vol} on {dev.name}')
+                except Exception as ex:
+                    logging.error(f'[DAEMON][GroupVol] Error restoring {uuid_dev}: {ex}')
+
+        threads = []
+        for m_uuid, m_vol in volumeSnapshot.items():
+            t = threading.Thread(target=_resVol, args=(m_uuid, m_vol))
+            t.start()
+            threads.append(t)
+        
+        for t in threads:
+            t.join()
+
+    @staticmethod
+    def getGroupSnapshot(cast):
+        """
+        Récupère les volumes actuels des membres d'un groupe.
+        Args:
+            cast: L'objet chromecast (groupe).
+        Returns:
+            dict: { uuid: volume_float } ou vide si ce n'est pas un groupe.
+        """
+        snapshot = {}
+        logging.debug(f"[DAEMON][GroupSnapshot] Start for cast: {cast.name} ({cast.uuid})")
+        try:
+            if cast.uuid in myConfig.NETCAST_GROUPS:
+                mz = myConfig.NETCAST_GROUPS[cast.uuid]
+                logging.debug(f"[DAEMON][GroupSnapshot] Members found for {cast.name}: {mz.members}")
+                
+                # Detection Paire Stéréo (multichannelDevices)
+                # Si présent, on traite le groupe comme un appareil unique (la Paire) et non comme une liste de membres.
+                isStereoPair = False
+                if hasattr(mz, 'multizone_status') and 'multichannelDevices' in mz.multizone_status and mz.multizone_status['multichannelDevices']:
+                    isStereoPair = True
+                    logging.debug(f"[DAEMON][GroupSnapshot] Stereo Pair detected (multichannelDevices). Treating {cast.name} as single device.")
+                    
+                    # On ajoute uniquement l'UUID de la paire elle-même au snapshot
+                    if cast.uuid in myConfig.NETCAST_DEVICES:
+                        snapshot[cast.uuid] = cast.status.volume_level
+                        logging.debug(f"[DAEMON][GroupSnapshot] Added Pair Device {cast.name} ({cast.uuid}) to snapshot")
+
+                if not isStereoPair:
+                    for member_uuid_str in mz.members:
+                        # Convert string UUID (no dashes) to UUID object used in NETCAST_DEVICES
+                        try:
+                            member_uuid = UUID(member_uuid_str)
+                        except ValueError:
+                            logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID string: {member_uuid_str}")
+                            continue
+                        
+                        # Avoid duplicates if already added via multichannel
+                        if member_uuid in snapshot:
+                            continue
+
+                        if member_uuid in myConfig.NETCAST_DEVICES:
+                            dev = myConfig.NETCAST_DEVICES[member_uuid]
+                            snapshot[member_uuid] = dev.status.volume_level
+                            logging.debug(f"[DAEMON][GroupSnapshot] Added member {dev.name} ({member_uuid}) with volume {dev.status.volume_level}")
+                        else:
+                            logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
+            else:
+                logging.debug(f"[DAEMON][GroupSnapshot] Cast {cast.name} ({cast.uuid}) not in NETCAST_GROUPS")
+        except Exception as e:
+            logging.error(f"[DAEMON][GroupSnapshot] Error: {e}")
+        
+        logging.debug(f"[DAEMON][GroupSnapshot] Final snapshot: {snapshot}")
+        return snapshot
+
+    @staticmethod
     def markdownToPlainText(text):
         """ Convert Markdown text to plain text """
         # Convert Markdown to HTML and then extract text
@@ -1393,745 +1741,725 @@ class Functions:
             return False
 
     @staticmethod
+    def controllerStartApp(cast, _googleUUID, _value, _options):
+        logging.debug(f'[DAEMON][controllerActions] Lancement de l\'application :: {_value}')
+        
+        _volume = None
+        _appDing = True
+        _cmdForce = False
+        _cmdWait = None
+        
+        try:
+            if (_options is not None):
+                options_json = json.loads("{" + _options + "}")
+                _volume = options_json.get('volume', None)
+                _appDing = options_json.get('ding', True)
+                _cmdForce = options_json.get('force', False)
+                _cmdWait = options_json.get('wait', None)
+                logging.debug(f'[DAEMON][controllerActions] StartApp :: Options :: {str(options_json)}')
+        except ValueError as e:
+            logging.debug(f'[DAEMON][controllerActions] StartApp :: Options mal formatées (Json KO) :: {e}')
+        
+        _appDing = False if myConfig.appDisableDing else _appDing
+        
+        # Default target is the googleUUID until resolved by Queue logic
+        _targetWaitUUID = _googleUUID
+        
+        # --- Wait Queue Management (Entrance) ---
+        allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, 'StartApp')
+        if not allowed:
+            return False
+        # ----------------------------------------
+        
+        volumeBeforePlay = None
+        groupSnapshot = None
+        isGroup = False
+
+        try:
+            if not _cmdForce:
+                # Si DashCast alors sortir de l'appli avant sinon cela plante    
+                Functions.checkIfDashCast(cast)
+            
+            volumeBeforePlay = cast.status.volume_level
+
+            groupSnapshot = Functions.getGroupSnapshot(cast)
+            isGroup = bool(groupSnapshot)
+            
+            if not _appDing:
+                if isGroup:
+                    Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                else:
+                    cast.set_volume(volume=0)
+            elif (_volume is not None):
+                logging.debug(f'[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
+                if isGroup:
+                    Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                else:
+                    cast.set_volume(volume=_volume / 100)
+            
+            cast.start_app(_value)
+            
+            if (not _appDing and _volume is not None):
+                logging.debug(f'[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
+                if isGroup:
+                    Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                else:
+                    cast.set_volume(volume=_volume / 100)
+            elif (not _appDing):
+                if isGroup:
+                    Functions.restoreGroupMembersVolume(groupSnapshot)
+                else:
+                    cast.set_volume(volume=volumeBeforePlay)
+            
+            cast.media_controller.block_until_active()
+            
+            logging.debug(f'[DAEMON][controllerActions] StartApp :: Application lancée :: {str(_value)}')
+            
+            return True
+            
+        except Exception as e:
+            logging.error(f'[DAEMON][controllerStartApp] Exception ({_googleUUID}) :: {e}')
+            if volumeBeforePlay is not None:
+                if isGroup and groupSnapshot:
+                    Functions.restoreGroupMembersVolume(groupSnapshot)
+                else:
+                    if cast is not None:
+                        cast.set_volume(volume=volumeBeforePlay)
+            
+            return False
+            
+        finally:
+            # --- Wait Queue Management (Exit - Always) ---
+            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'StartApp')
+
+    @staticmethod
+    def controllerYoutube(cast, _googleUUID, _value, _options):
+        logging.debug(f'[DAEMON][controllerActions] YouTube Id @ UUID :: {_value} @ {_googleUUID}')
+        
+        _playlist = None
+        _enqueue = False
+        _volume = None
+        _appDing = True
+        _cmdForce = False
+        _cmdWait = None
+        
+        try:
+            if (_options is not None):
+                options_json = json.loads("{" + _options + "}")
+                _playlist = options_json.get('playlist', None)
+                _enqueue = options_json.get('enqueue', False)
+                _volume = options_json.get('volume', None)
+                _appDing = options_json.get('ding', True)
+                _cmdForce = options_json.get('force', False)
+                _cmdWait = options_json.get('wait', None)
+                logging.debug(f'[DAEMON][controllerActions] YouTube :: Options :: {str(options_json)}')
+        except ValueError as e:
+            logging.debug(f'[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: {e}')
+        
+        _appDing = False if myConfig.appDisableDing else _appDing
+        
+        # Default target is the googleUUID until resolved by Queue logic
+        _targetWaitUUID = _googleUUID
+        
+        # --- Wait Queue Management (Entrance) ---
+        allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, 'YouTube')
+        if not allowed:
+            return False
+        # ----------------------------------------
+        
+        volumeBeforePlay = None
+        groupSnapshot = None
+        isGroup = False
+
+        try:
+            if not _cmdForce:
+                Functions.checkIfDashCast(cast)
+            
+            volumeBeforePlay = cast.status.volume_level
+            
+            groupSnapshot = Functions.getGroupSnapshot(cast)
+            isGroup = bool(groupSnapshot)
+            
+            if not _appDing:
+                if isGroup:
+                    Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                else:
+                    cast.set_volume(volume=0)
+            elif (_volume is not None):
+                logging.debug(f'[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
+                if isGroup:
+                    Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                else:
+                    cast.set_volume(volume=_volume / 100)
+
+            app_name = "youtube"
+            app_data = {
+                "media_id": _value,
+                "playlist_id": _playlist,
+                "enqueue": _enqueue
+            }
+            quick_play.quick_play(cast, app_name, app_data)
+            
+            if (not _appDing and _volume is not None):
+                logging.debug(f'[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
+                if isGroup:
+                    Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                else:
+                    cast.set_volume(volume=_volume / 100)
+            elif (not _appDing):
+                if isGroup:
+                    Functions.restoreGroupMembersVolume(groupSnapshot)
+                else:
+                    cast.set_volume(volume=volumeBeforePlay)
+            
+            cast.media_controller.block_until_active()
+            
+            logging.debug(f'[DAEMON][controllerActions] YouTube :: Diffusion lancée :: {str(cast.media_controller.status)}')
+            
+            return True
+        except Exception as e:
+            logging.error(f'[DAEMON][controllerYoutube] Exception ({_googleUUID}) :: {e}')
+            if volumeBeforePlay is not None:
+                if isGroup and groupSnapshot:
+                    Functions.restoreGroupMembersVolume(groupSnapshot)
+                else:
+                    if cast is not None:
+                        cast.set_volume(volume=volumeBeforePlay)
+            
+            return False
+            
+        finally:
+            # --- Wait Queue Management (Exit - Always) ---
+            Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'YouTube')
+
+    @staticmethod
+    def controllerDashCast(cast, _googleUUID, _value, _options):
+        logging.debug(f'[DAEMON][controllerActions] DashCast URL / Options @ UUID :: {_value} / {_options} @ {_googleUUID}')
+        
+        player = dashcast.DashCastController()
+        cast.register_handler(player)
+        
+        _force = False
+        _reload_seconds = None
+        _cmdWait = None
+        
+        try:
+            if (_options is not None):
+                options_json = json.loads("{" + _options + "}")    
+                _force = options_json.get('force', False)
+                _reload_seconds = options_json.get('reload_seconds', None)
+                _cmdWait = options_json.get('wait', None)
+        except ValueError as e:
+            logging.debug(f'[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: {e}')
+        
+        try:
+            # Default target is the googleUUID until resolved by Queue logic
+            _targetWaitUUID = _googleUUID 
+
+            # --- Wait Queue Management (Entrance) ---
+            allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _force, 'DashCast')
+            if not allowed:
+                return False
+            # ----------------------------------------
+
+            try:
+                if options_json.get('quit_app', False):
+                    logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
+                    cast.quit_app()
+                    t = 5
+                    while cast.status.app_id is not None and t > 0:
+                        time.sleep(0.1)
+                        t = t - 0.1
+                time.sleep(1)
+                
+                logging.debug(f'[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: {_value} | {str(options_json)}')
+                player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)  # type: ignore
+                time.sleep(2)
+                
+                cast.unregister_handler(player)
+                time.sleep(1)
+                
+                return True
+            finally:
+                # --- Wait Queue Management (Exit - Always) ---
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _force, 'DashCast')
+            
+        except Exception as e:
+            logging.error(f'[DAEMON][controllerDashCast] Exception ({_googleUUID}) :: {e}')
+            player = None
+            # TODO : Si une exception survient, est-ce que DashCast peut rester dans un état "bloqué" ? Faut-il tenter un quit_app de secours ici ?
+            
+            return False
+            
+    @staticmethod
+    def controllerRadios(cast, _googleUUID, _value, _options, _controller):
+        radioType = 'CustomRadios' if _controller == 'customradios' else 'Radios'
+        logging.debug(f'[DAEMON][controllerActions] {radioType} Streaming ID @ UUID :: {_value} @ {_googleUUID}')
+        
+        if _value == '':
+            cast.quit_app()
+            time.sleep(1)
+            return True
+        else:
+            if (_controller == 'customradios'):
+                _RadiosFilePath = myConfig.customRadiosFilePath
+            else:
+                _RadiosFilePath = myConfig.radiosFilePath
+            
+            if not os.path.isfile(_RadiosFilePath):
+                logging.error(f'[DAEMON][controllerActions] {radioType} JSON GetFile ERROR :: {_value} @ {_googleUUID}')
+                return False
+            else:
+                _volume = None
+                _appDing = True
+                _cmdForce = False
+                _cmdWait = None
+                try:
+                    if (_options is not None):
+                        options_json = json.loads("{" + _options + "}")
+                        _volume = options_json.get('volume', None)
+                        _appDing = options_json.get('ding', True)
+                        _cmdForce = options_json.get('force', False)
+                        _cmdWait = options_json.get('wait', None)
+                        logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options :: {str(options_json)}')
+                except ValueError as e:
+                    logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options mal formatées (Json KO) :: {e}')
+
+                _appDing = False if myConfig.appDisableDing else _appDing
+                
+                # Default target is the googleUUID until resolved by Queue logic
+                _targetWaitUUID = _googleUUID
+                
+                # --- Wait Queue Management (Entrance) ---
+                allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, radioType)
+                if not allowed:
+                    return False
+                # ----------------------------------------
+                
+                volumeBeforePlay = None
+                groupSnapshot = None
+                isGroup = False
+
+                try:
+                    if not _cmdForce:
+                        # Si DashCast alors sortir de l'appli avant sinon cela plante
+                        Functions.checkIfDashCast(cast)
+                    
+                    volumeBeforePlay = cast.status.volume_level
+                    
+                    groupSnapshot = Functions.getGroupSnapshot(cast)
+                    isGroup = bool(groupSnapshot)
+
+                    if not _appDing:
+                        if isGroup:
+                            Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                        else:
+                            cast.set_volume(volume=0)
+                    elif (_volume is not None):
+                        logging.debug(f'[DAEMON][controllerActions] {radioType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
+                        if isGroup:
+                            Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                        else:
+                            cast.set_volume(volume=_volume / 100)
+                    
+                    f = open(_RadiosFilePath, "r")
+                    radiosArray = json.loads(f.read())
+                    f.close()
+                    
+                    if _value in radiosArray:
+                        radio = radiosArray[_value]
+                        if "NoLogo" in radio['image']:
+                            radioThumb = f'{myConfig.ttsWebSrvImages}tts.png'
+                        else:
+                            radioThumb = radio['image']
+                        radioUrl = radio['location']
+                        radioTitle = radio['title']
+                        radioArtist = "TTSCast Radio"
+                        radioAlbumName = "Jeedom"
+                        
+                        app_name = "default_media_receiver"
+                        app_data = {
+                            "media_id": radioUrl,
+                            "media_type": "audio/mp3",
+                            "title": radioTitle,
+                            "thumb": radioThumb,
+                            "metadata": {
+                                "metadataType": 3,
+                                "title": radioTitle,
+                                "artist": radioArtist,
+                                "albumName": radioAlbumName,
+                                "images": [{"url": radioThumb}]
+                            },
+                            "stream_type": "LIVE"
+                        }
+                        quick_play.quick_play(cast, app_name, app_data)
+                        
+                        if (not _appDing and _volume is not None):
+                            logging.debug(f'[DAEMON][controllerActions] {radioType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
+                            if isGroup:
+                                Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                            else:
+                                cast.set_volume(volume=_volume / 100)
+                        elif (not _appDing):
+                            if isGroup:
+                                Functions.restoreGroupMembersVolume(groupSnapshot)
+                            else:
+                                cast.set_volume(volume=volumeBeforePlay)
+                        
+                        cast.media_controller.block_until_active()
+                        
+                        logging.debug(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: {str(cast.media_controller.status)}')
+                    
+                    return True
+                except Exception as e:
+                    logging.error(f'[DAEMON][controllerRadios] Exception ({_googleUUID}) :: {e}')
+                    if volumeBeforePlay is not None:
+                        if isGroup and groupSnapshot:
+                            Functions.restoreGroupMembersVolume(groupSnapshot)
+                        else:
+                            cast.set_volume(volume=volumeBeforePlay)
+                    
+                    return False
+                finally:
+                    # --- Wait Queue Management (Exit - Always) ---
+                    Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, radioType)
+
+    @staticmethod
+    def controllerSounds(cast, _googleUUID, _value, _options, _controller):
+        soundType = 'CustomSounds' if _controller == 'customsounds' else 'Sounds'
+        logging.debug(f'[DAEMON][controllerActions] {soundType} Streaming ID @ UUID :: {_value} @ {_googleUUID}')
+        
+        if _value == '':
+            cast.quit_app()
+            time.sleep(1)
+            return True
+        else:
+            _volume = None
+            _appDing = True
+            _cmdWait = None
+            _cmdForce = False
+            
+            try:
+                if (_options is not None):
+                    options_json = json.loads("{" + _options + "}")
+                    _volume = options_json.get('volume', None)
+                    _appDing = options_json.get('ding', True)
+                    _cmdWait = options_json.get('wait', None)
+                    _cmdForce = options_json.get('force', False)
+                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Options :: {str(options_json)}')
+            except ValueError as e:
+                logging.debug(f'[DAEMON][controllerActions] {soundType} :: Options mal formatées (Json KO) :: {e}')
+
+            _appDing = False if myConfig.appDisableDing else _appDing
+
+            # Default target is the googleUUID until resolved by Queue logic
+            _targetWaitUUID = _googleUUID
+
+            # --- Wait Queue Management (Entrance) ---
+            allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, soundType)
+            if not allowed:
+                return False
+            # ----------------------------------------
+            
+            volumeBeforePlay = None
+            groupSnapshot = None
+            isGroup = False
+
+            try:
+                if not _cmdForce:
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
+                
+                volumeBeforePlay = cast.status.volume_level
+
+                groupSnapshot = Functions.getGroupSnapshot(cast)
+                isGroup = bool(groupSnapshot)
+
+                if not _appDing:
+                    if isGroup:
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                    else:
+                        cast.set_volume(volume=0)
+                elif (_volume is not None):
+                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
+                    if isGroup:
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                    else:
+                        cast.set_volume(volume=_volume / 100)
+                
+                if (_controller == 'customsounds'):
+                    soundURL = f'{myConfig.ttsWebSrvMedia}custom/{_value}'
+                else:
+                    soundURL = f'{myConfig.ttsWebSrvMedia}{_value}'
+                logging.debug(f'[DAEMON][controllerActions] {soundType} :: FilePath :: {soundURL}')
+
+                soundThumb = f'{myConfig.ttsWebSrvImages}tts.png'
+                soundAlbumName = "Jeedom"
+                soundTitle = f"TTSCast {soundType}"
+                soundArtist = _value
+
+                app_name = "default_media_receiver"
+                # app_name = "bubbleupnp"
+                app_data = {
+                    "media_id": soundURL,
+                    "media_type": "audio/mp3",
+                    "stream_type": "BUFFERED",
+                    "title": soundTitle,
+                    "thumb": soundThumb,
+                    "metadata": {
+                        "metadataType": 3,
+                        "title": soundTitle,
+                        "artist": soundArtist,
+                        "albumName": soundAlbumName,
+                        "images": [{"url": soundThumb}]
+                    }
+                }
+                quick_play.quick_play(cast, app_name, app_data)
+                
+                if (not _appDing and _volume is not None):
+                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
+                    if isGroup:
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                    else:
+                        cast.set_volume(volume=_volume / 100)
+                elif (not _appDing):
+                    if isGroup:
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
+                
+                cast.media_controller.block_until_active()
+                
+                logging.debug(f'[DAEMON][controllerActions] Diffusion {soundType} lancée :: {str(cast.media_controller.status)}')
+                
+                media_player_state = None
+                media_has_played = False
+                
+                # Timeout de sécurité pour éviter une boucle infinie (60 secondes sans changement d'état ou blocage)
+                # On reset le timeout tant que ça joue pour permettre les sons longs.
+                timeout_loops = 600  # 600 * 0.1s = 60s
+                current_loop = 0
+
+                while True:
+                    # Gestion du Timeout
+                    current_loop += 1
+                    if current_loop > timeout_loops:
+                        logging.warning(f'[DAEMON][controllerActions] {soundType} :: Timeout waiting for media end (Blocked or Too Long Buffering)')
+                        break
+
+                    if media_player_state != cast.media_controller.status.player_state:
+                        media_player_state = cast.media_controller.status.player_state
+                        
+                        # Si le statut change, on peut reset le timeout (signe de vie)
+                        # Sauf si on passe en IDLE (fin) qui sera géré plus bas
+                        current_loop = 0 
+                        
+                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
+                            # Fin normale de lecture
+                            break
+                        
+                        if media_player_state in ['PLAYING']:
+                            media_has_played = True
+                            logging.debug(f'[DAEMON][controllerActions] Diffusion {soundType} en cours :: {str(cast.media_controller.status)}')
+                    
+                    # Si on est en train de jouer, on reset le timeout en permanence pour ne pas couper les sons longs
+                    if media_player_state == 'PLAYING':
+                        current_loop = 0
+                    
+                    time.sleep(0.1)
+    
+                cast.quit_app()
+                if (_volume is not None):
+                    if isGroup:
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
+            
+                return True
+
+            except Exception as e:
+                logging.error(f'[DAEMON][controllerSounds] Exception ({_googleUUID}) :: {e}')
+                if volumeBeforePlay is not None:
+                    if isGroup and groupSnapshot:
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
+                return False
+
+            finally:
+                # --- Wait Queue Management (Exit - Always) ---
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, soundType)
+
+    @staticmethod
+    def controllerMedia(cast, _googleUUID, _value, _options):
+        logging.debug(f'[DAEMON][controllerActions] Media Streaming ID @ UUID :: {_value} @ {_googleUUID}')
+        
+        if not Functions.isURL(_value):
+            logging.error(f'[DAEMON][controllerActions] Media ERROR (not URL) :: {_value} @ {_googleUUID}')
+            return False
+        else:
+            _volume = None
+            _appDing = True
+            _mediaType = None
+            _cmdForce = False
+            _cmdWait = None
+            try:
+                if (_options is not None):
+                    options_json = json.loads("{" + _options + "}")
+                    _volume = options_json.get('volume', None)
+                    _appDing = options_json.get('ding', True)
+                    _mediaType = options_json.get('type', None)
+                    _cmdForce = options_json.get('force', False)
+                    _cmdWait = options_json.get('wait', None)
+
+                    logging.debug(f'[DAEMON][controllerActions] Media :: Options :: {str(options_json)}')
+            except ValueError as e:
+                logging.debug(f'[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: {e}')
+
+            _appDing = False if myConfig.appDisableDing else _appDing
+            
+            # Default target is the googleUUID until resolved by Queue logic
+            _targetWaitUUID = _googleUUID
+            
+            # --- Wait Queue Management (Entrance) ---
+            allowed, _targetWaitUUID = Functions.waitQueueEnter(cast, _googleUUID, _cmdWait, _cmdForce, 'Media')
+            if not allowed:
+                return False
+            # ----------------------------------------
+            
+            volumeBeforePlay = None
+            groupSnapshot = None
+            isGroup = False
+
+            try:
+                if not _cmdForce:
+                    # Si DashCast alors sortir de l'appli avant sinon cela plante
+                    Functions.checkIfDashCast(cast)
+                
+                volumeBeforePlay = cast.status.volume_level
+                groupSnapshot = Functions.getGroupSnapshot(cast)
+                isGroup = bool(groupSnapshot)
+
+                if not _appDing:
+                    if isGroup:
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), 0.0)
+                    else:
+                        cast.set_volume(volume=0)
+                elif (_volume is not None):
+                    logging.debug(f'[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
+                    if isGroup:
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                    else:
+                        cast.set_volume(volume=_volume / 100)
+                
+                if _mediaType is not None:
+                    mediaType = _mediaType
+                    if mediaType == "video/mp4":
+                        metadataType = 1  # type METADATA_TYPE_MOVIE (Title + SubTitle only)
+                        mediaStreamType = "BUFFERED"
+                    elif mediaType == "audio/mp3":
+                        metadataType = 3  # type METADATA_TYPE_MUSICTRACK ()
+                        mediaStreamType = "BUFFERED"
+                    else:
+                        metadataType = 0  # type METADATA_TYPE_GENERIC
+                        mediaStreamType = "BUFFERED"
+                else:
+                    mediaType = "video/mp4"
+                    metadataType = 1  # type METADATA_TYPE_MOVIE
+                    mediaStreamType = "BUFFERED"
+                
+                media = _value    
+                mediaImage = f'{myConfig.ttsWebSrvImages}tts.png'
+                mediaTitle = "TTSCast Media"
+                mediaSubTitle = _value
+                mediaAlbumName = "Jeedom"
+                mediaArtist = _value
+                
+                app_name = "bubbleupnp"
+                app_data = {
+                    "media_id": media,
+                    "media_type": mediaType,
+                    "stream_type": mediaStreamType,
+                    "metadata": {
+                        "metadataType": metadataType,
+                        "title": mediaTitle,
+                        "subtitle": mediaSubTitle,
+                        "artist": mediaArtist,
+                        "albumName": mediaAlbumName,
+                        "images": [{"url": mediaImage}]
+                    }
+                }
+                
+                quick_play.quick_play(cast, app_name, app_data)
+                    
+                if (not _appDing and _volume is not None):
+                    logging.debug(f'[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
+                    if isGroup:
+                        Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
+                    else:
+                        cast.set_volume(volume=_volume / 100)
+                elif (not _appDing):
+                    if isGroup:
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
+                
+                cast.media_controller.block_until_active()
+                
+                logging.debug(f'[DAEMON][controllerActions] Diffusion Media lancée :: {str(cast.media_controller.status)}')
+                
+                return True
+                
+            except Exception as e:
+                logging.error(f'[DAEMON][controllerMedia] Exception ({_googleUUID}) :: {e}')
+                if volumeBeforePlay is not None:
+                    if isGroup and groupSnapshot:
+                        Functions.restoreGroupMembersVolume(groupSnapshot)
+                    else:
+                        cast.set_volume(volume=volumeBeforePlay)
+                
+                return False
+                
+            finally:
+                # --- Wait Queue Management (Exit - Always) ---
+                Functions.waitQueueExit(_targetWaitUUID, _cmdWait, _cmdForce, 'Media')
+
+    @staticmethod
     def controllerActions(_googleUUID='UNKNOWN', _controller='', _value='', _options=''):
         if _googleUUID != 'UNKNOWN':
             cast = None
-            volumeBeforePlay = None
-            
             try:
                 _uuid = UUID(_googleUUID)
                 if (_uuid in myConfig.NETCAST_DEVICES):
                     cast = myConfig.NETCAST_DEVICES[_uuid]    
                     logging.debug('[DAEMON][controllerActions] Chromecast trouvé, lancement des actions')
                 else:
-                    logging.debug('[DAEMON][controllerActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][controllerActions] Aucun Chromecast avec cet UUID :: {_googleUUID}')
                     return False
                 
                 if (_controller == 'start_app'):
-                    logging.debug('[DAEMON][controllerActions] Lancement de l\'application :: %s', _value)
-                    
-                    _volume = None
-                    _appDing = True
-                    _cmdForce = False
-                    _cmdWait = None
-                    
-                    try:
-                        if (_options is not None):
-                            options_json = json.loads("{" + _options + "}")
-                            _volume = options_json.get('volume', None)
-                            _appDing = options_json.get('ding', True)
-                            _cmdForce = options_json.get('force', False)
-                            _cmdWait = options_json.get('wait', None)
-                            logging.debug('[DAEMON][controllerActions] StartApp :: Options :: %s', str(options_json))
-                    except ValueError as e:
-                        logging.debug('[DAEMON][controllerActions] StartApp :: Options mal formatées (Json KO) :: %s', e)
-                    
-                    _appDing = False if myConfig.appDisableDing else _appDing
-                    
-                    if _cmdForce:
-                        # Si cmdForce alors forcer la sortie de l'appli avant
-                        Functions.forceQuitApp(cast)
-                        if _googleUUID in myConfig.cmdWaitQueue:
-                            myConfig.cmdWaitQueue[_googleUUID] = 0
-                            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                    elif _cmdWait is not None:
-                        # WaitQueue if option defined
-                        if _googleUUID in myConfig.cmdWaitQueue:
-                            if int(_cmdWait) == 1:
-                                myConfig.cmdWaitQueue[_googleUUID] = 0
-                                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
-                            elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                t = 10
-                                while (myConfig.cmdWaitQueue[_googleUUID] == 0 and t > 0):
-                                    time.sleep(0.1)
-                                    t -= 1
-                                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue (t) :: %s ', str(t))
-                                if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                    logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
-                                    return False
-                        
-                        if _googleUUID in myConfig.cmdWaitQueue:
-                            myConfig.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
-                        else:
-                            myConfig.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
-                        logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
-                        queue_start_time = int(time.time())
-                        while myConfig.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
-                            queue_current_time = int(time.time())
-                            if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Timeout %s (%s)', _cmdWait, _googleUUID)
-                                logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                return False
-                            time.sleep(0.1)
-                        if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            return False
-                        logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: End Waiting %s (%s)', _cmdWait, _googleUUID)
-                    else:
-                        if _googleUUID in myConfig.cmdWaitQueue:
-                            myConfig.cmdWaitQueue[_googleUUID] = 0
-                    
-                    if not _cmdForce:
-                        # Si DashCast alors sortir de l'appli avant sinon cela plante    
-                        Functions.checkIfDashCast(cast)
-                    
-                    if not _appDing:
-                        cast.set_volume(volume=0)
-                    elif (_volume is not None):
-                        logging.debug('[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                        cast.set_volume(volume=_volume / 100)
-                    
-                    cast.start_app(_value)
-                    
-                    if (not _appDing and _volume is not None):
-                        logging.debug('[DAEMON][controllerActions] StartApp :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                        cast.set_volume(volume=_volume / 100)
-                    elif (not _appDing):
-                        cast.set_volume(volume=volumeBeforePlay)
-                    
-                    cast.media_controller.block_until_active()
-                    
-                    logging.debug('[DAEMON][controllerActions] StartApp :: Application lancée :: %s', str(_value))
-                    
-                    # Mise à jour de la WaitQueue
-                    if _cmdWait is not None and _cmdForce is False:
-                        if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                            myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerActions] StartApp Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                    
-                    # Libération de la mémoire
-                    cast = None
-                    return True
-                
-                if (_controller == 'youtube'):
-                    logging.debug('[DAEMON][controllerActions] YouTube Id @ UUID :: %s @ %s', _value, _googleUUID)
-                    
-                    _playlist = None
-                    _enqueue = False
-                    _volume = None
-                    _appDing = True
-                    _cmdForce = False
-                    _cmdWait = None
-                    
-                    try:
-                        if (_options is not None):
-                            options_json = json.loads("{" + _options + "}")
-                            _playlist = options_json.get('playlist', None)
-                            _enqueue = options_json.get('enqueue', False)
-                            _volume = options_json.get('volume', None)
-                            _appDing = options_json.get('ding', True)
-                            _cmdForce = options_json.get('force', False)
-                            _cmdWait = options_json.get('wait', None)
-                            logging.debug('[DAEMON][controllerActions] YouTube :: Options :: %s', str(options_json))
-                    except ValueError as e:
-                        logging.debug('[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: %s', e)
-                    
-                    _appDing = False if myConfig.appDisableDing else _appDing
-                    
-                    # Si cmdForce alors forcer la sortie de l'appli avant
-                    # Sinon si DashCast alors sortir de l'appli avant sinon cela plante
-                    if _cmdForce:
-                        Functions.forceQuitApp(cast)
-                        if _googleUUID in myConfig.cmdWaitQueue:
-                            myConfig.cmdWaitQueue[_googleUUID] = 0
-                            logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                    elif _cmdWait is not None:
-                        # WaitQueue if option defined
-                        if _googleUUID in myConfig.cmdWaitQueue:
-                            if int(_cmdWait) == 1:
-                                myConfig.cmdWaitQueue[_googleUUID] = 0
-                                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
-                            elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                t = 10
-                                while (myConfig.cmdWaitQueue[_googleUUID] == 0 and t > 0):
-                                    time.sleep(0.1)
-                                    t -= 1
-                                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue (t) :: %s ', str(t))
-                                if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                    logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
-                                    return False
-                        
-                        if _googleUUID in myConfig.cmdWaitQueue:
-                            myConfig.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
-                        else:
-                            myConfig.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
-                        logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
-                        queue_start_time = int(time.time())
-                        while myConfig.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
-                            queue_current_time = int(time.time())
-                            if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Timeout %s (%s)', _cmdWait, _googleUUID)
-                                logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                return False
-                            time.sleep(0.1)
-                        if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                            logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                            logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            return False
-                        logging.debug('[DAEMON][controllerActions] Youtube Wait Queue :: End Waiting %s (%s)', _cmdWait, _googleUUID)
-                    else:
-                        myConfig.cmdWaitQueue[_googleUUID] = 0
-                    
-                    if not _cmdForce:
-                        Functions.checkIfDashCast(cast)
-                    
-                    volumeBeforePlay = cast.status.volume_level
-                    if not _appDing:
-                        cast.set_volume(volume=0)
-                    elif (_volume is not None):
-                        logging.debug('[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                        cast.set_volume(volume=_volume / 100)
+                    return Functions.controllerStartApp(cast, _googleUUID, _value, _options)
 
-                    app_name = "youtube"
-                    app_data = {
-                        "media_id": _value,
-                        "playlist_id": _playlist,
-                        "enqueue": _enqueue
-                    }
-                    quick_play.quick_play(cast, app_name, app_data)
-                    
-                    if (not _appDing and _volume is not None):
-                        logging.debug('[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                        cast.set_volume(volume=_volume / 100)
-                    elif (not _appDing):
-                        cast.set_volume(volume=volumeBeforePlay)
-                    
-                    cast.media_controller.block_until_active()
-                    
-                    logging.debug('[DAEMON][controllerActions] YouTube :: Diffusion lancée :: %s', str(cast.media_controller.status))
-                    
-                    # Mise à jour de la WaitQueue
-                    if _cmdWait is not None and _cmdForce is False:
-                        if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                            myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerActions] YouTube Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                    
-                    # Libération de la mémoire
-                    cast = None
-                    return True
-                
+                elif (_controller == 'youtube'):
+                    return Functions.controllerYoutube(cast, _googleUUID, _value, _options)
+
                 elif (_controller == 'dashcast'):
-                    logging.debug('[DAEMON][controllerActions] DashCast URL / Options @ UUID :: %s / %s @ %s', _value, _options, _googleUUID)
-                    
-                    player = dashcast.DashCastController()
-                    cast.register_handler(player)
-                    
-                    _force = False
-                    _reload_seconds = None
-                    _cmdWait = None
-                    
-                    try:
-                        if (_options is not None):
-                            options_json = json.loads("{" + _options + "}")    
-                            _force = options_json.get('force', False)
-                            _reload_seconds = options_json.get('reload_seconds', None)
-                            _cmdWait = options_json.get('wait', None)
-                    except ValueError as e:
-                        logging.debug('[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: %s', e)
-                    
-                    # waitQueue if option defined
-                    if _cmdWait is not None:
-                        if _googleUUID in myConfig.cmdWaitQueue:
-                            if int(_cmdWait) == 1:
-                                myConfig.cmdWaitQueue[_googleUUID] = 0
-                                logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
-                            elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                t = 10
-                                while (myConfig.cmdWaitQueue[_googleUUID] == 0 and t > 0):
-                                    time.sleep(0.1)
-                                    t -= 1
-                                logging.debug('[DAEMON][controllerActions] DashCast Wait Queue (t) :: %s ', str(t))
-                                if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                    logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
-                                    return False
-                            
-                        if _googleUUID in myConfig.cmdWaitQueue:
-                            myConfig.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
-                        else:
-                            myConfig.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
-                        logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Start %s (%s)', _cmdWait, _googleUUID)
-                        queue_start_time = int(time.time())
-                        while myConfig.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
-                            queue_current_time = int(time.time())
-                            if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                                logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Timeout %s (%s)', _cmdWait, _googleUUID)
-                                logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                return False
-                            time.sleep(0.1)
-                        if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                            logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                            logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            return False
-                        logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: End %s (%s)', _cmdWait, _googleUUID)
-                    else:
-                        if _googleUUID in myConfig.cmdWaitQueue:
-                            myConfig.cmdWaitQueue[_googleUUID] = 0
-
-                    if options_json.get('quit_app', False):
-                        logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
-                        cast.quit_app()
-                        t = 5
-                        while cast.status.app_id is not None and t > 0:
-                            time.sleep(0.1)
-                            t = t - 0.1
-                    time.sleep(1)
-                    
-                    logging.debug('[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: %s | %s', _value, str(options_json))
-                    player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)  # type: ignore
-                    time.sleep(2)
-                    
-                    cast.unregister_handler(player)
-                    time.sleep(1)
-                    
-                    # Mise à jour de la WaitQueue
-                    if _cmdWait is not None:
-                        if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                            myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerActions] DashCast Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                    
-                    # Libération de la mémoire
-                    player = None
-                    cast = None
-                    return True
+                    return Functions.controllerDashCast(cast, _googleUUID, _value, _options)
                 
                 elif (_controller in ['radios', 'customradios']):
-                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
-                    
-                    if _value == '':
-                        cast.quit_app()
-                        time.sleep(1)
-                    else:
-                        if (_controller == 'customradios'):
-                            _RadiosFilePath = myConfig.customRadiosFilePath
-                        else:
-                            _RadiosFilePath = myConfig.radiosFilePath
-                        
-                        if not os.path.isfile(_RadiosFilePath):
-                            logging.error('[DAEMON][controllerActions] Radio/CustomRadio JSON GetFile ERROR :: %s @ %s', _value, _googleUUID)
-                        else:
-                            _volume = None
-                            _appDing = True
-                            _cmdForce = False
-                            _cmdWait = None
-                            try:
-                                if (_options is not None):
-                                    options_json = json.loads("{" + _options + "}")
-                                    _volume = options_json.get('volume', None)
-                                    _appDing = options_json.get('ding', True)
-                                    _cmdForce = options_json.get('force', False)
-                                    _cmdWait = options_json.get('wait', None)
-                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options :: %s', str(options_json))
-                            except ValueError as e:
-                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Options mal formatées (Json KO) :: %s', e)
-
-                            _appDing = False if myConfig.appDisableDing else _appDing
-                         
-                            if _cmdForce:
-                                # Si cmdForce alors forcer la sortie de l'appli avant
-                                Functions.forceQuitApp(cast)
-                                if _googleUUID in myConfig.cmdWaitQueue:
-                                    myConfig.cmdWaitQueue[_googleUUID] = 0
-                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            elif _cmdWait is not None:
-                                # WaitQueue if option defined
-                                if _googleUUID in myConfig.cmdWaitQueue:
-                                    if int(_cmdWait) == 1:
-                                        myConfig.cmdWaitQueue[_googleUUID] = 0
-                                        logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
-                                    elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                        t = 10
-                                        while (myConfig.cmdWaitQueue[_googleUUID] == 0 and t > 0):
-                                            time.sleep(0.1)
-                                            t -= 1
-                                        logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue (t) :: %s', str(t))
-                                        if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                            logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
-                                            return False
-                                    
-                                if _googleUUID in myConfig.cmdWaitQueue:
-                                    myConfig.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
-                                else:
-                                    myConfig.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
-                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
-                                queue_start_time = int(time.time())
-                                while myConfig.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
-                                    queue_current_time = int(time.time())
-                                    if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                                        logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Timeout %s (%s)', _cmdWait, _googleUUID)
-                                        logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                        return False
-                                    time.sleep(0.1)
-                                if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                    return False
-                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: End %s (%s)', _cmdWait, _googleUUID)
-                            else:
-                                if _googleUUID in myConfig.cmdWaitQueue:
-                                    myConfig.cmdWaitQueue[_googleUUID] = 0
-                            
-                            if not _cmdForce:
-                                # Si DashCast alors sortir de l'appli avant sinon cela plante
-                                Functions.checkIfDashCast(cast)
-                            
-                            volumeBeforePlay = cast.status.volume_level
-                            if not _appDing:
-                                cast.set_volume(volume=0)
-                            elif (_volume is not None):
-                                logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                                cast.set_volume(volume=_volume / 100)
-                            
-                            f = open(_RadiosFilePath, "r")
-                            radiosArray = json.loads(f.read())
-                            
-                            if _value in radiosArray:
-                                radio = radiosArray[_value]
-                                if "NoLogo" in radio['image']:
-                                    radioThumb = f'{myConfig.ttsWebSrvImages}tts.png'
-                                else:
-                                    radioThumb = radio['image']
-                                radioUrl = radio['location']
-                                radioTitle = radio['title']
-                                radioArtist = "TTSCast Radio"
-                                radioAlbumName = "Jeedom"
-                                
-                                app_name = "default_media_receiver"
-                                app_data = {
-                                    "media_id": radioUrl,
-                                    "media_type": "audio/mp3",
-                                    "title": radioTitle,
-                                    "thumb": radioThumb,
-                                    "metadata": {
-                                        "metadataType": 3,
-                                        "title": radioTitle,
-                                        "artist": radioArtist,
-                                        "albumName": radioAlbumName,
-                                        "images": [{"url": radioThumb}]
-                                    },
-                                    "stream_type": "LIVE"
-                                }
-                                quick_play.quick_play(cast, app_name, app_data)
-                                
-                                if (not _appDing and _volume is not None):
-                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                                    cast.set_volume(volume=_volume / 100)
-                                elif (not _appDing):
-                                    cast.set_volume(volume=volumeBeforePlay)
-                                
-                                cast.media_controller.block_until_active()
-                                
-                                logging.debug('[DAEMON][controllerActions] Diffusion Radio/CustomRadio lancée :: %s', str(cast.media_controller.status))
-                            
-                            # Mise à jour de la WaitQueue
-                            if _cmdWait is not None and _cmdForce is False:
-                                if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                                    myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                                    logging.debug('[DAEMON][controllerActions] Radio/CustomRadio Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                    
-                    # Libération de la mémoire
-                    cast = None
-                    return True
+                    return Functions.controllerRadios(cast, _googleUUID, _value, _options, _controller)
                     
                 elif (_controller in ['sounds', 'customsounds']):
-                    logging.debug('[DAEMON][controllerActions] Sound/CustomSound Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
-                    
-                    if _value == '':
-                        cast.quit_app()
-                        time.sleep(1)
-                    else:
-                        _volume = None
-                        _appDing = True
-                        _cmdWait = None
-                        _cmdForce = False
-                        
-                        try:
-                            if (_options is not None):
-                                options_json = json.loads("{" + _options + "}")
-                                _volume = options_json.get('volume', None)
-                                _appDing = options_json.get('ding', True)
-                                _cmdWait = options_json.get('wait', None)
-                                _cmdForce = options_json.get('force', False)
-                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Options :: %s', str(options_json))
-                        except ValueError as e:
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Options mal formatées (Json KO) :: %s', e)
-
-                        _appDing = False if myConfig.appDisableDing else _appDing
-
-                        if _cmdForce:
-                            Functions.forceQuitApp(cast)
-                            if _googleUUID in myConfig.cmdWaitQueue:
-                                myConfig.cmdWaitQueue[_googleUUID] = 0
-                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        elif _cmdWait is not None:
-                            if _googleUUID in myConfig.cmdWaitQueue:
-                                if int(_cmdWait) == 1:
-                                    myConfig.cmdWaitQueue[_googleUUID] = 0
-                                    logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
-                                elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                    t = 10
-                                    while (myConfig.cmdWaitQueue[_googleUUID] == 0 and t > 0):
-                                        time.sleep(0.1)
-                                        t -= 1
-                                    logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue (t) :: %s', str(t))
-                                    if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                        logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
-                                        return False
-                            # WaitQueue if option defined
-                            if _googleUUID in myConfig.cmdWaitQueue:
-                                myConfig.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
-                            else:
-                                myConfig.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
-                            queue_start_time = int(time.time())
-                            while myConfig.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
-                                queue_current_time = int(time.time())
-                                if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                                    logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Timeout %s (%s)', _cmdWait, _googleUUID)
-                                    logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                    return False
-                                time.sleep(0.1)
-                            if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                return False
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: End Waiting %s (%s)', _cmdWait, _googleUUID)
-                        else:
-                            if _googleUUID in myConfig.cmdWaitQueue:
-                                myConfig.cmdWaitQueue[_googleUUID] = 0
-                        
-                        if not _cmdForce:
-                            # Si DashCast alors sortir de l'appli avant sinon cela plante
-                            Functions.checkIfDashCast(cast)
-                        
-                        volumeBeforePlay = cast.status.volume_level
-                        if not _appDing:
-                            cast.set_volume(volume=0)
-                        elif (_volume is not None):
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                            cast.set_volume(volume=_volume / 100)
-                        
-                        if (_controller == 'customsounds'):
-                            soundURL = f'{myConfig.ttsWebSrvMedia}custom/{_value}'
-                        else:
-                            soundURL = f'{myConfig.ttsWebSrvMedia}{_value}'
-                        logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: FilePath :: %s', soundURL)
-
-                        soundThumb = f'{myConfig.ttsWebSrvImages}tts.png'
-                        soundAlbumName = "Jeedom"
-                        soundTitle = "TTSCast Sound"
-                        soundArtist = _value
-
-                        app_name = "default_media_receiver"
-                        # app_name = "bubbleupnp"
-                        app_data = {
-                            "media_id": soundURL,
-                            "media_type": "audio/mp3",
-                            "stream_type": "BUFFERED",
-                            "title": soundTitle,
-                            "thumb": soundThumb,
-                            "metadata": {
-                                "metadataType": 3,
-                                "title": soundTitle,
-                                "artist": soundArtist,
-                                "albumName": soundAlbumName,
-                                "images": [{"url": soundThumb}]
-                            }
-                        }
-                        quick_play.quick_play(cast, app_name, app_data)
-                        
-                        if (not _appDing and _volume is not None):
-                            logging.debug('[DAEMON][controllerActions] Sound/CustomSound :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                            cast.set_volume(volume=_volume / 100)
-                        elif (not _appDing):
-                            cast.set_volume(volume=volumeBeforePlay)
-                        
-                        cast.media_controller.block_until_active()
-                        
-                        logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound lancée :: %s', str(cast.media_controller.status))
-                        
-                        media_player_state = None
-                        media_has_played = False
-	
-                        while True:
-                            if media_player_state != cast.media_controller.status.player_state:
-                                media_player_state = cast.media_controller.status.player_state
-                                if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
-                                    break
-                                if media_player_state in ['PLAYING']:
-                                    media_has_played = True
-                                    logging.debug('[DAEMON][controllerActions] Diffusion Sound/CustomSound en cours :: %s', str(cast.media_controller.status))
-                            time.sleep(0.1)
-            
-                        cast.quit_app()
-                        if (_volume is not None):
-                            cast.set_volume(volume=volumeBeforePlay)
-                    
-                        # Mise à jour de la WaitQueue
-                        if _cmdWait is not None and _cmdForce is False:
-                            if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                                myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                                logging.debug('[DAEMON][controllerActions] Sound/CustomSound Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                    
-                    # Libération de la mémoire
-                    cast = None
-                    return True
+                    return Functions.controllerSounds(cast, _googleUUID, _value, _options, _controller)
                 
                 elif (_controller in ['media']):
-                    logging.debug('[DAEMON][controllerActions] Media Streaming ID @ UUID :: %s @ %s', _value, _googleUUID)
-                    
-                    if not Functions.isURL(_value):
-                        logging.error('[DAEMON][controllerActions] Media ERROR (not URL) :: %s @ %s', _value, _googleUUID)
-                    else:
-                        _volume = None
-                        _appDing = True
-                        _mediaType = None
-                        _cmdForce = False
-                        _cmdWait = None
-                        try:
-                            if (_options is not None):
-                                options_json = json.loads("{" + _options + "}")
-                                _volume = options_json.get('volume', None)
-                                _appDing = options_json.get('ding', True)
-                                _mediaType = options_json.get('type', None)
-                                _cmdForce = options_json.get('force', False)
-                                _cmdWait = options_json.get('wait', None)
-
-                                logging.debug('[DAEMON][controllerActions] Media :: Options :: %s', str(options_json))
-                        except ValueError as e:
-                            logging.debug('[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: %s', e)
-
-                        _appDing = False if myConfig.appDisableDing else _appDing
-                        
-                        if _cmdForce:
-                            Functions.forceQuitApp(cast)
-                            if _googleUUID in myConfig.cmdWaitQueue:
-                                myConfig.cmdWaitQueue[_googleUUID] = 0
-                                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Force %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        elif _cmdWait is not None:
-                            if _googleUUID in myConfig.cmdWaitQueue:
-                                if int(_cmdWait) == 1:
-                                    myConfig.cmdWaitQueue[_googleUUID] = 0
-                                    logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Reset %s (%s)', _cmdWait, _googleUUID)
-                                elif int(_cmdWait) > 1 and myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                    t = 10
-                                    while (myConfig.cmdWaitQueue[_googleUUID] == 0 and t > 0):
-                                        time.sleep(0.1)
-                                        t -= 1
-                                    logging.debug('[DAEMON][controllerActions] Media Wait Queue (t) :: %s', str(t))
-                                    if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                        logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Cancelled %s (%s)', _cmdWait, _googleUUID)
-                                        return False
-                            # WaitQueue if option defined
-                            if _googleUUID in myConfig.cmdWaitQueue:
-                                myConfig.cmdWaitQueue[_googleUUID] += 2 ** int(_cmdWait)
-                            else:
-                                myConfig.cmdWaitQueue[_googleUUID] = 2 ** int(_cmdWait)
-                            logging.debug('[DAEMON][controllerActions] Media Wait Queue :: In %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                            logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Start Waiting %s (%s)', _cmdWait, _googleUUID)
-                            queue_start_time = int(time.time())
-                            while myConfig.cmdWaitQueue[_googleUUID] % (2 ** int(_cmdWait)) != 0:
-                                queue_current_time = int(time.time())
-                                if (queue_start_time + (myConfig.cmdWaitTimeout * int(_cmdWait)) <= queue_current_time):
-                                    logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Timeout %s (%s)', _cmdWait, _googleUUID)
-                                    logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                    return False
-                                time.sleep(0.1)
-                            if myConfig.cmdWaitQueue[_googleUUID] == 0:
-                                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Cancel/Force %s (%s)', _cmdWait, _googleUUID)
-                                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Return %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                                return False
-                            logging.debug('[DAEMON][controllerActions] Media Wait Queue :: End Waiting %s (%s)', _cmdWait, _googleUUID)
-                        else:
-                            if _googleUUID in myConfig.cmdWaitQueue:
-                                myConfig.cmdWaitQueue[_googleUUID] = 0
-                        
-                        if not _cmdForce:
-                            # Si DashCast alors sortir de l'appli avant sinon cela plante
-                            Functions.checkIfDashCast(cast)
-                        
-                        volumeBeforePlay = cast.status.volume_level
-                        if not _appDing:
-                            cast.set_volume(volume=0)
-                        elif (_volume is not None):
-                            logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                            cast.set_volume(volume=_volume / 100)
-                        
-                        if _mediaType is not None:
-                            mediaType = _mediaType
-                            if mediaType == "video/mp4":
-                                metadataType = 1  # type METADATA_TYPE_MOVIE (Title + SubTitle only)
-                                mediaStreamType = "BUFFERED"
-                            elif mediaType == "audio/mp3":
-                                metadataType = 3  # type METADATA_TYPE_MUSICTRACK ()
-                                mediaStreamType = "BUFFERED"
-                            else:
-                                metadataType = 0  # type METADATA_TYPE_GENERIC
-                                mediaStreamType = "BUFFERED"
-                        else:
-                            mediaType = "video/mp4"
-                            metadataType = 1  # type METADATA_TYPE_MOVIE
-                        
-                        media = _value    
-                        mediaImage = f'{myConfig.ttsWebSrvImages}tts.png'
-                        mediaTitle = "TTSCast Media"
-                        mediaSubTitle = _value
-                        mediaAlbumName = "Jeedom"
-                        mediaArtist = _value
-                        
-                        app_name = "bubbleupnp"
-                        app_data = {
-                            "media_id": media,
-                            "media_type": mediaType,
-                            "stream_type": mediaStreamType,
-                            "metadata": {
-                                "metadataType": metadataType,
-                                "title": mediaTitle,
-                                "subtitle": mediaSubTitle,
-                                "artist": mediaArtist,
-                                "albumName": mediaAlbumName,
-                                "images": [{"url": mediaImage}]
-                            }
-                        }
-                        
-                        quick_play.quick_play(cast, app_name, app_data)
-                            
-                        if (not _appDing and _volume is not None):
-                            logging.debug('[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(_volume))
-                            cast.set_volume(volume=_volume / 100)
-                        elif (not _appDing):
-                            cast.set_volume(volume=volumeBeforePlay)
-                        
-                        cast.media_controller.block_until_active()
-                        
-                        logging.debug('[DAEMON][controllerActions] Diffusion Media lancée :: %s', str(cast.media_controller.status))
-                        
-                        # Mise à jour de la WaitQueue
-                        if _cmdWait is not None and _cmdForce is False:
-                            if myConfig.cmdWaitQueue[_googleUUID] > 0:
-                                myConfig.cmdWaitQueue[_googleUUID] -= 2 ** int(_cmdWait)
-                                logging.debug('[DAEMON][controllerActions] Media Wait Queue :: Out %s (%s)', str(myConfig.cmdWaitQueue[_googleUUID]), _googleUUID)
-                        
-                    # Libération de la mémoire
-                    cast = None
-                    return True
+                    return Functions.controllerMedia(cast, _googleUUID, _value, _options)
+                
+                return True
                 
             except Exception as e:
-                logging.error('[DAEMON][controllerActions] Exception on controllerActions (%s) :: %s', _googleUUID, e)
+                logging.error(f'[DAEMON][controllerActions] Exception on controllerActions ({_googleUUID}) :: {e}')
                 logging.debug(traceback.format_exc())
-                
-                if volumeBeforePlay is not None:
-                    cast.set_volume(volume=volumeBeforePlay)  # type: ignore
-
-                # TODO : Mise à jour de la WaitQueue en cas d'erreur ???
-                
-                # Libération de la mémoire
-                cast = None
                 return False
 
     @staticmethod
@@ -2144,7 +2472,7 @@ class Functions:
                     cast = myConfig.NETCAST_DEVICES[_uuid]
                     logging.debug('[DAEMON][mediaActions] Chromecast trouvé, lancement des actions')
                 else:
-                    logging.debug('[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] Aucun Chromecast avec cet UUID :: {_googleUUID}')
                     return False
                 
                 if (_mode in ('volumeset', 'volumeup', 'volumedown')):
@@ -2155,40 +2483,40 @@ class Functions:
                         castVolumeLevel = round(cast.volume_up(delta=0.05) * 100)
                     elif (_mode == 'volumedown'): 
                         castVolumeLevel = round(cast.volume_down(delta=0.05) * 100)
-                    logging.debug('[DAEMON][mediaActions] Chromecast Volume @ UUID :: %s @ %s', str(castVolumeLevel), _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] Chromecast Volume @ UUID :: {str(castVolumeLevel)} @ {_googleUUID}')
                 elif (_mode == 'media_pause'):
                     cast.media_controller.pause()
-                    logging.debug('[DAEMON][mediaActions] PAUSE :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] PAUSE :: {_googleUUID}')
                 elif (_mode == 'media_play'):
                     cast.media_controller.play()
-                    logging.debug('[DAEMON][mediaActions] PLAY :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] PLAY :: {_googleUUID}')
                 elif (_mode == 'media_stop'): 
                     cast.media_controller.stop()
-                    logging.debug('[DAEMON][mediaActions] STOP :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] STOP :: {_googleUUID}')
                 elif (_mode == 'media_quit'): 
                     cast.quit_app()
-                    logging.debug('[DAEMON][mediaActions] QUIT :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] QUIT :: {_googleUUID}')
                 elif (_mode == 'media_next'): 
                     cast.media_controller.queue_next()
-                    logging.debug('[DAEMON][mediaActions] NEXT :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] NEXT :: {_googleUUID}')
                 elif (_mode == 'media_previous'): 
                     cast.media_controller.queue_prev()
-                    logging.debug('[DAEMON][mediaActions] PREVIOUS :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] PREVIOUS :: {_googleUUID}')
                 elif (_mode == 'media_rewind'): 
                     cast.media_controller.rewind()
-                    logging.debug('[DAEMON][mediaActions] REWIND :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] REWIND :: {_googleUUID}')
                 elif (_mode == 'mute_on'): 
                     cast.set_volume_muted(True)
-                    logging.debug('[DAEMON][mediaActions] MUTE ON :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] MUTE ON :: {_googleUUID}')
                 elif (_mode == 'mute_off'): 
                     cast.set_volume_muted(False)
-                    logging.debug('[DAEMON][mediaActions] MUTE OFF :: %s', _googleUUID)
+                    logging.debug(f'[DAEMON][mediaActions] MUTE OFF :: {_googleUUID}')
                     
                 # Libération de la mémoire
                 cast = None
                 return True
             except Exception as e:
-                logging.error('[DAEMON][mediaActions] Exception on mediaActions (%s) :: %s', _googleUUID, e)
+                logging.error(f'[DAEMON][mediaActions] Exception on mediaActions ({_googleUUID}) :: {e}')
                 logging.debug(traceback.format_exc())
                 
                 # Libération de la mémoire
@@ -2465,6 +2793,13 @@ class myCast:
                 logging.debug(traceback.format_exc())
         else:
             logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Connect Listener already deleted', str(chromecast.name))
+
+        if (uuid in myConfig.NETCAST_GROUPS):
+            try:
+                del myConfig.NETCAST_GROUPS[uuid]
+                logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: MultizoneController deleted', str(chromecast.name))
+            except Exception as e:
+                logging.error('[DAEMON][NETCAST][CastRemove][Multizone] Exception (%s) :: %s', str(chromecast.name), e)
         
         logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Listeners Removed', str(chromecast.name))
 
@@ -2486,6 +2821,19 @@ class myCast:
             try:
                 chromecast.wait(timeout=30)
                 logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
+
+                # Ajout Gestion Multizone pour les groupes
+                if chromecast.cast_info.cast_type == 'group':
+                    if chromecast.uuid not in myConfig.NETCAST_GROUPS:
+                        logging.debug('[DAEMON][NETCAST][CastCallBack] Group detected, adding MultizoneController :: %s', str(chromecast.name))
+                        mz = MyMultizoneController(chromecast.uuid)
+                        chromecast.register_handler(mz)
+                        mz.register_listener(MyMultizoneStatusListener(chromecast.name, chromecast))
+                        # On force une update pour peupler la liste initialement
+                        mz.update_members()
+                        myConfig.NETCAST_GROUPS[chromecast.uuid] = mz
+                        logging.debug('[DAEMON][NETCAST][CastCallBack] MultizoneController added for %s', str(chromecast.name))
+
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][CastCallBack] Chromecast Exception (%s) :: %s', str(chromecast.name), e)
                 # logging.debug(traceback.format_exc())
@@ -2675,6 +3023,25 @@ class myCast:
                 logging.error('[DAEMON][NETCAST][New_Connect_Status] Exception :: %s', e)
                 logging.debug(traceback.format_exc())
 
+    class MyMultizoneStatusListener(MultiZoneControllerListener):
+        """Listener for Multizone Controller events."""
+
+        def __init__(self, name, cast):
+            self.name = name
+            self.cast = cast
+
+        def multizone_member_added(self, uuid):
+            """Called when a member is added to the group."""
+            logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Added :: %s', self.name, uuid)
+
+        def multizone_member_removed(self, uuid):
+            """Called when a member is removed from the group."""
+            logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Removed :: %s', self.name, uuid)
+
+        def multizone_status_received(self):
+            """Called when multizone status is received."""
+            logging.debug('[DAEMON][NETCAST][Multizone] %s :: Status Received', self.name)
+
 # ----------------------------------------------------------------------------
 
 def handler(signum=None, frame=None):
@@ -2729,6 +3096,7 @@ parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="ApiKey", type=str)
 parser.add_argument("--apittskey", help="ApiTTS Key", type=str)
 parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
+parser.add_argument("--gcloudaudioencoding", help="Google Cloud Audio Encoding", type=str, default='MP3')
 parser.add_argument("--voicerssapikey", help="Voice RSS ApiKey", type=str)
 parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
 parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
@@ -2739,6 +3107,7 @@ parser.add_argument("--cmdwaittimeout", help="Cmd Wait Timeout Parameter", type=
 parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 parser.add_argument("--aienabled", help="Enable AI", type=str, default='0')
+parser.add_argument("--aidefault", help="AI Use By Default", type=str, default='0')
 parser.add_argument("--aiauthmode", help="AI Auth Mode", type=str, default='noMode')
 parser.add_argument("--aiprojectid", help="AI Project ID", type=str, default='noProjectId')
 parser.add_argument("--aiapikey", help="AI ApiKey", type=str, default='noKey')
@@ -2760,6 +3129,15 @@ if args.apittskey:
     myConfig.apiTTSKey = args.apittskey
 if args.gcloudapikey:
     myConfig.gCloudApiKey = args.gcloudapikey
+if args.gcloudaudioencoding:
+    if args.gcloudaudioencoding == "LINEAR16_48K":
+        myConfig.gCloudAudioEncoding = "LINEAR16"
+        myConfig.gCloudSampleRate = 48000
+    elif args.gcloudaudioencoding == "LINEAR16_24K":
+        myConfig.gCloudAudioEncoding = "LINEAR16"
+        myConfig.gCloudSampleRate = 24000
+    else:
+        myConfig.gCloudAudioEncoding = args.gcloudaudioencoding
 if args.voicerssapikey:
     myConfig.apiRSSKey = args.voicerssapikey
 if args.ttsdisablecache:
@@ -2782,6 +3160,11 @@ if args.aienabled:
         myConfig.aiEnabled = False
     else:
         myConfig.aiEnabled = True
+if args.aidefault:
+    if (args.aidefault == '0'):
+        myConfig.aiDefault = False
+    else:
+        myConfig.aiDefault = True
 if args.aiauthmode:
     myConfig.aiAuthMode = args.aiauthmode
 if args.aiprojectid and args.aiprojectid != 'noProjectId':
@@ -2832,6 +3215,7 @@ else:
 
 logging.info('[DAEMON][MAIN] Start Daemon')
 logging.info('[DAEMON][MAIN] Plugin Version: %s', myConfig.pluginVersion)
+logging.info('[DAEMON][MAIN] Python Version: %s', sys.version)
 logging.info('[DAEMON][MAIN] Log level: %s', myConfig.logLevel)
 logging.info('[DAEMON][MAIN] Socket port: %s', myConfig.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', myConfig.socketHost)
@@ -2849,11 +3233,14 @@ logging.info('[DAEMON][MAIN] PID file: %s', myConfig.pidFile)
 logging.info('[DAEMON][MAIN] ApiKey: %s', "***" if myConfig.apiKey else "N/A")
 logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***" if myConfig.apiTTSKey else "N/A")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', myConfig.gCloudApiKey)
+logging.info('[DAEMON][MAIN] Google Cloud Audio Encoding: %s', myConfig.gCloudAudioEncoding)
+logging.info('[DAEMON][MAIN] Google Cloud Sample Rate (Linear16 only): %s', myConfig.gCloudSampleRate)
 logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', "***" if myConfig.apiRSSKey else "N/A")
 logging.info('[DAEMON][MAIN] TTS Disable Cache: %s', str(myConfig.ttsDisableCache))
 logging.info('[DAEMON][MAIN] App Disable Ding: %s', str(myConfig.appDisableDing))
 logging.info('[DAEMON][MAIN] App Convert Single Quote: %s', str(myConfig.appConvertSingleQuote))
 logging.info('[DAEMON][MAIN] AI Enabled: %s', str(myConfig.aiEnabled))
+logging.info('[DAEMON][MAIN] AI Default: %s', str(myConfig.aiDefault))
 logging.info('[DAEMON][MAIN] AI Auth Mode: %s', myConfig.aiAuthMode)
 logging.info('[DAEMON][MAIN] AI Project ID: %s', myConfig.aiProjectID)
 logging.info('[DAEMON][MAIN] AI ApiKey: %s', "***" if myConfig.aiApiKey else "N/A")

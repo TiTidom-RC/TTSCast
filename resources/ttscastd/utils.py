@@ -24,6 +24,7 @@ class Config:
     
     NETCAST_BROWSER = None
     NETCAST_DEVICES = {}
+    NETCAST_GROUPS = {}
     NETCAST_ZCONF = None
     LISTENER_CAST = {}
     LISTENER_MEDIA = {}
@@ -65,9 +66,12 @@ class Config:
     # ttsVoiceRSSUrl = 'api.voicerss.org:443'
 
     gCloudApiKey = ''
+    gCloudAudioEncoding = 'MP3'
+    gCloudSampleRate = 24000
     
     # AI Configuration
     aiEnabled = False
+    aiDefault = False
     aiAuthMode = 'noMode'  # 'noMode', 'apikey', 'oauth2'
     aiProjectID = 'noProjectID'  # Google Cloud Project ID for AI
     aiApiKey = ''
