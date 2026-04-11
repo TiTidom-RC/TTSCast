@@ -240,6 +240,9 @@ try {
                 }
             }
         }
+    } elseif (isset($result['aiTestResult'])) {
+        log::add('ttscast', 'debug', '[CALLBACK] TTSCast AI Test Result');
+        message::add('ttscast', '[AI Test] ' . strval($result['aiTestResult']), '', '', false);
     } elseif (isset($result['aiLastMessage'])) {
         log::add('ttscast', 'debug', '[CALLBACK] TTSCast AI Last Message');
         foreach ($result['aiLastMessage'] as $uuid => $text) {
