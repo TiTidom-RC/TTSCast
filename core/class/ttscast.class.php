@@ -2121,7 +2121,6 @@ class ttscast extends eqLogic
             $cmd->setLogicalId('tts_notify');
             $cmd->setType('action');
             $cmd->setSubType('message');
-            $cmd->setConfiguration('template', 'ttsNotify');
             $cmd->setDisplay('forceReturnLineBefore', '1');
             $cmd->setDisplay('forceReturnLineAfter', '1');
             $cmd->setIsVisible(0);
@@ -2212,6 +2211,30 @@ class ttscastCmd extends cmd
     // Fonction exécutée automatiquement avant la suppression de la commande
     public function preRemove() {
         
+    }
+
+    public function getWidgetTemplateCode($_version = 'dashboard', $_clean = true, $_widgetName = '') {
+        if ($_version != 'scenario') {
+            return parent::getWidgetTemplateCode($_version, $_clean, $_widgetName);
+        }
+
+        if ($this->getLogicalId() !== 'tts_notify') {
+            return parent::getWidgetTemplateCode($_version, $_clean, $_widgetName);
+        }
+
+        $templateFilename = 'cmd.ttsNotify';
+        $replace = [
+            '#uid#' => 'cmd' . $this->getId() . eqLogic::UIDDELIMITER . mt_rand() . eqLogic::UIDDELIMITER,
+        ];
+
+        $html = template_replace($replace, getTemplate('core', 'scenario', $templateFilename, 'ttscast'));
+        $html = translate::exec($html, 'plugins/ttscast/core/template/scenario/' . $templateFilename . '.html');
+
+        if (!is_null($html) && !is_array($html) && $html !== '') {
+            return array('template' => $html, 'isCoreWidget' => false);
+        }
+
+        return parent::getWidgetTemplateCode($_version, $_clean, $_widgetName);
     }
 
     // Exécution d'une commande
