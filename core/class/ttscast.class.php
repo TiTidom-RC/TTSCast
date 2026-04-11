@@ -2224,7 +2224,8 @@ class ttscastCmd extends cmd
 
         $templateFilename = 'cmd.ttsNotify';
         $replace = [
-            '#uid#' => 'cmd' . $this->getId() . eqLogic::UIDDELIMITER . mt_rand() . eqLogic::UIDDELIMITER,
+            '#uid#'             => 'cmd' . $this->getId() . eqLogic::UIDDELIMITER . mt_rand() . eqLogic::UIDDELIMITER,
+            '#cmdNotification#' => '',
         ];
 
         $html = template_replace($replace, getTemplate('core', 'scenario', $templateFilename, 'ttscast'));
