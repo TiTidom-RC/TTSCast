@@ -1,0 +1,40 @@
+<div class="input-group input-group-sm" style="width: 100%; padding-top: 1px">
+  <span class="input-group-addon roundedLeft" style="width: 120px">{{Options}}</span>
+  <textarea class="message expressionAttr form-control ta_autosize" data-l1key="options" data-l2key="title" rows="1"
+    style="resize:vertical;" data-cmd_id="#id#" data-uid="#uid#"
+    placeholder="{{Ex : aitone:professional, aitemp:0.7}}">#title#</textarea>
+</div>
+
+<div class="input-group input-group-sm" style="width: 100%; padding-top: 1px">
+  <span class="input-group-addon roundedLeft" style="width: 120px">{{Message}}</span>
+  <textarea class="message expressionAttr form-control ta_autosize" data-l1key="options" data-l2key="message" rows="1"
+    style="resize:vertical;" data-cmd_id="#id#" data-uid="#uid#">#message#</textarea>
+  <span class="input-group-btn">
+    <button class="btn btn-default listDeviceInfoMessage roundedRight" type="button"
+      title="{{Sélectionner la commande}}" data-cmd_id="#id#" data-uid="#uid#"><i class="fas fa-list-alt"></i></button>
+  </span>
+</div>
+
+<div class="input-group input-group-sm" style="width: 100%; padding-top: 1px">
+  <span class="input-group-addon roundedLeft" style="width: 120px">{{Notification}}</span>
+  <textarea class="message expressionAttr form-control ta_autosize" data-l1key="options" data-l2key="cmdNotification" rows="1"
+    style="resize:vertical;" data-cmd_id="#id#" data-uid="#uid#">#cmdNotification#</textarea>
+  <span class="input-group-btn">
+    <button class="btn btn-default listDeviceInfoCmdNotification roundedRight" type="button"
+      title="{{Sélectionner la commande}}" data-cmd_id="#id#" data-uid="#uid#"><i class="fas fa-list-alt"></i></button>
+  </span>
+</div>
+
+<script>
+  document.querySelector('.listDeviceInfoMessage[data-uid="#uid#"]').addEventListener('click', function () {
+    jeedom.cmd.getSelectModal({}, function (result) {
+      document.querySelector('.expressionAttr[data-l1key=options][data-l2key=message][data-uid="#uid#"]').insertAtCursor(result.human)
+    })
+  })
+
+  document.querySelector('.listDeviceInfoCmdNotification[data-uid="#uid#"]').addEventListener('click', function () {
+    jeedom.cmd.getSelectModal({ cmd: { type: 'action' } }, function (result) {
+      document.querySelector('.expressionAttr[data-l1key=options][data-l2key=cmdNotification][data-uid="#uid#"]').insertAtCursor(result.human)
+    })
+  })
+</script>

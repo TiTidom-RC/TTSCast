@@ -310,7 +310,7 @@ class ttscast extends eqLogic
         self::sendToDaemon($value);
     }
 
-    public static function playTTS($gHome=null, $message=null, $options=null) {
+    public static function playTTS($gHome=null, $message=null, $options=null, $cmdNotificationId=0) {
         $ttsText = $message;
         $ttsGoogleUUID = $gHome;
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
@@ -339,7 +339,7 @@ class ttscast extends eqLogic
         $ttsOptions = $options;
         log::add('ttscast', 'debug', '[PlayTTS] ttsOptions After Array :: ' . $ttsOptions);
         
-        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
+        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'cmdNotificationId' => $cmdNotificationId);
         self::sendToDaemon($value);
     }
 
@@ -2113,6 +2113,26 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
+        if (config::byKey('ttsAIEnable', 'ttscast', '0') == '1') {
+            $cmd = $this->getCmd(null, 'ai_reformat_send');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Envoyer message IA', __FILE__));
+                $cmd->setEqLogic_id($this->getId());
+                $cmd->setLogicalId('ai_reformat_send');
+                $cmd->setType('action');
+                $cmd->setSubType('message');
+                $cmd->setConfiguration('template', 'aiReformatSend');
+                $cmd->setDisplay('forceReturnLineBefore', '1');
+                $cmd->setDisplay('forceReturnLineAfter', '1');
+                $cmd->setIsVisible(0);
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            } else {
+                $orderCmd++;
+            }
+        }
+
         $cmd = $this->getCmd(null, 'customcmd');
         if (!is_object($cmd)) {
             $cmd = new ttscastCmd();
@@ -2262,6 +2282,22 @@ class ttscastCmd extends cmd
                 }                
             } elseif (in_array($logicalId, ["refresh", "refreshcast"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+            } elseif ($logicalId == "ai_reformat_send") {
+                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+                $googleUUID = $eqLogic->getLogicalId();
+                if (!empty($googleUUID) && isset($_options['message']) && isset($_options['cmdNotification'])) {
+                    $cmdNotification = cmd::byString($_options['cmdNotification']);
+                    if (!is_object($cmdNotification)) {
+                        log::add('ttscast', 'warning', '[CMD] ai_reformat_send :: Commande notification introuvable :: ' . $_options['cmdNotification']);
+                    } else {
+                        $cmdNotificationId = $cmdNotification->getId();
+                        $ttsOptions = isset($_options['title']) ? $_options['title'] : '';
+                        log::add('ttscast', 'debug', '[CMD] ai_reformat_send :: UUID=' . $googleUUID . ' | cmdNotificationId=' . $cmdNotificationId . ' | options=' . $ttsOptions);
+                        ttscast::playTTS($googleUUID, $_options['message'], $ttsOptions, $cmdNotificationId);
+                    }
+                } else {
+                    log::add('ttscast', 'debug', '[CMD] ai_reformat_send :: Il manque des paramètres (message ou cmdNotification)');
+                }
             }
             else {
                 throw new Exception(__('Commande Action non implémentée actuellement', __FILE__));    

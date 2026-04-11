@@ -257,6 +257,37 @@ try {
                 log::add('ttscast', 'debug', '[CALLBACK] AI Last Message :: Mise à jour :: UUID=' . $uuid);
             }
         }
+    } elseif (isset($result['aiReformatResult'])) {
+        log::add('ttscast', 'debug', '[CALLBACK] TTSCast AI Reformat Result');
+        $data              = $result['aiReformatResult'];
+        $googleUUID        = isset($data['googleUUID'])        ? $data['googleUUID']        : '';
+        $cmdNotificationId = isset($data['cmdNotificationId']) ? $data['cmdNotificationId'] : 0;
+        $reformulatedText  = isset($data['reformulatedText'])  ? strval($data['reformulatedText']) : '';
+        $cmdOptions        = isset($data['cmdOptions'])        ? $data['cmdOptions']        : array();
+
+        // Mise à jour ai_last_message du device
+        if ($googleUUID !== '') {
+            $deviceEq = ttscast::byLogicalId($googleUUID, 'ttscast');
+            if (is_object($deviceEq)) {
+                $cmd = $deviceEq->getCmd('info', 'ai_last_message');
+                if (is_object($cmd)) {
+                    $cmd->event($reformulatedText);
+                    log::add('ttscast', 'debug', '[CALLBACK] AI Reformat Result :: ai_last_message mis à jour :: UUID=' . $googleUUID);
+                }
+            }
+        }
+
+        // Exécution de la commande notification avec le texte reformulé + options pass-through
+        if ($cmdNotificationId > 0 && $reformulatedText !== '') {
+            $cmdNotification = cmd::byId($cmdNotificationId);
+            if (is_object($cmdNotification)) {
+                $execOptions = array_merge($cmdOptions, array('message' => $reformulatedText));
+                $cmdNotification->execCmd($execOptions);
+                log::add('ttscast', 'debug', '[CALLBACK] AI Reformat Result :: execCmd :: cmdId=' . $cmdNotificationId . ' | options=' . json_encode($execOptions));
+            } else {
+                log::add('ttscast', 'warning', '[CALLBACK] AI Reformat Result :: Commande notification introuvable :: cmdId=' . $cmdNotificationId);
+            }
+        }
     } else {
         log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 
     }
