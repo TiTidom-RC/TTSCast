@@ -240,6 +240,20 @@ try {
                 }
             }
         }
+    } elseif (isset($result['aiLastMessage'])) {
+        log::add('ttscast', 'debug', '[CALLBACK] TTSCast AI Last Message');
+        foreach ($result['aiLastMessage'] as $uuid => $text) {
+            $deviceEq = ttscast::byLogicalId($uuid, 'ttscast');
+            if (!is_object($deviceEq)) {
+                log::add('ttscast', 'debug', '[CALLBACK] AI Last Message :: Équipement non trouvé :: UUID=' . $uuid);
+                continue;
+            }
+            $cmd = $deviceEq->getCmd('info', 'ai_last_message');
+            if (is_object($cmd)) {
+                $cmd->event(strval($text));
+                log::add('ttscast', 'debug', '[CALLBACK] AI Last Message :: Mise à jour :: UUID=' . $uuid);
+            }
+        }
     } else {
         log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 
     }

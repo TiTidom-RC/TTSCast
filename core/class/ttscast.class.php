@@ -1777,6 +1777,27 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
+        // Commandes IA (créées uniquement si l'IA est activée globalement)
+        if (config::byKey('ttsAIEnable', 'ttscast', '0') == '1') {
+            $cmd = $this->getCmd(null, 'ai_last_message');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('AI Last Message', __FILE__));
+                $cmd->setEqLogic_id($this->getId());
+                $cmd->setLogicalId('ai_last_message');
+                $cmd->setType('info');
+                $cmd->setSubType('string');
+                $cmd->setDisplay('forceReturnLineBefore', '1');
+                $cmd->setDisplay('forceReturnLineAfter', '1');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(0);
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            } else {
+                $orderCmd++;
+            }
+        }
+
         $cmd = $this->getCmd(null, 'title');
         if (!is_object($cmd)) {
             $cmd = new ttscastCmd();

@@ -801,6 +801,7 @@ class TTSCast:
             _useSSML = False
             _silenceBefore = None
             _cmdForce = False
+            _aiReformulatedText = None
             
             try:
                 if (ttsOptions is not None):
@@ -888,6 +889,7 @@ class TTSCast:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
+                                _aiReformulatedText = ttsAIText
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -957,6 +959,7 @@ class TTSCast:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
+                                _aiReformulatedText = ttsAIText
                                 ttsText = ttsAIText
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -991,6 +994,7 @@ class TTSCast:
                         ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                         if ttsAIText is not None:
                             logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
+                            _aiReformulatedText = ttsAIText
                             ttsText = ttsAIText
                         else:
                             logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -1023,6 +1027,7 @@ class TTSCast:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
+                                _aiReformulatedText = ttsAIText
                                 ttsText = ttsAIText
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -1041,8 +1046,13 @@ class TTSCast:
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
-                    logging.warning('[DAEMON][TTS] Clé API (Voice RSS) invalide :: ' + myConfig.apiRSSKey)  
-                    
+                    logging.warning('[DAEMON][TTS] Clé API (Voice RSS) invalide :: ' + myConfig.apiRSSKey)
+
+            # Envoyer ai_last_message si reformulation IA effectuée
+            if _aiReformulatedText is not None and ttsGoogleUUID:
+                Comm.sendToJeedom.add_changes('aiLastMessage::' + ttsGoogleUUID, _aiReformulatedText)  # type: ignore
+                logging.debug('[DAEMON][TTS] aiLastMessage envoyé :: UUID=%s', ttsGoogleUUID)
+
         except Exception as e:
             logging.error('[DAEMON][TTS] Exception on TTS :: %s', e)
             logging.debug(traceback.format_exc())
@@ -1667,7 +1677,7 @@ class Functions:
         # Convert Markdown to HTML and then extract text
         html = markdown.markdown(text)
         soup = BeautifulSoup(html, "html.parser")
-        return soup.get_text()
+        return soup.get_text().strip()
 
     @staticmethod
     def convertSingleQuoteToDoubleQuote(text: str, showLogs: bool = False, callerFunc: str = "SingleQuote") -> str:
