@@ -38,4 +38,7 @@
       document.querySelector('.expressionAttr[data-l1key=options][data-l2key=cmdNotification][data-uid="#uid#"]').insertAtCursor(result.human)
     })
   })
+
+  var _cmdNotificationEl = document.querySelector('.expressionAttr[data-uid="#uid#"][data-l1key=options][data-l2key=cmdNotification]')
+  if (!_cmdNotificationEl.value || _cmdNotificationEl.value === '#' + 'cmdNotification#') _cmdNotificationEl.value = ''
 </script>
