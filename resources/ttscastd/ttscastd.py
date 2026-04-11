@@ -596,7 +596,7 @@ class TTSCast:
 
         # Envoyer le résultat IA au centre de messages Jeedom si reformulation effectuée
         if _aiReformulatedText is not None:
-            Comm.sendToJeedom.add_changes('aiTestResult', _aiReformulatedText)  # type: ignore
+            Comm.sendToJeedom.send_change_immediate({'aiTestResult': _aiReformulatedText})  # type: ignore
             logging.debug('[DAEMON][TestTTS] aiTestResult envoyé')
 
     @staticmethod
@@ -1060,7 +1060,7 @@ class TTSCast:
 
             # Envoyer ai_last_message si reformulation IA effectuée
             if _aiReformulatedText is not None and ttsGoogleUUID:
-                Comm.sendToJeedom.add_changes('aiLastMessage::' + ttsGoogleUUID, _aiReformulatedText)  # type: ignore
+                Comm.sendToJeedom.send_change_immediate({'aiLastMessage': {ttsGoogleUUID: _aiReformulatedText}})  # type: ignore
                 logging.debug('[DAEMON][TTS] aiLastMessage envoyé :: UUID=%s', ttsGoogleUUID)
 
         except Exception as e:
