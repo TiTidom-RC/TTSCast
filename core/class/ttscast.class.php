@@ -2113,24 +2113,22 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
-        if (config::byKey('ttsAIEnable', 'ttscast', '0') == '1') {
-            $cmd = $this->getCmd(null, 'ai_reformat_send');
-            if (!is_object($cmd)) {
-                $cmd = new ttscastCmd();
-                $cmd->setName(__('Envoyer message IA', __FILE__));
-                $cmd->setEqLogic_id($this->getId());
-                $cmd->setLogicalId('ai_reformat_send');
-                $cmd->setType('action');
-                $cmd->setSubType('message');
-                $cmd->setConfiguration('template', 'aiReformatSend');
-                $cmd->setDisplay('forceReturnLineBefore', '1');
-                $cmd->setDisplay('forceReturnLineAfter', '1');
-                $cmd->setIsVisible(0);
-                $cmd->setOrder($orderCmd++);
-                $cmd->save();
-            } else {
-                $orderCmd++;
-            }
+        $cmd = $this->getCmd(null, 'tts_notify');
+        if (!is_object($cmd)) {
+            $cmd = new ttscastCmd();
+            $cmd->setName(__('TTS & Notifier', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->setLogicalId('tts_notify');
+            $cmd->setType('action');
+            $cmd->setSubType('message');
+            $cmd->setConfiguration('template', 'ttsNotify');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
+            $cmd->setIsVisible(0);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
         }
 
         $cmd = $this->getCmd(null, 'customcmd');
@@ -2282,21 +2280,21 @@ class ttscastCmd extends cmd
                 }                
             } elseif (in_array($logicalId, ["refresh", "refreshcast"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
-            } elseif ($logicalId == "ai_reformat_send") {
+            } elseif ($logicalId == "tts_notify") {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (!empty($googleUUID) && isset($_options['message']) && isset($_options['cmdNotification'])) {
                     $cmdNotification = cmd::byString($_options['cmdNotification']);
                     if (!is_object($cmdNotification)) {
-                        log::add('ttscast', 'warning', '[CMD] ai_reformat_send :: Commande notification introuvable :: ' . $_options['cmdNotification']);
+                        log::add('ttscast', 'warning', '[CMD] tts_notify :: Commande notification introuvable :: ' . $_options['cmdNotification']);
                     } else {
                         $cmdNotificationId = $cmdNotification->getId();
                         $ttsOptions = isset($_options['title']) ? $_options['title'] : '';
-                        log::add('ttscast', 'debug', '[CMD] ai_reformat_send :: UUID=' . $googleUUID . ' | cmdNotificationId=' . $cmdNotificationId . ' | options=' . $ttsOptions);
+                        log::add('ttscast', 'debug', '[CMD] tts_notify :: UUID=' . $googleUUID . ' | cmdNotificationId=' . $cmdNotificationId . ' | options=' . $ttsOptions);
                         ttscast::playTTS($googleUUID, $_options['message'], $ttsOptions, $cmdNotificationId);
                     }
                 } else {
-                    log::add('ttscast', 'debug', '[CMD] ai_reformat_send :: Il manque des paramètres (message ou cmdNotification)');
+                    log::add('ttscast', 'debug', '[CMD] tts_notify :: Il manque des paramètres (message ou cmdNotification)');
                 }
             }
             else {

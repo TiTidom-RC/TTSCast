@@ -394,14 +394,14 @@ class TTSCast:
             logging.debug('[DAEMON][AI] aiLastMessage envoyé :: UUID=%s', googleUUID)
         if cmdNotificationId:
             Comm.sendToJeedom.send_change_immediate({  # type: ignore
-                'aiReformatResult': {
+                'ttsNotifyResult': {
                     'googleUUID':        googleUUID,
                     'cmdNotificationId': cmdNotificationId,
                     'reformulatedText':  text,
                     'cmdOptions':        cmdOpts or {},
                 }
             })
-            logging.debug('[DAEMON][AI] aiReformatResult envoyé :: cmdNotificationId=%s', cmdNotificationId)
+            logging.debug('[DAEMON][AI] ttsNotifyResult envoyé :: cmdNotificationId=%s', cmdNotificationId)
 
     @staticmethod
     def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0', ttsAI='0'):

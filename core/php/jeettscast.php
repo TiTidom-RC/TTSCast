@@ -257,9 +257,9 @@ try {
                 log::add('ttscast', 'debug', '[CALLBACK] AI Last Message :: Mise à jour :: UUID=' . $uuid);
             }
         }
-    } elseif (isset($result['aiReformatResult'])) {
-        log::add('ttscast', 'debug', '[CALLBACK] TTSCast AI Reformat Result');
-        $data              = $result['aiReformatResult'];
+    } elseif (isset($result['ttsNotifyResult'])) {
+        log::add('ttscast', 'debug', '[CALLBACK] TTS Notify Result');
+        $data              = $result['ttsNotifyResult'];
         $googleUUID        = isset($data['googleUUID'])        ? $data['googleUUID']        : '';
         $cmdNotificationId = isset($data['cmdNotificationId']) ? $data['cmdNotificationId'] : 0;
         $reformulatedText  = isset($data['reformulatedText'])  ? strval($data['reformulatedText']) : '';
@@ -272,7 +272,7 @@ try {
                 $cmd = $deviceEq->getCmd('info', 'ai_last_message');
                 if (is_object($cmd)) {
                     $cmd->event($reformulatedText);
-                    log::add('ttscast', 'debug', '[CALLBACK] AI Reformat Result :: ai_last_message mis à jour :: UUID=' . $googleUUID);
+                    log::add('ttscast', 'debug', '[CALLBACK] TTS Notify Result :: ai_last_message mis à jour :: UUID=' . $googleUUID);
                 }
             }
         }
@@ -283,9 +283,9 @@ try {
             if (is_object($cmdNotification)) {
                 $execOptions = array_merge($cmdOptions, array('message' => $reformulatedText));
                 $cmdNotification->execCmd($execOptions);
-                log::add('ttscast', 'debug', '[CALLBACK] AI Reformat Result :: execCmd :: cmdId=' . $cmdNotificationId . ' | options=' . json_encode($execOptions));
+                log::add('ttscast', 'debug', '[CALLBACK] TTS Notify Result :: execCmd :: cmdId=' . $cmdNotificationId . ' | options=' . json_encode($execOptions));
             } else {
-                log::add('ttscast', 'warning', '[CALLBACK] AI Reformat Result :: Commande notification introuvable :: cmdId=' . $cmdNotificationId);
+                log::add('ttscast', 'warning', '[CALLBACK] TTS Notify Result :: Commande notification introuvable :: cmdId=' . $cmdNotificationId);
             }
         }
     } else {
