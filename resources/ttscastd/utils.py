@@ -70,6 +70,9 @@ class Config:
     gCloudSampleRate = 24000
     
     # AI Configuration
+    # Clés d'options consommées par le démon (jamais renvoyées comme options de notification)
+    DAEMON_OPTION_KEYS = frozenset({'genai', 'aitone', 'aisysprompt', 'aitemp', 'ssml', 'before', 'voice'})
+
     aiEnabled = False
     aiDefault = False
     aiAuthMode = 'noMode'  # 'noMode', 'apikey', 'oauth2'
