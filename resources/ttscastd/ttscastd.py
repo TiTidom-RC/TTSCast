@@ -775,8 +775,8 @@ class TTSCast:
                     filepath = ttsFile
                     logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
 
-                    if not os.path.isfile(filepath) or myConfig.ttsDisableCache or (_useAI and _useSSML is False):
-                        if _useAI and _useSSML is False:
+                    if not os.path.isfile(filepath) or myConfig.ttsDisableCache or (_useAI and not _useSSML):
+                        if _useAI and not _useSSML:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
@@ -1067,8 +1067,8 @@ class TTSCast:
                     filepath = os.path.join(symLinkPath, filename)
                     logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
 
-                    if not os.path.isfile(filepath) or myConfig.ttsDisableCache or (_useAI and _useSSML is False):
-                        if _useAI and _useSSML is False:
+                    if not os.path.isfile(filepath) or myConfig.ttsDisableCache or (_useAI and not _useSSML):
+                        if _useAI and not _useSSML:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
