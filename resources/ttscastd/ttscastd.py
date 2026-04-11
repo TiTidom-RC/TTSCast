@@ -385,6 +385,15 @@ class TTSCast:
         return filecontent
 
     @staticmethod
+    def _sendAIResult(text, isTest, googleUUID=''):
+        if isTest:
+            Comm.sendToJeedom.send_change_immediate({'aiTestResult': text})  # type: ignore
+            logging.debug('[DAEMON][AI] aiTestResult envoyé')
+        elif googleUUID:
+            Comm.sendToJeedom.send_change_immediate({'aiLastMessage': {googleUUID: text}})  # type: ignore
+            logging.debug('[DAEMON][AI] aiLastMessage envoyé :: UUID=%s', googleUUID)
+
+    @staticmethod
     def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0', ttsAI='0'):
         logging.debug('[DAEMON][TestTTS] Param TTSEngine :: %s', ttsEngine)
         
@@ -434,6 +443,7 @@ class TTSCast:
                             if myConfig.appConvertSingleQuote:
                                 ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText, True, "TestTTS")
                             _aiReformulatedText = ttsAIText
+                            TTSCast._sendAIResult(_aiReformulatedText, True)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                         else:
                             logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -508,6 +518,7 @@ class TTSCast:
                         if ttsAIText is not None:
                             logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                             _aiReformulatedText = ttsAIText
+                            TTSCast._sendAIResult(_aiReformulatedText, True)
                             ttsText = ttsAIText
                         else:
                             logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -542,6 +553,7 @@ class TTSCast:
                     if ttsAIText is not None:
                         logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                         _aiReformulatedText = ttsAIText
+                        TTSCast._sendAIResult(_aiReformulatedText, True)
                         ttsText = ttsAIText
                     else:
                         logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -574,6 +586,7 @@ class TTSCast:
                         if ttsAIText is not None:
                             logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                             _aiReformulatedText = ttsAIText
+                            TTSCast._sendAIResult(_aiReformulatedText, True)
                             ttsText = ttsAIText
                         else:
                             logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -593,11 +606,6 @@ class TTSCast:
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Voice RSS) invalide :: ' + myConfig.apiRSSKey)
-
-        # Envoyer le résultat IA au centre de messages Jeedom si reformulation effectuée
-        if _aiReformulatedText is not None:
-            Comm.sendToJeedom.send_change_immediate({'aiTestResult': _aiReformulatedText})  # type: ignore
-            logging.debug('[DAEMON][TestTTS] aiTestResult envoyé')
 
     @staticmethod
     def generateTTS(ttsText, ttsFile, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None):
@@ -900,6 +908,7 @@ class TTSCast:
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
                                 _aiReformulatedText = ttsAIText
+                                TTSCast._sendAIResult(_aiReformulatedText, False, ttsGoogleUUID)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -970,6 +979,7 @@ class TTSCast:
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                                 _aiReformulatedText = ttsAIText
+                                TTSCast._sendAIResult(_aiReformulatedText, False, ttsGoogleUUID)
                                 ttsText = ttsAIText
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -1005,6 +1015,7 @@ class TTSCast:
                         if ttsAIText is not None:
                             logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                             _aiReformulatedText = ttsAIText
+                            TTSCast._sendAIResult(_aiReformulatedText, False, ttsGoogleUUID)
                             ttsText = ttsAIText
                         else:
                             logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -1038,6 +1049,7 @@ class TTSCast:
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                                 _aiReformulatedText = ttsAIText
+                                TTSCast._sendAIResult(_aiReformulatedText, False, ttsGoogleUUID)
                                 ttsText = ttsAIText
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -1057,11 +1069,6 @@ class TTSCast:
                     logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
                     logging.warning('[DAEMON][TTS] Clé API (Voice RSS) invalide :: ' + myConfig.apiRSSKey)
-
-            # Envoyer ai_last_message si reformulation IA effectuée
-            if _aiReformulatedText is not None and ttsGoogleUUID:
-                Comm.sendToJeedom.send_change_immediate({'aiLastMessage': {ttsGoogleUUID: _aiReformulatedText}})  # type: ignore
-                logging.debug('[DAEMON][TTS] aiLastMessage envoyé :: UUID=%s', ttsGoogleUUID)
 
         except Exception as e:
             logging.error('[DAEMON][TTS] Exception on TTS :: %s', e)
