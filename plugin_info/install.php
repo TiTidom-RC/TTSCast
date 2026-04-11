@@ -187,6 +187,38 @@ function ttscast_update() {
         }
     }
     
+    // Nettoyage des anciens fichiers et répertoires obsolètes
+    $pluginDir = dirname(__DIR__);
+    try {
+        $pathsToRemove = array(
+            // Accepte fichiers ET répertoires (rm -rf) — ajouter ici les chemins à supprimer à chaque mise à jour
+            $pluginDir . '/core/php/.htaccess',
+        );
+        $cleanupRemoved = 0;
+        $cleanupErrors = 0;
+        foreach ($pathsToRemove as $path) {
+            if (file_exists($path)) {
+                $output = array();
+                $returnVar = 0;
+                exec('rm -rf ' . escapeshellarg($path) . ' 2>&1', $output, $returnVar);
+                if ($returnVar !== 0) {
+                    $cleanupErrors++;
+                    log::add('ttscast', 'warning', '[CLEANUP_KO] Echec suppression "' . $path . '" (Code: ' . $returnVar . ') : ' . implode(' ', $output));
+                } else {
+                    $cleanupRemoved++;
+                    log::add('ttscast', 'info', '[CLEANUP_OK] Chemin supprimé : ' . $path);
+                }
+            }
+        }
+        $cleanupSummary = count($pathsToRemove) . ' chemin(s) vérifié(s), ' . $cleanupRemoved . ' supprimé(s)';
+        if ($cleanupErrors > 0) {
+            $cleanupSummary .= ', ' . $cleanupErrors . ' erreur(s)';
+        }
+        log::add('ttscast', 'debug', '[CLEANUP] ' . $cleanupSummary);
+    } catch (Exception $e) {
+        log::add('ttscast', 'warning', '[CLEANUP_KO] Erreur lors du nettoyage : ' . $e->getMessage());
+    }
+
     // Créer l'équipement AI Stats si l'IA est déjà activée
     ttscast::manageAIStatsEquipment();
 }
