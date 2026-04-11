@@ -385,13 +385,13 @@ class TTSCast:
         return filecontent
 
     @staticmethod
-    def _sendAIResult(text, isTest, googleUUID='', cmdNotificationId=0, cmdOpts=None):
+    def _sendTTSResult(text, isTest, googleUUID='', cmdNotificationId=0, cmdOpts=None):
         if isTest:
-            Comm.sendToJeedom.send_change_immediate({'aiTestResult': text})  # type: ignore
-            logging.debug('[DAEMON][AI] aiTestResult envoyé')
+            Comm.sendToJeedom.send_change_immediate({'ttsTestResult': text})  # type: ignore
+            logging.debug('[DAEMON][TTS] ttsTestResult envoyé')
         elif googleUUID:
-            Comm.sendToJeedom.send_change_immediate({'aiLastMessage': {googleUUID: text}})  # type: ignore
-            logging.debug('[DAEMON][AI] aiLastMessage envoyé :: UUID=%s', googleUUID)
+            Comm.sendToJeedom.send_change_immediate({'ttsLastMessage': {googleUUID: text}})  # type: ignore
+            logging.debug('[DAEMON][TTS] ttsLastMessage envoyé :: UUID=%s', googleUUID)
         if cmdNotificationId:
             Comm.sendToJeedom.send_change_immediate({  # type: ignore
                 'ttsNotifyResult': {
@@ -401,7 +401,7 @@ class TTSCast:
                     'cmdOptions':        cmdOpts or {},
                 }
             })
-            logging.debug('[DAEMON][AI] ttsNotifyResult envoyé :: cmdNotificationId=%s', cmdNotificationId)
+            logging.debug('[DAEMON][TTS] ttsNotifyResult envoyé :: cmdNotificationId=%s', cmdNotificationId)
 
     @staticmethod
     def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0', ttsAI='0'):
@@ -453,7 +453,7 @@ class TTSCast:
                             if myConfig.appConvertSingleQuote:
                                 ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText, True, "TestTTS")
                             _aiReformulatedText = ttsAIText
-                            TTSCast._sendAIResult(_aiReformulatedText, True)
+                            TTSCast._sendTTSResult(_aiReformulatedText, True)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                         else:
                             logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -501,6 +501,8 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
+                if _aiReformulatedText is None:
+                    TTSCast._sendTTSResult(ttsText, True)
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
@@ -528,7 +530,7 @@ class TTSCast:
                         if ttsAIText is not None:
                             logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                             _aiReformulatedText = ttsAIText
-                            TTSCast._sendAIResult(_aiReformulatedText, True)
+                            TTSCast._sendTTSResult(_aiReformulatedText, True)
                             ttsText = ttsAIText
                         else:
                             logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -544,6 +546,8 @@ class TTSCast:
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
+            if _aiReformulatedText is None:
+                TTSCast._sendTTSResult(ttsText, True)
             urlFileToPlay = f'{ttsSrvWeb}{filename}'
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
@@ -563,7 +567,7 @@ class TTSCast:
                     if ttsAIText is not None:
                         logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                         _aiReformulatedText = ttsAIText
-                        TTSCast._sendAIResult(_aiReformulatedText, True)
+                        TTSCast._sendTTSResult(_aiReformulatedText, True)
                         ttsText = ttsAIText
                     else:
                         logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -576,6 +580,8 @@ class TTSCast:
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
+            if _aiReformulatedText is None:
+                TTSCast._sendTTSResult(ttsText, True)
             urlFileToPlay = f'{ttsSrvWeb}{filename}'
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
@@ -596,7 +602,7 @@ class TTSCast:
                         if ttsAIText is not None:
                             logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                             _aiReformulatedText = ttsAIText
-                            TTSCast._sendAIResult(_aiReformulatedText, True)
+                            TTSCast._sendTTSResult(_aiReformulatedText, True)
                             ttsText = ttsAIText
                         else:
                             logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
@@ -609,6 +615,8 @@ class TTSCast:
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
+                if _aiReformulatedText is None:
+                    TTSCast._sendTTSResult(ttsText, True)
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
@@ -891,10 +899,9 @@ class TTSCast:
             
             _appDing = False if myConfig.appDisableDing else _appDing
 
-            # Notification sans IA : envoi immédiat avec le texte brut (avant génération audio bloquante)
-            # _useSSML=True => SSML prioritaire sur l'IA, on envoie le texte brut (_originalTtsText, sans markup)
-            if cmdNotificationId and (not _useAI or _useSSML):
-                TTSCast._sendAIResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+            # Texte brut (sans IA, ou SSML prioritaire sur l'IA) : mise à jour ttsLastMessage + notification si applicable
+            if not _useAI or _useSSML:
+                TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
             
             if ttsEngine == "gcloudtts":
                 logging.debug('[DAEMON][TTS] TTSEngine = gcloudtts')
@@ -929,11 +936,11 @@ class TTSCast:
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
                                 _aiReformulatedText = ttsAIText
-                                TTSCast._sendAIResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+                                TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
-                                TTSCast._sendAIResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+                                TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsText)
@@ -1001,11 +1008,11 @@ class TTSCast:
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                                 _aiReformulatedText = ttsAIText
-                                TTSCast._sendAIResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+                                TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                                 ttsText = ttsAIText
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
-                                TTSCast._sendAIResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+                                TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                         client = gTTS(ttsText, lang=langToTTS)
                         client.save(filepath)
                     except Exception as e:
@@ -1038,11 +1045,11 @@ class TTSCast:
                         if ttsAIText is not None:
                             logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                             _aiReformulatedText = ttsAIText
-                            TTSCast._sendAIResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+                            TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                             ttsText = ttsAIText
                         else:
                             logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
-                            TTSCast._sendAIResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+                            TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                     ttsResult = TTSCast.jeedomTTS(ttsText, ttsLang)
                     if ttsResult is not None:
                         with open(filepath, 'wb') as f:
@@ -1073,11 +1080,11 @@ class TTSCast:
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][TTS] Génération du TTS avec IA')
                                 _aiReformulatedText = ttsAIText
-                                TTSCast._sendAIResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+                                TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                                 ttsText = ttsAIText
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
-                                TTSCast._sendAIResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+                                TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                         ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
                         if ttsResult is not None:
                             with open(filepath, 'wb') as f:

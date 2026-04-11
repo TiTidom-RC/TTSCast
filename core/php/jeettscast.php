@@ -240,21 +240,21 @@ try {
                 }
             }
         }
-    } elseif (isset($result['aiTestResult'])) {
-        log::add('ttscast', 'debug', '[CALLBACK] TTSCast AI Test Result');
-        message::add('ttscast', '[AI Test] ' . strval($result['aiTestResult']));
-    } elseif (isset($result['aiLastMessage'])) {
-        log::add('ttscast', 'debug', '[CALLBACK] TTSCast AI Last Message');
-        foreach ($result['aiLastMessage'] as $uuid => $text) {
+    } elseif (isset($result['ttsTestResult'])) {
+        log::add('ttscast', 'debug', '[CALLBACK] TTSCast TTS Test Result');
+        message::add('ttscast', '[TTS Test] ' . strval($result['ttsTestResult']));
+    } elseif (isset($result['ttsLastMessage'])) {
+        log::add('ttscast', 'debug', '[CALLBACK] TTSCast TTS Last Message');
+        foreach ($result['ttsLastMessage'] as $uuid => $text) {
             $deviceEq = ttscast::byLogicalId($uuid, 'ttscast');
             if (!is_object($deviceEq)) {
-                log::add('ttscast', 'debug', '[CALLBACK] AI Last Message :: Équipement non trouvé :: UUID=' . $uuid);
+                log::add('ttscast', 'debug', '[CALLBACK] TTS Last Message :: Équipement non trouvé :: UUID=' . $uuid);
                 continue;
             }
-            $cmd = $deviceEq->getCmd('info', 'ai_last_message');
+            $cmd = $deviceEq->getCmd('info', 'tts_last_message');
             if (is_object($cmd)) {
                 $cmd->event(strval($text));
-                log::add('ttscast', 'debug', '[CALLBACK] AI Last Message :: Mise à jour :: UUID=' . $uuid);
+                log::add('ttscast', 'debug', '[CALLBACK] TTS Last Message :: Mise à jour :: UUID=' . $uuid);
             }
         }
     } elseif (isset($result['ttsNotifyResult'])) {
@@ -265,19 +265,8 @@ try {
         $reformulatedText  = isset($data['reformulatedText'])  ? strval($data['reformulatedText']) : '';
         $cmdOptions        = isset($data['cmdOptions'])        ? $data['cmdOptions']        : array();
 
-        // Mise à jour ai_last_message du device
-        if ($googleUUID !== '') {
-            $deviceEq = ttscast::byLogicalId($googleUUID, 'ttscast');
-            if (is_object($deviceEq)) {
-                $cmd = $deviceEq->getCmd('info', 'ai_last_message');
-                if (is_object($cmd)) {
-                    $cmd->event($reformulatedText);
-                    log::add('ttscast', 'debug', '[CALLBACK] TTS Notify Result :: ai_last_message mis à jour :: UUID=' . $googleUUID);
-                }
-            }
-        }
-
         // Exécution de la commande notification avec le texte reformulé + options pass-through
+        // Note : tts_last_message est mis à jour via le handler ttsLastMessage (envoyé séparément par le démon)
         if ($cmdNotificationId > 0 && $reformulatedText !== '') {
             $cmdNotification = cmd::byId($cmdNotificationId);
             if (is_object($cmdNotification)) {
