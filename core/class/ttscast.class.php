@@ -2116,7 +2116,7 @@ class ttscast extends eqLogic
         $cmd = $this->getCmd(null, 'tts_notify');
         if (!is_object($cmd)) {
             $cmd = new ttscastCmd();
-            $cmd->setName(__('TTS & Notifier', __FILE__));
+            $cmd->setName(__('TTS Notify', __FILE__));
             $cmd->setEqLogic_id($this->getId());
             $cmd->setLogicalId('tts_notify');
             $cmd->setType('action');
