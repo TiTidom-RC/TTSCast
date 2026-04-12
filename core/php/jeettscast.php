@@ -240,6 +240,43 @@ try {
                 }
             }
         }
+    } elseif (isset($result['ttsTestResult'])) {
+        log::add('ttscast', 'debug', '[CALLBACK] TTSCast TTS Test Result');
+        message::add('ttscast', '[TTS Test] ' . strval($result['ttsTestResult']));
+    } elseif (isset($result['ttsLastMessage'])) {
+        log::add('ttscast', 'debug', '[CALLBACK] TTSCast TTS Last Message');
+        foreach ($result['ttsLastMessage'] as $uuid => $text) {
+            $deviceEq = ttscast::byLogicalId($uuid, 'ttscast');
+            if (!is_object($deviceEq)) {
+                log::add('ttscast', 'debug', '[CALLBACK] TTS Last Message :: Équipement non trouvé :: UUID=' . $uuid);
+                continue;
+            }
+            $cmd = $deviceEq->getCmd('info', 'tts_last_message');
+            if (is_object($cmd)) {
+                $cmd->event(strval($text));
+                log::add('ttscast', 'debug', '[CALLBACK] TTS Last Message :: Mise à jour :: UUID=' . $uuid);
+            }
+        }
+    } elseif (isset($result['ttsNotifyResult'])) {
+        log::add('ttscast', 'debug', '[CALLBACK] TTS Notify Result');
+        $data              = $result['ttsNotifyResult'];
+        $googleUUID        = isset($data['googleUUID'])        ? $data['googleUUID']        : '';
+        $cmdNotificationId = isset($data['cmdNotificationId']) ? $data['cmdNotificationId'] : 0;
+        $reformulatedText  = isset($data['reformulatedText'])  ? strval($data['reformulatedText']) : '';
+        $cmdOptions        = isset($data['cmdOptions'])        ? $data['cmdOptions']        : array();
+
+        // Exécution de la commande notification avec le texte reformulé + options pass-through
+        // Note : tts_last_message est mis à jour via le handler ttsLastMessage (envoyé séparément par le démon)
+        if ($cmdNotificationId > 0 && $reformulatedText !== '') {
+            $cmdNotification = cmd::byId($cmdNotificationId);
+            if (is_object($cmdNotification)) {
+                $execOptions = array_merge($cmdOptions, array('message' => $reformulatedText));
+                $cmdNotification->execCmd($execOptions);
+                log::add('ttscast', 'debug', '[CALLBACK] TTS Notify Result :: execCmd :: cmdId=' . $cmdNotificationId . ' | options=' . json_encode($execOptions));
+            } else {
+                log::add('ttscast', 'warning', '[CALLBACK] TTS Notify Result :: Commande notification introuvable :: cmdId=' . $cmdNotificationId);
+            }
+        }
     } else {
         log::add('ttscast', 'error', '[CALLBACK] unknown message received from daemon'); 
     }

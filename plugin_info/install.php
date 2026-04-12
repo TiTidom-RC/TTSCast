@@ -219,8 +219,8 @@ function ttscast_update() {
         log::add('ttscast', 'warning', '[CLEANUP_KO] Erreur lors du nettoyage : ' . $e->getMessage());
     }
 
-    // Créer l'équipement AI Stats si l'IA est déjà activée
-    ttscast::manageAIStatsEquipment();
+    // Créer/configurer les équipements IA si l'IA est déjà activée
+    ttscast::manageAIEquipments();
 }
 
 // Fonction exécutée automatiquement après la suppression du plugin
