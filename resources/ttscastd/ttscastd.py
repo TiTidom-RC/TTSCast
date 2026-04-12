@@ -25,6 +25,7 @@ import json
 import argparse
 import threading
 import datetime
+import queue
 import requests
 import re
 import wave
@@ -35,7 +36,7 @@ from uuid import UUID
 # Import pour Jeedom
 try:
     # from jeedom.jeedom import *
-    from jeedom.jeedom import jeedom_socket, jeedom_utils, jeedom_com, JEEDOM_SOCKET_MESSAGE  # jeedom_serial
+    from jeedom.jeedom import jeedom_socket, jeedom_socket_handler, jeedom_utils, jeedom_com, JEEDOM_SOCKET_MESSAGE  # jeedom_serial
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module jeedom.jeedom ::", e)
     sys.exit(1)
@@ -117,134 +118,136 @@ class Loops:
     # *** Boucle events from Jeedom ***
     @staticmethod
     def eventsFromJeedom(cycle=0.5):
-        # global JEEDOM_SOCKET_MESSAGE
-        while not myConfig.IS_ENDING:    
-            if not JEEDOM_SOCKET_MESSAGE.empty():
-                logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
-                
-                message = json.loads(JEEDOM_SOCKET_MESSAGE.get().decode('utf-8'))
-                
-                if message['apikey'] != myConfig.apiKey:
-                    logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
-                    return
-                
-                try:
-                    # TODO ***** Gestion des messages reçus de Jeedom *****
-                    if message['cmd'] == 'action':
-                        # TODO ***** Gestion des actions
-                        logging.debug('[DAEMON][SOCKET] Action')
-                        
-                        if 'cmd_action' in message:
-                            
-                            # Traitement des actions (inclus les CustomCmd)
-                            if message['cmd_action'] == 'ttstest':
-                                logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
+        while not myConfig.IS_ENDING:
+            try:
+                raw = JEEDOM_SOCKET_MESSAGE.get(block=True, timeout=cycle)
+            except queue.Empty:
+                continue
 
-                                if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsSSML', 'ttsAI')):
-                                    logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'] + ' | ' + message['ttsAI'])
-                                    threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML'], message['ttsAI']]).start()
-                                else:
-                                    logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
-                            
-                            elif message['cmd_action'] == 'tts':
-                                logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
-                        
-                                if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
-                                    logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))                                    
-                                    threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'], message.get('cmdNotificationId', 0)]).start()
-                                else:
-                                    logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
-                                    
-                            elif message['cmd_action'] == 'generatetts':
-                                logging.debug('[DAEMON][SOCKET] Generate TTS as Jeedom Engine')
-                                
-                                if all(keys in message for keys in ('ttsText', 'ttsFile', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
-                                    logging.debug('[DAEMON][SOCKET] GenerateTTS :: %s', str(message))
-                                    threading.Thread(target=TTSCast.generateTTS, args=[message['ttsText'], message['ttsFile'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()
-                                else:
-                                    logging.debug('[DAEMON][SOCKET] GenerateTTS :: Il manque des données pour traiter la commande.')
-                            
-                            elif (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
-                                logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
-                                threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], message['value'], message['cmd_action']]).start()
-                            
-                            elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
-                                logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
-                                threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], '', message['cmd_action']]).start()
-                                
-                            elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'customradios', 'sounds', 'customsounds', 'media', 'start_app')):
-                                logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
-                                threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options']]).start()
+            logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
 
-                    elif message['cmd'] == 'purgettscache':
-                        logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
+            message = json.loads(raw.decode('utf-8'))
+
+            if message['apikey'] != myConfig.apiKey:
+                logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
+                continue
+
+            try:
+                # TODO ***** Gestion des messages reçus de Jeedom *****
+                if message['cmd'] == 'action':
+                    # TODO ***** Gestion des actions
+                    logging.debug('[DAEMON][SOCKET] Action')
+                    
+                    if 'cmd_action' in message:
                         
-                        if 'days' in message:
-                            threading.Thread(target=Functions.purgeCache, args=[message['days']]).start()
+                        # Traitement des actions (inclus les CustomCmd)
+                        if message['cmd_action'] == 'ttstest':
+                            logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
+
+                            if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsSSML', 'ttsAI')):
+                                logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'] + ' | ' + message['ttsAI'])
+                                threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML'], message['ttsAI']]).start()
+                            else:
+                                logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                         
-                        else:
-                            threading.Thread(target=Functions.purgeCache).start()
-                            
-                    elif message['cmd'] == "addcast":
-                        
-                        if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
-                            _uuid = UUID(message['uuid'])
-                            
-                            if message['host'] not in myConfig.KNOWN_HOSTS:
-                                myConfig.KNOWN_HOSTS.append(message['host'])
-                                logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(myConfig.KNOWN_HOSTS))
-                            
-                            if message['friendly_name'] not in myConfig.GCAST_NAMES: 
-                                myConfig.GCAST_NAMES.append(message['friendly_name'])
-                                logging.debug('[DAEMON][SOCKET] Add Cast to GCAST Names :: %s', str(myConfig.GCAST_NAMES))
-                            
-                            if _uuid not in myConfig.GCAST_UUID:
-                                myConfig.GCAST_UUID.append(_uuid)
-                                logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(myConfig.GCAST_UUID))
-                                myCast.castListeners(uuid=_uuid)
-                            
-                            if message['uuid'] not in myConfig.cmdWaitQueue:
-                                myConfig.cmdWaitQueue[message['uuid']] = 0
-                                logging.debug('[DAEMON][SOCKET] Add Wait Queue for Device :: %s', message['uuid'])
+                        elif message['cmd_action'] == 'tts':
+                            logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
+                    
+                            if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
+                                logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))                                    
+                                threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'], message.get('cmdNotificationId', 0)]).start()
+                            else:
+                                logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
                                 
-                    elif message['cmd'] == "removecast":
-                        if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
-                            _uuid = UUID(message['uuid'])
+                        elif message['cmd_action'] == 'generatetts':
+                            logging.debug('[DAEMON][SOCKET] Generate TTS as Jeedom Engine')
                             
-                            if message['host'] in myConfig.KNOWN_HOSTS:
-                                myConfig.KNOWN_HOSTS.remove(message['host'])
-                                logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(myConfig.KNOWN_HOSTS))
-                            
-                            if message['friendly_name'] in myConfig.GCAST_NAMES: 
-                                myConfig.GCAST_NAMES.remove(message['friendly_name'])
-                                logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST Names :: %s', str(myConfig.GCAST_NAMES))
-                            
-                            if _uuid in myConfig.GCAST_UUID:
-                                myConfig.GCAST_UUID.remove(_uuid)
-                                logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(myConfig.GCAST_UUID))
-                                myCast.castRemove(uuid=_uuid)
-                            
-                            if message['uuid'] in myConfig.cmdWaitQueue:
-                                del myConfig.cmdWaitQueue[message['uuid']]
-                                logging.debug('[DAEMON][SOCKET] Remove Wait Queue for Device :: %s', message['uuid'])
-                            
-                    elif message['cmd'] == "scanOn":
-                        logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
+                            if all(keys in message for keys in ('ttsText', 'ttsFile', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName')):
+                                logging.debug('[DAEMON][SOCKET] GenerateTTS :: %s', str(message))
+                                threading.Thread(target=TTSCast.generateTTS, args=[message['ttsText'], message['ttsFile'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()
+                            else:
+                                logging.debug('[DAEMON][SOCKET] GenerateTTS :: Il manque des données pour traiter la commande.')
                         
-                        myConfig.ScanMode = True
-                        myConfig.ScanModeStart = int(time.time())
-                        Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})  # type: ignore
+                        elif (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
+                            logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
+                            threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], message['value'], message['cmd_action']]).start()
                         
-                    elif message['cmd'] == "scanOff":
-                        logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
+                        elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
+                            logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
+                            threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], '', message['cmd_action']]).start()
+                            
+                        elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'customradios', 'sounds', 'customsounds', 'media', 'start_app')):
+                            logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
+                            threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options']]).start()
+
+                elif message['cmd'] == 'purgettscache':
+                    logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
+                    
+                    if 'days' in message:
+                        threading.Thread(target=Functions.purgeCache, args=[message['days']]).start()
+                    
+                    else:
+                        threading.Thread(target=Functions.purgeCache).start()
                         
-                        myConfig.ScanMode = False
-                        Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})  # type: ignore
+                elif message['cmd'] == "addcast":
+                    
+                    if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
+                        _uuid = UUID(message['uuid'])
                         
-                except Exception as e:
-                    logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
-                    logging.debug(traceback.format_exc())
-            time.sleep(cycle)
+                        if message['host'] not in myConfig.KNOWN_HOSTS:
+                            myConfig.KNOWN_HOSTS.append(message['host'])
+                            logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(myConfig.KNOWN_HOSTS))
+                        
+                        if message['friendly_name'] not in myConfig.GCAST_NAMES: 
+                            myConfig.GCAST_NAMES.append(message['friendly_name'])
+                            logging.debug('[DAEMON][SOCKET] Add Cast to GCAST Names :: %s', str(myConfig.GCAST_NAMES))
+                        
+                        if _uuid not in myConfig.GCAST_UUID:
+                            myConfig.GCAST_UUID.append(_uuid)
+                            logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(myConfig.GCAST_UUID))
+                            myCast.castListeners(uuid=_uuid)
+                        
+                        if message['uuid'] not in myConfig.cmdWaitQueue:
+                            myConfig.cmdWaitQueue[message['uuid']] = 0
+                            logging.debug('[DAEMON][SOCKET] Add Wait Queue for Device :: %s', message['uuid'])
+                            
+                elif message['cmd'] == "removecast":
+                    if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
+                        _uuid = UUID(message['uuid'])
+                        
+                        if message['host'] in myConfig.KNOWN_HOSTS:
+                            myConfig.KNOWN_HOSTS.remove(message['host'])
+                            logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(myConfig.KNOWN_HOSTS))
+                        
+                        if message['friendly_name'] in myConfig.GCAST_NAMES: 
+                            myConfig.GCAST_NAMES.remove(message['friendly_name'])
+                            logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST Names :: %s', str(myConfig.GCAST_NAMES))
+                        
+                        if _uuid in myConfig.GCAST_UUID:
+                            myConfig.GCAST_UUID.remove(_uuid)
+                            logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(myConfig.GCAST_UUID))
+                            myCast.castRemove(uuid=_uuid)
+                        
+                        if message['uuid'] in myConfig.cmdWaitQueue:
+                            del myConfig.cmdWaitQueue[message['uuid']]
+                            logging.debug('[DAEMON][SOCKET] Remove Wait Queue for Device :: %s', message['uuid'])
+                        
+                elif message['cmd'] == "scanOn":
+                    logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
+                    
+                    myConfig.ScanMode = True
+                    myConfig.ScanModeStart = int(time.time())
+                    Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOn'})  # type: ignore
+                    
+                elif message['cmd'] == "scanOff":
+                    logging.debug('[DAEMON][SOCKET] ScanState = scanOff')
+                    
+                    myConfig.ScanMode = False
+                    Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})  # type: ignore
+                    
+            except Exception as e:
+                logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
+                logging.debug(traceback.format_exc())
         
     # *** Boucle principale infinie (daemon) ***
     @staticmethod
@@ -1490,6 +1493,40 @@ class TTSCast:
         except Exception as e:
             logging.error('[DAEMON][GenAI] Erreur: %s', e)
             return None
+
+    @staticmethod
+    def handleAiReformat(message):
+        """
+        Handler synchrone pour aiReformat.
+        Appelé directement depuis jeedom_socket_handler.handle() — répond sur le socket.
+        """
+        text = message.get('text', '')
+        ttsOptions = message.get('ttsOptions')
+        logging.debug('[DAEMON][SYNC][aiReformat] Texte :: %s', text[:80] if text else '')
+
+        if not text:
+            return {'reformulated': '', 'original': ''}
+
+        # Parser les options depuis ttsOptions (même format JSON brut que pour getTTS)
+        aiSysPrompt = None
+        aiTone = None
+        aiTemp = None
+        if ttsOptions:
+            try:
+                options_json = json.loads('{' + ttsOptions + '}')
+                aiSysPrompt = options_json.get('aisysprompt')
+                aiTone = options_json.get('aitone')
+                aiTemp = options_json.get('aitemp')
+            except Exception as e:
+                logging.warning('[DAEMON][SYNC][aiReformat] Impossible de parser les options :: %s', e)
+
+        reformulated = TTSCast.genAI(text, aiSysPrompt, aiTone, aiTemp)
+        if reformulated is None:
+            logging.warning('[DAEMON][SYNC][aiReformat] genAI retourne None — retour texte original')
+            reformulated = text
+
+        logging.debug('[DAEMON][SYNC][aiReformat] Résultat :: %s', reformulated[:80] if reformulated else '')
+        return {'reformulated': reformulated, 'original': text}
 
 class Functions:
     """ Class Functions """
@@ -3326,6 +3363,8 @@ try:
     else:
         logging.info('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication OK (Daemon to Jeedom)')
     my_jeedom_socket = jeedom_socket(port=myConfig.socketPort, address=myConfig.socketHost)
+    jeedom_socket_handler.expected_apikey = myConfig.apiKey
+    jeedom_socket_handler.sync_command_handlers['aiReformat'] = TTSCast.handleAiReformat
     Loops.mainLoop(myConfig.cycleMain)  # type: ignore
 except Exception as e:
     logging.error('[DAEMON][MAIN] Fatal error: %s', e)

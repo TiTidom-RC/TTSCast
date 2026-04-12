@@ -21,14 +21,11 @@ from threading import Thread
 import requests
 # import datetime
 import time
-try:
-    from collections.abc import Mapping
-except ImportError:
-    from collections import Mapping
+from collections.abc import Mapping
 import os
 from queue import Queue
 import socketserver
-from socketserver import (TCPServer, StreamRequestHandler)
+from socketserver import (ThreadingTCPServer, StreamRequestHandler)
 import unicodedata
 
 # ------------------------------------------------------------------------------
@@ -115,7 +112,7 @@ class jeedom_com():
 		try:
 			response = requests.get(self._url + '?apikey=' + self._apikey, verify=False)
 			if response.status_code != requests.codes.ok:
-				logging.error('[DAEMON][COM][TEST] Callback error "%s" :: %s. Please check your network configuration page', response.status.code, response.status.message)
+				logging.error('[DAEMON][COM][TEST] Callback error "%s" :: %s. Please check your network configuration page', response.status_code, response.text)
 				return False
 		except Exception as error:
 			logging.error('[DAEMON][COM][TEST] Callback result as a unknown error :: %s. Please check your network configuration page', error)
@@ -188,21 +185,49 @@ class jeedom_utils():
 JEEDOM_SOCKET_MESSAGE = Queue()
 
 class jeedom_socket_handler(StreamRequestHandler):
+	# Commandes synchrones (request/response) : {cmd_name: callable(message) -> dict}
+	sync_command_handlers = {}
+	# Apikey attendue — à initialiser depuis le démon : jeedom_socket_handler.expected_apikey = myConfig.apiKey
+	expected_apikey = ''
+
 	def handle(self):
 		global JEEDOM_SOCKET_MESSAGE
 		logging.debug("[DAEMON][HANDLER] Client connected to [%s:%d]", self.client_address[0], self.client_address[1])
 		lg = self.rfile.readline()
-		JEEDOM_SOCKET_MESSAGE.put(lg)
-  
+		
 		try:
 			lgdecode = json.loads(lg.strip())
-			if lgdecode and lgdecode['apikey']:
+			if lgdecode and lgdecode.get('apikey'):
 				lgdecode['apikey'] = '***'
 			logging.debug("[DAEMON][HANDLER] Message read from socket :: %s", str(json.dumps(lgdecode).encode('utf-8')))
 		except Exception as error:
 			logging.error("[DAEMON][HANDLER] JSON Exception :: %s", error)
 			logging.debug("[DAEMON][HANDLER] Message read from socket :: %s", str(lg.strip()))
-  
+			self.netAdapterClientConnected = False
+			logging.debug("[DAEMON][HANDLER] Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
+			return
+
+		# Commandes synchrones : traitement in-thread + réponse directe sur le socket
+		try:
+			msg = json.loads(lg.strip())
+			if msg.get('apikey') != jeedom_socket_handler.expected_apikey:
+				logging.error("[DAEMON][HANDLER] Invalid apikey in sync command — rejected")
+				self.netAdapterClientConnected = False
+				return
+			cmd = msg.get('cmd', '')
+			if cmd in jeedom_socket_handler.sync_command_handlers:
+				handler_fn = jeedom_socket_handler.sync_command_handlers[cmd]
+				response = handler_fn(msg)
+				response_bytes = json.dumps(response).encode('utf-8')
+				self.wfile.write(response_bytes)
+				self.wfile.flush()
+				self.netAdapterClientConnected = False
+				logging.debug("[DAEMON][HANDLER] Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
+				return
+		except Exception as e:
+			logging.error("[DAEMON][HANDLER] Sync handler error :: %s", e)
+
+		JEEDOM_SOCKET_MESSAGE.put(lg)
 		self.netAdapterClientConnected = False
 		logging.debug("[DAEMON][HANDLER] Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
 
@@ -214,7 +239,7 @@ class jeedom_socket():
 		socketserver.TCPServer.allow_reuse_address = True
 
 	def open(self):
-		self.netAdapter = TCPServer((self.address, self.port), jeedom_socket_handler)
+		self.netAdapter = ThreadingTCPServer((self.address, self.port), jeedom_socket_handler)
 		if self.netAdapter:
 			logging.info("[DAEMON][SOCKET] Socket interface started")
 			Thread(target=self.loopNetServer).start()
@@ -229,9 +254,6 @@ class jeedom_socket():
 
 	def close(self):
 		self.netAdapter.shutdown()
-
-	def getMessage(self):
-		return self.message
 
 # ------------------------------------------------------------------------------
 # END
