@@ -45,6 +45,8 @@
         "Media Quit": "Abbandono dei media",
         "Media Rewind": "Media Rewind",
         "Media Stop": "Media Stop",
+        "Message IA": "Messaggio IA",
+        "Message pré-IA": "Messaggio pre-IA",
         "Msg Retour IA": "Msg Ritorno IA",
         "Mute": "Silenziamento",
         "Mute Off": "Disattivare l'audio",
@@ -52,12 +54,15 @@
         "Radios": "Radio",
         "Rafraîchir": "Aggiornare",
         "Rafraîchir Cast": "Aggiorna Cast",
+        "Reformuler IA": "Riformulare IA",
         "Réponse IA Bloquée": "Risposta IA bloccata",
         "Schedule LastTime": "Programmare LastTime",
         "Schedule LastTime (TS)": "Programmazione LastTime (TS)",
         "Sounds": "Suoni",
         "Start App": "App di avvio",
         "TTS": "TTS",
+        "TTS Last Message": "TTS Ultimo messaggio",
+        "TTSCast - IA ne peut pas être activé manuellement. Activez l\\'IA dans la configuration du plugin (IA Générative).": "TTSCast - L'IA non può essere attivata manualmente. Attiva l'IA nelle impostazioni del plugin (IA generativa).",
         "Tokens Cache": "Cache dei token",
         "Tokens IA Entrée": "Gettoni IA Ingresso",
         "Tokens IA Sortie": "Token IA Uscita",
@@ -92,6 +97,22 @@
         "Date de collecte": "Data di ritiro",
         "Date de valeur": "Data del valore",
         "Largeur de l'image": "Larghezza dell'immagine"
+    },
+    "plugins\/ttscast\/core\/template\/scenario\/cmd.aiReformat.html": {
+        "Enregistrer dans": "Salva in",
+        "Ex : &quot;aitone&quot;: &quot;professionnel&quot;, &quot;aitemp&quot;: 0.7, &quot;aisysprompt&quot;: &quot;Tu es un assistant&quot;": "Es.: \"aitone\": \"professionale\", \"aitemp\": 0,7, \"aisysprompt\": \"Sei un assistente\"",
+        "Ex : maVariable ou #[Objet][Eq][Cmd]#": "Es.: maVariable o #[Oggetto][Eq][Cmd]#",
+        "Options IA": "Opzioni IA",
+        "Sélectionner la commande": "Selezionare il comando",
+        "Texte": "Testo"
+    },
+    "plugins\/ttscast\/core\/template\/scenario\/cmd.tts.html": {
+        "Ex : #[Maison][Mobile][Notifier]#": "Es.: #[Casa][Mobile][Notifica]#",
+        "Ex : &quot;volume&quot;: 80, &quot;ding&quot;: false, &quot;genai&quot;: true, &quot;aitone&quot;: &quot;sérieux&quot;": "Es.: \"volume\": 80, \"ding\": false, \"genai\": true, \"aitone\": \"serio\"",
+        "Notification": "Notifica",
+        "Options": "Opzioni",
+        "Sélectionner la commande": "Selezionare il comando",
+        "TTS": "TTS"
     },
     "plugins\/ttscast\/desktop\/js\/ttscast.js": {
         "Afficher": "Vista",
