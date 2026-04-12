@@ -2113,23 +2113,6 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
-        $cmd = $this->getCmd(null, 'tts_notify');
-        if (!is_object($cmd)) {
-            $cmd = new ttscastCmd();
-            $cmd->setName(__('TTS Notify', __FILE__));
-            $cmd->setEqLogic_id($this->getId());
-            $cmd->setLogicalId('tts_notify');
-            $cmd->setType('action');
-            $cmd->setSubType('message');
-            $cmd->setDisplay('forceReturnLineBefore', '1');
-            $cmd->setDisplay('forceReturnLineAfter', '1');
-            $cmd->setIsVisible(0);
-            $cmd->setOrder($orderCmd++);
-            $cmd->save();
-        } else {
-            $orderCmd++;
-        }
-
         $cmd = $this->getCmd(null, 'customcmd');
         if (!is_object($cmd)) {
             $cmd = new ttscastCmd();
@@ -2218,11 +2201,11 @@ class ttscastCmd extends cmd
             return parent::getWidgetTemplateCode($_version, $_clean, $_widgetName);
         }
 
-        if ($this->getLogicalId() !== 'tts_notify') {
+        if ($this->getLogicalId() !== 'tts') {
             return parent::getWidgetTemplateCode($_version, $_clean, $_widgetName);
         }
 
-        $templateFilename = 'cmd.ttsNotify';
+        $templateFilename = 'cmd.tts';
         $replace = [
             '#uid#' => 'cmd' . $this->getId() . eqLogic::UIDDELIMITER . mt_rand() . eqLogic::UIDDELIMITER,
         ];
@@ -2260,8 +2243,17 @@ class ttscastCmd extends cmd
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
-                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID);
-                    ttscast::playTTS($googleUUID, $_options['message'], isset($_options['title']) ? $_options['title'] : null);
+                    $cmdNotificationId = 0;
+                    if (!empty($_options['cmdNotification'])) {
+                        $cmdNotification = cmd::byString($_options['cmdNotification']);
+                        if (!is_object($cmdNotification)) {
+                            log::add('ttscast', 'warning', '[CMD] tts :: Commande notification introuvable :: ' . $_options['cmdNotification']);
+                        } else {
+                            $cmdNotificationId = $cmdNotification->getId();
+                        }
+                    }
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID / CmdNotification) :: ' . $_options['message'] . " / " . $googleUUID . " / " . $cmdNotificationId);
+                    ttscast::playTTS($googleUUID, $_options['message'], isset($_options['title']) ? $_options['title'] : null, $cmdNotificationId);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour diffuser un message TTS');
@@ -2303,22 +2295,6 @@ class ttscastCmd extends cmd
                 }                
             } elseif (in_array($logicalId, ["refresh", "refreshcast"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
-            } elseif ($logicalId == "tts_notify") {
-                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
-                $googleUUID = $eqLogic->getLogicalId();
-                if (!empty($googleUUID) && isset($_options['message']) && isset($_options['cmdNotification'])) {
-                    $cmdNotification = cmd::byString($_options['cmdNotification']);
-                    if (!is_object($cmdNotification)) {
-                        log::add('ttscast', 'warning', '[CMD] tts_notify :: Commande notification introuvable :: ' . $_options['cmdNotification']);
-                    } else {
-                        $cmdNotificationId = $cmdNotification->getId();
-                        $ttsOptions = isset($_options['title']) ? $_options['title'] : '';
-                        log::add('ttscast', 'debug', '[CMD] tts_notify :: UUID=' . $googleUUID . ' | cmdNotificationId=' . $cmdNotificationId . ' | options=' . $ttsOptions);
-                        ttscast::playTTS($googleUUID, $_options['message'], $ttsOptions, $cmdNotificationId);
-                    }
-                } else {
-                    log::add('ttscast', 'debug', '[CMD] tts_notify :: Il manque des paramètres (message ou cmdNotification)');
-                }
             }
             else {
                 throw new Exception(__('Commande Action non implémentée actuellement', __FILE__));    
