@@ -1387,7 +1387,7 @@ class ttscast extends eqLogic
             $cmd = $aiEq->getCmd(null, 'ai_reformat_input');
             if (!is_object($cmd)) {
                 $cmd = new ttscastCmd();
-                $cmd->setName(__('Texte pré-IA', __FILE__));
+                $cmd->setName(__('Message pré-IA', __FILE__));
                 $cmd->setEqLogic_id($aiEq->getId());
                 $cmd->setLogicalId('ai_reformat_input');
                 $cmd->setType('info');
