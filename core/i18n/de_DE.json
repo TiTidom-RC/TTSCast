@@ -45,6 +45,8 @@
         "Media Quit": "Media Quit",
         "Media Rewind": "Media Rewind",
         "Media Stop": "Media Stop",
+        "Message IA": "KI-Nachricht",
+        "Message pré-IA": "Nachricht vor KI",
         "Msg Retour IA": "Msg Zurück IA",
         "Mute": "Stummschaltung",
         "Mute Off": "Stummschaltung Aus",
@@ -52,12 +54,15 @@
         "Radios": "Radios",
         "Rafraîchir": "Auffrischen",
         "Rafraîchir Cast": "Cast auffrischen",
+        "Reformuler IA": "KI neu formulieren",
         "Réponse IA Bloquée": "Antwort KI Blockiert",
         "Schedule LastTime": "Schedule LastTime",
         "Schedule LastTime (TS)": "Schedule LastTime (TS)",
         "Sounds": "Sounds",
         "Start App": "Start App",
         "TTS": "TTS",
+        "TTS Last Message": "TTS Letzte Nachricht",
+        "TTSCast - IA ne peut pas être activé manuellement. Activez l\\'IA dans la configuration du plugin (IA Générative).": "TTSCast – Die KI kann nicht manuell aktiviert werden. Aktivieren Sie die KI in den Plugin-Einstellungen (Generative KI).",
         "Tokens Cache": "Cache-Tokens",
         "Tokens IA Entrée": "IA-Token Eingang",
         "Tokens IA Sortie": "IA-Token Ausgang",
@@ -92,6 +97,22 @@
         "Date de collecte": "Datum der Erhebung",
         "Date de valeur": "Wertstellungsdatum",
         "Largeur de l'image": "Breite des Bildes"
+    },
+    "plugins\/ttscast\/core\/template\/scenario\/cmd.aiReformat.html": {
+        "Enregistrer dans": "Speichern unter",
+        "Ex : &quot;aitone&quot;: &quot;professionnel&quot;, &quot;aitemp&quot;: 0.7, &quot;aisysprompt&quot;: &quot;Tu es un assistant&quot;": "Beispiel: „aitone“: „professionell“, „aitemp“: 0,7, „aisysprompt“: „Du bist ein Assistent“",
+        "Ex : maVariable ou #[Objet][Eq][Cmd]#": "Beispiel: maVariable oder #[Objekt][Eq][Befehl]#",
+        "Options IA": "KI-Optionen",
+        "Sélectionner la commande": "Befehl auswählen",
+        "Texte": "Text"
+    },
+    "plugins\/ttscast\/core\/template\/scenario\/cmd.tts.html": {
+        "Ex : #[Maison][Mobile][Notifier]#": "Beispiel: #[Haus][Mobil][Benachrichtigen]#",
+        "Ex : &quot;volume&quot;: 80, &quot;ding&quot;: false, &quot;genai&quot;: true, &quot;aitone&quot;: &quot;sérieux&quot;": "Beispiel: „Lautstärke“: 80, „Klingeln“: false, „Genai“: true, „Aitone“: „ernst“",
+        "Notification": "Benachrichtigung",
+        "Options": "Options",
+        "Sélectionner la commande": "Befehl auswählen",
+        "TTS": "TTS"
     },
     "plugins\/ttscast\/desktop\/js\/ttscast.js": {
         "Afficher": "Display",
