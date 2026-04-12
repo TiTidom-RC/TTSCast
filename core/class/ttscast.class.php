@@ -930,8 +930,8 @@ class ttscast extends eqLogic
 
     public function getImage()
     {
-        // Icône spécifique pour l'équipement virtuel AI Stats
-        if ($this->getLogicalId() == 'TTSCast_AI_Stats') {
+        // Icône spécifique pour les équipements virtuels IA
+        if (in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
             if (file_exists(__DIR__ . "/../../data/images/ai_stats.png")) {
                 return 'plugins/ttscast/data/images/ai_stats.png';
             }

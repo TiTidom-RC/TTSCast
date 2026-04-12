@@ -210,12 +210,12 @@ class jeedom_socket_handler(StreamRequestHandler):
 		# Commandes synchrones : traitement in-thread + réponse directe sur le socket
 		try:
 			msg = json.loads(lg.strip())
-			if msg.get('apikey') != jeedom_socket_handler.expected_apikey:
-				logging.error("[DAEMON][HANDLER] Invalid apikey in sync command — rejected")
-				self.netAdapterClientConnected = False
-				return
 			cmd = msg.get('cmd', '')
 			if cmd in jeedom_socket_handler.sync_command_handlers:
+				if msg.get('apikey') != jeedom_socket_handler.expected_apikey:
+					logging.error("[DAEMON][HANDLER] Invalid apikey in sync command — rejected")
+					self.netAdapterClientConnected = False
+					return
 				handler_fn = jeedom_socket_handler.sync_command_handlers[cmd]
 				response = handler_fn(msg)
 				response_bytes = json.dumps(response).encode('utf-8')
