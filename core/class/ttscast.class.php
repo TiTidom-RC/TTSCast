@@ -252,6 +252,38 @@ class ttscast extends eqLogic
         }
     }
 
+    /**
+     * Envoie un message sur le socket et attend la réponse (synchrone).
+     * Utilisé pour les commandes request/response comme aiReformat.
+     */
+    public static function sendToDaemonSync($params, $timeout = 30) {
+        try {
+            $deamon_info = self::deamon_info();
+            if ($deamon_info['state'] != 'ok') {
+                throw new Exception("Le Démon n'est pas démarré !");
+            }
+            $params['apikey'] = jeedom::getApiKey(__CLASS__);
+            $payLoad = json_encode($params);
+            $socket = socket_create(AF_INET, SOCK_STREAM, 0);
+            socket_set_option($socket, SOL_SOCKET, SO_RCVTIMEO, ['sec' => $timeout, 'usec' => 0]);
+            socket_connect($socket, '127.0.0.1', config::byKey('socketport', __CLASS__, '55111'));
+            socket_write($socket, $payLoad, strlen($payLoad));
+            socket_shutdown($socket, 1); // SHUT_WR : signale EOF au démon
+            $response = '';
+            while (($chunk = socket_read($socket, 4096)) !== false && $chunk !== '') {
+                $response .= $chunk;
+            }
+            socket_close($socket);
+            if ($response === '') {
+                return null;
+            }
+            return json_decode($response, true);
+        } catch (\Exception $e) {
+            log::add('ttscast', 'error', '[SOCKET][SendToDaemonSync] Exception :: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     /* ************************ Méthodes static : PLUGIN *************************** */
 
     public static function testExternalAddress($useExternal=NULL)
@@ -310,7 +342,7 @@ class ttscast extends eqLogic
         self::sendToDaemon($value);
     }
 
-    public static function playTTS($gHome=null, $message=null, $options=null) {
+    public static function playTTS($gHome=null, $message=null, $options=null, $cmdNotificationId=0) {
         $ttsText = $message;
         $ttsGoogleUUID = $gHome;
         $ttsVoiceName = config::byKey('gCloudTTSVoice', 'ttscast', 'fr-FR-Standard-A');
@@ -339,7 +371,7 @@ class ttscast extends eqLogic
         $ttsOptions = $options;
         log::add('ttscast', 'debug', '[PlayTTS] ttsOptions After Array :: ' . $ttsOptions);
         
-        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
+        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'cmdNotificationId' => $cmdNotificationId);
         self::sendToDaemon($value);
     }
 
@@ -898,8 +930,8 @@ class ttscast extends eqLogic
 
     public function getImage()
     {
-        // Icône spécifique pour l'équipement virtuel AI Stats
-        if ($this->getLogicalId() == 'TTSCast_AI_Stats') {
+        // Icône spécifique pour les équipements virtuels IA
+        if (in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
             if (file_exists(__DIR__ . "/../../data/images/ai_stats.png")) {
                 return 'plugins/ttscast/data/images/ai_stats.png';
             }
@@ -1004,8 +1036,10 @@ class ttscast extends eqLogic
     /**
      * Gère l'équipement virtuel TTSCast AI Stats en fonction de l'activation de l'IA
      */
-    public static function manageAIStatsEquipment() {
+    public static function manageAIEquipments() {
         $aiEnabled = config::byKey('ttsAIEnable', 'ttscast', '0');
+
+        // --- TTSCast_AI_Stats (métriques tokens) ---
         $statsEq = self::byLogicalId('TTSCast_AI_Stats', 'ttscast');
         
         if ($aiEnabled == '1') {
@@ -1290,10 +1324,87 @@ class ttscast extends eqLogic
             
             log::add('ttscast', 'debug', '[AI Stats] Équipement virtuel TTSCast AI Stats configuré');
         } else {
-            // L'IA est désactivée, supprimer l'équipement s'il existe
             if (is_object($statsEq)) {
-                log::add('ttscast', 'info', '[AI Stats] Suppression de l\'équipement virtuel TTSCast AI Stats (IA désactivée)');
-                $statsEq->remove();
+                log::add('ttscast', 'info', '[AI] Désactivation TTSCast_AI_Stats (IA désactivée)');
+                $statsEq->setIsEnable(0);
+                $statsEq->save();
+            }
+        }
+
+        // --- TTSCast_AI (équipement reformulation) ---
+        $aiEq = self::byLogicalId('TTSCast_AI', 'ttscast');
+
+        if ($aiEnabled == '1') {
+            if (!is_object($aiEq)) {
+                log::add('ttscast', 'info', '[AI] Création de l\'équipement virtuel TTSCast_AI');
+                $aiEq = new ttscast();
+                $aiEq->setLogicalId('TTSCast_AI');
+                $aiEq->setName('TTSCast - IA');
+                $aiEq->setEqType_name('ttscast');
+                $aiEq->setIsEnable(1);
+                $aiEq->setIsVisible(1);
+                $aiEq->save();
+            } elseif (!$aiEq->getIsEnable()) {
+                $aiEq->setIsEnable(1);
+                $aiEq->save();
+            }
+
+            $orderCmd = 1;
+
+            // ai_reformat (action/message)
+            $cmd = $aiEq->getCmd(null, 'ai_reformat');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Reformuler IA', __FILE__));
+                $cmd->setEqLogic_id($aiEq->getId());
+                $cmd->setLogicalId('ai_reformat');
+                $cmd->setType('action');
+                $cmd->setSubType('message');
+                $cmd->setIsVisible(1);
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            } else {
+                $orderCmd++;
+            }
+
+            // ai_reformat_message (info/string)
+            $cmd = $aiEq->getCmd(null, 'ai_reformat_message');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Message IA', __FILE__));
+                $cmd->setEqLogic_id($aiEq->getId());
+                $cmd->setLogicalId('ai_reformat_message');
+                $cmd->setType('info');
+                $cmd->setSubType('string');
+                $cmd->setIsVisible(1);
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            } else {
+                $orderCmd++;
+            }
+
+            // ai_reformat_input (info/string)
+            $cmd = $aiEq->getCmd(null, 'ai_reformat_input');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Message pré-IA', __FILE__));
+                $cmd->setEqLogic_id($aiEq->getId());
+                $cmd->setLogicalId('ai_reformat_input');
+                $cmd->setType('info');
+                $cmd->setSubType('string');
+                $cmd->setIsVisible(1);
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            } else {
+                $orderCmd++;
+            }
+
+            log::add('ttscast', 'debug', '[AI] Équipement virtuel TTSCast_AI configuré');
+        } else {
+            if (is_object($aiEq)) {
+                log::add('ttscast', 'info', '[AI] Désactivation TTSCast_AI (IA désactivée)');
+                $aiEq->setIsEnable(0);
+                $aiEq->save();
             }
         }
     }
@@ -1302,7 +1413,7 @@ class ttscast extends eqLogic
      * Action après modification de la configuration ttsAIEnable
      */
     public static function postConfig_ttsAIEnable($value) {
-        self::manageAIStatsEquipment();
+        self::manageAIEquipments();
     }
 
     /*
@@ -1337,8 +1448,16 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
     public function postSave() {
-        // Ignorer l'équipement virtuel AI Stats (ses commandes sont gérées dans manageAIStatsEquipment)
-        if ($this->getLogicalId() == 'TTSCast_AI_Stats') {
+        // Ignorer les équipements virtuels IA (leurs commandes sont gérées dans manageAIEquipments)
+        if (in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
+            // Bloquer la réactivation manuelle de TTSCast_AI si l'IA est désactivée
+            if ($this->getLogicalId() === 'TTSCast_AI' && $this->getIsEnable() == 1) {
+                $aiEnabled = config::byKey('ttsAIEnable', 'ttscast', '0');
+                if ($aiEnabled != '1') {
+                    \DB::Prepare('UPDATE eqLogic SET `isEnable`=:enable WHERE `id`=:id', ['enable' => 0, 'id' => $this->getId()], \DB::FETCH_TYPE_ROW);
+                    message::add('ttscast', __('TTSCast - IA ne peut pas être activé manuellement. Activez l\'IA dans la configuration du plugin (IA Générative).', __FILE__));
+                }
+            }
             return;
         }
         
@@ -1777,6 +1896,27 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
+        // Commandes IA (créées uniquement si l'IA est activée globalement)
+        if (config::byKey('ttsAIEnable', 'ttscast', '0') == '1') {
+            $cmd = $this->getCmd(null, 'tts_last_message');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('TTS Last Message', __FILE__));
+                $cmd->setEqLogic_id($this->getId());
+                $cmd->setLogicalId('tts_last_message');
+                $cmd->setType('info');
+                $cmd->setSubType('string');
+                $cmd->setDisplay('forceReturnLineBefore', '1');
+                $cmd->setDisplay('forceReturnLineAfter', '1');
+                $cmd->setIsVisible(0);
+                $cmd->setIsHistorized(0);
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            } else {
+                $orderCmd++;
+            }
+        }
+
         $cmd = $this->getCmd(null, 'title');
         if (!is_object($cmd)) {
             $cmd = new ttscastCmd();
@@ -2119,8 +2259,8 @@ class ttscast extends eqLogic
     
     // Fonction exécutée automatiquement avant la suppression de l'équipement
     public function preRemove() {
-        // Ne pas notifier le démon pour l'équipement virtuel AI Stats
-        if ($this->getLogicalId() != 'TTSCast_AI_Stats') {
+        // Ne pas notifier le démon pour les équipements virtuels IA
+        if (!in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
             $this->disableCastToDaemon();
         }
     }
@@ -2163,8 +2303,8 @@ class ttscastCmd extends cmd
     // Permet d'empêcher la suppression des commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
     public function dontRemoveCmd() {
         $eqLogic = $this->getEqLogic();
-        // Empêcher la suppression automatique des commandes de l'équipement virtuel AI Stats
-        if (is_object($eqLogic) && $eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+        // Empêcher la suppression automatique des commandes des équipements virtuels IA
+        if (is_object($eqLogic) && in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
             return true;
         }
         return false;
@@ -2173,6 +2313,32 @@ class ttscastCmd extends cmd
     // Fonction exécutée automatiquement avant la suppression de la commande
     public function preRemove() {
         
+    }
+
+    public function getWidgetTemplateCode($_version = 'dashboard', $_clean = true, $_widgetName = '') {
+        if ($_version != 'scenario') {
+            return parent::getWidgetTemplateCode($_version, $_clean, $_widgetName);
+        }
+
+        $logicalId = $this->getLogicalId();
+
+        if (!in_array($logicalId, ['tts', 'ai_reformat'])) {
+            return parent::getWidgetTemplateCode($_version, $_clean, $_widgetName);
+        }
+
+        $templateFilename = ($logicalId === 'ai_reformat') ? 'cmd.aiReformat' : 'cmd.tts';
+        $replace = [
+            '#uid#' => 'cmd' . $this->getId() . eqLogic::UIDDELIMITER . mt_rand() . eqLogic::UIDDELIMITER,
+        ];
+
+        $html = template_replace($replace, getTemplate('core', 'scenario', $templateFilename, 'ttscast'));
+        $html = translate::exec($html, 'plugins/ttscast/core/template/scenario/' . $templateFilename . '.html');
+
+        if (!is_null($html) && !is_array($html) && $html !== '') {
+            return array('template' => $html, 'isCoreWidget' => false);
+        }
+
+        return parent::getWidgetTemplateCode($_version, $_clean, $_widgetName);
     }
 
     // Exécution d'une commande
@@ -2198,12 +2364,72 @@ class ttscastCmd extends cmd
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
-                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID);
-                    ttscast::playTTS($googleUUID, $_options['message'], isset($_options['title']) ? $_options['title'] : null);
+                    $cmdNotificationId = 0;
+                    if (!empty($_options['cmdNotification'])) {
+                        $cmdNotification = cmd::byString($_options['cmdNotification']);
+                        if (!is_object($cmdNotification)) {
+                            log::add('ttscast', 'warning', '[CMD] tts :: Commande notification introuvable :: ' . $_options['cmdNotification']);
+                        } else {
+                            $cmdNotificationId = $cmdNotification->getId();
+                        }
+                    }
+                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID / CmdNotification) :: ' . $_options['message'] . " / " . $googleUUID . " / " . $cmdNotificationId);
+                    ttscast::playTTS($googleUUID, $_options['message'], isset($_options['title']) ? $_options['title'] : null, $cmdNotificationId);
                 }
                 else {
                     log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour diffuser un message TTS');
-                }                
+                }
+            } elseif ($logicalId == 'ai_reformat' && $eqLogic->getLogicalId() == 'TTSCast_AI') {
+                log::add('ttscast', 'debug', '[CMD] ai_reformat :: ' . json_encode($_options));
+                $text = isset($_options['message']) ? trim($_options['message']) : '';
+                if ($text === '') {
+                    log::add('ttscast', 'warning', '[CMD] ai_reformat :: texte vide, rien à reformuler');
+                    return true;
+                }
+                $payload = [
+                    'cmd' => 'aiReformat',
+                    'text' => $text,
+                    'ttsOptions' => isset($_options['title']) ? $_options['title'] : null,
+                ];
+                $result = ttscast::sendToDaemonSync($payload);
+                if ($result === null || isset($result['error'])) {
+                    log::add('ttscast', 'warning', '[CMD] ai_reformat :: Pas de réponse du démon, retour texte original');
+                    $result = ['reformulated' => $text, 'original' => $text];
+                }
+                $reformulated = isset($result['reformulated']) ? $result['reformulated'] : $text;
+                $original = isset($result['original']) ? $result['original'] : $text;
+                // Toujours mettre à jour les commandes info de TTSCast_AI
+                $aiEqLogic = ttscast::byLogicalId('TTSCast_AI', 'ttscast');
+                if (is_object($aiEqLogic)) {
+                    $cmdMsg = $aiEqLogic->getCmd(null, 'ai_reformat_message');
+                    if (is_object($cmdMsg)) $cmdMsg->event($reformulated);
+                    $cmdInput = $aiEqLogic->getCmd(null, 'ai_reformat_input');
+                    if (is_object($cmdInput)) $cmdInput->event($original);
+                }
+                // storeTarget optionnel : variable ou commande info
+                $target = trim(isset($_options['storeTarget']) ? $_options['storeTarget'] : '');
+                if ($target !== '') {
+                    if (strpos($target, '#[') === 0) { // TODO: PHP 8.0 — str_starts_with
+                        $targetCmd = cmd::byString($target);
+                        if (is_object($targetCmd)) {
+                            $targetCmd->event($reformulated);
+                        } else {
+                            log::add('ttscast', 'warning', '[CMD] ai_reformat :: Commande storeTarget introuvable :: ' . $target);
+                        }
+                    } else {
+                        // Sauvegarde dans une variable globale Jeedom via dataStore
+                        $dataStore = \dataStore::byTypeLinkIdKey('scenario', -1, $target);
+                        if (!is_object($dataStore)) {
+                            $dataStore = new \dataStore();
+                            $dataStore->setKey($target);
+                            $dataStore->setType('scenario');
+                            $dataStore->setLink_id(-1);
+                        }
+                        $dataStore->setValue($reformulated);
+                        $dataStore->save();
+                    }
+                }
+                log::add('ttscast', 'debug', '[CMD] ai_reformat :: Résultat :: ' . $reformulated);
             } elseif ($logicalId == "volumeset") {
                 log::add('ttscast', 'debug', '[CMD] VolumeSet Keys :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
