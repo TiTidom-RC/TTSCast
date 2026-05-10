@@ -673,7 +673,7 @@ class ttscast extends eqLogic
 
     public static function sendOnStartCastToDaemon()
     {
-        log::add('ttscast', 'info', '[SendOnStart] Envoi Equipements TTSCast Actifs');
+        log::add('ttscast', 'info', '[SendOnStart] Envoi équipements TTSCast actifs');
         $i = 0;
         while ($i < 10) {
             $deamon_info = self::deamon_info();
@@ -688,8 +688,8 @@ class ttscast extends eqLogic
             return false;
         }
         foreach(self::byType('ttscast', false) as $eqLogic) {
-            // Ignorer l'équipement virtuel AI Stats
-            if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+            // Ignorer les équipements virtuels IA
+            if (in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
                 continue;
             }
             
@@ -706,6 +706,9 @@ class ttscast extends eqLogic
 
     public function enableCastToDaemon()
     {
+        if (in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
+            return;
+        }
         if ($this->getLogicalId() != '') {
             $value = array(
                 'cmd' => 'addcast',
@@ -720,6 +723,9 @@ class ttscast extends eqLogic
 
     public function disableCastToDaemon()
     {
+        if (in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
+            return;
+        }
         if ($this->getLogicalId() != '') {
             $value = array(
                 'cmd' => 'removecast',
@@ -835,8 +841,8 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
-                // Ignorer l'équipement virtuel AI Stats
-                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+                // Ignorer les équipements virtuels IA
+                if (in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
                     continue;
                 }
                 $cmd = $eqLogic->getCmd(null, 'radios');
@@ -857,8 +863,8 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
-                // Ignorer l'équipement virtuel AI Stats
-                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+                // Ignorer les équipements virtuels IA
+                if (in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
                     continue;
                 }
                 $cmd = $eqLogic->getCmd(null, 'customradios');
@@ -879,8 +885,8 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
-                // Ignorer l'équipement virtuel AI Stats
-                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+                // Ignorer les équipements virtuels IA
+                if (in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
                     continue;
                 }
                 $cmd = $eqLogic->getCmd(null, 'sounds');
@@ -901,8 +907,8 @@ class ttscast extends eqLogic
     {
         try {
             foreach(self::byType('ttscast', false) as $eqLogic) {
-                // Ignorer l'équipement virtuel AI Stats
-                if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+                // Ignorer les équipements virtuels IA
+                if (in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
                     continue;
                 }
                 $cmd = $eqLogic->getCmd(null, 'customsounds');
@@ -961,8 +967,8 @@ class ttscast extends eqLogic
     public static function cron5() {
         $currentTime = time();
         foreach(self::byType('ttscast', true) as $eqLogic) {
-            // Ignorer l'équipement virtuel AI Stats
-            if ($eqLogic->getLogicalId() == 'TTSCast_AI_Stats') {
+            // Ignorer les équipements virtuels IA
+            if (in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
                 continue;
             }
             
