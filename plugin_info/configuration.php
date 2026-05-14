@@ -810,7 +810,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de choisir le ton sur lequel le moteur IA reformulera votre notification.}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
-                    <input class="configKey form-control" type="text" data-l1key="ttsAIDefaultTone" placeholder="{{Ex: Enthousiaste et humoristique}}" />
+                    <input class="configKey form-control" type="text" data-l1key="ttsAIDefaultTone" placeholder="{{Ex: enthousiaste et humoristique}}" />
                 </div>
             </div>
             <div class="form-group">
@@ -827,7 +827,7 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{Prompt Système par Défaut}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Affiche le prompt système utilisé par l'IA lorsqu'aucun prompt personnalisé n'est défini. Le démon doit être démarré.}}"></i></sup>
                 </label>
-                <div class="col-lg-9">
+                <div class="col-lg-6">
                     <a class="btn btn-primary customclass-getdefaultprompt"><i class="fas fa-eye"></i> {{Afficher}}</a>
                     <textarea class="form-control customclass-defaultpromptresult" rows="8" readonly style="display:none;margin-top:8px;resize:vertical;"></textarea>
                 </div>
