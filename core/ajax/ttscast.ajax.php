@@ -98,7 +98,7 @@ try {
     if (init('action') == 'getDefaultPrompt') {
         $result = ttscast::sendToDaemonSync(['cmd' => 'getDefaultPrompt']);
         if ($result === null) {
-            throw new Exception(__('Le démon n\'est pas démarré', __FILE__));
+            ajax::error(__('Le démon n\'est pas démarré', __FILE__));
         }
         ajax::success($result['prompt'] ?? '');
     }
