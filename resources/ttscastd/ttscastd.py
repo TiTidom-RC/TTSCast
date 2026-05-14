@@ -1531,6 +1531,15 @@ class TTSCast:
         logging.debug('[DAEMON][SYNC][aiReformat] Résultat :: %s', reformulated[:80] if reformulated else '')
         return {'reformulated': reformulated, 'original': text}
 
+    @staticmethod
+    def handleGetDefaultPrompt(message):
+        """
+        Handler synchrone pour getDefaultPrompt.
+        Retourne le prompt système par défaut (sans ton personnalisé).
+        """
+        logging.debug('[DAEMON][SYNC][getDefaultPrompt] Requête reçue')
+        return {'prompt': myConfig.aiSysPrompt()}
+
 class Functions:
     """ Class Functions """
 
@@ -3368,6 +3377,7 @@ try:
     my_jeedom_socket = jeedom_socket(port=myConfig.socketPort, address=myConfig.socketHost)
     jeedom_socket_handler.expected_apikey = myConfig.apiKey
     jeedom_socket_handler.sync_command_handlers['aiReformat'] = TTSCast.handleAiReformat
+    jeedom_socket_handler.sync_command_handlers['getDefaultPrompt'] = TTSCast.handleGetDefaultPrompt
     Loops.mainLoop(myConfig.cycleMain)  # type: ignore
 except Exception as e:
     logging.error('[DAEMON][MAIN] Fatal error: %s', e)

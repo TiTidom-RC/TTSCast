@@ -823,6 +823,15 @@ if (!isConnect()) {
                     <input class="configKey form-control" type="text" data-l1key="ttsAICustomSysPrompt" placeholder="{{Ex: Répond à la question s'il y en a une et reformule la phrase}}" />
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Prompt Système par Défaut}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Affiche le prompt système utilisé par l'IA lorsqu'aucun prompt personnalisé n'est défini. Le démon doit être démarré.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <a class="btn btn-primary customclass-getdefaultprompt"><i class="fas fa-eye"></i> {{Afficher}}</a>
+                    <textarea class="form-control customclass-defaultpromptresult" rows="8" readonly style="display:none;margin-top:8px;resize:vertical;"></textarea>
+                </div>
+            </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
                <label class="col-lg-3 control-label">{{Tester avec la syntaxe SSML (TTS)}}
@@ -1002,7 +1011,9 @@ const SELECTORS = Object.freeze({
   BTN_UPDATE_SOUNDS: '.customclass-updatesounds',
   BTN_UPDATE_CUSTOM_SOUNDS: '.customclass-updatecustomsounds',
   BTN_TEST_PLAY: '.customclass-ttstestplay',
-  BTN_RESET_API_KEY: '.customclass-resetapikey'
+  BTN_RESET_API_KEY: '.customclass-resetapikey',
+  BTN_DEFAULT_PROMPT: '.customclass-getdefaultprompt',
+  DEFAULT_PROMPT_RESULT: '.customclass-defaultpromptresult'
 })
 
 // AJAX URL constant
@@ -1234,6 +1245,32 @@ if (btnTestPlay) {
   btnTestPlay.addEventListener('click', () => {
     simpleAjaxPost('playTestTTS', '{{Demande de génération du TTS de test envoyée (voir les logs du démon pour le résultat)}}')
 
+  })
+}
+
+// Get Default Prompt
+const btnDefaultPrompt = document.querySelector(SELECTORS.BTN_DEFAULT_PROMPT)
+if (btnDefaultPrompt) {
+  btnDefaultPrompt.addEventListener('click', () => {
+    const promptResult = document.querySelector(SELECTORS.DEFAULT_PROMPT_RESULT)
+    domUtils.ajax({
+      type: 'POST',
+      url: AJAX_URL,
+      data: { action: 'getDefaultPrompt' },
+      success: (data) => {
+        if (data.state !== 'ok') {
+          jeedomUtils.showAlert({ message: data.result, level: 'danger' })
+          return
+        }
+        if (promptResult) {
+          promptResult.value = data.result
+          promptResult.style.display = ''
+        }
+      },
+      error: (error) => {
+        jeedomUtils.showAlert({ message: error.message || '{{Le démon doit être démarré pour afficher le prompt par défaut.}}', level: 'warning' })
+      }
+    })
   })
 }
 
