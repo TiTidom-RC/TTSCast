@@ -827,7 +827,7 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{Prompt Système par Défaut}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Affiche le prompt système utilisé par l'IA lorsqu'aucun prompt personnalisé n'est défini. Le démon doit être démarré.}}"></i></sup>
                 </label>
-                <div class="col-lg-3">
+                <div class="col-lg-9">
                     <a class="btn btn-primary customclass-getdefaultprompt"><i class="fas fa-eye"></i> {{Afficher}}</a>
                     <textarea class="form-control customclass-defaultpromptresult" rows="8" readonly style="display:none;margin-top:8px;resize:vertical;"></textarea>
                 </div>
