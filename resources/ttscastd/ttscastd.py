@@ -1408,7 +1408,7 @@ class TTSCast:
                     SYSTEM_INSTRUCTION = myConfig.aiSysPrompt(_aiCustomTone)
                 else:
                     SYSTEM_INSTRUCTION = myConfig.aiSysPrompt()
-                logging.debug('[DAEMON][GenAI] Instructions Système :: %s', SYSTEM_INSTRUCTION)
+                logging.debug('[DAEMON][GenAI] Instructions Système (repr) :: %s', repr(SYSTEM_INSTRUCTION))
                 
                 response = client.models.generate_content(
                     model=MODEL_ID,
@@ -1485,8 +1485,11 @@ class TTSCast:
                     logging.warning('[DAEMON][GenAI] Aucune réponse générée par Gemini.')
                     return None
                 else:
-                    logging.debug('[DAEMON][GenAI] Réponse générée par Gemini :: %s', response.text.strip())
-                    return Functions.markdownToPlainText(response.text.strip())
+                    raw_text = response.text.strip()
+                    logging.debug('[DAEMON][GenAI] Réponse générée par Gemini (repr) :: %s', repr(raw_text))
+                    clean_text = Functions.markdownToPlainText(raw_text)
+                    logging.debug('[DAEMON][GenAI] Réponse après nettoyage Markdown (repr) :: %s', repr(clean_text))
+                    return clean_text
             else:
                 logging.error('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, "***" if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
                 return None
