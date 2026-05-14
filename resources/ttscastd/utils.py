@@ -92,11 +92,11 @@ class Config:
             'Contenu :\n'
             '- Reformule la phrase d\'origine de façon naturelle et réponds à la question posée s\'il y en a une.\n'
             '- Conserve toutes les valeurs chiffrées présentes dans la phrase d\'origine.\n'
-            '- Si la phrase contient une notion temporelle (date, jour, heure, délai…), utilise la recherche en ligne pour vérifier et confirmer explicitement la date et le jour de la semaine exacts.\n'
+            '- Si la phrase contient une notion temporelle (date, jour, heure, délai…), utilise la recherche en ligne pour vérifier la date et le jour de la semaine.\n'
             '- Pour toute question nécessitant des données actuelles ou factuelles (météo, actualités, résultats…), utilise la recherche en ligne.\n\n'
             'Format de tes réponses :\n'
-            '- Tu peux structurer ta réponse avec des retours à la ligne si cela améliore la lisibilité.\n'
-            '- N\'utilise jamais d\'emojis ni de syntaxe Markdown dans tes réponses (pas de **, *, #, >, listes à tirets…).\n'
+            '- Réponds en phrases courtes et fluides, adaptées à une diffusion vocale.\n'
+            '- Réponds en texte brut, sans emojis ni mise en forme Markdown (**, *, #, >, tirets de liste).\n'
             '- Ne décris pas tes propres actions ni le processus de génération.'
         )
 
