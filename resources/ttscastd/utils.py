@@ -73,7 +73,7 @@ class Config:
     # Clés d'options consommées par le démon (jamais renvoyées comme options de notification)
     DAEMON_OPTION_KEYS = frozenset({
         'genai', 'aitone', 'aisysprompt', 'aitemp',  # IA
-        'ssml', 'before', 'voice',                    # TTS voix
+        'ssml', 'markup', 'style', 'before', 'voice', # TTS voix / format
         'volume', 'ding', 'wait', 'force',            # TTS comportement
     })
 

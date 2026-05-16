@@ -843,11 +843,27 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
+               <label class="col-lg-3 control-label">{{Tester avec markup Chirp3}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Active le format markup pour les voix Chirp3 HD. Incompatible avec l'option SSML.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsTestMarkup" />
+                </div>
+            </div>
+            <div class="form-group">
                <label class="col-lg-3 control-label">{{Tester avec l'IA}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Ce paramètre permet de tester la reformulation des réponses à l'aide de l'IA.}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsTestAI" />
+                </div>
+            </div>
+            <div class="form-group">
+               <label class="col-lg-3 control-label">{{Style}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style passée au moteur de synthèse Google Cloud TTS (Style Instructions). Fonctionne avec les voix &quot;promptable&quot; (Chirp3 HD et futures voix compatibles).}}"></i></sup>
+                </label>
+                <div class="col-lg-5">
+                    <input class="configKey form-control" type="text" data-l1key="ttsTestStyle" placeholder="{{Ex : Parlez d'une voix joyeuse et énergique.}}" />
                 </div>
             </div>
             <div class="form-group">
