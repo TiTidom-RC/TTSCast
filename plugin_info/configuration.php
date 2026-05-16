@@ -833,7 +833,6 @@ if (!isConnect()) {
                     <textarea class="form-control customclass-defaultpromptresult" rows="8" readonly style="display:none;margin-top:8px;resize:vertical;"></textarea>
                 </div>
             </div>
-            <hr>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Activer Gemini TTS}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Active le moteur de synthèse vocale Gemini TTS. Utilise la clé API ou le compte OAuth2 configuré ci-dessus. Invocable par scénario via l'option engine:geminitts.}}"></i></sup>
