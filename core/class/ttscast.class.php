@@ -321,9 +321,7 @@ class ttscast extends eqLogic
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsSSML = config::byKey('ttsTestSSML', 'ttscast', '0');
         $ttsAI = config::byKey('ttsTestAI', 'ttscast', '0');
-        $ttsStyle = config::byKey('ttsTestStyle', 'ttscast', '');
-        $ttsMarkup = config::byKey('ttsTestMarkup', 'ttscast', '0');
-        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI, 'ttsStyle' => $ttsStyle, 'ttsMarkup' => $ttsMarkup);
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI);
         self::sendToDaemon($value);
     }
 
