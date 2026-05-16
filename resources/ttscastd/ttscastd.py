@@ -445,6 +445,7 @@ class TTSCast:
                 
                 if not os.path.isfile(filepath) or myConfig.ttsDisableCache or ttsAI == '1':
                     _isChirp3Voice = 'Chirp3-HD-' in ttsVoiceName
+                    _isGeminiTTSVoice = 'Gemini' in ttsVoiceName
                     language_code = "-".join(ttsVoiceName.split("-")[:2])
                     logging.debug('[DAEMON][TestTTS] LanguageCode :: %s', language_code)
                     if ttsSSML == '1':
@@ -457,7 +458,7 @@ class TTSCast:
                         logging.warning('[DAEMON][TestTTS] markup=1 ignoré : voix non-Chirp3 (%s), fallback texte brut', ttsVoiceName)
                         if myConfig.appConvertSingleQuote:
                             ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
-                        text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=ttsStyle or None)
+                        text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=ttsStyle if _isGeminiTTSVoice else None)
                     elif ttsAI == '1':
                         ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt)
                         if ttsAIText is not None:
@@ -466,17 +467,17 @@ class TTSCast:
                                 ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText, True, "TestTTS")
                             _aiReformulatedText = ttsAIText
                             TTSCast._sendTTSResult(_aiReformulatedText, True)
-                            text_input = googleCloudTTS.SynthesisInput(text=ttsAIText, prompt=ttsStyle or None)
+                            text_input = googleCloudTTS.SynthesisInput(text=ttsAIText, prompt=ttsStyle if _isGeminiTTSVoice else None)
                         else:
                             logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
-                            text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=ttsStyle or None)
+                            text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=ttsStyle if _isGeminiTTSVoice else None)
                     else:
                         logging.debug('[DAEMON][TestTTS] Génération du TTS')
                         if myConfig.appConvertSingleQuote:
                             ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
-                        text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=ttsStyle or None)
+                        text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=ttsStyle if _isGeminiTTSVoice else None)
                     voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                     # TODO Ajouter les effets possibles : https://cloud.google.com/text-to-speech/docs/audio-profiles
                     # Effets possibles : 'headphone-class-device', 'small-bluetooth-speaker-class-device', 'medium-bluetooth-speaker-class-device', 'large-home-entertainment-class-device', 'large-automotive-class-device', 'telephony-class-application'
@@ -713,6 +714,7 @@ class TTSCast:
 
                     if not os.path.isfile(filepath) or myConfig.ttsDisableCache or _useAI:
                         _isChirp3Voice = 'Chirp3-HD-' in ttsVoiceName
+                        _isGeminiTTSVoice = 'Gemini' in ttsVoiceName
                         language_code = "-".join(ttsVoiceName.split("-")[:2])
                         if _useSSML:
                             logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec SSML')
@@ -724,24 +726,24 @@ class TTSCast:
                             logging.warning('[DAEMON][GenerateTTS] markup ignoré : voix non-Chirp3 (%s), fallback texte brut', ttsVoiceName)
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle or None)
+                            text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle if _isGeminiTTSVoice else None)
                         elif _useAI:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
-                                text_input = googleCloudTTS.SynthesisInput(text=ttsAIText, prompt=_ttsStyle or None)
+                                text_input = googleCloudTTS.SynthesisInput(text=ttsAIText, prompt=_ttsStyle if _isGeminiTTSVoice else None)
                             else:
                                 logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle or None)
+                                text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle if _isGeminiTTSVoice else None)
                         else:
                             logging.debug('[DAEMON][GenerateTTS] Génération du TTS')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle or None)
+                            text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle if _isGeminiTTSVoice else None)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
                         
                         _useLinear16 = (myConfig.gCloudAudioEncoding == "LINEAR16")
@@ -959,6 +961,7 @@ class TTSCast:
 
                     if not os.path.isfile(filepath) or myConfig.ttsDisableCache or _useAI:
                         _isChirp3Voice = 'Chirp3-HD-' in ttsVoiceName
+                        _isGeminiTTSVoice = 'Gemini' in ttsVoiceName
                         language_code = "-".join(ttsVoiceName.split("-")[:2])
                         if _useSSML:
                             logging.debug('[DAEMON][TTS] Génération du TTS avec SSML')
@@ -970,7 +973,7 @@ class TTSCast:
                             logging.warning('[DAEMON][TTS] markup ignoré : voix non-Chirp3 (%s), fallback texte brut', ttsVoiceName)
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle or None)
+                            text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle if _isGeminiTTSVoice else None)
                         elif _useAI:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
@@ -979,18 +982,18 @@ class TTSCast:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
                                 _aiReformulatedText = ttsAIText
                                 TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
-                                text_input = googleCloudTTS.SynthesisInput(text=ttsAIText, prompt=_ttsStyle or None)
+                                text_input = googleCloudTTS.SynthesisInput(text=ttsAIText, prompt=_ttsStyle if _isGeminiTTSVoice else None)
                             else:
                                 logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                                text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle or None)
+                                text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle if _isGeminiTTSVoice else None)
                         else:
                             logging.debug('[DAEMON][TTS] Génération du TTS')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
-                            text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle or None)
+                            text_input = googleCloudTTS.SynthesisInput(text=ttsText, prompt=_ttsStyle if _isGeminiTTSVoice else None)
                         voice_params = googleCloudTTS.VoiceSelectionParams(language_code=language_code, name=ttsVoiceName)
 
                         if myConfig.gCloudAudioEncoding == "LINEAR16":
