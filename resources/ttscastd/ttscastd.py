@@ -29,6 +29,7 @@ import queue
 import requests
 import re
 import wave
+import io
 
 from urllib.parse import urlencode, urlparse
 from uuid import UUID
@@ -636,7 +637,7 @@ class TTSCast:
             logging.debug('[DAEMON][TestTTS] TTSEngine = geminitts')
             # Pas de cache pour Gemini TTS : sortie LLM non déterministe, toujours régénérer
             raw_filename = ttsText + "|GeminiTTS|" + ttsGeminiVoiceName + "|" + myConfig.geminiTTSModel
-            filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+            filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".wav"
             filepath = os.path.join(symLinkPath, filename)
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
 
@@ -1542,7 +1543,7 @@ class TTSCast:
     def geminiTTS(ttsText: str, voiceName: str, style: str = ''):
         """
         Génère l'audio TTS via l'API Gemini TTS.
-        Retourne les bytes MP3, ou None en cas d'erreur.
+        Retourne les bytes WAV (PCM encapsulé), ou None en cas d'erreur.
         """
         try:
             if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProjectID') or myConfig.aiApiKey != 'noKey':
@@ -1575,15 +1576,21 @@ class TTSCast:
                     )
                 )
 
-                logging.debug('[DAEMON][GeminiTTS] Modèle :: %s | Voix :: %s', myConfig.geminiTTSModel, voiceName)
+                # Le style est intégré dans le prompt (méthode officielle Google TTS).
+                # Le délimiteur ### TRANSCRIPT indique clairement au modèle où commence le texte
+                # à synthétiser, évitant qu'il lise les instructions de style à voix haute.
+                if style:
+                    prompt = f"{style}\n\n### TRANSCRIPT\n{ttsText}"
+                else:
+                    prompt = ttsText
+
+                logging.debug('[DAEMON][GeminiTTS] Modèle :: %s | Voix :: %s | Style :: %s', myConfig.geminiTTSModel, voiceName, style if style else 'N/A')
 
                 response = client.models.generate_content(
                     model=myConfig.geminiTTSModel,
-                    contents=ttsText,
+                    contents=prompt,
                     config=types.GenerateContentConfig(
                         response_modalities=['AUDIO'],
-                        response_mime_type='audio/mp3',
-                        system_instruction=style if style else None,
                         speech_config=speechConfig
                     )
                 )
@@ -1601,7 +1608,19 @@ class TTSCast:
                         and (blob := content.parts[0].inline_data)
                         and blob.data):
                     audio_data = blob.data
-                    logging.debug('[DAEMON][GeminiTTS] Audio généré :: %d bytes', len(audio_data))
+                    mime_type = blob.mime_type or ''
+                    logging.debug('[DAEMON][GeminiTTS] Audio généré :: %d bytes | mime_type :: %s', len(audio_data), mime_type)
+                    # L'API Gemini TTS retourne du PCM brut (audio/pcm;rate=24000 ou audio/L16)
+                    # Il faut encapsuler dans un header WAV avant écriture sur disque
+                    if 'wav' not in mime_type.lower():
+                        buf = io.BytesIO()
+                        with wave.open(buf, 'wb') as wf:
+                            wf.setnchannels(1)
+                            wf.setsampwidth(2)  # 16-bit
+                            wf.setframerate(24000)
+                            wf.writeframes(audio_data)
+                        audio_data = buf.getvalue()
+                        logging.debug('[DAEMON][GeminiTTS] PCM encapsulé en WAV :: %d bytes', len(audio_data))
                     return audio_data
                 logging.warning('[DAEMON][GeminiTTS] Aucune donnée audio dans la réponse.')
                 return None
