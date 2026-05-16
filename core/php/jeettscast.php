@@ -254,7 +254,7 @@ try {
             $cmd = $deviceEq->getCmd('info', 'tts_last_message');
             if (is_object($cmd)) {
                 $cmd->event(strval($text));
-                log::add('ttscast', 'debug', '[CALLBACK] TTS Last Message :: Mise à jour :: UUID=' . $uuid);
+                log::add('ttscast', 'debug', '[CALLBACK] TTS Last Message [' . $deviceEq->getName() . '] :: "' . strval($text) . '" (UUID=' . $uuid . ')');
             }
         }
     } elseif (isset($result['ttsNotifyResult'])) {
