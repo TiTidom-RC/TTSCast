@@ -750,7 +750,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Modèle IA}}
+                <label class="col-lg-3 control-label">{{Modèle IA (Reformulation)}}
                     <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens:</b><br/><br/><b>Modèles Stables (Recommandés):</b><br/>• Gemini 3.1 Flash-Lite: In $0.25 | Out $1.50<br/>• Gemini 2.5 Flash Lite: In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash: In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro: In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto):</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta):</b><br/>• Gemini 3.1 Flash-Lite Preview: In $0.25 | Out $1.50<br/>• Gemini 3.1 Pro Preview: In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview: In $0.50 | Out $3.00"></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
@@ -835,7 +835,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Activer Gemini TTS}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Active le moteur de synthèse vocale Gemini TTS. Utilise la clé API ou le compte OAuth2 configuré ci-dessus. Invocable par scénario via l'option engine:geminitts.}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Active le moteur de synthèse vocale Gemini TTS. Utilise la clé API Google Gemini ou le compte OAuth2 configuré ci-dessus.}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="geminiTTSEnabled" />
@@ -846,7 +846,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Modèle Gemini TTS à utiliser. Flash est plus économique, Pro est plus expressif.}}"></i></sup>
                 </label>
-                <div class="col-lg-3">
+                <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="geminiTTSModel">
                         <!-- Gemini 3.x (Recommandé) -->
                         <option disabled>--- {{Gemini 3.x (Recommandé)}} ---</option>
@@ -862,44 +862,45 @@ if (!isConnect()) {
                 <label class="col-lg-3 control-label">{{Voix Gemini TTS}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Voix utilisée par défaut. Toutes les voix Gemini TTS sont multilingues (détection automatique de la langue).}}"></i></sup>
                 </label>
-                <div class="col-lg-3">
+                <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="geminiTTSVoice">
-                        <option value="Aoede">{{Aoede — Désinvolte (F) — Défaut}}</option>
-                        <option value="Achernar">{{Achernar — Douce (F)}}</option>
-                        <option value="Achird">{{Achird — Amicale (M)}}</option>
-                        <option value="Algenib">{{Algenib — Rauque (M)}}</option>
-                        <option value="Algieba">{{Algieba — Fluide (M)}}</option>
-                        <option value="Alnilam">{{Alnilam — Ferme (M)}}</option>
-                        <option value="Autonoe">{{Autonoe — Lumineuse (F)}}</option>
-                        <option value="Callirrhoe">{{Callirrhoe — Décontractée (F)}}</option>
-                        <option value="Charon">{{Charon — Informative (M)}}</option>
-                        <option value="Despina">{{Despina — Fluide (F)}}</option>
-                        <option value="Enceladus">{{Enceladus — Soufflée (M)}}</option>
-                        <option value="Erinome">{{Erinome — Claire (F)}}</option>
-                        <option value="Fenrir">{{Fenrir — Enthousiaste (M)}}</option>
-                        <option value="Gacrux">{{Gacrux — Mature (F)}}</option>
-                        <option value="Iapetus">{{Iapetus — Claire (M)}}</option>
-                        <option value="Kore">{{Kore — Ferme (F)}}</option>
-                        <option value="Laomedeia">{{Laomedeia — Dynamique (F)}}</option>
-                        <option value="Leda">{{Leda — Juvénile (F)}}</option>
-                        <option value="Orus">{{Orus — Ferme (M)}}</option>
-                        <option value="Puck">{{Puck — Dynamique (M)}}</option>
-                        <option value="Pulcherrima">{{Pulcherrima — Directe (F)}}</option>
-                        <option value="Rasalgethi">{{Rasalgethi — Informative (M)}}</option>
-                        <option value="Sadachbia">{{Sadachbia — Vive (M)}}</option>
-                        <option value="Sadaltager">{{Sadaltager — Savante (M)}}</option>
-                        <option value="Schedar">{{Schedar — Neutre (M)}}</option>
-                        <option value="Sulafat">{{Sulafat — Chaleureuse (F)}}</option>
-                        <option value="Umbriel">{{Umbriel — Décontractée (M)}}</option>
-                        <option value="Vindemiatrix">{{Vindemiatrix — Douce (F)}}</option>
-                        <option value="Zephyr">{{Zephyr — Lumineuse (F)}}</option>
-                        <option value="Zubenelgenubi">{{Zubenelgenubi — Décontractée (M)}}</option>
+                        <option disabled>--- {{Gemini TTS - Voix multilingues}} ---</option>
+                        <option value="Aoede" selected>Aoede - Breezy (Female)</option>
+                        <option value="Achernar">Achernar - Soft (Female)</option>
+                        <option value="Achird">Achird - Friendly (Male)</option>
+                        <option value="Algenib">Algenib - Gravelly (Male)</option>
+                        <option value="Algieba">Algieba - Smooth (Male)</option>
+                        <option value="Alnilam">Alnilam - Firm (Male)</option>
+                        <option value="Autonoe">Autonoe - Bright (Female)</option>
+                        <option value="Callirrhoe">Callirrhoe - Easy-going (Female)</option>
+                        <option value="Charon">Charon - Informative (Male)</option>
+                        <option value="Despina">Despina - Smooth (Female)</option>
+                        <option value="Enceladus">Enceladus - Breathy (Male)</option>
+                        <option value="Erinome">Erinome - Clear (Female)</option>
+                        <option value="Fenrir">Fenrir - Excitable (Male)</option>
+                        <option value="Gacrux">Gacrux - Mature (Female)</option>
+                        <option value="Iapetus">Iapetus - Clear (Male)</option>
+                        <option value="Kore">Kore - Firm (Female)</option>
+                        <option value="Laomedeia">Laomedeia - Upbeat (Female)</option>
+                        <option value="Leda">Leda - Youthful (Female)</option>
+                        <option value="Orus">Orus - Firm (Male)</option>
+                        <option value="Puck">Puck - Upbeat (Male)</option>
+                        <option value="Pulcherrima">Pulcherrima - Forward (Female)</option>
+                        <option value="Rasalgethi">Rasalgethi - Informative (Male)</option>
+                        <option value="Sadachbia">Sadachbia - Lively (Male)</option>
+                        <option value="Sadaltager">Sadaltager - Knowledgeable (Male)</option>
+                        <option value="Schedar">Schedar - Even (Male)</option>
+                        <option value="Sulafat">Sulafat - Warm (Female)</option>
+                        <option value="Umbriel">Umbriel - Easy-going (Male)</option>
+                        <option value="Vindemiatrix">Vindemiatrix - Gentle (Female)</option>
+                        <option value="Zephyr">Zephyr - Bright (Female)</option>
+                        <option value="Zubenelgenubi">Zubenelgenubi - Casual (Male)</option>
                     </select>
                 </div>
             </div>
             <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Utiliser Gemini TTS par défaut}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, toutes les notifications utilisent Gemini TTS. Peut être surchargé commande par commande avec l'option engine:gcloudtts.}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, toutes les notifications utilisent Gemini TTS par défaut.}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="geminiTTSDefault" />
