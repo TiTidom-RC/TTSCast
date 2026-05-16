@@ -740,41 +740,7 @@ if (!isConnect()) {
                     <input type="checkbox" class="configKey" data-l1key="ttsAIEnable" />
                 </div>
             </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Utiliser la Reformulation IA par défaut}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de reformuler toutes les notifications TTS avec l'IA, sauf si l'option <b>&quot;genAI&quot;: false</b> est passée dans les options de la commande.}}"></i></sup>
-                </label>
-                <div class="col-lg-1">
-                    <input type="checkbox" class="configKey" data-l1key="ttsAIDefault" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Modèle IA (Reformulation)}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens:</b><br/><br/><b>Modèles Stables (Recommandés):</b><br/>• Gemini 3.1 Flash-Lite: In $0.25 | Out $1.50<br/>• Gemini 2.5 Flash Lite: In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash: In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro: In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto):</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta):</b><br/>• Gemini 3.1 Flash-Lite Preview: In $0.25 | Out $1.50<br/>• Gemini 3.1 Pro Preview: In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview: In $0.50 | Out $3.00"></i></sup>
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
-                </label>
-                <div class="col-lg-2">
-                    <select class="configKey form-control" data-l1key="ttsAIModel">
-                        <!-- Modèles Recommandés (Stables) -->
-                        <option disabled>--- {{Modèles Stables (Recommandés)}} ---</option>
-                        <option value="gemini-3.1-flash-lite" selected>Gemini 3.1 Flash-Lite</option>
-                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                        <!-- Versions Latest (Mise à jour automatique) -->
-                        <option disabled>--- {{Versions Latest (Mise à jour auto)}} ---</option>
-                        <option value="gemini-flash-lite-latest">⚠️ Gemini Flash Lite Latest</option>
-                        <option value="gemini-flash-latest">⚠️ Gemini Flash Latest</option>
-                        <!-- Modèles Preview (Nouvelles fonctionnalités) -->
-                        <option disabled>--- {{Versions Preview (Beta)}} ---</option>
-                        <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite Preview</option>
-                        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
-                        <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
-                    </select>
-                </div>
-            </div>
+            <br>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Authentification IA}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
@@ -805,6 +771,42 @@ if (!isConnect()) {
                     <input class="configKey form-control" type="text" data-l1key="ttsAIAPIKey" />
                 </div>
             </div>
+            <br>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Modèle IA (Reformulation)}}
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens:</b><br/><br/><b>Modèles Stables (Recommandés):</b><br/>• Gemini 3.1 Flash-Lite: In $0.25 | Out $1.50<br/>• Gemini 2.5 Flash Lite: In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash: In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro: In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto):</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta):</b><br/>• Gemini 3.1 Flash-Lite Preview: In $0.25 | Out $1.50<br/>• Gemini 3.1 Pro Preview: In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview: In $0.50 | Out $3.00"></i></sup>
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="ttsAIModel">
+                        <!-- Modèles Recommandés (Stables) -->
+                        <option disabled>--- {{Modèles Stables (Recommandés)}} ---</option>
+                        <option value="gemini-3.1-flash-lite" selected>Gemini 3.1 Flash-Lite</option>
+                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                        <!-- Versions Latest (Mise à jour automatique) -->
+                        <option disabled>--- {{Versions Latest (Mise à jour auto)}} ---</option>
+                        <option value="gemini-flash-lite-latest">⚠️ Gemini Flash Lite Latest</option>
+                        <option value="gemini-flash-latest">⚠️ Gemini Flash Latest</option>
+                        <!-- Modèles Preview (Nouvelles fonctionnalités) -->
+                        <option disabled>--- {{Versions Preview (Beta)}} ---</option>
+                        <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite Preview</option>
+                        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                        <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Utiliser la Reformulation IA par défaut}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de reformuler toutes les notifications TTS avec l'IA, sauf si l'option <b>&quot;genAI&quot;: false</b> est passée dans les options de la commande.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsAIDefault" />
+                </div>
+            </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Ton / Style}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
@@ -833,8 +835,10 @@ if (!isConnect()) {
                     <textarea class="form-control customclass-defaultpromptresult" rows="8" readonly style="display:none;margin-top:8px;resize:vertical;"></textarea>
                 </div>
             </div>
+            <br>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Activer Gemini TTS}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Active le moteur de synthèse vocale Gemini TTS. Utilise la clé API Google Gemini ou le compte OAuth2 configuré ci-dessus.}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -900,6 +904,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Utiliser Gemini TTS par défaut}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, toutes les notifications utilisent Gemini TTS par défaut.}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
