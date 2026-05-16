@@ -751,7 +751,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Modèle IA}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens:</b><br/><br/><b>Modèles Stables (Recommandés):</b><br/>• Gemini 2.5 Flash Lite: In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash: In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro: In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto):</b><br/>• Gemini Flash Lite Latest: In $0.10 | Out $0.40<br/>• Gemini Flash Latest: In $0.30 | Out $2.50<br/><br/><b>Versions Preview (Beta):</b><br/>• Gemini 2.5 Flash Lite Preview: In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash Preview: In $0.30 | Out $2.50<br/>• Gemini 3 Flash Preview: In $0.50 | Out $2.50<br/>• Gemini 3 Pro Preview: In $2.00 | Out $12.00<br/><br/><b>Génération 2.0:</b><br/>• Gemini 2.0 Flash Lite: In $0.075 | Out $0.30<br/>• Gemini 2.0 Flash: In $0.10 | Out $0.40"></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens:</b><br/><br/><b>Modèles Stables (Recommandés):</b><br/>• Gemini 3.1 Flash-Lite: In $0.25 | Out $1.50<br/>• Gemini 2.5 Flash Lite: In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash: In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro: In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto):</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta):</b><br/>• Gemini 3.1 Flash-Lite Preview: In $0.25 | Out $1.50<br/>• Gemini 3.1 Pro Preview: In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview: In $0.50 | Out $3.00"></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
                 </label>
@@ -759,23 +759,19 @@ if (!isConnect()) {
                     <select class="configKey form-control" data-l1key="ttsAIModel">
                         <!-- Modèles Recommandés (Stables) -->
                         <option disabled>--- {{Modèles Stables (Recommandés)}} ---</option>
-                        <option value="gemini-2.5-flash-lite" selected>Gemini 2.5 Flash Lite</option>
+                        <option value="gemini-3.1-flash-lite" selected>Gemini 3.1 Flash-Lite</option>
+                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
                         <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
                         <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                         <!-- Versions Latest (Mise à jour automatique) -->
                         <option disabled>--- {{Versions Latest (Mise à jour auto)}} ---</option>
-                        <option value="gemini-flash-lite-latest">Gemini Flash Lite Latest</option>
-                        <option value="gemini-flash-latest">Gemini Flash Latest</option>
+                        <option value="gemini-flash-lite-latest">⚠️ Gemini Flash Lite Latest</option>
+                        <option value="gemini-flash-latest">⚠️ Gemini Flash Latest</option>
                         <!-- Modèles Preview (Nouvelles fonctionnalités) -->
                         <option disabled>--- {{Versions Preview (Beta)}} ---</option>
-                        <option value="gemini-2.5-flash-lite-preview-09-2025">Gemini 2.5 Flash Lite Preview</option>
-                        <option value="gemini-2.5-flash-preview-09-2025">Gemini 2.5 Flash Preview</option>
+                        <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite Preview</option>
+                        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
                         <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
-                        <option value="gemini-3-pro-preview">Gemini 3 Pro Preview</option>
-                        <!-- Modèles Génération 2.0 -->
-                        <option disabled>--- {{Génération 2.0}} ---</option>
-                        <option value="gemini-2.0-flash-lite">Gemini 2.0 Flash Lite</option>
-                        <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
                     </select>
                 </div>
             </div>
@@ -815,7 +811,7 @@ if (!isConnect()) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de choisir le ton sur lequel le moteur IA reformulera votre notification.}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
-                    <input class="configKey form-control" type="text" data-l1key="ttsAIDefaultTone" placeholder="{{Ex: Enthousiaste et humoristique}}" />
+                    <input class="configKey form-control" type="text" data-l1key="ttsAIDefaultTone" placeholder="{{Ex: enthousiaste et humoristique}}" />
                 </div>
             </div>
             <div class="form-group">
@@ -826,6 +822,15 @@ if (!isConnect()) {
                 <div class="col-lg-3">
                     <input type="checkbox" class="configKey" data-l1key="ttsAIUseCustomSysPrompt" />
                     <input class="configKey form-control" type="text" data-l1key="ttsAICustomSysPrompt" placeholder="{{Ex: Répond à la question s'il y en a une et reformule la phrase}}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Prompt Système par Défaut}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Affiche le prompt système utilisé par l'IA lorsqu'aucun prompt personnalisé n'est défini. Le démon doit être démarré.}}"></i></sup>
+                </label>
+                <div class="col-lg-6">
+                    <a class="btn btn-primary customclass-getdefaultprompt"><i class="fas fa-eye"></i> {{Afficher}}</a>
+                    <textarea class="form-control customclass-defaultpromptresult" rows="8" readonly style="display:none;margin-top:8px;resize:vertical;"></textarea>
                 </div>
             </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
@@ -1007,7 +1012,9 @@ const SELECTORS = Object.freeze({
   BTN_UPDATE_SOUNDS: '.customclass-updatesounds',
   BTN_UPDATE_CUSTOM_SOUNDS: '.customclass-updatecustomsounds',
   BTN_TEST_PLAY: '.customclass-ttstestplay',
-  BTN_RESET_API_KEY: '.customclass-resetapikey'
+  BTN_RESET_API_KEY: '.customclass-resetapikey',
+  BTN_DEFAULT_PROMPT: '.customclass-getdefaultprompt',
+  DEFAULT_PROMPT_RESULT: '.customclass-defaultpromptresult'
 })
 
 // AJAX URL constant
@@ -1239,6 +1246,32 @@ if (btnTestPlay) {
   btnTestPlay.addEventListener('click', () => {
     simpleAjaxPost('playTestTTS', '{{Demande de génération du TTS de test envoyée (voir les logs du démon pour le résultat)}}')
 
+  })
+}
+
+// Get Default Prompt
+const btnDefaultPrompt = document.querySelector(SELECTORS.BTN_DEFAULT_PROMPT)
+if (btnDefaultPrompt) {
+  btnDefaultPrompt.addEventListener('click', () => {
+    const promptResult = document.querySelector(SELECTORS.DEFAULT_PROMPT_RESULT)
+    domUtils.ajax({
+      type: 'POST',
+      url: AJAX_URL,
+      data: { action: 'getDefaultPrompt' },
+      success: (data) => {
+        if (data.state !== 'ok') {
+          jeedomUtils.showAlert({ message: data.result, level: 'danger' })
+          return
+        }
+        if (promptResult) {
+          promptResult.value = data.result
+          promptResult.style.display = ''
+        }
+      },
+      error: (error) => {
+        jeedomUtils.showAlert({ message: error.message || '{{Le démon doit être démarré pour afficher le prompt par défaut.}}', level: 'warning' })
+      }
+    })
   })
 }
 

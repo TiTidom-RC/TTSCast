@@ -94,6 +94,14 @@ try {
         ttscast::changeScanState(init('scanState'));
         ajax::success();
     }
+
+    if (init('action') == 'getDefaultPrompt') {
+        $result = ttscast::sendToDaemonSync(['cmd' => 'getDefaultPrompt']);
+        if ($result === null) {
+            throw new Exception(__('Le démon n\'est pas démarré', __FILE__));
+        }
+        ajax::success($result['prompt'] ?? '');
+    }
     
     if (init('action') == 'uploadCustomSound') {
         if (!isset($_FILES['fileCustomSound'])) {
@@ -147,5 +155,5 @@ try {
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
     /*     * *********Catch exception*************** */
 } catch (Exception $e) {
-    ajax::error(displayException($e), $e->getCode());
+    ajax::error($e->getMessage(), $e->getCode());
 }
