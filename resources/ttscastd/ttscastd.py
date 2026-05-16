@@ -667,7 +667,7 @@ class TTSCast:
             urlFileToPlay = f'{ttsSrvWeb}{filename}'
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
 
-            res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+            res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType='audio/wav')
             logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
     @staticmethod
