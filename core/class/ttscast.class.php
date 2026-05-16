@@ -189,6 +189,9 @@ class ttscast extends eqLogic
         $cmd .= ' --aidefaulttone "' . config::byKey('ttsAIDefaultTone', __CLASS__, 'NoDefaultTone') . '"';
         $cmd .= ' --aiusecustomsysprompt ' . config::byKey('ttsAIUseCustomSysPrompt', __CLASS__, '0');
         $cmd .= ' --aicustomsysprompt "' . config::byKey('ttsAICustomSysPrompt', __CLASS__, 'NoCustomSysPrompt') . '"';
+        $cmd .= ' --geminittsenabled ' . config::byKey('geminiTTSEnabled', __CLASS__, '0');
+        $cmd .= ' --geminittsmodel ' . config::byKey('geminiTTSModel', __CLASS__, 'noModel');
+        $cmd .= ' --geminittsdefault ' . config::byKey('geminiTTSDefault', __CLASS__, '0');
 
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
@@ -321,7 +324,10 @@ class ttscast extends eqLogic
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsSSML = config::byKey('ttsTestSSML', 'ttscast', '0');
         $ttsAI = config::byKey('ttsTestAI', 'ttscast', '0');
-        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI);
+        $ttsTestGemini = config::byKey('ttsTestGemini', 'ttscast', '0');
+        $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
+        $ttsGeminiStyle = config::byKey('ttsTestGeminiStyle', 'ttscast', '');
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'ttsGeminiStyle' => $ttsGeminiStyle, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI, 'ttsGemini' => $ttsTestGemini);
         self::sendToDaemon($value);
     }
 

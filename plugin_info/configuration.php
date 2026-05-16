@@ -936,6 +936,14 @@ if (!isConnect()) {
                     <input type="checkbox" class="configKey" data-l1key="ttsTestGemini" />
                 </div>
             </div>
+            <div class="form-group customform-testGeminiStyle" style="display:none;">
+               <label class="col-lg-3 control-label">{{Style de voix (Gemini TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS (ex: Parle d'une voix chaleureure et rassurante). Laissez vide pour le style par défaut.}}"></i></sup>
+                </label>
+                <div class="col-lg-4">
+                    <input class="configKey form-control" type="text" data-l1key="ttsTestGeminiStyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
+                </div>
+            </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Tester la Synthèse Vocale (TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sauvegardez bien votre configuration AVANT d'utiliser le bouton [Générer + Diffuser]}}"></i></sup>
@@ -1087,6 +1095,7 @@ const SELECTORS = Object.freeze({
   AI_APIKEY: '.customform-ai-apikey',
   AI_OAUTH2: '.customform-ai-oauth2',
   GEMINI_TTS: '.customform-geminiTTS',
+  TEST_GEMINI_STYLE: '.customform-testGeminiStyle',
   ADDRESS_CHECKBOX: '.customform-address',
   ADDRESS_TEST_URL: '.addressTestURL',
   API_KEY_INPUT: '.custominput-apikey',
@@ -1237,6 +1246,19 @@ function initConfigurationPage() {
     }
     geminiTTSToggle.addEventListener('change', updateGeminiTTSVisibility)
     updateGeminiTTSVisibility()
+  }
+
+  // Listen for Gemini TTS test toggle (show/hide style field)
+  const ttsTestGeminiToggle = document.querySelector('[data-l1key="ttsTestGemini"]')
+  if (ttsTestGeminiToggle) {
+    const testGeminiStyleSections = document.querySelectorAll(SELECTORS.TEST_GEMINI_STYLE)
+    const updateTestGeminiStyleVisibility = () => {
+      testGeminiStyleSections.forEach(el => {
+        el.style.display = ttsTestGeminiToggle.checked ? '' : 'none'
+      })
+    }
+    ttsTestGeminiToggle.addEventListener('change', updateTestGeminiStyleVisibility)
+    updateTestGeminiStyleVisibility()
   }
 }
 

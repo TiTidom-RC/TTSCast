@@ -144,9 +144,9 @@ class Loops:
                         if message['cmd_action'] == 'ttstest':
                             logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
 
-                            if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsSSML', 'ttsAI')):
-                                logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'] + ' | ' + message['ttsAI'])
-                                threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML'], message['ttsAI']]).start()
+                            if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName', 'ttsGeminiStyle', 'ttsSSML', 'ttsAI', 'ttsGemini')):
+                                logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'] + ' | ' + message['ttsAI'] + ' | geminiVoice=' + message['ttsGeminiVoiceName'] + ' | geminiStyle=' + message['ttsGeminiStyle'] + ' | gemini=' + message['ttsGemini'])
+                                threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsGeminiStyle'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML'], message['ttsAI'], message['ttsGemini']]).start()
                             else:
                                 logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                         
@@ -407,7 +407,11 @@ class TTSCast:
             logging.debug('[DAEMON][TTS] ttsNotifyResult envoyé :: cmdNotificationId=%s', cmdNotificationId)
 
     @staticmethod
-    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0', ttsAI='0'):
+    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsGeminiStyle, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0', ttsAI='0', ttsGemini='0'):
+        # Override moteur si test Gemini TTS activé
+        if ttsGemini == '1' and myConfig.geminiTTSEnabled:
+            ttsEngine = 'geminitts'
+
         logging.debug('[DAEMON][TestTTS] Param TTSEngine :: %s', ttsEngine)
         
         logging.debug('[DAEMON][TestTTS] Check des répertoires')
@@ -627,6 +631,43 @@ class TTSCast:
                 logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Voice RSS) invalide :: ' + myConfig.apiRSSKey)
+
+        elif ttsEngine == "geminitts":
+            logging.debug('[DAEMON][TestTTS] TTSEngine = geminitts')
+            # Pas de cache pour Gemini TTS : sortie LLM non déterministe, toujours régénérer
+            raw_filename = ttsText + "|GeminiTTS|" + ttsGeminiVoiceName + "|" + myConfig.geminiTTSModel
+            filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
+            filepath = os.path.join(symLinkPath, filename)
+            logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
+
+            _textToSynth = ttsText
+            if ttsAI == '1':
+                ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt)
+                if ttsAIText is not None:
+                    logging.debug('[DAEMON][TestTTS] Génération Gemini TTS avec IA')
+                    _aiReformulatedText = ttsAIText
+                    TTSCast._sendTTSResult(_aiReformulatedText, True)
+                    _textToSynth = ttsAIText
+                else:
+                    logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+            if myConfig.appConvertSingleQuote:
+                _textToSynth = Functions.convertSingleQuoteToDoubleQuote(_textToSynth, True, "TestTTS")
+            audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, ttsGeminiStyle)
+            if audioBytes is not None:
+                with open(filepath, 'wb') as out:
+                    out.write(audioBytes)
+                logging.debug('[DAEMON][TestTTS] Fichier TTS Gemini généré :: %s', filepath)
+            else:
+                logging.error('[DAEMON][TestTTS] Echec de la génération Gemini TTS')
+                return
+
+            if _aiReformulatedText is None:
+                TTSCast._sendTTSResult(ttsText, True)
+            urlFileToPlay = f'{ttsSrvWeb}{filename}'
+            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+
+            res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
+            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
     @staticmethod
     def generateTTS(ttsText, ttsFile, ttsVoiceName, ttsRSSVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None):
@@ -1495,6 +1536,80 @@ class TTSCast:
                 return None
         except Exception as e:
             logging.error('[DAEMON][GenAI] Erreur: %s', e)
+            return None
+
+    @staticmethod
+    def geminiTTS(ttsText: str, voiceName: str, style: str = ''):
+        """
+        Génère l'audio TTS via l'API Gemini TTS.
+        Retourne les bytes MP3, ou None en cas d'erreur.
+        """
+        try:
+            if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProjectID') or myConfig.aiApiKey != 'noKey':
+                client = None
+
+                if myConfig.aiAuthMode == 'oauth2' and myConfig.gCloudApiKey != 'noKey':
+                    gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
+                    if os.path.exists(gKey):
+                        logging.debug('[DAEMON][GeminiTTS] Chargement des credentials OAuth2 :: %s', myConfig.gCloudApiKey)
+                        credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
+                        client = genai.Client(
+                            vertexai=True,
+                            project=myConfig.aiProjectID,
+                            location='global',
+                            credentials=credentials,
+                        )
+                    else:
+                        logging.error('[DAEMON][GeminiTTS] Impossible de charger le fichier JSON :: %s', gKey)
+                        return None
+                elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
+                    logging.debug('[DAEMON][GeminiTTS] Client API key :: ***')
+                    client = genai.Client(api_key=myConfig.aiApiKey)
+                else:
+                    logging.error('[DAEMON][GeminiTTS] Mode auth invalide ou clé manquante.')
+                    return None
+
+                speechConfig = types.SpeechConfig(
+                    voice_config=types.VoiceConfig(
+                        prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voiceName)
+                    )
+                )
+
+                logging.debug('[DAEMON][GeminiTTS] Modèle :: %s | Voix :: %s', myConfig.geminiTTSModel, voiceName)
+
+                response = client.models.generate_content(
+                    model=myConfig.geminiTTSModel,
+                    contents=ttsText,
+                    config=types.GenerateContentConfig(
+                        response_modalities=['AUDIO'],
+                        response_mime_type='audio/mp3',
+                        system_instruction=style if style else None,
+                        speech_config=speechConfig
+                    )
+                )
+
+                if hasattr(response, 'usage_metadata') and response.usage_metadata:
+                    usage = response.usage_metadata
+                    input_tokens = getattr(usage, 'prompt_token_count', 0) or 0
+                    output_tokens = getattr(usage, 'candidates_token_count', 0) or 0
+                    total_tokens = getattr(usage, 'total_token_count', 0) or 0
+                    logging.info('[DAEMON][GeminiTTS][TOKENS] Model: %s | Input: %d | Output: %d | Total: %d', myConfig.geminiTTSModel, input_tokens, output_tokens, total_tokens)
+
+                if (response.candidates
+                        and (content := response.candidates[0].content)
+                        and content.parts
+                        and (blob := content.parts[0].inline_data)
+                        and blob.data):
+                    audio_data = blob.data
+                    logging.debug('[DAEMON][GeminiTTS] Audio généré :: %d bytes', len(audio_data))
+                    return audio_data
+                logging.warning('[DAEMON][GeminiTTS] Aucune donnée audio dans la réponse.')
+                return None
+            else:
+                logging.warning('[DAEMON][GeminiTTS] Clé API IA non configurée.')
+                return None
+        except Exception as e:
+            logging.error('[DAEMON][GeminiTTS] Exception :: %s', e)
             return None
 
     @staticmethod
@@ -3223,6 +3338,9 @@ parser.add_argument("--aimodel", help="AI Model", type=str, default='noModel')
 parser.add_argument("--aiusecustomsysprompt", help="Use Custom System Prompt for AI", type=str, default='0')
 parser.add_argument("--aicustomsysprompt", help="Custom System Prompt for AI", type=str, default='NoCustomSysPrompt')
 parser.add_argument("--aidefaulttone", help="Default AI Tone", type=str, default='NoDefaultTone')
+parser.add_argument("--geminittsenabled", help="Enable Gemini TTS engine", type=str, default='0')
+parser.add_argument("--geminittsmodel", help="Gemini TTS Model", type=str, default='noModel')
+parser.add_argument("--geminittsdefault", help="Use Gemini TTS as default engine", type=str, default='0')
 
 args = parser.parse_args()
 if args.loglevel:
@@ -3290,6 +3408,12 @@ if args.aiusecustomsysprompt:
         myConfig.aiUseCustomSysPrompt = True
 if args.aicustomsysprompt and args.aicustomsysprompt != 'NoCustomSysPrompt':
     myConfig.aiCustomSysPrompt = args.aicustomsysprompt
+if args.geminittsenabled:
+    myConfig.geminiTTSEnabled = args.geminittsenabled != '0'
+if args.geminittsmodel and args.geminittsmodel != 'noModel':
+    myConfig.geminiTTSModel = args.geminittsmodel
+if args.geminittsdefault:
+    myConfig.geminiTTSDefault = args.geminittsdefault != '0'
 if args.cmdwaittimeout:
     myConfig.cmdWaitTimeout = int(args.cmdwaittimeout)
 if args.pid:

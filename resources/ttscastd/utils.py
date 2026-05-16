@@ -74,6 +74,7 @@ class Config:
     DAEMON_OPTION_KEYS = frozenset({
         'genai', 'aitone', 'aisysprompt', 'aitemp',  # IA
         'ssml', 'markup', 'style', 'before', 'voice', # TTS voix / format
+        'engine',                                     # TTS moteur (override par commande)
         'volume', 'ding', 'wait', 'force',            # TTS comportement
     })
 
@@ -103,6 +104,11 @@ class Config:
     aiUseCustomSysPrompt = False
     aiCustomSysPrompt = ''
     aiScopes = ['https://www.googleapis.com/auth/cloud-platform']
+
+    # Gemini TTS Configuration
+    geminiTTSEnabled = False
+    geminiTTSModel   = 'noModel'
+    geminiTTSDefault = False
     
     # Paths for various resources
     mediaFolder = 'data/media'
