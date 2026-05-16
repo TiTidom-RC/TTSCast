@@ -730,7 +730,7 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
-            <legend><i class="fas fas fa-brain"></i> {{IA - Gemini}}</legend>
+            <legend><i class="fas fas fa-brain"></i> {{IA & TTS - Gemini}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Activer IA Générative}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
@@ -833,6 +833,79 @@ if (!isConnect()) {
                     <textarea class="form-control customclass-defaultpromptresult" rows="8" readonly style="display:none;margin-top:8px;resize:vertical;"></textarea>
                 </div>
             </div>
+            <hr>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Activer Gemini TTS}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Active le moteur de synthèse vocale Gemini TTS. Utilise la clé API ou le compte OAuth2 configuré ci-dessus. Invocable par scénario via l'option engine:geminitts.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="geminiTTSEnabled" />
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Modèle Gemini TTS}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Modèle Gemini TTS à utiliser. Flash est plus économique, Pro est plus expressif.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <select class="configKey form-control" data-l1key="geminiTTSModel">
+                        <!-- Gemini 3.x (Recommandé) -->
+                        <option disabled>--- {{Gemini 3.x (Recommandé)}} ---</option>
+                        <option value="gemini-3.1-flash-tts-preview" selected>Gemini 3.1 Flash TTS Preview</option>
+                        <!-- Gemini 2.5 -->
+                        <option disabled>--- {{Gemini 2.5}} ---</option>
+                        <option value="gemini-2.5-flash-preview-tts">Gemini 2.5 Flash TTS Preview</option>
+                        <option value="gemini-2.5-pro-preview-tts">Gemini 2.5 Pro TTS Preview</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Voix Gemini TTS}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Voix utilisée par défaut. Toutes les voix Gemini TTS sont multilingues (détection automatique de la langue).}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <select class="configKey form-control" data-l1key="geminiTTSVoice">
+                        <option value="Aoede">{{Aoede — Désinvolte (F) — Défaut}}</option>
+                        <option value="Achernar">{{Achernar — Douce (F)}}</option>
+                        <option value="Achird">{{Achird — Amicale (M)}}</option>
+                        <option value="Algenib">{{Algenib — Rauque (M)}}</option>
+                        <option value="Algieba">{{Algieba — Fluide (M)}}</option>
+                        <option value="Alnilam">{{Alnilam — Ferme (M)}}</option>
+                        <option value="Autonoe">{{Autonoe — Lumineuse (F)}}</option>
+                        <option value="Callirrhoe">{{Callirrhoe — Décontractée (F)}}</option>
+                        <option value="Charon">{{Charon — Informative (M)}}</option>
+                        <option value="Despina">{{Despina — Fluide (F)}}</option>
+                        <option value="Enceladus">{{Enceladus — Soufflée (M)}}</option>
+                        <option value="Erinome">{{Erinome — Claire (F)}}</option>
+                        <option value="Fenrir">{{Fenrir — Enthousiaste (M)}}</option>
+                        <option value="Gacrux">{{Gacrux — Mature (F)}}</option>
+                        <option value="Iapetus">{{Iapetus — Claire (M)}}</option>
+                        <option value="Kore">{{Kore — Ferme (F)}}</option>
+                        <option value="Laomedeia">{{Laomedeia — Dynamique (F)}}</option>
+                        <option value="Leda">{{Leda — Juvénile (F)}}</option>
+                        <option value="Orus">{{Orus — Ferme (M)}}</option>
+                        <option value="Puck">{{Puck — Dynamique (M)}}</option>
+                        <option value="Pulcherrima">{{Pulcherrima — Directe (F)}}</option>
+                        <option value="Rasalgethi">{{Rasalgethi — Informative (M)}}</option>
+                        <option value="Sadachbia">{{Sadachbia — Vive (M)}}</option>
+                        <option value="Sadaltager">{{Sadaltager — Savante (M)}}</option>
+                        <option value="Schedar">{{Schedar — Neutre (M)}}</option>
+                        <option value="Sulafat">{{Sulafat — Chaleureuse (F)}}</option>
+                        <option value="Umbriel">{{Umbriel — Décontractée (M)}}</option>
+                        <option value="Vindemiatrix">{{Vindemiatrix — Douce (F)}}</option>
+                        <option value="Zephyr">{{Zephyr — Lumineuse (F)}}</option>
+                        <option value="Zubenelgenubi">{{Zubenelgenubi — Décontractée (M)}}</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Utiliser Gemini TTS par défaut}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, toutes les notifications utilisent Gemini TTS. Peut être surchargé commande par commande avec l'option engine:gcloudtts.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="geminiTTSDefault" />
+                </div>
+            </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
                <label class="col-lg-3 control-label">{{Tester avec la syntaxe SSML (TTS)}}
@@ -843,11 +916,19 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-               <label class="col-lg-3 control-label">{{Tester avec l'IA}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Ce paramètre permet de tester la reformulation des réponses à l'aide de l'IA.}}"></i></sup>
+               <label class="col-lg-3 control-label">{{Tester avec la reformulation IA}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Ce paramètre permet de tester la reformulation du texte à l'aide de l'IA avant la synthèse vocale.}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsTestAI" />
+                </div>
+            </div>
+            <div class="form-group">
+               <label class="col-lg-3 control-label">{{Tester avec Gemini TTS}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Si coché, le test utilise le moteur Gemini TTS au lieu du moteur par défaut. Nécessite que Gemini TTS soit activé.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsTestGemini" />
                 </div>
             </div>
             <div class="form-group">
@@ -1000,6 +1081,7 @@ const SELECTORS = Object.freeze({
   AI_AUTH_MODE: '.customform-ai-authmode',
   AI_APIKEY: '.customform-ai-apikey',
   AI_OAUTH2: '.customform-ai-oauth2',
+  GEMINI_TTS: '.customform-geminiTTS',
   ADDRESS_CHECKBOX: '.customform-address',
   ADDRESS_TEST_URL: '.addressTestURL',
   API_KEY_INPUT: '.custominput-apikey',
@@ -1137,6 +1219,19 @@ function initConfigurationPage() {
   const aiAuthModeEl = document.querySelector(SELECTORS.AI_AUTH_MODE)
   if (aiAuthModeEl) {
     aiAuthModeEl.addEventListener('change', aiAuthModeSelect)
+  }
+
+  // Listen for Gemini TTS enable toggle
+  const geminiTTSToggle = document.querySelector('[data-l1key="geminiTTSEnabled"]')
+  if (geminiTTSToggle) {
+    const geminiTTSSections = document.querySelectorAll(SELECTORS.GEMINI_TTS)
+    const updateGeminiTTSVisibility = () => {
+      geminiTTSSections.forEach(el => {
+        el.style.display = geminiTTSToggle.checked ? '' : 'none'
+      })
+    }
+    geminiTTSToggle.addEventListener('change', updateGeminiTTSVisibility)
+    updateGeminiTTSVisibility()
   }
 }
 
