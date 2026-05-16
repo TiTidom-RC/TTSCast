@@ -453,7 +453,7 @@ class TTSCast:
                         text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                     elif ttsMarkup == '1' and _isChirp3Voice:
                         logging.debug('[DAEMON][TestTTS] Génération du TTS avec markup Chirp3')
-                        text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                        text_input = googleCloudTTS.SynthesisInput(markup=ttsText)
                     elif ttsMarkup == '1':
                         logging.warning('[DAEMON][TestTTS] markup=1 ignoré : voix non-Chirp3 (%s), fallback texte brut', ttsVoiceName)
                         if myConfig.appConvertSingleQuote:
@@ -721,7 +721,7 @@ class TTSCast:
                             text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                         elif _useMarkup and _isChirp3Voice:
                             logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec markup Chirp3')
-                            text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                            text_input = googleCloudTTS.SynthesisInput(markup=ttsText)
                         elif _useMarkup:
                             logging.warning('[DAEMON][GenerateTTS] markup ignoré : voix non-Chirp3 (%s), fallback texte brut', ttsVoiceName)
                             if myConfig.appConvertSingleQuote:
@@ -968,7 +968,7 @@ class TTSCast:
                             text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                         elif _useMarkup and _isChirp3Voice:
                             logging.debug('[DAEMON][TTS] Génération du TTS avec markup Chirp3')
-                            text_input = googleCloudTTS.SynthesisInput(text=ttsText)
+                            text_input = googleCloudTTS.SynthesisInput(markup=ttsText)
                         elif _useMarkup:
                             logging.warning('[DAEMON][TTS] markup ignoré : voix non-Chirp3 (%s), fallback texte brut', ttsVoiceName)
                             if myConfig.appConvertSingleQuote:
