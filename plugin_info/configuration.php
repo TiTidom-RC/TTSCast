@@ -809,7 +809,7 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Ton / Style}}
+                <label class="col-lg-3 control-label">{{Ton de Reformulation}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de choisir le ton sur lequel le moteur IA reformulera votre notification.}}"></i></sup>
                 </label>
@@ -902,6 +902,15 @@ if (!isConnect()) {
                         <option value="Zephyr">Zephyr - Bright (Female)</option>
                         <option value="Zubenelgenubi">Zubenelgenubi - Casual (Male)</option>
                     </select>
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Style par défaut (Gemini TTS)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.}}"></i></sup>
+                </label>
+                <div class="col-lg-4">
+                    <input class="configKey form-control" type="text" data-l1key="geminittsstyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
                 </div>
             </div>
             <div class="form-group customform-geminiTTS">

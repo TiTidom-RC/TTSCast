@@ -109,6 +109,7 @@ class Config:
     geminiTTSEnabled = False
     geminiTTSModel   = 'noModel'
     geminiTTSDefault = False
+    geminiTTSStyle   = ''  # Style par défaut, surchargeable par style: dans les options de scénario
     
     # Paths for various resources
     mediaFolder = 'data/media'
