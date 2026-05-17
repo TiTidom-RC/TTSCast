@@ -24,7 +24,6 @@ try {
         die();
     }
 
-    // Validation stricte : MD5 hex (32 car.) + extension audio autorisée
     $mimeTypes = [
         'mp3'  => 'audio/mp3',
         'wav'  => 'audio/wav',
@@ -33,14 +32,33 @@ try {
         'flac' => 'audio/flac',
     ];
 
+    $type = isset($_GET['type']) ? $_GET['type'] : '';
     $file = isset($_GET['file']) ? $_GET['file'] : '';
-    if (!preg_match('/^([a-f0-9]{32})\.(mp3|wav|ogg|opus|flac)$/', $file, $matches)) {
+
+    if ($type === 'tts') {
+        // Validation stricte : MD5 hex (32 car.) + extension audio autorisée
+        if (!preg_match('/^([a-f0-9]{32})\.(mp3|wav|ogg|opus|flac)$/', $file, $matches)) {
+            http_response_code(400);
+            die();
+        }
+        $mime     = $mimeTypes[$matches[2]];
+        $filePath = dirname(dirname(__DIR__)) . '/data/cache/' . $file;
+
+    } elseif ($type === 'sounds' || $type === 'customsounds') {
+        // Validation : nom de fichier sûr (pas de séparateur de répertoire, extension autorisée)
+        $safeFile = basename($file);
+        if (!preg_match('/^([a-zA-Z0-9._-]+)\.(mp3|wav|ogg|opus|flac)$/', $safeFile, $matches)) {
+            http_response_code(400);
+            die();
+        }
+        $mime     = $mimeTypes[$matches[2]];
+        $subDir   = ($type === 'customsounds') ? 'custom/' : '';
+        $filePath = dirname(dirname(__DIR__)) . '/data/media/' . $subDir . $safeFile;
+
+    } else {
         http_response_code(400);
         die();
     }
-
-    $mime     = $mimeTypes[$matches[2]];
-    $filePath = dirname(dirname(__DIR__)) . '/data/cache/' . $file;
 
     if (!file_exists($filePath) || !is_file($filePath)) {
         http_response_code(404);

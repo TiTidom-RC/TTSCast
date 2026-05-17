@@ -109,23 +109,25 @@ try {
         }
         log::add('ttscast', 'debug', "[UPLOAD][CustomSound] filename: {$_FILES['fileCustomSound']['name']}");
         $extension = strtolower(strrchr($_FILES['fileCustomSound']['name'], '.'));
-        if (!in_array($extension, array('.mp3'))) {
-            throw new Exception('[UPLOAD][CustomSound] Extension de fichier non valide (autorisé .mp3) : ' . $extension);
+        if (!in_array($extension, array('.mp3', '.wav', '.ogg', '.opus', '.flac'))) {
+            throw new Exception('[UPLOAD][CustomSound] Extension de fichier non valide (autorisé .mp3, .wav, .ogg, .opus, .flac) : ' . $extension);
         }
+
+        $safeFilename = basename($_FILES['fileCustomSound']['name']);
 
         # TODO limiter taille upload mp3 dans les customSounds ?
         /* if (filesize($_FILES['fileCustomSound']['tmp_name']) > 10000) {
             throw new Exception(__('[UPLOAD][CustomSound] Le fichier est trop gros (max. 10Ko)', __FILE__));
         } */
       
-        $filepath = __DIR__ . "/../../data/media/custom/{$_FILES['fileCustomSound']['name']}";
+        $filepath = __DIR__ . "/../../data/media/custom/{$safeFilename}";
         log::add('ttscast', 'debug', "[UPLOAD][CustomSound] filepath: {$filepath}");
         file_put_contents($filepath, file_get_contents($_FILES['fileCustomSound']['tmp_name']));
         if (!file_exists($filepath)) {
             throw new Exception(__('[UPLOAD][CustomSound] Impossible de sauvegarder le fichier', __FILE__));
         }
-        log::add('ttscast', 'info', "[UPLOAD][CustomSound] Upload OK :: {$_FILES['fileCustomSound']['name']}");
-        ajax::success("{$_FILES['fileCustomSound']['name']}");
+        log::add('ttscast', 'info', "[UPLOAD][CustomSound] Upload OK :: {$safeFilename}");
+        ajax::success("{$safeFilename}");
 	}
 
     if (init('action') == 'uploadCustomRadios') {

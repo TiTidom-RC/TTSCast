@@ -58,7 +58,7 @@ class Config:
     # soundsCustomPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/media/custom'))
     
     ttsWebSrvCache = ''
-    ttsWebSrvMedia = ''
+    ttsWebSrvMediaProxy = ''
     ttsWebSrvImages = ''
     ttsWebSrvJeeTTS = ''
     
