@@ -1613,14 +1613,18 @@ class TTSCast:
                     # L'API Gemini TTS retourne du PCM brut (audio/pcm;rate=24000 ou audio/L16)
                     # Il faut encapsuler dans un header WAV avant écriture sur disque
                     if 'wav' not in mime_type.lower():
+                        # Extraire le sample rate depuis le MIME type (ex: "audio/pcm;rate=24000")
+                        # Fallback 24000 Hz si absent — valeur documentée par Google Gemini TTS
+                        rate_match = re.search(r'rate=(\d+)', mime_type)
+                        sample_rate = int(rate_match.group(1)) if rate_match else 24000
                         buf = io.BytesIO()
                         with wave.open(buf, 'wb') as wf:
-                            wf.setnchannels(1)
-                            wf.setsampwidth(2)  # 16-bit
-                            wf.setframerate(24000)
+                            wf.setnchannels(1)   # Gemini TTS retourne toujours du mono
+                            wf.setsampwidth(2)   # 16-bit signed little-endian (PCM L16)
+                            wf.setframerate(sample_rate)
                             wf.writeframes(audio_data)
                         audio_data = buf.getvalue()
-                        logging.debug('[DAEMON][GeminiTTS] PCM encapsulé en WAV :: %d bytes', len(audio_data))
+                        logging.debug('[DAEMON][GeminiTTS] PCM encapsulé en WAV :: %d bytes | rate :: %d Hz', len(audio_data), sample_rate)
                     return audio_data
                 logging.warning('[DAEMON][GeminiTTS] Aucune donnée audio dans la réponse.')
                 return None
