@@ -189,6 +189,10 @@ class ttscast extends eqLogic
         $cmd .= ' --aidefaulttone "' . config::byKey('ttsAIDefaultTone', __CLASS__, 'NoDefaultTone') . '"';
         $cmd .= ' --aiusecustomsysprompt ' . config::byKey('ttsAIUseCustomSysPrompt', __CLASS__, '0');
         $cmd .= ' --aicustomsysprompt "' . config::byKey('ttsAICustomSysPrompt', __CLASS__, 'NoCustomSysPrompt') . '"';
+        $cmd .= ' --geminittsenabled ' . config::byKey('geminiTTSEnabled', __CLASS__, '0');
+        $cmd .= ' --geminittsmodel ' . config::byKey('geminiTTSModel', __CLASS__, 'noModel');
+        $cmd .= ' --geminittsdefault ' . config::byKey('geminiTTSDefault', __CLASS__, '0');
+        $cmd .= ' --geminittsstyle "' . config::byKey('geminiTTSStyle', __CLASS__, '') . '"';
 
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
@@ -321,7 +325,10 @@ class ttscast extends eqLogic
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsSSML = config::byKey('ttsTestSSML', 'ttscast', '0');
         $ttsAI = config::byKey('ttsTestAI', 'ttscast', '0');
-        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI);
+        $ttsTestGemini = config::byKey('ttsTestGemini', 'ttscast', '0');
+        $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
+        $ttsGeminiStyle = config::byKey('ttsTestGeminiStyle', 'ttscast', '');
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'ttsGeminiStyle' => $ttsGeminiStyle, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI, 'ttsGemini' => $ttsTestGemini);
         self::sendToDaemon($value);
     }
 
@@ -334,11 +341,12 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'gtranslatetts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
+        $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
 
         $ttsOptions = $options;
         log::add('ttscast', 'debug', '[generateTTS] ttsOptions After Array :: ' . $ttsOptions);
         
-        $value = array('cmd' => 'action', 'cmd_action' => 'generatetts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsFile' => $ttsFile, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
+        $value = array('cmd' => 'action', 'cmd_action' => 'generatetts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsFile' => $ttsFile, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName);
         self::sendToDaemon($value);
     }
 
@@ -351,6 +359,7 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'gtranslatetts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
+        $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
         
         /* log::add('ttscast', 'debug', '[PlayTTS] Options Before Array :: ' . $options);
 
@@ -371,7 +380,7 @@ class ttscast extends eqLogic
         $ttsOptions = $options;
         log::add('ttscast', 'debug', '[PlayTTS] ttsOptions After Array :: ' . $ttsOptions);
         
-        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'cmdNotificationId' => $cmdNotificationId);
+        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'cmdNotificationId' => $cmdNotificationId);
         self::sendToDaemon($value);
     }
 
@@ -417,7 +426,8 @@ class ttscast extends eqLogic
             # Options
             $optionKeys = [
                 'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
-                'ding', 'wait', 'type', 'ssml', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp'
+                'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp',
+                'engine'
             ];
             foreach ($optionKeys as $key) {
                 if (array_key_exists($key, $data)) {

@@ -1,5 +1,5 @@
 Options +FollowSymLinks
-<Files ~ "\.(mp3|png)$">
+<Files ~ "\.(mp3|wav|png)$">
     Require all granted
 </Files>
 Require all denied
