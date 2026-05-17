@@ -264,6 +264,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Langue/Voix TTS (gCloud TTS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de caractères :</b><br/><br/>• Chirp 3 HD: 1 M gratuits/mois, puis $30.00/M<br/>• Chirp HD: 1 M gratuits/mois, puis $30.00/M<br/>• Neural2: 1 M gratuits/mois, puis $16.00/M<br/>• WaveNet: 4 M gratuits/mois, puis $4.00/M<br/>• Standard: 4 M gratuits/mois, puis $4.00/M<br/>• Studio: 1 M gratuits/mois, puis $160.00/M"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Google Cloud TTS}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -847,7 +848,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Modèle Gemini TTS}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens:</b><br/><br/>• Gemini 2.5 Flash TTS: In $0.50 | Out $10.00 (audio)<br/>• Gemini 2.5 Pro TTS: In $1.00 | Out $20.00 (audio)<br/>• Gemini 3.1 Flash TTS: In $1.00 | Out $20.00 (audio)<br/><br/>⚠️ 25 tokens audio = 1 seconde. Un message de 5s ≈ 125 tokens audio.<br/>En usage domotique typique, le coût est négligeable (&lt;$0.002 / 1 000 notifs)."></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/>• Gemini 2.5 Flash TTS: In $0.50 | Out $10.00 (audio)<br/>• Gemini 2.5 Pro TTS: In $1.00 | Out $20.00 (audio)<br/>• Gemini 3.1 Flash TTS: In $1.00 | Out $20.00 (audio)<br/><br/>⚠️ 25 tokens audio = 1 seconde. Un message de 5s ≈ 125 tokens audio.<br/>En usage domotique typique, le coût reste raisonnable (&lt;$0.002 / 1 000 notifs)."></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Modèle Gemini TTS à utiliser. Flash est plus économique, Pro est plus expressif.}}"></i></sup>
                 </label>
