@@ -711,6 +711,13 @@ class TTSCast:
                     _silenceBefore = options_json.get('before', None)
                     # Gemini TTS Style
                     _ttsGeminiStyle = options_json.get('style', _ttsGeminiStyle)
+                    # Engine override (par notification)
+                    _requestedEngine = options_json.get('engine', None)
+                    if _requestedEngine is not None:
+                        if _requestedEngine == 'geminitts' and not myConfig.geminiTTSEnabled:
+                            logging.error('[DAEMON][GenerateTTS] Option "engine: geminitts" refusée : Gemini TTS n\'est pas activé dans la configuration du plugin. Activez Gemini TTS dans la configuration avant d\'utiliser cette option. Aucun TTS diffusé.')
+                            return False
+                        ttsEngine = _requestedEngine
 
                     if _silenceBefore is not None and _useSSML is False:
                         _useSSML = True
@@ -952,6 +959,13 @@ class TTSCast:
                     _silenceBefore = options_json.get('before', None)
                     # Gemini TTS Style
                     _ttsGeminiStyle = options_json.get('style', _ttsGeminiStyle)
+                    # Engine override (par notification)
+                    _requestedEngine = options_json.get('engine', None)
+                    if _requestedEngine is not None:
+                        if _requestedEngine == 'geminitts' and not myConfig.geminiTTSEnabled:
+                            logging.error('[DAEMON][TTS] Option "engine: geminitts" refusée : Gemini TTS n\'est pas activé dans la configuration du plugin. Activez Gemini TTS dans la configuration avant d\'utiliser cette option. Aucun TTS diffusé.')
+                            return False
+                        ttsEngine = _requestedEngine
 
                     if _silenceBefore is not None and _useSSML is False:
                         _useSSML = True
