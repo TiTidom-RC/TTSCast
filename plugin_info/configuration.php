@@ -847,6 +847,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Modèle Gemini TTS}}
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens:</b><br/><br/>• Gemini 2.5 Flash TTS: In $0.50 | Out $10.00 (audio)<br/>• Gemini 2.5 Pro TTS: In $1.00 | Out $20.00 (audio)<br/>• Gemini 3.1 Flash TTS: In $1.00 | Out $20.00 (audio)<br/><br/>⚠️ 25 tokens audio = 1 seconde. Un message de 5s ≈ 125 tokens audio.<br/>En usage domotique typique, le coût est négligeable (&lt;$0.002 / 1 000 notifs)."></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Modèle Gemini TTS à utiliser. Flash est plus économique, Pro est plus expressif.}}"></i></sup>
                 </label>
