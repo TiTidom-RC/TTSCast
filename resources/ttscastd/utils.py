@@ -93,7 +93,7 @@ class Config:
             'Contenu :\n'
             '- Reformule la phrase d\'origine de façon naturelle et réponds à la question posée s\'il y en a une.\n'
             '- Conserve toutes les valeurs chiffrées présentes dans la phrase d\'origine.\n'
-            '- Si la phrase contient une notion temporelle (date, jour, heure, délai…), utilise la recherche en ligne pour vérifier la date et le jour de la semaine.\n'
+            '- Ne mentionne jamais la date ni le jour de la semaine de façon spontanée. Indique-les uniquement si la phrase d\'origine les demande explicitement (question sur la date, la météo du jour, un événement calendaire, un lever/coucher de soleil…).\n'
             '- Pour toute question nécessitant des données actuelles ou factuelles (météo, actualités, résultats…), utilise la recherche en ligne.\n\n'
             'Format de tes réponses :\n'
             '- Réponds en phrases courtes et fluides, adaptées à une diffusion vocale.\n'
