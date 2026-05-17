@@ -814,7 +814,7 @@ class ttscast extends eqLogic
         $filesReturn = '';
         try {
             $filesArray = array();
-            foreach (glob(dirname(__FILE__) . '/../../data/media/*.mp3') as $fileName) {
+            foreach (glob(dirname(__FILE__) . '/../../data/media/*.{mp3,wav,ogg,opus,flac}', GLOB_BRACE) as $fileName) {
                 $filesArray[pathinfo($fileName, PATHINFO_BASENAME)] = ucwords(str_replace(["_", "-"], " ", pathinfo($fileName, PATHINFO_FILENAME)));
             }
             natsort($filesArray);
@@ -833,7 +833,7 @@ class ttscast extends eqLogic
         $filesReturn = '';
         try {
             $filesArray = array();
-            foreach (glob(dirname(__FILE__) . '/../../data/media/custom/*.mp3') as $fileName) {
+            foreach (glob(dirname(__FILE__) . '/../../data/media/custom/*.{mp3,wav,ogg,opus,flac}', GLOB_BRACE) as $fileName) {
                 $filesArray[pathinfo($fileName, PATHINFO_BASENAME)] = ucwords(str_replace(["_", "-"], " ", pathinfo($fileName, PATHINFO_FILENAME)));
             }
             natsort($filesArray);

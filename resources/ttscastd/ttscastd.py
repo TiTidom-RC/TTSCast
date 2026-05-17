@@ -31,7 +31,7 @@ import re
 import wave
 import io
 
-from urllib.parse import urlencode, urlparse
+from urllib.parse import urlencode, urlparse, quote
 from uuid import UUID
 
 # Import pour Jeedom
@@ -2540,9 +2540,9 @@ class Functions:
                         cast.set_volume(volume=_volume / 100)
                 
                 if (_controller == 'customsounds'):
-                    soundURL = f'{myConfig.ttsWebSrvMedia}custom/{_value}'
+                    soundURL = f'{myConfig.ttsWebSrvMediaProxy}?type=customsounds&file={quote(_value, safe="")}'
                 else:
-                    soundURL = f'{myConfig.ttsWebSrvMedia}{_value}'
+                    soundURL = f'{myConfig.ttsWebSrvMediaProxy}?type=sounds&file={quote(_value, safe="")}'
                 logging.debug(f'[DAEMON][controllerActions] {soundType} :: FilePath :: {soundURL}')
 
                 soundThumb = f'{myConfig.ttsWebSrvImages}tts.png'
@@ -2550,11 +2550,18 @@ class Functions:
                 soundTitle = f"TTSCast {soundType}"
                 soundArtist = _value
 
+                _soundMimeTypes = {
+                    'mp3': 'audio/mp3', 'wav': 'audio/wav',
+                    'ogg': 'audio/ogg', 'opus': 'audio/ogg; codecs=opus', 'flac': 'audio/flac'
+                }
+                _ext = os.path.splitext(_value)[1].lstrip('.').lower()
+                soundMimeType = _soundMimeTypes.get(_ext, 'audio/mp3')
+
                 app_name = "default_media_receiver"
                 # app_name = "bubbleupnp"
                 app_data = {
                     "media_id": soundURL,
-                    "media_type": "audio/mp3",
+                    "media_type": soundMimeType,
                     "stream_type": "BUFFERED",
                     "title": soundTitle,
                     "thumb": soundThumb,
@@ -3557,8 +3564,8 @@ if args.socketport:
 if args.ttsweb:
     # Normalize base URL once for all paths (supports Jeedom in subdirectories)
     ttsweb_base_url = args.ttsweb.rstrip('/')
-    myConfig.ttsWebSrvCache = f'{ttsweb_base_url}/plugins/ttscast/core/php/ttscast.audio.proxy.php?file='
-    myConfig.ttsWebSrvMedia = f'{ttsweb_base_url}/plugins/ttscast/data/media/'
+    myConfig.ttsWebSrvCache = f'{ttsweb_base_url}/plugins/ttscast/core/php/ttscast.audio.proxy.php?type=tts&file='
+    myConfig.ttsWebSrvMediaProxy = f'{ttsweb_base_url}/plugins/ttscast/core/php/ttscast.audio.proxy.php'
     myConfig.ttsWebSrvImages = f'{ttsweb_base_url}/plugins/ttscast/data/images/'
     myConfig.ttsWebSrvJeeTTS = f'{ttsweb_base_url}/core/api/'
 
@@ -3619,7 +3626,7 @@ logging.info('[DAEMON][MAIN] Gemini TTS Style: %s', myConfig.geminiTTSStyle if m
 logging.info('[DAEMON][MAIN] Cmd Wait Timeout: %s', str(myConfig.cmdWaitTimeout))
 logging.info('[DAEMON][MAIN] CallBack: %s', myConfig.callBack)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', myConfig.ttsWebSrvCache)
-logging.info('[DAEMON][MAIN] Jeedom WebSrvMedia: %s', myConfig.ttsWebSrvMedia)
+logging.info('[DAEMON][MAIN] Jeedom WebSrvMediaProxy: %s', myConfig.ttsWebSrvMediaProxy)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvImages: %s', myConfig.ttsWebSrvImages)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvJeeTTS: %s', myConfig.ttsWebSrvJeeTTS)
 
