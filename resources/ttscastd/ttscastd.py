@@ -1610,20 +1610,22 @@ class TTSCast:
                     audio_data = blob.data
                     mime_type = blob.mime_type or ''
                     logging.debug('[DAEMON][GeminiTTS] Audio généré :: %d bytes | mime_type :: %s', len(audio_data), mime_type)
-                    # L'API Gemini TTS retourne du PCM brut (audio/pcm;rate=24000 ou audio/L16)
+                    # L'API Gemini TTS retourne du PCM brut (ex: "audio/l16; rate=24000; channels=1")
                     if 'wav' not in mime_type.lower():
-                        # Extraire le sample rate depuis le MIME type (ex: "audio/pcm;rate=24000")
-                        # Fallback 24000 Hz si absent
+                        # Extraire rate et channels depuis le MIME type
+                        # Fallback : 24000 Hz / mono (valeurs documentées par Google Gemini TTS)
                         rate_match = re.search(r'rate=(\d+)', mime_type)
+                        channels_match = re.search(r'channels=(\d+)', mime_type)
                         sample_rate = int(rate_match.group(1)) if rate_match else 24000
+                        channels = int(channels_match.group(1)) if channels_match else 1
                         buf = io.BytesIO()
                         with wave.open(buf, 'wb') as wf:
-                            wf.setnchannels(1)   # Gemini TTS retourne toujours du mono
+                            wf.setnchannels(channels)
                             wf.setsampwidth(2)   # 16-bit signed little-endian (PCM L16)
                             wf.setframerate(sample_rate)
                             wf.writeframes(audio_data)
                         audio_data = buf.getvalue()
-                        logging.debug('[DAEMON][GeminiTTS] PCM encapsulé en WAV :: %d bytes | rate :: %d Hz', len(audio_data), sample_rate)
+                        logging.debug('[DAEMON][GeminiTTS] PCM encapsulé en WAV :: %d bytes | rate :: %d Hz | channels :: %d', len(audio_data), sample_rate, channels)
                     else:
                         logging.debug('[DAEMON][GeminiTTS] Audio WAV natif retourné :: %d bytes', len(audio_data))
                     return audio_data
