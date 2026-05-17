@@ -984,16 +984,16 @@ class TTSCast:
                     if _ttsVoiceCode is not None:
                         if ttsEngine == "gcloudtts":
                             ttsVoiceName = _ttsVoiceCode
-                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (Google Cloud) :: %s', ttsVoiceName)
+                            logging.debug('[DAEMON][TTS] Voix Custom (Google Cloud) :: %s', ttsVoiceName)
                         elif ttsEngine == "gtranslatetts":
                             ttsLang = _ttsVoiceCode
-                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (Google Translate) :: %s', ttsLang)
+                            logging.debug('[DAEMON][TTS] Voix Custom (Google Translate) :: %s', ttsLang)
                         elif ttsEngine == "voicersstts":
                             ttsRSSVoiceName = _ttsVoiceCode
-                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (VoiceRSS) :: %s', ttsRSSVoiceName)
+                            logging.debug('[DAEMON][TTS] Voix Custom (VoiceRSS) :: %s', ttsRSSVoiceName)
                         elif ttsEngine == "jeedomtts":
                             ttsLang = _ttsVoiceCode
-                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (Jeedom) :: %s', ttsLang)
+                            logging.debug('[DAEMON][TTS] Voix Custom (Jeedom) :: %s', ttsLang)
                         elif ttsEngine == "geminitts":
                             ttsGeminiVoiceName = _ttsVoiceCode
                             logging.debug('[DAEMON][TTS] Voix Custom (Gemini TTS) :: %s', ttsGeminiVoiceName)
