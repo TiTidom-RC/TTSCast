@@ -264,7 +264,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Langue/Voix TTS (gCloud TTS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de caractères :</b><br/><br/>• Chirp 3 HD: 1 M gratuits/mois, puis $30.00/M<br/>• Chirp HD: 1 M gratuits/mois, puis $30.00/M<br/>• Neural2: 1 M gratuits/mois, puis $16.00/M<br/>• WaveNet: 4 M gratuits/mois, puis $4.00/M<br/>• Standard: 4 M gratuits/mois, puis $4.00/M<br/>• Studio: 1 M gratuits/mois, puis $160.00/M"></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de caractères :</b><br/><br/>• Chirp 3 HD : 1 M gratuits/mois, puis $30.00/M<br/>• Chirp HD : 1 M gratuits/mois, puis $30.00/M<br/>• Neural2 : 1 M gratuits/mois, puis $16.00/M<br/>• WaveNet : 4 M gratuits/mois, puis $4.00/M<br/>• Standard : 4 M gratuits/mois, puis $4.00/M<br/>• Studio : 1 M gratuits/mois, puis $160.00/M"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Google Cloud TTS}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -775,7 +775,7 @@ if (!isConnect()) {
             <br>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Modèle IA (Reformulation)}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens:</b><br/><br/><b>Modèles Stables (Recommandés):</b><br/>• Gemini 3.1 Flash-Lite: In $0.25 | Out $1.50<br/>• Gemini 2.5 Flash Lite: In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash: In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro: In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto):</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta):</b><br/>• Gemini 3.1 Flash-Lite Preview: In $0.25 | Out $1.50<br/>• Gemini 3.1 Pro Preview: In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview: In $0.50 | Out $3.00"></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/><b>Modèles Stables (Recommandés) :</b><br/>• Gemini 3.1 Flash-Lite : In $0.25 | Out $1.50<br/>• Gemini 2.5 Flash Lite : In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash : In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro : In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto) :</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta) :</b><br/>• Gemini 3.1 Flash-Lite Preview : In $0.25 | Out $1.50<br/>• Gemini 3.1 Pro Preview : In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview : In $0.50 | Out $3.00"></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
                 </label>
@@ -848,7 +848,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Modèle Gemini TTS}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/>• Gemini 2.5 Flash TTS: In $0.50 | Out $10.00 (audio)<br/>• Gemini 2.5 Pro TTS: In $1.00 | Out $20.00 (audio)<br/>• Gemini 3.1 Flash TTS: In $1.00 | Out $20.00 (audio)<br/><br/>⚠️ 25 tokens audio = 1 seconde. Un message de 5s ≈ 125 tokens audio.<br/>En usage domotique typique, le coût reste raisonnable (&lt;$0.002 / 1 000 notifs)."></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/>• Gemini 2.5 Flash TTS : In $0.50 | Out $10.00 (audio)<br/>• Gemini 2.5 Pro TTS : In $1.00 | Out $20.00 (audio)<br/>• Gemini 3.1 Flash TTS : In $1.00 | Out $20.00 (audio)<br/><br/>⚠️ 25 tokens audio = 1 seconde. Un message de 5s ≈ 125 tokens audio.<br/>En usage domotique typique, le coût reste raisonnable (&lt;$0.002 / 1 000 notifs)."></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Modèle Gemini TTS à utiliser. Flash est plus économique, Pro est plus expressif.}}"></i></sup>
                 </label>
