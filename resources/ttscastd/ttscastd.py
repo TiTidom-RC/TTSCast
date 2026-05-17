@@ -664,10 +664,7 @@ class TTSCast:
 
             if _aiReformulatedText is None:
                 TTSCast._sendTTSResult(ttsText, True)
-            # Servir via proxy PHP pour contourner le RedirectMatch Jeedom qui bloque .wav
-            audioHash = hashlib.md5(raw_filename.encode('utf-8')).hexdigest()
-            baseUrl = ttsSrvWeb.replace('/data/cache/', '')
-            urlFileToPlay = f'{baseUrl}/core/php/ttscast.audio.proxy.php?file={audioHash}'
+            urlFileToPlay = f'{ttsSrvWeb}{filename}'
             logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
 
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType='audio/wav')
@@ -3447,7 +3444,7 @@ if args.socketport:
 if args.ttsweb:
     # Normalize base URL once for all paths (supports Jeedom in subdirectories)
     ttsweb_base_url = args.ttsweb.rstrip('/')
-    myConfig.ttsWebSrvCache = f'{ttsweb_base_url}/plugins/ttscast/data/cache/'
+    myConfig.ttsWebSrvCache = f'{ttsweb_base_url}/plugins/ttscast/core/php/ttscast.audio.proxy.php?file='
     myConfig.ttsWebSrvMedia = f'{ttsweb_base_url}/plugins/ttscast/data/media/'
     myConfig.ttsWebSrvImages = f'{ttsweb_base_url}/plugins/ttscast/data/images/'
     myConfig.ttsWebSrvJeeTTS = f'{ttsweb_base_url}/core/api/'

@@ -16,14 +16,31 @@
  */
 
 try {
-    // Validation stricte : MD5 hex uniquement (32 caractères [a-f0-9])
+    // Restriction réseau local uniquement (le Chromecast ne vient jamais d'une IP publique)
+    // REMOTE_ADDR est l'IP TCP réelle — ne pas utiliser X-Forwarded-For (falsifiable)
+    $clientIp = $_SERVER['REMOTE_ADDR'] ?? '';
+    if (filter_var($clientIp, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) !== false) {
+        http_response_code(403);
+        die();
+    }
+
+    // Validation stricte : MD5 hex (32 car.) + extension audio autorisée
+    $mimeTypes = [
+        'mp3'  => 'audio/mp3',
+        'wav'  => 'audio/wav',
+        'ogg'  => 'audio/ogg',
+        'opus' => 'audio/ogg; codecs=opus',
+        'flac' => 'audio/flac',
+    ];
+
     $file = isset($_GET['file']) ? $_GET['file'] : '';
-    if (!preg_match('/^[a-f0-9]{32}$/', $file)) {
+    if (!preg_match('/^([a-f0-9]{32})\.(mp3|wav|ogg|opus|flac)$/', $file, $matches)) {
         http_response_code(400);
         die();
     }
 
-    $filePath = dirname(dirname(__DIR__)) . '/data/cache/' . $file . '.wav';
+    $mime     = $mimeTypes[$matches[2]];
+    $filePath = dirname(dirname(__DIR__)) . '/data/cache/' . $file;
 
     if (!file_exists($filePath) || !is_file($filePath)) {
         http_response_code(404);
@@ -31,7 +48,7 @@ try {
     }
 
     $size = filesize($filePath);
-    header('Content-Type: audio/wav');
+    header('Content-Type: ' . $mime);
     header('Content-Length: ' . $size);
     header('Accept-Ranges: bytes');
     header('Cache-Control: no-cache, no-store');
