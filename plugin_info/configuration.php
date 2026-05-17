@@ -905,21 +905,21 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-geminiTTS">
-                <label class="col-lg-3 control-label">{{Style par défaut (Gemini TTS)}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.}}"></i></sup>
-                </label>
-                <div class="col-lg-4">
-                    <input class="configKey form-control" type="text" data-l1key="geminittsstyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
-                </div>
-            </div>
-            <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Utiliser Gemini TTS par défaut}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, toutes les notifications utilisent Gemini TTS par défaut.}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="geminiTTSDefault" />
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Style par défaut (Gemini TTS)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="geminittsstyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
                 </div>
             </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
@@ -951,7 +951,7 @@ if (!isConnect()) {
                <label class="col-lg-3 control-label">{{Style de voix (Gemini TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS (ex: Parle d'une voix chaleureure et rassurante). Laissez vide pour le style par défaut.}}"></i></sup>
                 </label>
-                <div class="col-lg-4">
+                <div class="col-lg-3">
                     <input class="configKey form-control" type="text" data-l1key="ttsTestGeminiStyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
                 </div>
             </div>
