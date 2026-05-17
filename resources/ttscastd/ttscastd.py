@@ -895,6 +895,9 @@ class TTSCast:
                 else:
                     logging.error('[DAEMON][GenerateTTS] Gemini TTS Error :: Incorrect Output')
 
+            else:
+                logging.error('[DAEMON][GenerateTTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts.', ttsEngine)
+
         except Exception as e:
             logging.error('[DAEMON][GenerateTTS] Exception on TTS :: %s', e)
             logging.debug(traceback.format_exc())
@@ -1243,6 +1246,9 @@ class TTSCast:
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType='audio/wav')
                 logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+
+            else:
+                logging.error('[DAEMON][TTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts.', ttsEngine)
 
         except Exception as e:
             logging.error('[DAEMON][TTS] Exception on TTS :: %s', e)
