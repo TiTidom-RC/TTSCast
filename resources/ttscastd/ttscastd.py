@@ -653,7 +653,8 @@ class TTSCast:
                     logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
             if myConfig.appConvertSingleQuote:
                 _textToSynth = Functions.convertSingleQuoteToDoubleQuote(_textToSynth, True, "TestTTS")
-            audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, ttsGeminiStyle)
+            _effectiveStyle = ttsGeminiStyle if ttsGeminiStyle else myConfig.geminiTTSStyle
+            audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _effectiveStyle)
             if audioBytes is not None:
                 with open(filepath, 'wb') as out:
                     out.write(audioBytes)
