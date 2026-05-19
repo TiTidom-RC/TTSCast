@@ -656,7 +656,7 @@ class TTSCast:
                 _textToSynth = Functions.convertSingleQuoteToDoubleQuote(_textToSynth, True, "TestTTS")
             _effectiveStyle = ttsGeminiStyle if ttsGeminiStyle else myConfig.geminiTTSStyle
             audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _effectiveStyle)
-            if audioBytes is not None:
+            if isinstance(audioBytes, bytes):
                 with open(filepath, 'wb') as out:
                     out.write(audioBytes)
                 logging.debug('[DAEMON][TestTTS] Fichier TTS Gemini généré :: %s', filepath)
@@ -889,7 +889,7 @@ class TTSCast:
                 if myConfig.appConvertSingleQuote:
                     _textToSynth = Functions.convertSingleQuoteToDoubleQuote(_textToSynth)
                 audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle)
-                if audioBytes is not None:
+                if isinstance(audioBytes, bytes):
                     with open(filepath, 'wb') as f:
                         f.write(audioBytes)
                     logging.debug('[DAEMON][GenerateTTS] Fichier TTS Gemini généré :: %s', filepath)
@@ -1256,7 +1256,7 @@ class TTSCast:
                     pipeName = str(uuid4()) + '.l16'
                     pipePath = os.path.join(streamDir, pipeName)
                     os.mkfifo(pipePath)  # type: ignore[attr-defined]  # POSIX only — cible Debian
-                    pipeUrl = f'{myConfig.ttsWebSrvMediaProxy}?type=stream&file={pipeName}'
+                    pipeUrl = f'{myConfig.ttsWebSrvMediaProxy}?type=stream&file={pipeName}&rate={sampleRate}&channels={channels}'
                     logging.debug('[DAEMON][TTS] Pipe créé :: %s | URL :: %s', pipePath, pipeUrl)
 
                     threading.Thread(target=TTSCast.geminiTTSStream, args=[streamIter, firstChunkBytes, sampleRate, channels, pipePath, filepath]).start()
@@ -1264,7 +1264,7 @@ class TTSCast:
 
                 else:
                     audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle)
-                    if audioBytes is not None:
+                    if isinstance(audioBytes, bytes):
                         with open(filepath, 'wb') as f:
                             f.write(audioBytes)
                         logging.debug('[DAEMON][TTS] Fichier TTS Gemini généré :: %s', filepath)

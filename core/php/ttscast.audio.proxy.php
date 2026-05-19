@@ -30,7 +30,6 @@ try {
         'ogg'  => 'audio/ogg',
         'opus' => 'audio/ogg; codecs=opus',
         'flac' => 'audio/flac',
-        'l16'  => 'audio/L16;rate=24000;channels=1',
     ];
 
     $type = isset($_GET['type']) ? $_GET['type'] : '';
@@ -63,7 +62,9 @@ try {
             http_response_code(500);
             die();
         }
-        header('Content-Type: audio/L16;rate=24000;channels=1');
+        $streamRate     = in_array((int)($_GET['rate']     ?? 0), [8000, 16000, 22050, 24000, 44100, 48000], true) ? (int)$_GET['rate']     : 24000;
+        $streamChannels = in_array((int)($_GET['channels'] ?? 0), [1, 2],                                    true) ? (int)$_GET['channels'] : 1;
+        header('Content-Type: audio/L16;rate=' . $streamRate . ';channels=' . $streamChannels);
         header('Cache-Control: no-cache, no-store');
         header('Transfer-Encoding: chunked');
         set_time_limit(0);
