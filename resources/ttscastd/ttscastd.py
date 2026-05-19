@@ -28,11 +28,12 @@ import datetime
 import queue
 import requests
 import re
+import errno
 import wave
 import io
 
 from urllib.parse import urlencode, urlparse, quote
-from uuid import UUID
+from uuid import UUID, uuid4
 
 # Import pour Jeedom
 try:
@@ -940,6 +941,7 @@ class TTSCast:
             _cmdOpts = {}
             _originalTtsText = ttsText
             _ttsGeminiStyle = myConfig.geminiTTSStyle
+            _useStreaming = myConfig.streamingDefault  # Gemini TTS uniquement — ignoré pour les autres moteurs
             
             try:
                 if (ttsOptions is not None):
@@ -962,6 +964,8 @@ class TTSCast:
                     _silenceBefore = options_json.get('before', None)
                     # Gemini TTS Style
                     _ttsGeminiStyle = options_json.get('style', _ttsGeminiStyle)
+                    # Streaming mode
+                    _useStreaming = options_json.get('streaming', myConfig.streamingDefault)
                     # Engine override (par notification)
                     _requestedEngine = options_json.get('engine', None)
                     if _requestedEngine is not None:
@@ -1234,17 +1238,43 @@ class TTSCast:
                         TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                 if myConfig.appConvertSingleQuote:
                     _textToSynth = Functions.convertSingleQuoteToDoubleQuote(_textToSynth)
-                audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle)
-                if audioBytes is not None:
-                    with open(filepath, 'wb') as f:
-                        f.write(audioBytes)
-                    logging.debug('[DAEMON][TTS] Fichier TTS Gemini généré :: %s', filepath)
+
+                if _useStreaming:
+                    logging.debug('[DAEMON][TTS] Mode streaming activé pour Gemini TTS')
+
+                    # Pré-lecture du premier chunk : détection du format audio réel avant de lancer le Chromecast
+                    prefetch = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle, streaming=True)
+                    if prefetch is None:
+                        logging.error('[DAEMON][TTS] GeminiTTS streaming :: échec de la pré-lecture')
+                        return False
+                    streamIter, firstChunkBytes, sampleRate, channels = prefetch
+                    mimeType = f'audio/L16;rate={sampleRate};channels={channels}'
+                    logging.debug('[DAEMON][TTS] Format stream détecté :: %s', mimeType)
+
+                    streamDir = myConfig.ttsStreamFolderTmp
+                    os.makedirs(streamDir, exist_ok=True)
+                    pipeName = str(uuid4()) + '.l16'
+                    pipePath = os.path.join(streamDir, pipeName)
+                    os.mkfifo(pipePath)  # type: ignore[attr-defined]  # POSIX only — cible Debian
+                    pipeUrl = f'{myConfig.ttsWebSrvMediaProxy}?type=stream&file={pipeName}'
+                    logging.debug('[DAEMON][TTS] Pipe créé :: %s | URL :: %s', pipePath, pipeUrl)
+
+                    threading.Thread(target=TTSCast.geminiTTSStream, args=[streamIter, firstChunkBytes, sampleRate, channels, pipePath, filepath]).start()
+                    res = TTSCast.castToGoogleHome(urltoplay=pipeUrl, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType=mimeType, streamType='LIVE')
+
                 else:
-                    logging.error('[DAEMON][TTS] GeminiTTS Error :: Incorrect Output')
-                    return False
-                urlFileToPlay = f'{ttsSrvWeb}{filename}'
-                logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType='audio/wav')
+                    audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle)
+                    if audioBytes is not None:
+                        with open(filepath, 'wb') as f:
+                            f.write(audioBytes)
+                        logging.debug('[DAEMON][TTS] Fichier TTS Gemini généré :: %s', filepath)
+                    else:
+                        logging.error('[DAEMON][TTS] GeminiTTS Error :: Incorrect Output')
+                        return False
+                    urlFileToPlay = f'{ttsSrvWeb}{filename}'
+                    logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+                    res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType='audio/wav')
+
                 logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
             else:
@@ -1255,7 +1285,7 @@ class TTSCast:
             logging.debug(traceback.format_exc())
 
     @staticmethod
-    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None, cmdForce=False, mimeType='audio/mp3'):
+    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None, cmdForce=False, mimeType='audio/mp3', streamType='BUFFERED'):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion (Test) sur le Google Home :: %s', googleName)
             
@@ -1301,8 +1331,7 @@ class TTSCast:
                 app_data = {
                     "media_id": urltoplay,
                     "media_type": mimeType,
-                    "stream_type": "BUFFERED",
-                    # "stream_type": "LIVE",
+                    "stream_type": streamType,
                     "title": "TTSCast",
                     "thumb": urlThumb,
                     "metadata": {
@@ -1426,8 +1455,7 @@ class TTSCast:
                 app_data = {
                     "media_id": urltoplay, 
                     "media_type": mimeType, 
-                    "stream_type": "BUFFERED",
-                    # "stream_type": "LIVE",
+                    "stream_type": streamType,
                     "title": "TTSCast", 
                     "thumb": urlThumb,
                     "metadata": {
@@ -1643,68 +1671,88 @@ class TTSCast:
             return None
 
     @staticmethod
-    def geminiTTS(ttsText: str, voiceName: str, style: str = ''):
+    def geminiTTS(ttsText: str, voiceName: str, style: str = '', streaming: bool = False):
         """
-        Génère l'audio TTS via l'API Gemini TTS.
-        Retourne les bytes WAV (PCM encapsulé), ou None en cas d'erreur.
+        Génère l'audio TTS via l'API Gemini.
+        - streaming=False (défaut) : bloquant, retourne les bytes WAV complets ou None.
+        - streaming=True : pré-lit le premier chunk pour détecter le format audio réel,
+          retourne (stream_iterator, first_chunk_bytes, sampleRate, channels) ou None.
+          Utilisé exclusivement par le mode streaming Gemini TTS dans getTTS.
         """
         try:
-            if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProjectID') or myConfig.aiApiKey != 'noKey':
-                client = None
+            # ── Authentification ──────────────────────────────────────────────
+            if not ((myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProjectID') or myConfig.aiApiKey != 'noKey'):
+                logging.warning('[DAEMON][GeminiTTS] Clé API IA non configurée.')
+                return None
 
-                if myConfig.aiAuthMode == 'oauth2' and myConfig.gCloudApiKey != 'noKey':
-                    gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
-                    if os.path.exists(gKey):
-                        logging.debug('[DAEMON][GeminiTTS] Chargement des credentials OAuth2 :: %s', myConfig.gCloudApiKey)
-                        credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
-                        client = genai.Client(
-                            vertexai=True,
-                            project=myConfig.aiProjectID,
-                            location='global',
-                            credentials=credentials,
-                        )
-                    else:
-                        logging.error('[DAEMON][GeminiTTS] Impossible de charger le fichier JSON :: %s', gKey)
-                        return None
-                elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
-                    logging.debug('[DAEMON][GeminiTTS] Client API key :: ***')
-                    client = genai.Client(api_key=myConfig.aiApiKey)
-                else:
-                    logging.error('[DAEMON][GeminiTTS] Mode auth invalide ou clé manquante.')
+            if myConfig.aiAuthMode == 'oauth2' and myConfig.gCloudApiKey != 'noKey':
+                gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
+                if not os.path.exists(gKey):
+                    logging.error('[DAEMON][GeminiTTS] Impossible de charger le fichier JSON :: %s', gKey)
                     return None
+                logging.debug('[DAEMON][GeminiTTS] Chargement des credentials OAuth2 :: %s', myConfig.gCloudApiKey)
+                credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
+                client = genai.Client(vertexai=True, project=myConfig.aiProjectID, location='global', credentials=credentials)
+            elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
+                logging.debug('[DAEMON][GeminiTTS] Client API key :: ***')
+                client = genai.Client(api_key=myConfig.aiApiKey)
+            else:
+                logging.error('[DAEMON][GeminiTTS] Mode auth invalide ou clé manquante.')
+                return None
 
-                speechConfig = types.SpeechConfig(
+            # ── Prompt & configuration audio ──────────────────────────────────
+            # Le délimiteur ### TRANSCRIPT indique au modèle où commence le texte
+            # à synthétiser, évitant qu'il lise les instructions de style à voix haute.
+            prompt = f"{style}\n\n### TRANSCRIPT\n{ttsText}" if style else ttsText
+            genConfig = types.GenerateContentConfig(
+                response_modalities=['AUDIO'],
+                speech_config=types.SpeechConfig(
                     voice_config=types.VoiceConfig(
                         prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voiceName)
                     )
                 )
+            )
+            logging.debug('[DAEMON][GeminiTTS] Modèle :: %s | Voix :: %s | Style :: %s | Mode :: %s',
+                          myConfig.geminiTTSModel, voiceName, style if style else 'N/A',
+                          'stream' if streaming else 'buffered')
 
-                # Le style est intégré dans le prompt (méthode officielle Google TTS).
-                # Le délimiteur ### TRANSCRIPT indique clairement au modèle où commence le texte
-                # à synthétiser, évitant qu'il lise les instructions de style à voix haute.
-                if style:
-                    prompt = f"{style}\n\n### TRANSCRIPT\n{ttsText}"
-                else:
-                    prompt = ttsText
+            if streaming:
+                # ── Mode streaming : pré-lecture du premier chunk ─────────────
+                streamIterator = client.models.generate_content_stream(
+                    model=myConfig.geminiTTSModel,
+                    contents=prompt,
+                    config=genConfig,
+                )
+                for chunk in streamIterator:
+                    if (chunk.candidates
+                            and (content := chunk.candidates[0].content)
+                            and content.parts
+                            and (blob := content.parts[0].inline_data)
+                            and blob.data):
+                        mime_type = blob.mime_type or ''
+                        rate_match = re.search(r'rate=(\d+)', mime_type)
+                        channels_match = re.search(r'channels=(\d+)', mime_type)
+                        sampleRate = int(rate_match.group(1)) if rate_match else 24000
+                        channels = int(channels_match.group(1)) if channels_match else 1
+                        logging.debug('[DAEMON][GeminiTTS] Premier chunk stream :: rate=%d | channels=%d', sampleRate, channels)
+                        return streamIterator, blob.data, sampleRate, channels
+                logging.error('[DAEMON][GeminiTTS] Streaming :: aucun chunk audio reçu.')
+                return None
 
-                logging.debug('[DAEMON][GeminiTTS] Modèle :: %s | Voix :: %s | Style :: %s', myConfig.geminiTTSModel, voiceName, style if style else 'N/A')
-
+            else:
+                # ── Mode buffered : réponse complète, encapsulation WAV ───────
                 response = client.models.generate_content(
                     model=myConfig.geminiTTSModel,
                     contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_modalities=['AUDIO'],
-                        speech_config=speechConfig
-                    )
+                    config=genConfig,
                 )
-
                 if hasattr(response, 'usage_metadata') and response.usage_metadata:
                     usage = response.usage_metadata
                     input_tokens = getattr(usage, 'prompt_token_count', 0) or 0
                     output_tokens = getattr(usage, 'candidates_token_count', 0) or 0
                     total_tokens = getattr(usage, 'total_token_count', 0) or 0
-                    logging.info('[DAEMON][GeminiTTS][TOKENS] Model: %s | Input: %d | Output: %d | Total: %d', myConfig.geminiTTSModel, input_tokens, output_tokens, total_tokens)
-
+                    logging.info('[DAEMON][GeminiTTS][TOKENS] Model: %s | Input: %d | Output: %d | Total: %d',
+                                 myConfig.geminiTTSModel, input_tokens, output_tokens, total_tokens)
                 if (response.candidates
                         and (content := response.candidates[0].content)
                         and content.parts
@@ -1715,8 +1763,6 @@ class TTSCast:
                     logging.debug('[DAEMON][GeminiTTS] Audio généré :: %d bytes | mime_type :: %s', len(audio_data), mime_type)
                     # L'API Gemini TTS retourne du PCM brut (ex: "audio/l16; rate=24000; channels=1")
                     if 'wav' not in mime_type.lower():
-                        # Extraire rate et channels depuis le MIME type
-                        # Fallback : 24000 Hz / mono (valeurs documentées par Google Gemini TTS)
                         rate_match = re.search(r'rate=(\d+)', mime_type)
                         channels_match = re.search(r'channels=(\d+)', mime_type)
                         sample_rate = int(rate_match.group(1)) if rate_match else 24000
@@ -1728,18 +1774,93 @@ class TTSCast:
                             wf.setframerate(sample_rate)
                             wf.writeframes(audio_data)
                         audio_data = buf.getvalue()
-                        logging.debug('[DAEMON][GeminiTTS] PCM encapsulé en WAV :: %d bytes | rate :: %d Hz | channels :: %d', len(audio_data), sample_rate, channels)
+                        logging.debug('[DAEMON][GeminiTTS] PCM encapsulé en WAV :: %d bytes | rate :: %d Hz | channels :: %d',
+                                      len(audio_data), sample_rate, channels)
                     else:
                         logging.debug('[DAEMON][GeminiTTS] Audio WAV natif retourné :: %d bytes', len(audio_data))
                     return audio_data
                 logging.warning('[DAEMON][GeminiTTS] Aucune donnée audio dans la réponse.')
                 return None
-            else:
-                logging.warning('[DAEMON][GeminiTTS] Clé API IA non configurée.')
-                return None
+
         except Exception as e:
             logging.error('[DAEMON][GeminiTTS] Exception :: %s', e)
+            logging.debug(traceback.format_exc())
             return None
+
+    @staticmethod
+    def geminiTTSStream(streamIterator, firstChunkBytes: bytes, sampleRate: int, channels: int, pipePath: str, cacheFilePath: str = ''):
+        """
+        Écrit le stream TTS Gemini dans le named pipe (mkfifo).
+        Reçoit l'itérateur de stream déjà initié et le premier chunk pré-lu.
+        Construit le WAV pour la mise en cache si cacheFilePath fourni.
+        """
+        fd = None
+        pcmBuffer = [firstChunkBytes]
+        try:
+            # Ouvrir le pipe en écriture non-bloquant avec retry 10 s
+            deadline = time.time() + 10.0
+            while time.time() < deadline:
+                try:
+                    fd = os.open(pipePath, os.O_WRONLY | os.O_NONBLOCK)  # type: ignore[attr-defined]  # POSIX only — cible Debian
+                    break
+                except OSError as oe:
+                    if oe.errno == errno.ENXIO:
+                        time.sleep(0.05)
+                        fd = None
+                        continue
+                    raise
+            if fd is None:
+                logging.error('[DAEMON][GeminiTTSStream] Timeout (10s) : aucun lecteur sur le pipe :: %s', pipePath)
+                return None
+
+            logging.debug('[DAEMON][GeminiTTSStream] Pipe ouvert en écriture, démarrage du streaming')
+
+            # Écrire le premier chunk déjà pré-lu
+            os.write(fd, firstChunkBytes)
+
+            # Continuer l'itération du stream
+            for chunk in streamIterator:
+                if (chunk.candidates
+                        and (content := chunk.candidates[0].content)
+                        and content.parts
+                        and (blob := content.parts[0].inline_data)
+                        and blob.data):
+                    pcmBuffer.append(blob.data)
+                    os.write(fd, blob.data)
+
+            os.close(fd)
+            fd = None
+            logging.debug('[DAEMON][GeminiTTSStream] Streaming PCM terminé :: %d chunks', len(pcmBuffer))
+
+            # Construire le WAV pour la mise en cache
+            allPcm = b''.join(pcmBuffer)
+            buf = io.BytesIO()
+            with wave.open(buf, 'wb') as wf:
+                wf.setnchannels(channels)
+                wf.setsampwidth(2)
+                wf.setframerate(sampleRate)
+                wf.writeframes(allPcm)
+            wavBytes = buf.getvalue()
+            logging.debug('[DAEMON][GeminiTTSStream] WAV cache :: %d bytes | rate=%d | channels=%d', len(wavBytes), sampleRate, channels)
+            if cacheFilePath:
+                with open(cacheFilePath, 'wb') as f:
+                    f.write(wavBytes)
+                logging.debug('[DAEMON][GeminiTTSStream] Fichier TTS Gemini stream mis en cache :: %s', cacheFilePath)
+            return wavBytes
+        except Exception as e:
+            logging.error('[DAEMON][GeminiTTSStream] Exception :: %s', e)
+            logging.debug(traceback.format_exc())
+            return None
+        finally:
+            if fd is not None:
+                try:
+                    os.close(fd)
+                except Exception:
+                    pass
+            try:
+                os.unlink(pipePath)
+            except Exception:
+                pass
 
     @staticmethod
     def handleAiReformat(message):
@@ -3478,6 +3599,7 @@ parser.add_argument("--geminittsenabled", help="Enable Gemini TTS engine", type=
 parser.add_argument("--geminittsmodel", help="Gemini TTS Model", type=str, default='noModel')
 parser.add_argument("--geminittsdefault", help="Use Gemini TTS as default engine", type=str, default='0')
 parser.add_argument("--geminittsstyle", help="Default style for Gemini TTS", type=str, default='')
+parser.add_argument("--streamingdefault", help="Enable streaming TTS by default", type=str, default='0')
 
 args = parser.parse_args()
 if args.loglevel:
@@ -3553,6 +3675,8 @@ if args.geminittsdefault:
     myConfig.geminiTTSDefault = args.geminittsdefault != '0'
 if args.geminittsstyle is not None:
     myConfig.geminiTTSStyle = args.geminittsstyle
+if args.streamingdefault:
+    myConfig.streamingDefault = args.streamingdefault != '0'
 if args.cmdwaittimeout:
     myConfig.cmdWaitTimeout = int(args.cmdwaittimeout)
 if args.pid:

@@ -30,6 +30,7 @@ try {
         'ogg'  => 'audio/ogg',
         'opus' => 'audio/ogg; codecs=opus',
         'flac' => 'audio/flac',
+        'l16'  => 'audio/L16;rate=24000;channels=1',
     ];
 
     $type = isset($_GET['type']) ? $_GET['type'] : '';
@@ -43,6 +44,36 @@ try {
         }
         $mime     = $mimeTypes[$matches[2]];
         $filePath = dirname(dirname(__DIR__)) . '/data/cache/' . $file;
+
+    } elseif ($type === 'stream') {
+        // Named pipe (mkfifo) — streaming PCM L16 Gemini TTS
+        // Validation : UUID v4 + extension l16 uniquement
+        $safeFile = basename($file);
+        if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.l16$/', $safeFile)) {
+            http_response_code(400);
+            die();
+        }
+        $pipePath = '/tmp/jeedom/ttscast_cache/stream/' . $safeFile;
+        if (!file_exists($pipePath)) {
+            http_response_code(404);
+            die();
+        }
+        $fh = fopen($pipePath, 'rb');
+        if ($fh === false) {
+            http_response_code(500);
+            die();
+        }
+        header('Content-Type: audio/L16;rate=24000;channels=1');
+        header('Cache-Control: no-cache, no-store');
+        header('Transfer-Encoding: chunked');
+        set_time_limit(0);
+        fpassthru($fh);
+        fclose($fh);
+        // Nettoyage du pipe (déjà supprimé par le démon Python mais au cas où)
+        if (file_exists($pipePath)) {
+            @unlink($pipePath);
+        }
+        die();
 
     } elseif ($type === 'sounds' || $type === 'customsounds') {
         // Validation : nom de fichier sûr (pas de séparateur de répertoire, extension autorisée)

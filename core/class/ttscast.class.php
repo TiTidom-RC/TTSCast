@@ -193,6 +193,7 @@ class ttscast extends eqLogic
         $cmd .= ' --geminittsmodel ' . config::byKey('geminiTTSModel', __CLASS__, 'noModel');
         $cmd .= ' --geminittsdefault ' . config::byKey('geminiTTSDefault', __CLASS__, '0');
         $cmd .= ' --geminittsstyle "' . config::byKey('geminiTTSStyle', __CLASS__, '') . '"';
+        $cmd .= ' --streamingdefault ' . config::byKey('streamingDefault', __CLASS__, '0');
 
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
@@ -427,7 +428,7 @@ class ttscast extends eqLogic
             $optionKeys = [
                 'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
                 'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp',
-                'engine'
+                'engine', 'streaming'
             ];
             foreach ($optionKeys as $key) {
                 if (array_key_exists($key, $data)) {
