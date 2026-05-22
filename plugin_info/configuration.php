@@ -958,19 +958,19 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-testGeminiStyle" style="display:none;">
-               <label class="col-lg-3 control-label">{{Style de voix (Gemini TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS (ex: Parle d'une voix chaleureure et rassurante). Laissez vide pour le style par défaut.}}"></i></sup>
-                </label>
-                <div class="col-lg-3">
-                    <input class="configKey form-control" type="text" data-l1key="ttsTestGeminiStyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
-                </div>
-            </div>
-            <div class="form-group customform-testGeminiStyle" style="display:none;">
                <label class="col-lg-3 control-label">{{Tester avec le mode streaming}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Si coché, le test utilise le mode streaming Gemini TTS (lecture directe sans fichier intermédiaire). Nécessite que Gemini TTS soit activé et que le paramètre 'Tester avec Gemini TTS' soit coché.}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsTestStreaming" />
+                </div>
+            </div>
+            <div class="form-group customform-testGeminiStyle" style="display:none;">
+               <label class="col-lg-3 control-label">{{Style de voix (Gemini TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS (ex: Parle d'une voix chaleureure et rassurante). Laissez vide pour le style par défaut.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="ttsTestGeminiStyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
                 </div>
             </div>
             <div class="form-group">
