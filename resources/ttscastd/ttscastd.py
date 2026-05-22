@@ -3789,6 +3789,7 @@ logging.info('[DAEMON][MAIN] Gemini TTS Enabled: %s', str(myConfig.geminiTTSEnab
 logging.info('[DAEMON][MAIN] Gemini TTS Model: %s', myConfig.geminiTTSModel)
 logging.info('[DAEMON][MAIN] Gemini TTS Default: %s', str(myConfig.geminiTTSDefault))
 logging.info('[DAEMON][MAIN] Gemini TTS Style: %s', myConfig.geminiTTSStyle if myConfig.geminiTTSStyle else 'N/A')
+logging.info('[DAEMON][MAIN] Gemini TTS Streaming Default: %s', str(myConfig.streamingDefault))
 logging.info('[DAEMON][MAIN] Cmd Wait Timeout: %s', str(myConfig.cmdWaitTimeout))
 logging.info('[DAEMON][MAIN] CallBack: %s', myConfig.callBack)
 logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', myConfig.ttsWebSrvCache)
