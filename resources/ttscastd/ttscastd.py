@@ -144,7 +144,7 @@ class Loops:
                         
                         # Traitement des actions (inclus les CustomCmd)
                         if message['cmd_action'] == 'ttstest':
-                            logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
+                            logging.info('[DAEMON][SOCKET] Generate And Play Test TTS')
 
                             if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName', 'ttsGeminiStyle', 'ttsSSML', 'ttsAI', 'ttsGemini', 'ttsStreaming')):
                                 logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'] + ' | ' + message['ttsAI'] + ' | geminiVoice=' + message['ttsGeminiVoiceName'] + ' | geminiStyle=' + message['ttsGeminiStyle'] + ' | gemini=' + message['ttsGemini'] + ' | streaming=' + message['ttsStreaming'])
@@ -153,7 +153,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                         
                         elif message['cmd_action'] == 'tts':
-                            logging.debug('[DAEMON][SOCKET] Generate And Play TTS')
+                            logging.info('[DAEMON][SOCKET] Generate And Play TTS')
                     
                             if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName')):
                                 logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))                                    
@@ -162,7 +162,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
                                 
                         elif message['cmd_action'] == 'generatetts':
-                            logging.debug('[DAEMON][SOCKET] Generate TTS as Jeedom Engine')
+                            logging.info('[DAEMON][SOCKET] Generate TTS as Jeedom Engine')
                             
                             if all(keys in message for keys in ('ttsText', 'ttsFile', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName')):
                                 logging.debug('[DAEMON][SOCKET] GenerateTTS :: %s', str(message))
@@ -171,19 +171,19 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] GenerateTTS :: Il manque des données pour traiter la commande.')
                         
                         elif (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
-                            logging.debug('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
+                            logging.info('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
                             threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], message['value'], message['cmd_action']]).start()
                         
                         elif (message['cmd_action'] in ('volumeup', 'volumedown', 'media_pause', 'media_play', 'media_stop', 'media_next', 'media_quit', 'media_rewind', 'media_previous', 'mute_on', 'mute_off') and 'googleUUID' in message):
-                            logging.debug('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
+                            logging.info('[DAEMON][SOCKET] Action :: %s @ %s', message['cmd_action'], message['googleUUID'])
                             threading.Thread(target=Functions.mediaActions, args=[message['googleUUID'], '', message['cmd_action']]).start()
                             
                         elif (message['cmd_action'] in ('youtube', 'dashcast', 'radios', 'customradios', 'sounds', 'customsounds', 'media', 'start_app')):
-                            logging.debug('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
+                            logging.info('[DAEMON][SOCKET] Media :: %s @ %s', message['cmd_action'], message['googleUUID'])
                             threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options']]).start()
 
                 elif message['cmd'] == 'purgettscache':
-                    logging.debug('[DAEMON][SOCKET] Purge TTS Cache')
+                    logging.info('[DAEMON][SOCKET] Purge TTS Cache')
                     
                     if 'days' in message:
                         threading.Thread(target=Functions.purgeCache, args=[message['days']]).start()
@@ -1042,7 +1042,7 @@ class TTSCast:
                 logging.warning('[DAEMON][TTS] Option "streaming" ignorée : le mode streaming n\'est supporté que par le moteur Gemini TTS (moteur actif : "%s"). Supprimez l\'option "streaming:true" de cet appel TTS.', ttsEngine)
 
             if ttsEngine == "gcloudtts":
-                logging.debug('[DAEMON][TTS] TTSEngine = gcloudtts')
+                logging.info('[DAEMON][TTS] TTSEngine = gcloudtts')
                 logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
                 if myConfig.gCloudApiKey != 'noKey':
                     gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
@@ -1113,9 +1113,9 @@ class TTSCast:
                                     wav_file.writeframes(response.audio_content)
                             else:
                                 out.write(response.audio_content)
-                            logging.debug('[DAEMON][TTS] Fichier TTS généré :: %s', filepath)
+                            logging.info('[DAEMON][TTS] Fichier TTS généré :: %s', filepath)
                     else:
-                        logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+                        logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
                     urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
@@ -1123,12 +1123,12 @@ class TTSCast:
                     _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
 
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType=_mimeType)
-                    logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                    logging.info('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
                     logging.warning('[DAEMON][TTS] Clé API invalide :: ' + myConfig.gCloudApiKey)
             
             elif ttsEngine == "gtranslatetts":
-                logging.debug('[DAEMON][TTS] TTSEngine = gtranslatetts')
+                logging.info('[DAEMON][TTS] TTSEngine = gtranslatetts')
                 raw_filename = ttsText + "|gTTS|" + ttsLang
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
                 filepath = os.path.join(symLinkPath, filename)
@@ -1157,16 +1157,16 @@ class TTSCast:
                                 pass
                         logging.debug('[DAEMON][TTS] Google Translate API ERROR :: %s', e)
                 else:
-                    logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+                    logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
                 res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
-                logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                logging.info('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             
             elif ttsEngine == "jeedomtts":
-                logging.debug('[DAEMON][TTS] TTSEngine = jeedomtts')
+                logging.info('[DAEMON][TTS] TTSEngine = jeedomtts')
                 
                 raw_filename = ttsText + "|JeedomTTS|" + ttsLang
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
@@ -1191,16 +1191,16 @@ class TTSCast:
                     else:
                         logging.debug('[DAEMON][TTS] JeedomTTS Error :: Incorrect Output')
                 else:
-                    logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+                    logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
                 res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
-                logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                logging.info('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
             
             elif ttsEngine == "voicersstts":
-                logging.debug('[DAEMON][TTS] TTSEngine = voicersstts')
+                logging.info('[DAEMON][TTS] TTSEngine = voicersstts')
                 logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
                 if myConfig.apiRSSKey != 'noKey':
                     raw_filename = ttsText + "|VoiceRSSTTS|" + ttsRSSVoiceName + "|" + ttsRSSSpeed + "|" + str(_useSSML)
@@ -1226,18 +1226,18 @@ class TTSCast:
                         else:
                             logging.debug('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output')
                     else:
-                        logging.debug('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
+                        logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
                     urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                     
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait)
-                    logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                    logging.info('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
                 else:
                     logging.warning('[DAEMON][TTS] Clé API (Voice RSS) invalide :: ' + myConfig.apiRSSKey)
 
             elif ttsEngine == "geminitts":
-                logging.debug('[DAEMON][TTS] TTSEngine = geminitts')
+                logging.info('[DAEMON][TTS] TTSEngine = geminitts')
                 # Pas de cache pour Gemini TTS : sortie LLM non déterministe, toujours régénérer
                 raw_filename = ttsText + "|GeminiTTS|" + ttsGeminiVoiceName + "|" + myConfig.geminiTTSModel
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".wav"
@@ -1289,7 +1289,7 @@ class TTSCast:
                     if isinstance(audioBytes, bytes):
                         with open(filepath, 'wb') as f:
                             f.write(audioBytes)
-                        logging.debug('[DAEMON][TTS] Fichier TTS Gemini généré :: %s', filepath)
+                        logging.info('[DAEMON][TTS] Fichier TTS Gemini généré :: %s', filepath)
                     else:
                         logging.error('[DAEMON][TTS] GeminiTTS Error :: Incorrect Output')
                         return False
@@ -1297,7 +1297,7 @@ class TTSCast:
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType='audio/wav')
 
-                logging.debug('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                logging.info('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
             else:
                 logging.error('[DAEMON][TTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts.', ttsEngine)

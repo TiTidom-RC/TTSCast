@@ -380,6 +380,7 @@ class ttscast extends eqLogic
             $ttsOptions = $options;
         } */
         $ttsOptions = $options;
+        log::add('ttscast', 'info', '[PlayTTS] Moteur: ' . $ttsEngine . ' | UUID: ' . $ttsGoogleUUID . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8'));
         log::add('ttscast', 'debug', '[PlayTTS] ttsOptions After Array :: ' . $ttsOptions);
         
         $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'cmdNotificationId' => $cmdNotificationId);
@@ -387,14 +388,14 @@ class ttscast extends eqLogic
     }
 
     public static function actionGCast($gHomeUUID=null, $action=null, $message=null) {
-        log::add('ttscast', 'debug', '[ActionGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message);
+        log::add('ttscast', 'info', '[ActionGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message);
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID);
         log::add('ttscast', 'debug', '[ActionGCast] ArrayToSend :: ' . json_encode($value));
         self::sendToDaemon($value);
     }
 
     public static function mediaGCast($gHomeUUID=null, $action=null, $message=null, $options=null) {
-        log::add('ttscast', 'debug', '[MediaGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options);
+        log::add('ttscast', 'info', '[MediaGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options);
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID, 'options' => $options);
         log::add('ttscast', 'debug', '[MediaGCast] ArrayToSend :: ' . json_encode($value));
         self::sendToDaemon($value);
