@@ -731,15 +731,6 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Streaming TTS par défaut}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, la lecture audio démarre dès les premières syllabes générées, sans attendre la fin de la synthèse vocale. Réduit la latence perçue.}}"></i></sup>
-                </label>
-                <div class="col-lg-1">
-                    <input type="checkbox" class="configKey" data-l1key="streamingDefault" />
-                </div>
-            </div>
             <legend><i class="fas fas fa-brain"></i> {{IA & TTS - Gemini}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Activer IA Générative}}
@@ -921,6 +912,15 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="geminiTTSDefault" />
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Streaming Gemini TTS par défaut}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, la lecture audio démarre dès les premières syllabes générées, sans attendre la fin de la synthèse vocale. Réduit la latence perçue.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="streamingDefault" />
                 </div>
             </div>
             <div class="form-group customform-geminiTTS">
