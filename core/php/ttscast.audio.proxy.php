@@ -55,32 +55,36 @@ try {
             http_response_code(404);
             die();
         }
+        $streamRate     = in_array((int)($_GET['rate']     ?? 0), [8000, 16000, 22050, 24000, 44100, 48000], true) ? (int)$_GET['rate']     : 24000;
+        $streamChannels = in_array((int)($_GET['channels'] ?? 0), [1, 2],                                    true) ? (int)$_GET['channels'] : 1;
+
+        // Envoyer les headers HTTP + flusher AVANT d'ouvrir le pipe
+        // Le Chromecast reçoit « HTTP/1.1 200 OK » immédiatement et attend les données,
+        // au lieu de timeout pendant que PHP bloque sur fopen() du FIFO.
+        header('Content-Type: audio/wav'); // WAV RIFF avec header dans le stream (PCM LE 16-bit)
+        header('Cache-Control: no-cache, no-store');
+        header('Content-Encoding: identity'); // Désactiver mod_deflate — le PCM brut ne doit pas être compressé
+        set_time_limit(0);
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        ob_implicit_flush(true); // Flush automatique à chaque echo
+        flush(); // Envoyer les headers HTTP maintenant (avant que le pipe soit ouvert)
+
         log::add('ttscast', 'debug', '[PROXY][Stream] Ouverture du pipe (attente writer) :: ' . $safeFile);
         $fh = fopen($pipePath, 'rb');
         if ($fh === false) {
             log::add('ttscast', 'error', '[PROXY][Stream] Échec ouverture pipe :: ' . $safeFile);
-            http_response_code(500);
             die();
         }
-        $streamRate     = in_array((int)($_GET['rate']     ?? 0), [8000, 16000, 22050, 24000, 44100, 48000], true) ? (int)$_GET['rate']     : 24000;
-        $streamChannels = in_array((int)($_GET['channels'] ?? 0), [1, 2],                                    true) ? (int)$_GET['channels'] : 1;
         log::add('ttscast', 'debug', '[PROXY][Stream] Pipe ouvert, streaming démarré :: rate=' . $streamRate . ' | channels=' . $streamChannels);
-        header('Content-Type: audio/wav'); // WAV RIFF avec header dans le stream (PCM LE 16-bit — rate/channels dans le header WAV)
-        header('Cache-Control: no-cache, no-store');
-        header('Transfer-Encoding: chunked');
-        header('Content-Encoding: identity'); // Désactiver mod_deflate — le PCM brut ne doit pas être compressé
-        set_time_limit(0);
-        // Désactiver tous les buffers de sortie PHP pour un envoi en temps réel
-        while (ob_get_level() > 0) {
-            ob_end_clean();
-        }
+
         // Lire le pipe et envoyer immédiatement au client (Chromecast)
         $bytesSent = 0;
         while (!feof($fh)) {
             $chunk = fread($fh, 8192);
             if ($chunk !== false && $chunk !== '') {
                 echo $chunk;
-                flush();
                 $bytesSent += strlen($chunk);
             }
         }

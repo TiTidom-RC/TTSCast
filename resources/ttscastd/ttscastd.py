@@ -1825,7 +1825,7 @@ class TTSCast:
                     break
                 except OSError as oe:
                     if oe.errno == errno.ENXIO:
-                        time.sleep(0.05)
+                        time.sleep(0.005)  # 5ms — réduit la latence avant la première écriture dans le pipe
                         fd = None
                         continue
                     raise
