@@ -51,6 +51,7 @@ class Config:
     ttsCacheFolder = 'data/cache'
     ttsCacheFolderWeb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ttsCacheFolder))
     ttsCacheFolderTmp = os.path.join('/tmp/jeedom/', 'ttscast_cache')
+    ttsStreamFolderTmp = os.path.join('/tmp/jeedom/ttscast_cache', 'stream')
     
     radiosFilePath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/radios/radios.json'))
     customRadiosFilePath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/radios/custom/radios.json'))
@@ -110,6 +111,7 @@ class Config:
     geminiTTSModel   = 'noModel'
     geminiTTSDefault = False
     geminiTTSStyle   = ''  # Style par défaut, surchargeable par style: dans les options de scénario
+    streamingDefault = False  # Gemini TTS uniquement — ignoré pour les autres moteurs
     
     # Paths for various resources
     mediaFolder = 'data/media'

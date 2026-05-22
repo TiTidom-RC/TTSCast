@@ -174,8 +174,8 @@ if (!isConnect()) {
                 <div class="col-lg-3">
                     <select class="configKey form-control" data-l1key="gCloudAudioEncoding">
                         <option value="MP3" selected>{{MP3 (Défaut)}}</option>
-                        <option value="LINEAR16_24K" disabled>{{LINEAR16 (WAV - 24kHz)}}</option>
-                        <option value="LINEAR16_48K" disabled>{{LINEAR16 (WAV - 48kHz)}}</option>
+                        <option value="LINEAR16_24K">{{LINEAR16 (WAV - 24kHz)}}</option>
+                        <option value="LINEAR16_48K">{{LINEAR16 (WAV - 48kHz)}}</option>
                     </select>
                 </div>
             </div>
@@ -775,7 +775,7 @@ if (!isConnect()) {
             <br>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Modèle IA (Reformulation)}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/><b>Modèles Stables (Recommandés) :</b><br/>• Gemini 3.1 Flash-Lite : In $0.25 | Out $1.50<br/>• Gemini 2.5 Flash Lite : In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash : In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro : In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto) :</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta) :</b><br/>• Gemini 3.1 Flash-Lite Preview : In $0.25 | Out $1.50<br/>• Gemini 3.1 Pro Preview : In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview : In $0.50 | Out $3.00"></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/><b>Modèles Stables (Recommandés) :</b><br/>• Gemini 3.5 Flash : In $1.50 | Out $9.00<br/>• Gemini 3.1 Flash-Lite : In $0.25 | Out $1.50<br/>• Gemini 2.5 Flash Lite : In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash : In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro : In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto) :</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta) :</b><br/>• Gemini 3.1 Flash-Lite Preview : In $0.25 | Out $1.50<br/>• Gemini 3.1 Pro Preview : In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview : In $0.50 | Out $3.00"></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
                 </label>
@@ -783,6 +783,7 @@ if (!isConnect()) {
                     <select class="configKey form-control" data-l1key="ttsAIModel">
                         <!-- Modèles Recommandés (Stables) -->
                         <option disabled>--- {{Modèles Stables (Recommandés)}} ---</option>
+                        <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
                         <option value="gemini-3.1-flash-lite" selected>Gemini 3.1 Flash-Lite</option>
                         <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
                         <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
@@ -914,6 +915,15 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Streaming Gemini TTS par défaut}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, la lecture audio démarre dès les premières syllabes générées, sans attendre la fin de la synthèse vocale. Réduit la latence perçue.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="streamingDefault" />
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Style par défaut (Gemini TTS)}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.}}"></i></sup>
@@ -945,6 +955,14 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsTestGemini" />
+                </div>
+            </div>
+            <div class="form-group customform-testGeminiStyle" style="display:none;">
+               <label class="col-lg-3 control-label">{{Tester avec le mode streaming}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Si coché, le test utilise le mode streaming Gemini TTS (lecture directe sans fichier intermédiaire). Nécessite que Gemini TTS soit activé et que le paramètre 'Tester avec Gemini TTS' soit coché.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsTestStreaming" />
                 </div>
             </div>
             <div class="form-group customform-testGeminiStyle" style="display:none;">

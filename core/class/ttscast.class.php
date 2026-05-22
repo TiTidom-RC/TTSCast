@@ -193,6 +193,7 @@ class ttscast extends eqLogic
         $cmd .= ' --geminittsmodel ' . config::byKey('geminiTTSModel', __CLASS__, 'noModel');
         $cmd .= ' --geminittsdefault ' . config::byKey('geminiTTSDefault', __CLASS__, '0');
         $cmd .= ' --geminittsstyle "' . config::byKey('geminiTTSStyle', __CLASS__, '') . '"';
+        $cmd .= ' --streamingdefault ' . config::byKey('streamingDefault', __CLASS__, '0');
 
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
@@ -328,7 +329,8 @@ class ttscast extends eqLogic
         $ttsTestGemini = config::byKey('ttsTestGemini', 'ttscast', '0');
         $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
         $ttsGeminiStyle = config::byKey('ttsTestGeminiStyle', 'ttscast', '');
-        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'ttsGeminiStyle' => $ttsGeminiStyle, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI, 'ttsGemini' => $ttsTestGemini);
+        $ttsTestStreaming = ($ttsTestGemini == '1') ? config::byKey('ttsTestStreaming', 'ttscast', '0') : '0';
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'ttsGeminiStyle' => $ttsGeminiStyle, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI, 'ttsGemini' => $ttsTestGemini, 'ttsStreaming' => $ttsTestStreaming);
         self::sendToDaemon($value);
     }
 
@@ -427,7 +429,7 @@ class ttscast extends eqLogic
             $optionKeys = [
                 'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
                 'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp',
-                'engine'
+                'engine', 'streaming'
             ];
             foreach ($optionKeys as $key) {
                 if (array_key_exists($key, $data)) {
