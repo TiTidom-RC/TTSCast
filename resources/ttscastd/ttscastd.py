@@ -665,7 +665,7 @@ class TTSCast:
                 if prefetch is None:
                     logging.error('[DAEMON][TestTTS] GeminiTTS streaming :: échec de la pré-lecture')
                     return
-                streamIter, firstChunkBytes, sampleRate, channels = prefetch
+                streamIter, firstChunkBytes, sampleRate, channels, streamClient = prefetch
                 streamMimeType = f'audio/L16;rate={sampleRate};channels={channels}'
                 streamDir = myConfig.ttsStreamFolderTmp
                 os.makedirs(streamDir, exist_ok=True)
@@ -674,7 +674,7 @@ class TTSCast:
                 os.mkfifo(pipePath)  # type: ignore[attr-defined]  # POSIX only — cible Debian
                 pipeUrl = f'{myConfig.ttsWebSrvMediaProxy}?type=stream&file={pipeName}&rate={sampleRate}&channels={channels}'
                 logging.debug('[DAEMON][TestTTS] Pipe créé :: %s | URL :: %s', pipePath, pipeUrl)
-                threading.Thread(target=TTSCast.geminiTTSStream, args=[streamIter, firstChunkBytes, sampleRate, channels, pipePath, filepath]).start()
+                threading.Thread(target=TTSCast.geminiTTSStream, args=[streamIter, firstChunkBytes, sampleRate, channels, pipePath, filepath, streamClient]).start()
                 res = TTSCast.castToGoogleHome(pipeUrl, ttsGoogleName, mimeType=streamMimeType, streamType='LIVE')
             else:
                 audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _effectiveStyle)
@@ -1266,7 +1266,7 @@ class TTSCast:
                     if prefetch is None:
                         logging.error('[DAEMON][TTS] GeminiTTS streaming :: échec de la pré-lecture')
                         return False
-                    streamIter, firstChunkBytes, sampleRate, channels = prefetch
+                    streamIter, firstChunkBytes, sampleRate, channels, streamClient = prefetch
                     mimeType = f'audio/L16;rate={sampleRate};channels={channels}'
                     logging.debug('[DAEMON][TTS] Format stream détecté :: %s', mimeType)
 
@@ -1278,7 +1278,7 @@ class TTSCast:
                     pipeUrl = f'{myConfig.ttsWebSrvMediaProxy}?type=stream&file={pipeName}&rate={sampleRate}&channels={channels}'
                     logging.debug('[DAEMON][TTS] Pipe créé :: %s | URL :: %s', pipePath, pipeUrl)
 
-                    threading.Thread(target=TTSCast.geminiTTSStream, args=[streamIter, firstChunkBytes, sampleRate, channels, pipePath, filepath]).start()
+                    threading.Thread(target=TTSCast.geminiTTSStream, args=[streamIter, firstChunkBytes, sampleRate, channels, pipePath, filepath, streamClient]).start()
                     res = TTSCast.castToGoogleHome(urltoplay=pipeUrl, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType=mimeType, streamType='LIVE')
 
                 else:
@@ -1755,7 +1755,7 @@ class TTSCast:
                         sampleRate = int(rate_match.group(1)) if rate_match else 24000
                         channels = int(channels_match.group(1)) if channels_match else 1
                         logging.debug('[DAEMON][GeminiTTS] Premier chunk stream :: rate=%d | channels=%d', sampleRate, channels)
-                        return streamIterator, blob.data, sampleRate, channels
+                        return streamIterator, blob.data, sampleRate, channels, client
                 logging.error('[DAEMON][GeminiTTS] Streaming :: aucun chunk audio reçu.')
                 return None
 
@@ -1808,7 +1808,7 @@ class TTSCast:
             return None
 
     @staticmethod
-    def geminiTTSStream(streamIterator, firstChunkBytes: bytes, sampleRate: int, channels: int, pipePath: str, cacheFilePath: str = ''):
+    def geminiTTSStream(streamIterator, firstChunkBytes: bytes, sampleRate: int, channels: int, pipePath: str, cacheFilePath: str = '', _client=None):  # noqa: ARG004 — _client maintenu en vie pour éviter la fermeture des sockets httpx
         """
         Écrit le stream TTS Gemini dans le named pipe (mkfifo).
         Reçoit l'itérateur de stream déjà initié et le premier chunk pré-lu.
