@@ -657,7 +657,8 @@ class TTSCast:
 
             if ttsStreaming == '1':
                 logging.debug('[DAEMON][TestTTS] Mode streaming activé pour Gemini TTS')
-                logging.info('[TIMING][GeminiStream] t0_start :: %.3f', time.time())
+                _t = time.time()
+                logging.info('[TIMING][GeminiStream] t0_start :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
                 prefetch = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _effectiveStyle, streaming=True)
                 if prefetch is None:
                     logging.error('[DAEMON][TestTTS] GeminiTTS streaming :: échec de la pré-lecture')
@@ -672,7 +673,8 @@ class TTSCast:
                 pipeUrl = f'{myConfig.ttsWebSrvMediaProxy}?type=stream&file={pipeName}&rate={sampleRate}&channels={channels}'
                 logging.debug('[DAEMON][TestTTS] Pipe créé :: %s | URL :: %s', pipePath, pipeUrl)
                 threading.Thread(target=TTSCast.geminiTTSStream, args=[streamIter, firstChunkBytes, sampleRate, channels, pipePath, filepath, streamClient]).start()
-                logging.info('[TIMING][GeminiStream] t1_castStart :: %.3f', time.time())
+                _t = time.time()
+                logging.info('[TIMING][GeminiStream] t1_castStart :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
                 res = TTSCast.castToGoogleHome(pipeUrl, ttsGoogleName, mimeType=streamMimeType, streamType='LIVE')
             else:
                 audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _effectiveStyle)
@@ -1876,7 +1878,8 @@ class TTSCast:
                 with open(cacheFilePath, 'wb') as f:
                     f.write(wavBytes)
                 logging.debug('[DAEMON][GeminiTTSStream] Fichier TTS Gemini stream mis en cache :: %s', cacheFilePath)
-                logging.info('[TIMING][GeminiStream] t2_cacheWritten :: %.3f', time.time())
+                _t = time.time()
+                logging.info('[TIMING][GeminiStream] t2_cacheWritten :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
             return wavBytes
         except BrokenPipeError:
             # Le client (Chromecast via proxy PHP) a fermé la connexion avant la fin du stream
