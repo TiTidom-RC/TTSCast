@@ -110,7 +110,7 @@ class Config:
     geminiTTSEnabled = False
     geminiTTSModel   = 'noModel'
     geminiTTSDefault = False
-    geminiTTSStyle   = ''  # Style par défaut, surchargeable par style: dans les options de scénario
+    geminiTTSStyle   = ''  # Style par défaut, peut être surchargé par style: dans les options de scénario
     streamingDefault = False  # Gemini TTS uniquement — ignoré pour les autres moteurs
     
     # Paths for various resources
