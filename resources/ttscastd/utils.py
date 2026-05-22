@@ -106,13 +106,12 @@ class Config:
     aiCustomSysPrompt = ''
     aiScopes = ['https://www.googleapis.com/auth/cloud-platform']
 
-    streamingDefault = False
-
     # Gemini TTS Configuration
     geminiTTSEnabled = False
     geminiTTSModel   = 'noModel'
     geminiTTSDefault = False
     geminiTTSStyle   = ''  # Style par défaut, surchargeable par style: dans les options de scénario
+    streamingDefault = False  # Gemini TTS uniquement — ignoré pour les autres moteurs
     
     # Paths for various resources
     mediaFolder = 'data/media'
