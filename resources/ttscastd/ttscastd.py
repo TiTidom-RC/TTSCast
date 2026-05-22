@@ -146,9 +146,9 @@ class Loops:
                         if message['cmd_action'] == 'ttstest':
                             logging.debug('[DAEMON][SOCKET] Generate And Play Test TTS')
 
-                            if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName', 'ttsGeminiStyle', 'ttsSSML', 'ttsAI', 'ttsGemini')):
-                                logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'] + ' | ' + message['ttsAI'] + ' | geminiVoice=' + message['ttsGeminiVoiceName'] + ' | geminiStyle=' + message['ttsGeminiStyle'] + ' | gemini=' + message['ttsGemini'])
-                                threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsGeminiStyle'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML'], message['ttsAI'], message['ttsGemini']]).start()
+                            if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName', 'ttsGeminiStyle', 'ttsSSML', 'ttsAI', 'ttsGemini', 'ttsStreaming')):
+                                logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'] + ' | ' + message['ttsAI'] + ' | geminiVoice=' + message['ttsGeminiVoiceName'] + ' | geminiStyle=' + message['ttsGeminiStyle'] + ' | gemini=' + message['ttsGemini'] + ' | streaming=' + message['ttsStreaming'])
+                                threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsGeminiStyle'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML'], message['ttsAI'], message['ttsGemini'], message['ttsStreaming']]).start()
                             else:
                                 logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                         
@@ -409,7 +409,7 @@ class TTSCast:
             logging.debug('[DAEMON][TTS] ttsNotifyResult envoyé :: cmdNotificationId=%s', cmdNotificationId)
 
     @staticmethod
-    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsGeminiStyle, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0', ttsAI='0', ttsGemini='0'):
+    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsGeminiStyle, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0', ttsAI='0', ttsGemini='0', ttsStreaming='0'):
         # Override moteur si test Gemini TTS activé
         if ttsGemini == '1' and myConfig.geminiTTSEnabled:
             ttsEngine = 'geminitts'
@@ -655,21 +655,40 @@ class TTSCast:
             if myConfig.appConvertSingleQuote:
                 _textToSynth = Functions.convertSingleQuoteToDoubleQuote(_textToSynth, True, "TestTTS")
             _effectiveStyle = ttsGeminiStyle if ttsGeminiStyle else myConfig.geminiTTSStyle
-            audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _effectiveStyle)
-            if isinstance(audioBytes, bytes):
-                with open(filepath, 'wb') as out:
-                    out.write(audioBytes)
-                logging.debug('[DAEMON][TestTTS] Fichier TTS Gemini généré :: %s', filepath)
-            else:
-                logging.error('[DAEMON][TestTTS] Echec de la génération Gemini TTS')
-                return
 
             if _aiReformulatedText is None:
                 TTSCast._sendTTSResult(ttsText, True)
-            urlFileToPlay = f'{ttsSrvWeb}{filename}'
-            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
 
-            res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType='audio/wav')
+            if ttsStreaming == '1':
+                logging.debug('[DAEMON][TestTTS] Mode streaming activé pour Gemini TTS')
+                prefetch = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _effectiveStyle, streaming=True)
+                if prefetch is None:
+                    logging.error('[DAEMON][TestTTS] GeminiTTS streaming :: échec de la pré-lecture')
+                    return
+                streamIter, firstChunkBytes, sampleRate, channels = prefetch
+                streamMimeType = f'audio/L16;rate={sampleRate};channels={channels}'
+                streamDir = myConfig.ttsStreamFolderTmp
+                os.makedirs(streamDir, exist_ok=True)
+                pipeName = str(uuid4()) + '.l16'
+                pipePath = os.path.join(streamDir, pipeName)
+                os.mkfifo(pipePath)  # type: ignore[attr-defined]  # POSIX only — cible Debian
+                pipeUrl = f'{myConfig.ttsWebSrvMediaProxy}?type=stream&file={pipeName}&rate={sampleRate}&channels={channels}'
+                logging.debug('[DAEMON][TestTTS] Pipe créé :: %s | URL :: %s', pipePath, pipeUrl)
+                threading.Thread(target=TTSCast.geminiTTSStream, args=[streamIter, firstChunkBytes, sampleRate, channels, pipePath, filepath]).start()
+                res = TTSCast.castToGoogleHome(pipeUrl, ttsGoogleName, mimeType=streamMimeType, streamType='LIVE')
+            else:
+                audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _effectiveStyle)
+                if isinstance(audioBytes, bytes):
+                    with open(filepath, 'wb') as out:
+                        out.write(audioBytes)
+                    logging.debug('[DAEMON][TestTTS] Fichier TTS Gemini généré :: %s', filepath)
+                else:
+                    logging.error('[DAEMON][TestTTS] Echec de la génération Gemini TTS')
+                    return
+                urlFileToPlay = f'{ttsSrvWeb}{filename}'
+                logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+                res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType='audio/wav')
+
             logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
     @staticmethod
@@ -1553,13 +1572,14 @@ class TTSCast:
                             project=myConfig.aiProjectID,
                             location="global",
                             credentials=credentials,
+                            http_options=types.HttpOptions(timeout=30000),
                         )   
                     else:
                         logging.error('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return None
                 elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
                     logging.debug('[DAEMON][genAI] Chargement du moteur IA en utilisant la clé API :: %s', "***" if myConfig.aiApiKey else "N/A")
-                    client = genai.Client(api_key=myConfig.aiApiKey)
+                    client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=30000))
                 else:
                     logging.error('[DAEMON][genAI] Mode d\'authentification invalide ou clé API manquante.')
                     return None
@@ -1692,10 +1712,10 @@ class TTSCast:
                     return None
                 logging.debug('[DAEMON][GeminiTTS] Chargement des credentials OAuth2 :: %s', myConfig.gCloudApiKey)
                 credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
-                client = genai.Client(vertexai=True, project=myConfig.aiProjectID, location='global', credentials=credentials)
+                client = genai.Client(vertexai=True, project=myConfig.aiProjectID, location='global', credentials=credentials, http_options=types.HttpOptions(timeout=30000))
             elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
                 logging.debug('[DAEMON][GeminiTTS] Client API key :: ***')
-                client = genai.Client(api_key=myConfig.aiApiKey)
+                client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=30000))
             else:
                 logging.error('[DAEMON][GeminiTTS] Mode auth invalide ou clé manquante.')
                 return None

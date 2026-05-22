@@ -329,7 +329,8 @@ class ttscast extends eqLogic
         $ttsTestGemini = config::byKey('ttsTestGemini', 'ttscast', '0');
         $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
         $ttsGeminiStyle = config::byKey('ttsTestGeminiStyle', 'ttscast', '');
-        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'ttsGeminiStyle' => $ttsGeminiStyle, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI, 'ttsGemini' => $ttsTestGemini);
+        $ttsTestStreaming = config::byKey('ttsTestStreaming', 'ttscast', '0');
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'ttsGeminiStyle' => $ttsGeminiStyle, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI, 'ttsGemini' => $ttsTestGemini, 'ttsStreaming' => $ttsTestStreaming);
         self::sendToDaemon($value);
     }
 
