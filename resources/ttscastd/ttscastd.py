@@ -1835,6 +1835,20 @@ class TTSCast:
 
             logging.debug('[DAEMON][GeminiTTSStream] Pipe ouvert en écriture, démarrage du streaming')
 
+            # Header WAV RIFF pour stream de durée inconnue
+            # audio/L16 (RFC 2586) attend du big-endian, mais Gemini retourne du PCM little-endian.
+            # audio/wav accepte du PCM LE nativement — patch des tailles à 0x7FFFFFFF pour stream ouvert.
+            _wavBuf = io.BytesIO()
+            with wave.open(_wavBuf, 'wb') as _wh:
+                _wh.setnchannels(channels)
+                _wh.setsampwidth(2)
+                _wh.setframerate(sampleRate)
+                _wh.writeframes(b'')
+            _wavHeader = bytearray(_wavBuf.getvalue())
+            _wavHeader[4:8]   = b'\xff\xff\xff\x7f'  # RIFF chunk size : durée inconnue
+            _wavHeader[40:44] = b'\xff\xff\xff\x7f'  # data chunk size : durée inconnue
+            os.write(fd, bytes(_wavHeader))
+
             # Écrire le premier chunk déjà pré-lu
             os.write(fd, firstChunkBytes)
 

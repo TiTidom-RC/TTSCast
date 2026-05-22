@@ -65,7 +65,7 @@ try {
         $streamRate     = in_array((int)($_GET['rate']     ?? 0), [8000, 16000, 22050, 24000, 44100, 48000], true) ? (int)$_GET['rate']     : 24000;
         $streamChannels = in_array((int)($_GET['channels'] ?? 0), [1, 2],                                    true) ? (int)$_GET['channels'] : 1;
         log::add('ttscast', 'debug', '[PROXY][Stream] Pipe ouvert, streaming démarré :: rate=' . $streamRate . ' | channels=' . $streamChannels);
-        header('Content-Type: audio/L16;rate=' . $streamRate . ';channels=' . $streamChannels);
+        header('Content-Type: audio/wav'); // WAV RIFF avec header dans le stream (PCM LE 16-bit — rate/channels dans le header WAV)
         header('Cache-Control: no-cache, no-store');
         header('Transfer-Encoding: chunked');
         header('Content-Encoding: identity'); // Désactiver mod_deflate — le PCM brut ne doit pas être compressé
