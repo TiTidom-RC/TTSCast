@@ -666,7 +666,7 @@ class TTSCast:
                     logging.error('[DAEMON][TestTTS] GeminiTTS streaming :: échec de la pré-lecture')
                     return
                 streamIter, firstChunkBytes, sampleRate, channels, streamClient = prefetch
-                streamMimeType = f'audio/L16;rate={sampleRate};channels={channels}'
+                streamMimeType = 'audio/wav'  # Le proxy envoie un stream WAV RIFF (PCM LE 16-bit)
                 streamDir = myConfig.ttsStreamFolderTmp
                 os.makedirs(streamDir, exist_ok=True)
                 pipeName = str(uuid4()) + '.l16'
@@ -1267,7 +1267,7 @@ class TTSCast:
                         logging.error('[DAEMON][TTS] GeminiTTS streaming :: échec de la pré-lecture')
                         return False
                     streamIter, firstChunkBytes, sampleRate, channels, streamClient = prefetch
-                    mimeType = f'audio/L16;rate={sampleRate};channels={channels}'
+                    mimeType = 'audio/wav'  # Le proxy envoie un stream WAV RIFF (PCM LE 16-bit)
                     logging.debug('[DAEMON][TTS] Format stream détecté :: %s', mimeType)
 
                     streamDir = myConfig.ttsStreamFolderTmp
