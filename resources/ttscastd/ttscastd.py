@@ -1867,6 +1867,11 @@ class TTSCast:
                     f.write(wavBytes)
                 logging.debug('[DAEMON][GeminiTTSStream] Fichier TTS Gemini stream mis en cache :: %s', cacheFilePath)
             return wavBytes
+        except BrokenPipeError:
+            # Le client (Chromecast via proxy PHP) a fermé la connexion avant la fin du stream
+            # Ce comportement est attendu si le Chromecast déconnecte (LOAD_FAILED, stop, etc.)
+            logging.warning('[DAEMON][GeminiTTSStream] Client déconnecté avant la fin du stream (Broken pipe)')
+            return None
         except Exception as e:
             logging.error('[DAEMON][GeminiTTSStream] Exception :: %s', e)
             logging.debug(traceback.format_exc())
