@@ -1827,6 +1827,8 @@ class TTSCast:
                 logging.error('[DAEMON][GeminiTTSStream] Timeout (10s) : aucun lecteur sur le pipe :: %s', pipePath)
                 return None
 
+            # Retirer O_NONBLOCK après l'ouverture : les écritures doivent bloquer si le buffer est plein
+            os.set_blocking(fd, True)  # type: ignore[attr-defined]  # POSIX only — cible Debian
             logging.debug('[DAEMON][GeminiTTSStream] Pipe ouvert en écriture, démarrage du streaming')
 
             # Header WAV RIFF pour stream de durée inconnue
