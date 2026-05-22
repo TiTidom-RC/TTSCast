@@ -1037,7 +1037,10 @@ class TTSCast:
             # Texte brut (sans IA, ou SSML prioritaire sur l'IA) : mise à jour ttsLastMessage + notification si applicable
             if not _useAI or _useSSML:
                 TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
-            
+
+            if _useStreaming and ttsEngine != 'geminitts' and not myConfig.streamingDefault:
+                logging.warning('[DAEMON][TTS] Option "streaming" ignorée : le mode streaming n\'est supporté que par le moteur Gemini TTS (moteur actif : "%s"). Supprimez l\'option "streaming:true" de cet appel TTS.', ttsEngine)
+
             if ttsEngine == "gcloudtts":
                 logging.debug('[DAEMON][TTS] TTSEngine = gcloudtts')
                 logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
