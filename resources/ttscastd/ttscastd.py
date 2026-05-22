@@ -1261,6 +1261,8 @@ class TTSCast:
                     logging.debug('[DAEMON][TTS] Mode streaming activé pour Gemini TTS')
 
                     # Pré-lecture du premier chunk : détection du format audio réel avant de lancer le Chromecast
+                    _t = time.time()
+                    logging.info('[TIMING][GeminiStream] t0_start :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
                     prefetch = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle, streaming=True)
                     if prefetch is None:
                         logging.error('[DAEMON][TTS] GeminiTTS streaming :: échec de la pré-lecture')
@@ -1278,6 +1280,8 @@ class TTSCast:
                     logging.debug('[DAEMON][TTS] Pipe créé :: %s | URL :: %s', pipePath, pipeUrl)
 
                     threading.Thread(target=TTSCast.geminiTTSStream, args=[streamIter, firstChunkBytes, sampleRate, channels, pipePath, filepath, streamClient]).start()
+                    _t = time.time()
+                    logging.info('[TIMING][GeminiStream] t1_castStart :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
                     res = TTSCast.castToGoogleHome(urltoplay=pipeUrl, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType=mimeType, streamType='LIVE')
 
                 else:
