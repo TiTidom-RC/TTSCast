@@ -1,0 +1,25 @@
+name: Python Check
+
+on:
+  pull_request:
+    branches:
+      - beta
+
+jobs:
+  python-check:
+    name: Ruff Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Install ruff
+        run: pip install ruff
+
+      - name: Ruff Check
+        run: ruff check resources/ttscastd/
