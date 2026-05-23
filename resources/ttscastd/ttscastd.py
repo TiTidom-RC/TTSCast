@@ -150,7 +150,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'] + ' | ' + message['ttsAI'] + ' | geminiVoice=' + message['ttsGeminiVoiceName'] + ' | geminiStyle=' + message['ttsGeminiStyle'] + ' | gemini=' + message['ttsGemini'] + ' | streaming=' + message['ttsStreaming'])
                                 threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsGeminiStyle'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML'], message['ttsAI'], message['ttsGemini'], message['ttsStreaming']]).start()
                             else:
-                                logging.debug('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
+                                logging.warning('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                         
                         elif message['cmd_action'] == 'tts':
                             logging.info('[DAEMON][SOCKET] Generate And Play TTS')
@@ -159,7 +159,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))                                    
                                 threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'], message.get('cmdNotificationId', 0)]).start()
                             else:
-                                logging.debug('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
+                                logging.warning('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
                                 
                         elif message['cmd_action'] == 'generatetts':
                             logging.info('[DAEMON][SOCKET] Generate TTS as Jeedom Engine')
@@ -168,7 +168,7 @@ class Loops:
                                 logging.debug('[DAEMON][SOCKET] GenerateTTS :: %s', str(message))
                                 threading.Thread(target=TTSCast.generateTTS, args=[message['ttsText'], message['ttsFile'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()
                             else:
-                                logging.debug('[DAEMON][SOCKET] GenerateTTS :: Il manque des données pour traiter la commande.')
+                                logging.warning('[DAEMON][SOCKET] GenerateTTS :: Il manque des données pour traiter la commande.')
                         
                         elif (message['cmd_action'] == 'volumeset' and all(keys in message for keys in ('value', 'googleUUID'))):
                             logging.info('[DAEMON][SOCKET] Action :: VolumeSet = %s @ %s', message['value'], message['googleUUID'])
@@ -302,7 +302,7 @@ class Loops:
                     logging.debug(traceback.format_exc())    
                     shutdown()
         except KeyboardInterrupt:
-            logging.error('[DAEMON][MAINLOOP] KeyboardInterrupt on MainLoop, Shutdown.')
+            logging.info('[DAEMON][MAINLOOP] KeyboardInterrupt on MainLoop, Shutdown.')
             shutdown()
                     
 class TTSCast:
@@ -334,7 +334,7 @@ class TTSCast:
             
             if response.status_code != requests.codes.ok:
                 filecontent = None
-                logging.error('[DAEMON][JeedomTTS] Status Code Error :: %s', response.status_code)
+                logging.warning('[DAEMON][JeedomTTS] Status Code Error :: %s (%s)', response.status_code, response.reason)
             else:
                 if len(response.content) < 254 and os.path.exists(response.content):
                     logging.debug('[DAEMON][JeedomTTS] Response is a FilePath. Downloading Content Now.')
@@ -377,7 +377,7 @@ class TTSCast:
             
             if response.status_code != requests.codes.ok:
                 filecontent = None
-                logging.error('[DAEMON][VoiceRSS] Status Code Error :: %s (%s)', response.status_code, response.reason)
+                logging.warning('[DAEMON][VoiceRSS] Status Code Error :: %s (%s)', response.status_code, response.reason)
             else:
                 """ logging.debug('[DAEMON][VoiceRSS] Response is OK. Downloading Content Now.')
                 fc = open(response.content, "rb")
@@ -463,7 +463,7 @@ class TTSCast:
                             TTSCast._sendTTSResult(_aiReformulatedText, True)
                             text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                         else:
-                            logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                            logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                             if myConfig.appConvertSingleQuote:
                                 ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText, True, "TestTTS")
                             text_input = googleCloudTTS.SynthesisInput(text=ttsText)
@@ -538,7 +538,7 @@ class TTSCast:
                             TTSCast._sendTTSResult(_aiReformulatedText, True)
                             ttsText = ttsAIText
                         else:
-                            logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                            logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                     client = gTTS(ttsText, lang=langToTTS)
                     client.save(filepath)
                 except Exception as e:
@@ -547,7 +547,7 @@ class TTSCast:
                             os.remove(filepath)
                         except OSError:
                             pass
-                    logging.debug('[DAEMON][TestTTS] Google Translate API ERROR :: %s', e)
+                    logging.warning('[DAEMON][TestTTS] Google Translate API ERROR :: %s', e)
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
@@ -575,13 +575,13 @@ class TTSCast:
                         TTSCast._sendTTSResult(_aiReformulatedText, True)
                         ttsText = ttsAIText
                     else:
-                        logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                        logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                 ttsResult = TTSCast.jeedomTTS(ttsText, ttsLang)
                 if ttsResult is not None:
                     with open(filepath, 'wb') as f:
                         f.write(ttsResult)
                 else:
-                    logging.debug('[DAEMON][TestTTS] JeedomTTS Error :: Incorrect Output')
+                    logging.warning('[DAEMON][TestTTS] JeedomTTS Error :: Incorrect Output — lang : %s — extrait : "%.80s"', ttsLang, ttsText)
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
@@ -610,13 +610,13 @@ class TTSCast:
                             TTSCast._sendTTSResult(_aiReformulatedText, True)
                             ttsText = ttsAIText
                         else:
-                            logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                            logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                     ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, True if ttsSSML == '1' else False)
                     if ttsResult is not None:
                         with open(filepath, 'wb') as f:
                             f.write(ttsResult)
                     else:
-                        logging.debug('[DAEMON][TestTTS] VoiceRSS Error :: Incorrect Output')
+                        logging.warning('[DAEMON][TestTTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : "%.80s"', ttsRSSVoiceName, ttsText)
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
@@ -647,7 +647,7 @@ class TTSCast:
                     TTSCast._sendTTSResult(_aiReformulatedText, True)
                     _textToSynth = ttsAIText
                 else:
-                    logging.error('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                    logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
             if myConfig.appConvertSingleQuote:
                 _textToSynth = Functions.convertSingleQuoteToDoubleQuote(_textToSynth, True, "TestTTS")
             _effectiveStyle = ttsGeminiStyle if ttsGeminiStyle else myConfig.geminiTTSStyle
@@ -683,7 +683,7 @@ class TTSCast:
                         out.write(audioBytes)
                     logging.debug('[DAEMON][TestTTS] Fichier TTS Gemini généré :: %s', filepath)
                 else:
-                    logging.error('[DAEMON][TestTTS] Echec de la génération Gemini TTS')
+                    logging.error('[DAEMON][TestTTS] Echec de la génération Gemini TTS — voix : %s — extrait : "%.80s"', ttsGeminiVoiceName, _textToSynth)
                     return
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
@@ -744,7 +744,7 @@ class TTSCast:
                         ttsText = "<speak><break time='" + str(_silenceBefore) + "' /><p>" + ttsText + "</p></speak>"
                         logging.debug('[DAEMON][GenerateTTS] Ajout de %s de silence avant le TTS :: %s', str(_silenceBefore), ttsText)
                     elif _silenceBefore is not None and _useSSML is True:
-                        logging.error('[DAEMON][GenerateTTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande.')
+                        logging.error('[DAEMON][GenerateTTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande. Aucun TTS diffusé.')
                         return False
 
                     # Custom Voice
@@ -765,7 +765,7 @@ class TTSCast:
 
                     logging.debug('[DAEMON][GenerateTTS] Options :: %s', str(options_json))
             except ValueError as e:
-                logging.debug('[DAEMON][GenerateTTS] Options mal formatées (Json KO) :: %s', e)
+                logging.warning('[DAEMON][GenerateTTS] Options mal formatées (Json KO) :: %s', e)
             
             if ttsEngine == "gcloudtts":
                 logging.debug('[DAEMON][GenerateTTS] TTSEngine = gcloudtts')
@@ -795,7 +795,7 @@ class TTSCast:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
-                                logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                                logging.warning('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsText)
@@ -851,7 +851,7 @@ class TTSCast:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 ttsText = ttsAIText
                             else:
-                                logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                                logging.warning('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                         client = gTTS(ttsText, lang=langToTTS)
                         client.save(filepath)
                         logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
@@ -861,7 +861,7 @@ class TTSCast:
                                 os.remove(filepath)
                             except OSError:
                                 pass
-                        logging.debug('[DAEMON][GenerateTTS] Google Translate API ERROR :: %s', e)
+                        logging.warning('[DAEMON][GenerateTTS] Google Translate API ERROR :: %s', e)
                 else:
                     logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
@@ -879,14 +879,14 @@ class TTSCast:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 ttsText = ttsAIText
                             else:
-                                logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                                logging.warning('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                         ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
                         if ttsResult is not None:
                             with open(filepath, 'wb') as f:
                                 f.write(ttsResult)
                             logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
                         else:
-                            logging.debug('[DAEMON][GenerateTTS] VoiceRSS Error :: Incorrect Output')
+                            logging.warning('[DAEMON][GenerateTTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : "%.80s"', ttsRSSVoiceName, ttsText)
                     else:
                         logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 else:
@@ -904,7 +904,7 @@ class TTSCast:
                         logging.debug('[DAEMON][GenerateTTS] Génération Gemini TTS avec IA')
                         _textToSynth = ttsAIText
                     else:
-                        logging.error('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                        logging.warning('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                 if myConfig.appConvertSingleQuote:
                     _textToSynth = Functions.convertSingleQuoteToDoubleQuote(_textToSynth)
                 audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle)
@@ -913,7 +913,7 @@ class TTSCast:
                         f.write(audioBytes)
                     logging.debug('[DAEMON][GenerateTTS] Fichier TTS Gemini généré :: %s', filepath)
                 else:
-                    logging.error('[DAEMON][GenerateTTS] Gemini TTS Error :: Incorrect Output')
+                    logging.warning('[DAEMON][GenerateTTS][GEMINI] Réponse invalide de l\'API Gemini TTS — voix : %s — extrait : "%.80s"', ttsGeminiVoiceName, _textToSynth)
 
             else:
                 logging.error('[DAEMON][GenerateTTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts.', ttsEngine)
@@ -996,9 +996,9 @@ class TTSCast:
                     if _silenceBefore is not None and _useSSML is False:
                         _useSSML = True
                         ttsText = "<speak><break time='" + str(_silenceBefore) + "' /><p>" + ttsText + "</p></speak>"
-                        logging.debug('[DAEMON][TTS] Ajout de %s de silence avant le TTS :: %s', str(_silenceBefore), ttsText)
+                        logging.info('[DAEMON][TTS] Ajout de %s de silence avant le TTS :: %s', str(_silenceBefore), ttsText)
                     elif _silenceBefore is not None and _useSSML is True:
-                        logging.error('[DAEMON][TTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande.')
+                        logging.error('[DAEMON][TTS] Les options "before" et "ssml" ne peuvent pas être utilisées dans la même commande. Aucun TTS diffusé.')
                         return False
                     
                     # Force
@@ -1030,7 +1030,7 @@ class TTSCast:
                         logging.debug('[DAEMON][TTS] Notification pass-through opts :: %s', str(_cmdOpts))
                     logging.debug('[DAEMON][TTS] Options :: %s', str(options_json))
             except ValueError as e:
-                logging.debug('[DAEMON][TTS] Options mal formatées (Json KO) :: %s', e)
+                logging.warning('[DAEMON][TTS] Options mal formatées (Json KO) :: %s', e)
             
             _appDing = False if myConfig.appDisableDing else _appDing
 
@@ -1075,7 +1075,7 @@ class TTSCast:
                                 TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                                 text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
                             else:
-                                logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                                logging.warning('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                                 if myConfig.appConvertSingleQuote:
                                     ttsText = Functions.convertSingleQuoteToDoubleQuote(ttsText)
@@ -1145,7 +1145,7 @@ class TTSCast:
                                 TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                                 ttsText = ttsAIText
                             else:
-                                logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                                logging.warning('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                         client = gTTS(ttsText, lang=langToTTS)
                         client.save(filepath)
@@ -1155,7 +1155,7 @@ class TTSCast:
                                 os.remove(filepath)
                             except OSError:
                                 pass
-                        logging.debug('[DAEMON][TTS] Google Translate API ERROR :: %s', e)
+                        logging.warning('[DAEMON][TTS] Google Translate API ERROR :: %s', e)
                 else:
                     logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
@@ -1182,14 +1182,14 @@ class TTSCast:
                             TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                             ttsText = ttsAIText
                         else:
-                            logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                            logging.warning('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                             TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                     ttsResult = TTSCast.jeedomTTS(ttsText, ttsLang)
                     if ttsResult is not None:
                         with open(filepath, 'wb') as f:
                             f.write(ttsResult)
                     else:
-                        logging.debug('[DAEMON][TTS] JeedomTTS Error :: Incorrect Output')
+                        logging.warning('[DAEMON][TTS] JeedomTTS Error :: Incorrect Output — lang : %s — extrait : "%.80s"', ttsLang, ttsText)
                 else:
                     logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
@@ -1217,14 +1217,14 @@ class TTSCast:
                                 TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                                 ttsText = ttsAIText
                             else:
-                                logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                                logging.warning('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                         ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
                         if ttsResult is not None:
                             with open(filepath, 'wb') as f:
                                 f.write(ttsResult)
                         else:
-                            logging.debug('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output')
+                            logging.warning('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : "%.80s"', ttsRSSVoiceName, ttsText)
                     else:
                         logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
@@ -1252,7 +1252,7 @@ class TTSCast:
                         TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                         _textToSynth = ttsAIText
                     else:
-                        logging.error('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
+                        logging.warning('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                         TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                 if myConfig.appConvertSingleQuote:
                     _textToSynth = Functions.convertSingleQuoteToDoubleQuote(_textToSynth)
@@ -1291,7 +1291,7 @@ class TTSCast:
                             f.write(audioBytes)
                         logging.info('[DAEMON][TTS] Fichier TTS Gemini généré :: %s', filepath)
                     else:
-                        logging.error('[DAEMON][TTS] GeminiTTS Error :: Incorrect Output')
+                        logging.error('[DAEMON][TTS] GeminiTTS Error :: Incorrect Output — voix : %s — extrait : "%.80s"', ttsGeminiVoiceName, _textToSynth)
                         return False
                     urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
@@ -1320,7 +1320,7 @@ class TTSCast:
             try:
                 chromecasts = [mycast for mycast in myConfig.NETCAST_DEVICES.values() if mycast.name == googleName]
                 if not chromecasts:
-                    logging.debug('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
+                    logging.warning('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
                     return False
                 cast = chromecasts[0]
                 logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
@@ -1379,7 +1379,7 @@ class TTSCast:
                 
                 cast.media_controller.block_until_active()
                 
-                logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
+                logging.info('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
                 
                 media_player_state = None
                 media_has_played = False
@@ -1407,7 +1407,7 @@ class TTSCast:
                 chromecasts = None
                 return True
             except Exception as e:
-                logging.debug('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
+                logging.warning('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
                 logging.debug(traceback.format_exc())
                 
                 if volumeBeforePlay is not None:
@@ -1439,7 +1439,7 @@ class TTSCast:
                     cast = myConfig.NETCAST_DEVICES[_uuid]
                     logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
                 else:
-                    logging.debug('[DAEMON][Cast] Aucun Chromecast avec cet UUID nom :: %s', googleUUID)
+                    logging.warning('[DAEMON][Cast] Aucun Chromecast avec cet UUID :: %s', googleUUID)
                     return False
                 
                 # --- Wait Queue Management (Entrance) ---
@@ -1504,7 +1504,7 @@ class TTSCast:
                 
                 cast.media_controller.block_until_active()
 
-                logging.debug('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
+                logging.info('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
                 media_player_state = None
                 media_has_played = False
@@ -1534,7 +1534,7 @@ class TTSCast:
                 cast = None
                 return True
             except Exception as e:
-                logging.debug('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
+                logging.warning('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
                 logging.debug(traceback.format_exc())
                 
                 if volumeBeforePlay is not None:
@@ -1578,13 +1578,13 @@ class TTSCast:
                             http_options=types.HttpOptions(timeout=30000),
                         )   
                     else:
-                        logging.error('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
+                        logging.warning('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return None
                 elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
                     logging.debug('[DAEMON][genAI] Chargement du moteur IA en utilisant la clé API :: %s', "***" if myConfig.aiApiKey else "N/A")
                     client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=30000))
                 else:
-                    logging.error('[DAEMON][genAI] Mode d\'authentification invalide ou clé API manquante.')
+                    logging.warning('[DAEMON][genAI] Mode d\'authentification invalide ou clé API manquante (mode configuré : %s).', myConfig.aiAuthMode)
                     return None
                 
                 logging.debug('[DAEMON][genAI] Reformulation de texte via IA')
@@ -1673,12 +1673,12 @@ class TTSCast:
                         Comm.sendToJeedom.add_changes('aiStats::TTSCast_AI_Stats', data)  # type: ignore
                         logging.debug('[DAEMON][GenAI][TOKENS] Stats envoyées à Jeedom')
                     except Exception as e:
-                        logging.error('[DAEMON][GenAI][TOKENS] Erreur lors de l\'envoi des tokens à Jeedom: %s', e)
+                        logging.warning('[DAEMON][GenAI][TOKENS] Erreur lors de l\'envoi des tokens à Jeedom: %s', e)
                 else:
                     logging.warning('[DAEMON][GenAI][TOKENS] Aucun token reçu (input=0) - stats non envoyées à Jeedom')
                 
                 if not response.text:
-                    logging.warning('[DAEMON][GenAI] Aucune réponse générée par Gemini.')
+                    logging.warning('[DAEMON][GenAI] Aucune réponse générée par Gemini — extrait : "%.80s"', _aiPrompt)
                     return None
                 else:
                     raw_text = response.text.strip()
@@ -1687,7 +1687,7 @@ class TTSCast:
                     logging.debug('[DAEMON][GenAI] Réponse après nettoyage Markdown (repr) :: %s', repr(clean_text))
                     return clean_text
             else:
-                logging.error('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, "***" if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
+                logging.warning('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, "***" if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
                 return None
         except Exception as e:
             logging.error('[DAEMON][GenAI] Erreur: %s', e)
@@ -1720,7 +1720,7 @@ class TTSCast:
                 logging.debug('[DAEMON][GeminiTTS] Client API key :: ***')
                 client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=30000))
             else:
-                logging.error('[DAEMON][GeminiTTS] Mode auth invalide ou clé manquante.')
+                logging.error('[DAEMON][GeminiTTS] Mode auth invalide ou clé manquante (mode configuré : %s).', myConfig.aiAuthMode)
                 return None
 
             # ── Prompt & configuration audio ──────────────────────────────────
@@ -2277,7 +2277,7 @@ class Functions:
                 _cmdWait = options_json.get('wait', None)
                 logging.debug(f'[DAEMON][controllerActions] StartApp :: Options :: {str(options_json)}')
         except ValueError as e:
-            logging.debug(f'[DAEMON][controllerActions] StartApp :: Options mal formatées (Json KO) :: {e}')
+            logging.warning(f'[DAEMON][controllerActions] StartApp :: Options mal formatées (Json KO) :: {e}')
         
         _appDing = False if myConfig.appDisableDing else _appDing
         
@@ -2373,7 +2373,7 @@ class Functions:
                 _cmdWait = options_json.get('wait', None)
                 logging.debug(f'[DAEMON][controllerActions] YouTube :: Options :: {str(options_json)}')
         except ValueError as e:
-            logging.debug(f'[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: {e}')
+            logging.warning(f'[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: {e}')
         
         _appDing = False if myConfig.appDisableDing else _appDing
         
@@ -2433,7 +2433,7 @@ class Functions:
             
             cast.media_controller.block_until_active()
             
-            logging.debug(f'[DAEMON][controllerActions] YouTube :: Diffusion lancée :: {str(cast.media_controller.status)}')
+            logging.info(f'[DAEMON][controllerActions] YouTube :: Diffusion lancée :: {cast.name} | ID: {_value}')
             
             return True
         except Exception as e:
@@ -2469,7 +2469,7 @@ class Functions:
                 _reload_seconds = options_json.get('reload_seconds', None)
                 _cmdWait = options_json.get('wait', None)
         except ValueError as e:
-            logging.debug(f'[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: {e}')
+            logging.warning(f'[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: {e}')
         
         try:
             # Default target is the googleUUID until resolved by Queue logic
@@ -2542,7 +2542,7 @@ class Functions:
                         _cmdWait = options_json.get('wait', None)
                         logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options :: {str(options_json)}')
                 except ValueError as e:
-                    logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options mal formatées (Json KO) :: {e}')
+                    logging.warning(f'[DAEMON][controllerActions] {radioType} :: Options mal formatées (Json KO) :: {e}')
 
                 _appDing = False if myConfig.appDisableDing else _appDing
                 
@@ -2627,7 +2627,7 @@ class Functions:
                         
                         cast.media_controller.block_until_active()
                         
-                        logging.debug(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: {str(cast.media_controller.status)}')
+                        logging.info(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: {cast.name} | {radioTitle}')
                     
                     return True
                 except Exception as e:
@@ -2667,7 +2667,7 @@ class Functions:
                     _cmdForce = options_json.get('force', False)
                     logging.debug(f'[DAEMON][controllerActions] {soundType} :: Options :: {str(options_json)}')
             except ValueError as e:
-                logging.debug(f'[DAEMON][controllerActions] {soundType} :: Options mal formatées (Json KO) :: {e}')
+                logging.warning(f'[DAEMON][controllerActions] {soundType} :: Options mal formatées (Json KO) :: {e}')
 
             _appDing = False if myConfig.appDisableDing else _appDing
 
@@ -2756,7 +2756,7 @@ class Functions:
                 
                 cast.media_controller.block_until_active()
                 
-                logging.debug(f'[DAEMON][controllerActions] Diffusion {soundType} lancée :: {str(cast.media_controller.status)}')
+                logging.info(f'[DAEMON][controllerActions] Diffusion {soundType} lancée :: {cast.name} | {_value}')
                 
                 media_player_state = None
                 media_has_played = False
@@ -2840,7 +2840,7 @@ class Functions:
 
                     logging.debug(f'[DAEMON][controllerActions] Media :: Options :: {str(options_json)}')
             except ValueError as e:
-                logging.debug(f'[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: {e}')
+                logging.warning(f'[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: {e}')
 
             _appDing = False if myConfig.appDisableDing else _appDing
             
@@ -2932,7 +2932,7 @@ class Functions:
                 
                 cast.media_controller.block_until_active()
                 
-                logging.debug(f'[DAEMON][controllerActions] Diffusion Media lancée :: {str(cast.media_controller.status)}')
+                logging.info(f'[DAEMON][controllerActions] Diffusion Media lancée :: {cast.name} | {_value}')
                 
                 return True
                 
@@ -3298,7 +3298,7 @@ class myCast:
                 logging.error('[DAEMON][NETCAST][CastRemove][Cast] Exception (%s) :: %s', str(chromecast.name), e)
                 logging.debug(traceback.format_exc())
         else:
-            logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Status Listener already deleted', str(chromecast.name))
+            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Status Listener already deleted', str(chromecast.name))
             
         if (uuid in myConfig.LISTENER_MEDIA):
             try:
@@ -3308,7 +3308,7 @@ class myCast:
                 logging.error('[DAEMON][NETCAST][CastRemove][Media] Exception (%s) :: %s', str(chromecast.name), e)
                 logging.debug(traceback.format_exc())
         else:
-            logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
+            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
         
         if (uuid in myConfig.LISTENER_CONNECT):
             try:
@@ -3318,7 +3318,7 @@ class myCast:
                 logging.error('[DAEMON][NETCAST][CastRemove][Connect] Exception (%s) :: %s', str(chromecast.name), e)
                 logging.debug(traceback.format_exc())
         else:
-            logging.warning('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Connect Listener already deleted', str(chromecast.name))
+            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Connect Listener already deleted', str(chromecast.name))
 
         if (uuid in myConfig.NETCAST_GROUPS):
             try:

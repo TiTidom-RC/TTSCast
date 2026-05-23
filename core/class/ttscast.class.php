@@ -71,7 +71,7 @@ class ttscast extends eqLogic
                 return true;
             } else {
                 // file_put_contents($_filename, '');
-                log::add('ttscast', 'error', '[generateTTS] You can\'t use Jeedom TTS as engine (in the plugin) and call it from Jeedom TTS API !!');
+                log::add('ttscast', 'error', '[generateTTS] Conflit de configuration : le moteur sélectionné est "Jeedom TTS", mais TTSCast est lui-même appelé par l\'API TTS de Jeedom — cela créerait une boucle infinie. Sélectionnez un autre moteur TTS dans la configuration du plugin.');
                 return false;
             }
             
@@ -113,15 +113,15 @@ class ttscast extends eqLogic
             $return['state'] = 'in_progress';
         } else {
             if (exec(system::getCmdSudo() . system::get('cmd_check') . '-Ec "python3\-requests|python3\-setuptools|python3\-dev|python3\-venv"') < 4) {
-                log::add('ttscast', 'debug', '[DepInfo][ERROR] Missing system dependencies');
+                log::add('ttscast', 'warning', '[DepInfo] Missing system dependencies');
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
             } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Eiwc "' . config::byKey('pythonDepString', 'ttscast', '', true) . '"') < config::byKey('pythonDepNum', 'ttscast', 0, true)) {
-                log::add('ttscast', 'debug', '[DepInfo][ERROR] Missing Python dependencies');
+                log::add('ttscast', 'warning', '[DepInfo] Missing Python dependencies');
                 $return['state'] = 'nok';
             } else {
-                log::add('ttscast', 'debug', '[DepInfo][INFO] All dependencies are installed');
+                log::add('ttscast', 'info', '[DepInfo] All dependencies are installed');
                 $return['state'] = 'ok';
             }
         }
@@ -468,7 +468,7 @@ class ttscast extends eqLogic
             }
         }
         catch (\Exception $e) {
-            log::add('ttscast', 'debug', '[Plugin-Version] Get ERROR :: ' . $e->getMessage());
+            log::add('ttscast', 'warning', '[Plugin-Version] Get ERROR :: ' . $e->getMessage());
         }
         log::add('ttscast', 'info', '[Plugin-Version] PluginVersion :: ' . $pluginVersion);
         return $pluginVersion;
@@ -499,7 +499,7 @@ class ttscast extends eqLogic
             $pythonDepNum = count($nonEmptyLines);
         }
         catch (\Exception $e) {
-            log::add('ttscast', 'debug', '[Python-Dep] Get requirements.txt ERROR :: ' . $e->getMessage());
+            log::add('ttscast', 'warning', '[Python-Dep] Get requirements.txt ERROR :: ' . $e->getMessage());
         }
         log::add('ttscast', 'debug', '[Python-Dep] PythonDepString / PythonDepNum :: ' . $pythonDepString . " / " . $pythonDepNum);
         config::save('pythonDepString', $pythonDepString, 'ttscast');
@@ -624,12 +624,12 @@ class ttscast extends eqLogic
     public static function scheduleUpdateCast($_data)
     {
         if (!isset($_data['uuid'])) {
-            log::add('ttscast', 'error', '[SCHEDULE][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
+            log::add('ttscast', 'warning', '[SCHEDULE][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
             return false;
         }
         $updttscast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
         if (!is_object($updttscast)) {
-            log::add('ttscast', 'error', '[SCHEDULE][CAST] Cast non existant dans Jeedom');
+            log::add('ttscast', 'warning', '[SCHEDULE][CAST] Équipement introuvable dans Jeedom (UUID : ' . $_data['uuid'] . ') — il a peut-être été supprimé. Relancez un scan pour mettre à jour la liste des équipements.');
             return false;
         }
         else {
@@ -655,18 +655,18 @@ class ttscast extends eqLogic
     public static function realtimeUpdateCast($_data)
     {
         if (!isset($_data['uuid'])) {
-            log::add('ttscast', 'error', '[REALTIME][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
+            log::add('ttscast', 'warning', '[REALTIME][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
             return false;
         }
         if (!isset($_data['status_type'])) {
-            log::add('ttscast', 'error', '[REALTIME][CAST] Information manquante (Status_Type) pour mettre à jour l\'équipement');
+            log::add('ttscast', 'warning', '[REALTIME][CAST] Information manquante (Status_Type) pour mettre à jour l\'équipement');
             return false;
         } else {
             log::add('ttscast', 'debug', '[REALTIME][CAST] Status Type :: ' . $_data['status_type']);
         }
         $rtcast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
         if (!is_object($rtcast)) {
-            log::add('ttscast', 'error', '[REALTIME][CAST] Cast non existant dans Jeedom');
+            log::add('ttscast', 'warning', '[REALTIME][CAST] Équipement introuvable dans Jeedom (UUID : ' . $_data['uuid'] . ') — il a peut-être été supprimé. Relancez un scan pour mettre à jour la liste des équipements.');
             return false;
         }
         else {
@@ -2375,7 +2375,7 @@ class ttscastCmd extends cmd
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Custom Decoded Message) :: ' . json_encode($_options));
                 }
                 else {
-                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                    log::add('ttscast', 'warning', '[CMD] customcmd annulé — paramètre \'message\' manquant (commande personnalisée non renseignée). Options reçues : ' . json_encode($_options));
                 }                
             }
             
@@ -2396,7 +2396,8 @@ class ttscastCmd extends cmd
                     ttscast::playTTS($googleUUID, $_options['message'], isset($_options['title']) ? $_options['title'] : null, $cmdNotificationId);
                 }
                 else {
-                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour diffuser un message TTS');
+                    $missingParam = (!isset($googleUUID)) ? 'UUID de l\'équipement' : 'texte du message';
+                    log::add('ttscast', 'warning', '[CMD] TTS annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options));
                 }
             } elseif ($logicalId == 'ai_reformat' && $eqLogic->getLogicalId() == 'TTSCast_AI') {
                 log::add('ttscast', 'debug', '[CMD] ai_reformat :: ' . json_encode($_options));
@@ -2456,7 +2457,7 @@ class ttscastCmd extends cmd
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['slider'] . ' / ' . $googleUUID);
                     ttscast::actionGCast($googleUUID, "volumeset", $_options['slider']);
                 } else {
-                    log::add('ttscast', 'debug', '[CMD] VolumeSet :: ERROR = Mauvais paramètre');
+                    log::add('ttscast', 'warning', '[CMD] VolumeSet :: Mauvais paramètre :: UUID=' . ($googleUUID ?? 'null') . ' / ' . json_encode($_options));
                 }
             } elseif (in_array($logicalId, ["volumedown", "volumeup", "media_pause", "media_play", "media_stop", "media_previous", "media_next", "media_quit", "media_rewind", "mute_on", "mute_off"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
@@ -2472,7 +2473,8 @@ class ttscastCmd extends cmd
                     ttscast::mediaGCast($googleUUID, $logicalId, $_options['message'], isset($_options['title']) ? $_options['title'] : null);
                 }
                 else {
-                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                    $missingParam = (!isset($googleUUID)) ? 'UUID de l\'équipement' : 'URL / chemin du média';
+                    log::add('ttscast', 'warning', '[CMD] ' . $logicalId . ' annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options));
                 }                
             } elseif (in_array($logicalId, ["radios", "customradios", "sounds", "customsounds"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
@@ -2482,7 +2484,8 @@ class ttscastCmd extends cmd
                     ttscast::mediaGCast($googleUUID, $logicalId, $_options['select'], isset($_options['title']) ? $_options['title'] : null);
                 }
                 else {
-                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                    $missingParam = (!isset($googleUUID)) ? 'UUID de l\'équipement' : 'sélection (radio / son)';
+                    log::add('ttscast', 'warning', '[CMD] ' . $logicalId . ' annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options));
                 }                
             } elseif (in_array($logicalId, ["refresh", "refreshcast"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
