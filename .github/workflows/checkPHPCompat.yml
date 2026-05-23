@@ -1,0 +1,40 @@
+name: PHP Compatibility Check
+
+on:
+  pull_request:
+    branches:
+      - beta
+
+jobs:
+  php-compat:
+    name: PHPStan — PHP ${{ matrix.php-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['7.4', '8.2', '8.4']
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          tools: composer
+          coverage: none
+
+      - name: Install PHPStan
+        run: composer global require phpstan/phpstan --no-interaction --quiet
+
+      - name: Checkout Jeedom Core (sparse)
+        run: |
+          git clone --depth 1 --filter=blob:none --sparse \
+            https://github.com/jeedom/core.git /tmp/jeedom-core
+          git -C /tmp/jeedom-core sparse-checkout set core/class core/php core/repo
+
+      - name: PHP ${{ matrix.php-version }} Compatibility Check
+        run: |
+          PHPSTAN_VERSION=$(echo "${{ matrix.php-version }}" | awk -F. '{printf "%d%02d00", $1, $2}')
+          printf 'includes:\n  - phpstan.neon.dist\nparameters:\n  phpVersion: %s\n  scanDirectories:\n    - /tmp/jeedom-core/core/class\n    - /tmp/jeedom-core/core/php\n    - /tmp/jeedom-core/core/repo\n' "$PHPSTAN_VERSION" > phpstan.neon
+          phpstan analyse --level 0 --no-progress core/ desktop/ plugin_info/
