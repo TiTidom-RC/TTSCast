@@ -346,8 +346,15 @@ class ttscast extends eqLogic
         $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
 
         $ttsOptions = $options;
-        log::add('ttscast', 'debug', '[generateTTS] ttsOptions After Array :: ' . $ttsOptions);
-        
+        $engineOverride = null;
+        if (!empty($ttsOptions)) {
+            $parsedOptions = json_decode('{' . $ttsOptions . '}', true);
+            if (is_array($parsedOptions) && isset($parsedOptions['engine'])) {
+                $engineOverride = $parsedOptions['engine'];
+            }
+        }
+        $logEngine = $engineOverride !== null ? $ttsEngine . ' → ' . $engineOverride . ' (override options)' : $ttsEngine;
+        log::add('ttscast', 'info', '[GenerateTTS] Moteur: ' . $logEngine . ' | Fichier: ' . $ttsFile . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8'));
         $value = array('cmd' => 'action', 'cmd_action' => 'generatetts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsFile' => $ttsFile, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName);
         self::sendToDaemon($value);
     }
@@ -363,26 +370,16 @@ class ttscast extends eqLogic
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
         
-        /* log::add('ttscast', 'debug', '[PlayTTS] Options Before Array :: ' . $options);
-
-        $_appDisableDing = config::byKey('appDisableDing', 'ttscast', false);
-        if ($_appDisableDing) {
-            if ($options == null) {
-                $_resOptions = array();
-            } else {
-                $_resOptions = json_decode("{" . $options . "}", true);
-            }
-            $_resOptions['ding'] = false;
-            log::add('ttscast', 'debug', '[PlayTTS] _res Ding :: ' . json_encode($_resOptions['ding']));
-            $ttsOptions = substr(json_encode($_resOptions), 1, -1);
-        }
-        else {
-            $ttsOptions = $options;
-        } */
         $ttsOptions = $options;
-        log::add('ttscast', 'info', '[PlayTTS] Moteur: ' . $ttsEngine . ' | UUID: ' . $ttsGoogleUUID . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8'));
-        log::add('ttscast', 'debug', '[PlayTTS] ttsOptions After Array :: ' . $ttsOptions);
-        
+        $engineOverride = null;
+        if (!empty($ttsOptions)) {
+            $parsedOptions = json_decode('{' . $ttsOptions . '}', true);
+            if (is_array($parsedOptions) && isset($parsedOptions['engine'])) {
+                $engineOverride = $parsedOptions['engine'];
+            }
+        }
+        $logEngine = $engineOverride !== null ? $ttsEngine . ' → ' . $engineOverride . ' (override options)' : $ttsEngine;
+        log::add('ttscast', 'info', '[PlayTTS] Moteur: ' . $logEngine . ' | UUID: ' . $ttsGoogleUUID . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8'));
         $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'cmdNotificationId' => $cmdNotificationId);
         self::sendToDaemon($value);
     }
