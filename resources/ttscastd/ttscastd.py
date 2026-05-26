@@ -3617,6 +3617,7 @@ myConfig = Config()
 
 parser = argparse.ArgumentParser(description='TTSCast Daemon for Jeedom plugin')
 parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
+parser.add_argument("--castloglevel", help="Log Level for Chromecast libraries (pychromecast, zeroconf)", type=str, default='daemon')
 parser.add_argument("--pluginversion", help="Plugin Version", type=str)
 parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="ApiKey", type=str)
@@ -3650,6 +3651,8 @@ parser.add_argument("--streamingdefault", help="Enable streaming TTS by default"
 args = parser.parse_args()
 if args.loglevel:
     myConfig.logLevel = args.loglevel
+if args.castloglevel:
+    myConfig.castLogLevel = args.castloglevel
 if args.pluginversion:
     myConfig.pluginVersion = args.pluginversion
 if args.callback:
@@ -3741,6 +3744,11 @@ if args.ttsweb:
 
 jeedom_utils.set_log_level(myConfig.logLevel)
 
+if myConfig.castLogLevel != 'daemon':
+    _cast_level = jeedom_utils.convert_log_level(myConfig.castLogLevel)
+    logging.getLogger('pychromecast').setLevel(_cast_level)
+    logging.getLogger('zeroconf').setLevel(_cast_level)
+
 if myConfig.cycleFactor == 0:
     myConfig.cycleMain = 2.0
     myConfig.cycleComm = 0.5
@@ -3758,6 +3766,7 @@ logging.info('[DAEMON][MAIN] Start Daemon')
 logging.info('[DAEMON][MAIN] Plugin Version: %s', myConfig.pluginVersion)
 logging.info('[DAEMON][MAIN] Python Version: %s', sys.version)
 logging.info('[DAEMON][MAIN] Log level: %s', myConfig.logLevel)
+logging.info('[DAEMON][MAIN] Cast log level: %s', myConfig.castLogLevel)
 logging.info('[DAEMON][MAIN] Socket port: %s', myConfig.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', myConfig.socketHost)
 logging.info('[DAEMON][MAIN] CycleFactor: %s', myConfig.cycleFactor)
