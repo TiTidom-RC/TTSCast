@@ -130,6 +130,7 @@ class Config:
     cmdWaitQueue = {}
     
     logLevel = "error"
+    castLogLevel = "daemon"
     socketPort = 55111
     socketHost = 'localhost'
     pidFile = '/tmp/ttscastd.pid'
