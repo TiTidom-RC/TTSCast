@@ -113,6 +113,22 @@ if (!isConnect()) {
 			        </select>
 	            </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Niveau de log Chromecast}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Niveau de log des librairies Chromecast du démon. Par défaut, hérite du niveau de log global.}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="castLogLevel">
+                        <option value="daemon" selected>{{Identique au démon (défaut)}}</option>
+                        <option value="debug">{{Debug}}</option>
+                        <option value="info">{{Info}}</option>
+                        <option value="warning">{{Warning}}</option>
+                        <option value="error">{{Error}}</option>
+                        <option value="critical">{{Critical}}</option>
+                    </select>
+                </div>
+            </div>
             <legend><i class="fab fa-chromecast"></i> {{TTS (Text To Speech)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Moteur TTS}}
@@ -174,8 +190,8 @@ if (!isConnect()) {
                 <div class="col-lg-3">
                     <select class="configKey form-control" data-l1key="gCloudAudioEncoding">
                         <option value="MP3" selected>{{MP3 (Défaut)}}</option>
-                        <option value="LINEAR16_24K" disabled>{{LINEAR16 (WAV - 24kHz)}}</option>
-                        <option value="LINEAR16_48K" disabled>{{LINEAR16 (WAV - 48kHz)}}</option>
+                        <option value="LINEAR16_24K">{{LINEAR16 (WAV - 24kHz)}}</option>
+                        <option value="LINEAR16_48K">{{LINEAR16 (WAV - 48kHz)}}</option>
                     </select>
                 </div>
             </div>
@@ -264,6 +280,7 @@ if (!isConnect()) {
             </div>
             <div class="form-group customform-gcloudtts">
                 <label class="col-lg-3 control-label">{{Langue/Voix TTS (gCloud TTS)}} <a class="btn btn-info btn-xs" target="_blank" href="https://cloud.google.com/text-to-speech/">{{SITE}}</a>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de caractères :</b><br/><br/>• Chirp 3 HD : 1 M gratuits/mois, puis $30.00/M<br/>• Chirp HD : 1 M gratuits/mois, puis $30.00/M<br/>• Neural2 : 1 M gratuits/mois, puis $16.00/M<br/>• WaveNet : 4 M gratuits/mois, puis $4.00/M<br/>• Standard : 4 M gratuits/mois, puis $4.00/M<br/>• Studio : 1 M gratuits/mois, puis $160.00/M"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Langue et Voix à utiliser avec le moteur Google Cloud TTS}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
@@ -730,7 +747,7 @@ if (!isConnect()) {
                     </select>
                 </div>
             </div>
-            <legend><i class="fas fas fa-brain"></i> {{IA - Gemini}}</legend>
+            <legend><i class="fas fas fa-brain"></i> {{IA & TTS - Gemini}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Activer IA Générative}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
@@ -740,41 +757,7 @@ if (!isConnect()) {
                     <input type="checkbox" class="configKey" data-l1key="ttsAIEnable" />
                 </div>
             </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Utiliser la Reformulation IA par défaut}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de reformuler toutes les notifications TTS avec l'IA, sauf si l'option <b>&quot;genAI&quot;: false</b> est passée dans les options de la commande.}}"></i></sup>
-                </label>
-                <div class="col-lg-1">
-                    <input type="checkbox" class="configKey" data-l1key="ttsAIDefault" />
-                </div>
-            </div>
-            <div class="form-group">
-                <label class="col-lg-3 control-label">{{Modèle IA}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens:</b><br/><br/><b>Modèles Stables (Recommandés):</b><br/>• Gemini 3.1 Flash-Lite: In $0.25 | Out $1.50<br/>• Gemini 2.5 Flash Lite: In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash: In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro: In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto):</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta):</b><br/>• Gemini 3.1 Flash-Lite Preview: In $0.25 | Out $1.50<br/>• Gemini 3.1 Pro Preview: In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview: In $0.50 | Out $3.00"></i></sup>
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
-                </label>
-                <div class="col-lg-2">
-                    <select class="configKey form-control" data-l1key="ttsAIModel">
-                        <!-- Modèles Recommandés (Stables) -->
-                        <option disabled>--- {{Modèles Stables (Recommandés)}} ---</option>
-                        <option value="gemini-3.1-flash-lite" selected>Gemini 3.1 Flash-Lite</option>
-                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
-                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
-                        <!-- Versions Latest (Mise à jour automatique) -->
-                        <option disabled>--- {{Versions Latest (Mise à jour auto)}} ---</option>
-                        <option value="gemini-flash-lite-latest">⚠️ Gemini Flash Lite Latest</option>
-                        <option value="gemini-flash-latest">⚠️ Gemini Flash Latest</option>
-                        <!-- Modèles Preview (Nouvelles fonctionnalités) -->
-                        <option disabled>--- {{Versions Preview (Beta)}} ---</option>
-                        <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite Preview</option>
-                        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
-                        <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
-                    </select>
-                </div>
-            </div>
+            <br>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Authentification IA}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
@@ -805,8 +788,45 @@ if (!isConnect()) {
                     <input class="configKey form-control" type="text" data-l1key="ttsAIAPIKey" />
                 </div>
             </div>
+            <br>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Ton / Style}}
+                <label class="col-lg-3 control-label">{{Modèle IA (Reformulation)}}
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/><b>Modèles Stables (Recommandés) :</b><br/>• Gemini 3.5 Flash : In $1.50 | Out $9.00<br/>• Gemini 3.1 Flash-Lite : In $0.25 | Out $1.50<br/>• Gemini 2.5 Flash Lite : In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash : In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro : In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto) :</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta) :</b><br/>• Gemini 3.1 Flash-Lite Preview : In $0.25 | Out $1.50<br/>• Gemini 3.1 Pro Preview : In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview : In $0.50 | Out $3.00"></i></sup>
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="ttsAIModel">
+                        <!-- Modèles Recommandés (Stables) -->
+                        <option disabled>--- {{Modèles Stables (Recommandés)}} ---</option>
+                        <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                        <option value="gemini-3.1-flash-lite" selected>Gemini 3.1 Flash-Lite</option>
+                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                        <!-- Versions Latest (Mise à jour automatique) -->
+                        <option disabled>--- {{Versions Latest (Mise à jour auto)}} ---</option>
+                        <option value="gemini-flash-lite-latest">⚠️ Gemini Flash Lite Latest</option>
+                        <option value="gemini-flash-latest">⚠️ Gemini Flash Latest</option>
+                        <!-- Modèles Preview (Nouvelles fonctionnalités) -->
+                        <option disabled>--- {{Versions Preview (Beta)}} ---</option>
+                        <option value="gemini-3.1-flash-lite-preview">Gemini 3.1 Flash-Lite Preview</option>
+                        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
+                        <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Utiliser la Reformulation IA par défaut}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet de reformuler toutes les notifications TTS avec l'IA, sauf si l'option <b>&quot;genAI&quot;: false</b> est passée dans les options de la commande.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsAIDefault" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Ton de Reformulation}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Permet de choisir le ton sur lequel le moteur IA reformulera votre notification.}}"></i></sup>
                 </label>
@@ -833,6 +853,101 @@ if (!isConnect()) {
                     <textarea class="form-control customclass-defaultpromptresult" rows="8" readonly style="display:none;margin-top:8px;resize:vertical;"></textarea>
                 </div>
             </div>
+            <br>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Activer Gemini TTS}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Active le moteur de synthèse vocale Gemini TTS. Utilise la clé API Google Gemini ou le compte OAuth2 configuré ci-dessus.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="geminiTTSEnabled" />
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Modèle Gemini TTS}}
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/>• Gemini 2.5 Flash TTS : In $0.50 | Out $10.00 (audio)<br/>• Gemini 2.5 Pro TTS : In $1.00 | Out $20.00 (audio)<br/>• Gemini 3.1 Flash TTS : In $1.00 | Out $20.00 (audio)<br/><br/>⚠️ 25 tokens audio = 1 seconde. Un message de 5s ≈ 125 tokens audio.<br/>En usage domotique typique, le coût reste raisonnable (&lt;$0.002 / 1 000 notifs)."></i></sup>
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Modèle Gemini TTS à utiliser. Flash est plus économique, Pro est plus expressif.}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="geminiTTSModel">
+                        <!-- Gemini 3.x (Recommandé) -->
+                        <option disabled>--- {{Gemini 3.x (Recommandé)}} ---</option>
+                        <option value="gemini-3.1-flash-tts-preview" selected>Gemini 3.1 Flash TTS Preview</option>
+                        <!-- Gemini 2.5 -->
+                        <option disabled>--- {{Gemini 2.5}} ---</option>
+                        <option value="gemini-2.5-flash-preview-tts">Gemini 2.5 Flash TTS Preview</option>
+                        <option value="gemini-2.5-pro-preview-tts">Gemini 2.5 Pro TTS Preview</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Voix Gemini TTS}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Voix utilisée par défaut. Toutes les voix Gemini TTS sont multilingues (détection automatique de la langue).}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <select class="configKey form-control" data-l1key="geminiTTSVoice">
+                        <option disabled>--- {{Gemini TTS - Voix multilingues}} ---</option>
+                        <option value="Aoede" selected>Aoede - Breezy (Female)</option>
+                        <option value="Achernar">Achernar - Soft (Female)</option>
+                        <option value="Achird">Achird - Friendly (Male)</option>
+                        <option value="Algenib">Algenib - Gravelly (Male)</option>
+                        <option value="Algieba">Algieba - Smooth (Male)</option>
+                        <option value="Alnilam">Alnilam - Firm (Male)</option>
+                        <option value="Autonoe">Autonoe - Bright (Female)</option>
+                        <option value="Callirrhoe">Callirrhoe - Easy-going (Female)</option>
+                        <option value="Charon">Charon - Informative (Male)</option>
+                        <option value="Despina">Despina - Smooth (Female)</option>
+                        <option value="Enceladus">Enceladus - Breathy (Male)</option>
+                        <option value="Erinome">Erinome - Clear (Female)</option>
+                        <option value="Fenrir">Fenrir - Excitable (Male)</option>
+                        <option value="Gacrux">Gacrux - Mature (Female)</option>
+                        <option value="Iapetus">Iapetus - Clear (Male)</option>
+                        <option value="Kore">Kore - Firm (Female)</option>
+                        <option value="Laomedeia">Laomedeia - Upbeat (Female)</option>
+                        <option value="Leda">Leda - Youthful (Female)</option>
+                        <option value="Orus">Orus - Firm (Male)</option>
+                        <option value="Puck">Puck - Upbeat (Male)</option>
+                        <option value="Pulcherrima">Pulcherrima - Forward (Female)</option>
+                        <option value="Rasalgethi">Rasalgethi - Informative (Male)</option>
+                        <option value="Sadachbia">Sadachbia - Lively (Male)</option>
+                        <option value="Sadaltager">Sadaltager - Knowledgeable (Male)</option>
+                        <option value="Schedar">Schedar - Even (Male)</option>
+                        <option value="Sulafat">Sulafat - Warm (Female)</option>
+                        <option value="Umbriel">Umbriel - Easy-going (Male)</option>
+                        <option value="Vindemiatrix">Vindemiatrix - Gentle (Female)</option>
+                        <option value="Zephyr">Zephyr - Bright (Female)</option>
+                        <option value="Zubenelgenubi">Zubenelgenubi - Casual (Male)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Utiliser Gemini TTS par défaut}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, toutes les notifications utilisent Gemini TTS par défaut.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="geminiTTSDefault" />
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Streaming Gemini TTS par défaut}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, la lecture audio démarre dès les premières syllabes générées, sans attendre la fin de la synthèse vocale. Réduit la latence perçue.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="streamingDefault" />
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Style par défaut (Gemini TTS)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="geminittsstyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
+                </div>
+            </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
             <div class="form-group">
                <label class="col-lg-3 control-label">{{Tester avec la syntaxe SSML (TTS)}}
@@ -843,11 +958,35 @@ if (!isConnect()) {
                 </div>
             </div>
             <div class="form-group">
-               <label class="col-lg-3 control-label">{{Tester avec l'IA}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Ce paramètre permet de tester la reformulation des réponses à l'aide de l'IA.}}"></i></sup>
+               <label class="col-lg-3 control-label">{{Tester avec la reformulation IA}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Ce paramètre permet de tester la reformulation du texte à l'aide de l'IA avant la synthèse vocale.}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="ttsTestAI" />
+                </div>
+            </div>
+            <div class="form-group">
+               <label class="col-lg-3 control-label">{{Tester avec Gemini TTS}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Si coché, le test utilise le moteur Gemini TTS au lieu du moteur par défaut. Nécessite que Gemini TTS soit activé.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsTestGemini" />
+                </div>
+            </div>
+            <div class="form-group customform-testGeminiStyle" style="display:none;">
+               <label class="col-lg-3 control-label">{{Tester avec le mode streaming}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Si coché, le test utilise le mode streaming Gemini TTS (lecture directe sans fichier intermédiaire). Nécessite que Gemini TTS soit activé et que le paramètre 'Tester avec Gemini TTS' soit coché.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="checkbox" class="configKey" data-l1key="ttsTestStreaming" />
+                </div>
+            </div>
+            <div class="form-group customform-testGeminiStyle" style="display:none;">
+               <label class="col-lg-3 control-label">{{Style de voix (Gemini TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS (ex: Parle d'une voix chaleureure et rassurante). Laissez vide pour le style par défaut.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="ttsTestGeminiStyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
                 </div>
             </div>
             <div class="form-group">
@@ -964,11 +1103,11 @@ if (!isConnect()) {
             </div>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Ajouter un fichier :: Custom Sound}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Upload un fichier (.mp3) pour l'ajouter au répertoire des Custom Sounds}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Upload un fichier (.mp3, .wav, .ogg, .opus, .flac) pour l'ajouter au répertoire des Custom Sounds}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <a class="btn btn-info btn-file">
-                        <i class="fas fa-file-upload"></i> {{Ajouter un Custom Sound (.mp3)}}<input class="pluginAction" data-action="uploadCustomSound" type="file" name="fileCustomSound" style="display: inline-block;" accept=".mp3" />
+                        <i class="fas fa-file-upload"></i> {{Ajouter un Custom Sound}}<input class="pluginAction" data-action="uploadCustomSound" type="file" name="fileCustomSound" style="display: inline-block;" accept=".mp3,.wav,.ogg,.opus,.flac" />
                     </a>
                 </div>
             </div>
@@ -1000,6 +1139,8 @@ const SELECTORS = Object.freeze({
   AI_AUTH_MODE: '.customform-ai-authmode',
   AI_APIKEY: '.customform-ai-apikey',
   AI_OAUTH2: '.customform-ai-oauth2',
+  GEMINI_TTS: '.customform-geminiTTS',
+  TEST_GEMINI_STYLE: '.customform-testGeminiStyle',
   ADDRESS_CHECKBOX: '.customform-address',
   ADDRESS_TEST_URL: '.addressTestURL',
   API_KEY_INPUT: '.custominput-apikey',
@@ -1137,6 +1278,32 @@ function initConfigurationPage() {
   const aiAuthModeEl = document.querySelector(SELECTORS.AI_AUTH_MODE)
   if (aiAuthModeEl) {
     aiAuthModeEl.addEventListener('change', aiAuthModeSelect)
+  }
+
+  // Listen for Gemini TTS enable toggle
+  const geminiTTSToggle = document.querySelector('[data-l1key="geminiTTSEnabled"]')
+  if (geminiTTSToggle) {
+    const geminiTTSSections = document.querySelectorAll(SELECTORS.GEMINI_TTS)
+    const updateGeminiTTSVisibility = () => {
+      geminiTTSSections.forEach(el => {
+        el.style.display = geminiTTSToggle.checked ? '' : 'none'
+      })
+    }
+    geminiTTSToggle.addEventListener('change', updateGeminiTTSVisibility)
+    updateGeminiTTSVisibility()
+  }
+
+  // Listen for Gemini TTS test toggle (show/hide style field)
+  const ttsTestGeminiToggle = document.querySelector('[data-l1key="ttsTestGemini"]')
+  if (ttsTestGeminiToggle) {
+    const testGeminiStyleSections = document.querySelectorAll(SELECTORS.TEST_GEMINI_STYLE)
+    const updateTestGeminiStyleVisibility = () => {
+      testGeminiStyleSections.forEach(el => {
+        el.style.display = ttsTestGeminiToggle.checked ? '' : 'none'
+      })
+    }
+    ttsTestGeminiToggle.addEventListener('change', updateTestGeminiStyleVisibility)
+    updateTestGeminiStyleVisibility()
   }
 }
 

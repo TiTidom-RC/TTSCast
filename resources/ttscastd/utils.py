@@ -51,6 +51,7 @@ class Config:
     ttsCacheFolder = 'data/cache'
     ttsCacheFolderWeb = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), ttsCacheFolder))
     ttsCacheFolderTmp = os.path.join('/tmp/jeedom/', 'ttscast_cache')
+    ttsStreamFolderTmp = os.path.join('/tmp/jeedom/ttscast_cache', 'stream')
     
     radiosFilePath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/radios/radios.json'))
     customRadiosFilePath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/radios/custom/radios.json'))
@@ -58,7 +59,7 @@ class Config:
     # soundsCustomPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/media/custom'))
     
     ttsWebSrvCache = ''
-    ttsWebSrvMedia = ''
+    ttsWebSrvMediaProxy = ''
     ttsWebSrvImages = ''
     ttsWebSrvJeeTTS = ''
     
@@ -73,7 +74,8 @@ class Config:
     # Clés d'options consommées par le démon (jamais renvoyées comme options de notification)
     DAEMON_OPTION_KEYS = frozenset({
         'genai', 'aitone', 'aisysprompt', 'aitemp',  # IA
-        'ssml', 'before', 'voice',                    # TTS voix
+        'ssml', 'markup', 'style', 'before', 'voice', # TTS voix / format
+        'engine',                                     # TTS moteur (override par commande)
         'volume', 'ding', 'wait', 'force',            # TTS comportement
     })
 
@@ -92,7 +94,7 @@ class Config:
             'Contenu :\n'
             '- Reformule la phrase d\'origine de façon naturelle et réponds à la question posée s\'il y en a une.\n'
             '- Conserve toutes les valeurs chiffrées présentes dans la phrase d\'origine.\n'
-            '- Si la phrase contient une notion temporelle (date, jour, heure, délai…), utilise la recherche en ligne pour vérifier la date et le jour de la semaine.\n'
+            '- Ne mentionne jamais la date ni le jour de la semaine de façon spontanée. Indique-les uniquement si la phrase d\'origine les demande explicitement (question sur la date, la météo du jour, un événement calendaire, un lever/coucher de soleil…).\n'
             '- Pour toute question nécessitant des données actuelles ou factuelles (météo, actualités, résultats…), utilise la recherche en ligne.\n\n'
             'Format de tes réponses :\n'
             '- Réponds en phrases courtes et fluides, adaptées à une diffusion vocale.\n'
@@ -103,6 +105,13 @@ class Config:
     aiUseCustomSysPrompt = False
     aiCustomSysPrompt = ''
     aiScopes = ['https://www.googleapis.com/auth/cloud-platform']
+
+    # Gemini TTS Configuration
+    geminiTTSEnabled = False
+    geminiTTSModel   = 'noModel'
+    geminiTTSDefault = False
+    geminiTTSStyle   = ''  # Style par défaut, peut être surchargé par style: dans les options de scénario
+    streamingDefault = False  # Gemini TTS uniquement — ignoré pour les autres moteurs
     
     # Paths for various resources
     mediaFolder = 'data/media'
@@ -121,6 +130,7 @@ class Config:
     cmdWaitQueue = {}
     
     logLevel = "error"
+    castLogLevel = "daemon"
     socketPort = 55111
     socketHost = 'localhost'
     pidFile = '/tmp/ttscastd.pid'

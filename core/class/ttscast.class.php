@@ -71,7 +71,7 @@ class ttscast extends eqLogic
                 return true;
             } else {
                 // file_put_contents($_filename, '');
-                log::add('ttscast', 'error', '[generateTTS] You can\'t use Jeedom TTS as engine (in the plugin) and call it from Jeedom TTS API !!');
+                log::add('ttscast', 'error', '[generateTTS] Conflit de configuration : le moteur sélectionné est "Jeedom TTS", mais TTSCast est lui-même appelé par l\'API TTS de Jeedom — cela créerait une boucle infinie. Sélectionnez un autre moteur TTS dans la configuration du plugin.');
                 return false;
             }
             
@@ -113,15 +113,15 @@ class ttscast extends eqLogic
             $return['state'] = 'in_progress';
         } else {
             if (exec(system::getCmdSudo() . system::get('cmd_check') . '-Ec "python3\-requests|python3\-setuptools|python3\-dev|python3\-venv"') < 4) {
-                log::add('ttscast', 'debug', '[DepInfo][ERROR] Missing system dependencies');
+                log::add('ttscast', 'warning', '[DepInfo] Missing system dependencies');
                 $return['state'] = 'nok';
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
             } elseif (exec(system::getCmdSudo() . self::PYTHON3_PATH . ' -m pip freeze | grep -Eiwc "' . config::byKey('pythonDepString', 'ttscast', '', true) . '"') < config::byKey('pythonDepNum', 'ttscast', 0, true)) {
-                log::add('ttscast', 'debug', '[DepInfo][ERROR] Missing Python dependencies');
+                log::add('ttscast', 'warning', '[DepInfo] Missing Python dependencies');
                 $return['state'] = 'nok';
             } else {
-                log::add('ttscast', 'debug', '[DepInfo][INFO] All dependencies are installed');
+                log::add('ttscast', 'info', '[DepInfo] All dependencies are installed');
                 $return['state'] = 'ok';
             }
         }
@@ -162,6 +162,7 @@ class ttscast extends eqLogic
         $path = realpath(__DIR__ . '/../../resources/ttscastd');
         $cmd = self::PYTHON3_PATH . " {$path}/ttscastd.py";
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
+        $cmd .= ' --castloglevel ' . config::byKey('castLogLevel', __CLASS__, 'daemon');
         $cmd .= ' --pluginversion ' . config::byKey('pluginVersion', __CLASS__, '0.0.0');
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55111');
         $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1');
@@ -189,6 +190,11 @@ class ttscast extends eqLogic
         $cmd .= ' --aidefaulttone "' . config::byKey('ttsAIDefaultTone', __CLASS__, 'NoDefaultTone') . '"';
         $cmd .= ' --aiusecustomsysprompt ' . config::byKey('ttsAIUseCustomSysPrompt', __CLASS__, '0');
         $cmd .= ' --aicustomsysprompt "' . config::byKey('ttsAICustomSysPrompt', __CLASS__, 'NoCustomSysPrompt') . '"';
+        $cmd .= ' --geminittsenabled ' . config::byKey('geminiTTSEnabled', __CLASS__, '0');
+        $cmd .= ' --geminittsmodel ' . config::byKey('geminiTTSModel', __CLASS__, 'noModel');
+        $cmd .= ' --geminittsdefault ' . config::byKey('geminiTTSDefault', __CLASS__, '0');
+        $cmd .= ' --geminittsstyle "' . config::byKey('geminiTTSStyle', __CLASS__, '') . '"';
+        $cmd .= ' --streamingdefault ' . config::byKey('streamingDefault', __CLASS__, '0');
 
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
@@ -321,7 +327,11 @@ class ttscast extends eqLogic
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
         $ttsSSML = config::byKey('ttsTestSSML', 'ttscast', '0');
         $ttsAI = config::byKey('ttsTestAI', 'ttscast', '0');
-        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI);
+        $ttsTestGemini = config::byKey('ttsTestGemini', 'ttscast', '0');
+        $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
+        $ttsGeminiStyle = config::byKey('ttsTestGeminiStyle', 'ttscast', '');
+        $ttsTestStreaming = ($ttsTestGemini == '1') ? config::byKey('ttsTestStreaming', 'ttscast', '0') : '0';
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'ttsGeminiStyle' => $ttsGeminiStyle, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI, 'ttsGemini' => $ttsTestGemini, 'ttsStreaming' => $ttsTestStreaming);
         self::sendToDaemon($value);
     }
 
@@ -334,11 +344,19 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'gtranslatetts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
+        $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
 
         $ttsOptions = $options;
-        log::add('ttscast', 'debug', '[generateTTS] ttsOptions After Array :: ' . $ttsOptions);
-        
-        $value = array('cmd' => 'action', 'cmd_action' => 'generatetts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsFile' => $ttsFile, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed);
+        $engineOverride = null;
+        if (!empty($ttsOptions)) {
+            $parsedOptions = json_decode('{' . $ttsOptions . '}', true);
+            if (is_array($parsedOptions) && isset($parsedOptions['engine'])) {
+                $engineOverride = $parsedOptions['engine'];
+            }
+        }
+        $logEngine = $engineOverride !== null ? $ttsEngine . ' → ' . $engineOverride . ' (override options)' : $ttsEngine;
+        log::add('ttscast', 'info', '[GenerateTTS] Moteur: ' . $logEngine . ' | Fichier: ' . $ttsFile . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8'));
+        $value = array('cmd' => 'action', 'cmd_action' => 'generatetts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsFile' => $ttsFile, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName);
         self::sendToDaemon($value);
     }
 
@@ -351,39 +369,31 @@ class ttscast extends eqLogic
         $ttsEngine = config::byKey('ttsEngine', 'ttscast', 'gtranslatetts');  // jeedomtts | gtranslatetts | gcloudtts
         $ttsLang = config::byKey('ttsLang', 'ttscast', 'fr-FR');
         $ttsSpeed = config::byKey('gCloudTTSSpeed', 'ttscast', '1.0');
+        $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
         
-        /* log::add('ttscast', 'debug', '[PlayTTS] Options Before Array :: ' . $options);
-
-        $_appDisableDing = config::byKey('appDisableDing', 'ttscast', false);
-        if ($_appDisableDing) {
-            if ($options == null) {
-                $_resOptions = array();
-            } else {
-                $_resOptions = json_decode("{" . $options . "}", true);
-            }
-            $_resOptions['ding'] = false;
-            log::add('ttscast', 'debug', '[PlayTTS] _res Ding :: ' . json_encode($_resOptions['ding']));
-            $ttsOptions = substr(json_encode($_resOptions), 1, -1);
-        }
-        else {
-            $ttsOptions = $options;
-        } */
         $ttsOptions = $options;
-        log::add('ttscast', 'debug', '[PlayTTS] ttsOptions After Array :: ' . $ttsOptions);
-        
-        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'cmdNotificationId' => $cmdNotificationId);
+        $engineOverride = null;
+        if (!empty($ttsOptions)) {
+            $parsedOptions = json_decode('{' . $ttsOptions . '}', true);
+            if (is_array($parsedOptions) && isset($parsedOptions['engine'])) {
+                $engineOverride = $parsedOptions['engine'];
+            }
+        }
+        $logEngine = $engineOverride !== null ? $ttsEngine . ' → ' . $engineOverride . ' (override options)' : $ttsEngine;
+        log::add('ttscast', 'info', '[PlayTTS] Moteur: ' . $logEngine . ' | UUID: ' . $ttsGoogleUUID . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8'));
+        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'cmdNotificationId' => $cmdNotificationId);
         self::sendToDaemon($value);
     }
 
     public static function actionGCast($gHomeUUID=null, $action=null, $message=null) {
-        log::add('ttscast', 'debug', '[ActionGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message);
+        log::add('ttscast', 'info', '[ActionGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message);
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID);
         log::add('ttscast', 'debug', '[ActionGCast] ArrayToSend :: ' . json_encode($value));
         self::sendToDaemon($value);
     }
 
     public static function mediaGCast($gHomeUUID=null, $action=null, $message=null, $options=null) {
-        log::add('ttscast', 'debug', '[MediaGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options);
+        log::add('ttscast', 'info', '[MediaGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options);
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID, 'options' => $options);
         log::add('ttscast', 'debug', '[MediaGCast] ArrayToSend :: ' . json_encode($value));
         self::sendToDaemon($value);
@@ -417,7 +427,8 @@ class ttscast extends eqLogic
             # Options
             $optionKeys = [
                 'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
-                'ding', 'wait', 'type', 'ssml', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp'
+                'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp',
+                'engine', 'streaming'
             ];
             foreach ($optionKeys as $key) {
                 if (array_key_exists($key, $data)) {
@@ -455,7 +466,7 @@ class ttscast extends eqLogic
             }
         }
         catch (\Exception $e) {
-            log::add('ttscast', 'debug', '[Plugin-Version] Get ERROR :: ' . $e->getMessage());
+            log::add('ttscast', 'warning', '[Plugin-Version] Get ERROR :: ' . $e->getMessage());
         }
         log::add('ttscast', 'info', '[Plugin-Version] PluginVersion :: ' . $pluginVersion);
         return $pluginVersion;
@@ -486,7 +497,7 @@ class ttscast extends eqLogic
             $pythonDepNum = count($nonEmptyLines);
         }
         catch (\Exception $e) {
-            log::add('ttscast', 'debug', '[Python-Dep] Get requirements.txt ERROR :: ' . $e->getMessage());
+            log::add('ttscast', 'warning', '[Python-Dep] Get requirements.txt ERROR :: ' . $e->getMessage());
         }
         log::add('ttscast', 'debug', '[Python-Dep] PythonDepString / PythonDepNum :: ' . $pythonDepString . " / " . $pythonDepNum);
         config::save('pythonDepString', $pythonDepString, 'ttscast');
@@ -611,12 +622,12 @@ class ttscast extends eqLogic
     public static function scheduleUpdateCast($_data)
     {
         if (!isset($_data['uuid'])) {
-            log::add('ttscast', 'error', '[SCHEDULE][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
+            log::add('ttscast', 'warning', '[SCHEDULE][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
             return false;
         }
         $updttscast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
         if (!is_object($updttscast)) {
-            log::add('ttscast', 'error', '[SCHEDULE][CAST] Cast non existant dans Jeedom');
+            log::add('ttscast', 'warning', '[SCHEDULE][CAST] Équipement introuvable dans Jeedom (UUID : ' . $_data['uuid'] . ') — il a peut-être été supprimé. Relancez un scan pour mettre à jour la liste des équipements.');
             return false;
         }
         else {
@@ -642,18 +653,18 @@ class ttscast extends eqLogic
     public static function realtimeUpdateCast($_data)
     {
         if (!isset($_data['uuid'])) {
-            log::add('ttscast', 'error', '[REALTIME][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
+            log::add('ttscast', 'warning', '[REALTIME][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
             return false;
         }
         if (!isset($_data['status_type'])) {
-            log::add('ttscast', 'error', '[REALTIME][CAST] Information manquante (Status_Type) pour mettre à jour l\'équipement');
+            log::add('ttscast', 'warning', '[REALTIME][CAST] Information manquante (Status_Type) pour mettre à jour l\'équipement');
             return false;
         } else {
             log::add('ttscast', 'debug', '[REALTIME][CAST] Status Type :: ' . $_data['status_type']);
         }
         $rtcast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
         if (!is_object($rtcast)) {
-            log::add('ttscast', 'error', '[REALTIME][CAST] Cast non existant dans Jeedom');
+            log::add('ttscast', 'warning', '[REALTIME][CAST] Équipement introuvable dans Jeedom (UUID : ' . $_data['uuid'] . ') — il a peut-être été supprimé. Relancez un scan pour mettre à jour la liste des équipements.');
             return false;
         }
         else {
@@ -804,7 +815,7 @@ class ttscast extends eqLogic
         $filesReturn = '';
         try {
             $filesArray = array();
-            foreach (glob(dirname(__FILE__) . '/../../data/media/*.mp3') as $fileName) {
+            foreach (glob(dirname(__FILE__) . '/../../data/media/*.{mp3,wav,ogg,opus,flac}', GLOB_BRACE) as $fileName) {
                 $filesArray[pathinfo($fileName, PATHINFO_BASENAME)] = ucwords(str_replace(["_", "-"], " ", pathinfo($fileName, PATHINFO_FILENAME)));
             }
             natsort($filesArray);
@@ -823,7 +834,7 @@ class ttscast extends eqLogic
         $filesReturn = '';
         try {
             $filesArray = array();
-            foreach (glob(dirname(__FILE__) . '/../../data/media/custom/*.mp3') as $fileName) {
+            foreach (glob(dirname(__FILE__) . '/../../data/media/custom/*.{mp3,wav,ogg,opus,flac}', GLOB_BRACE) as $fileName) {
                 $filesArray[pathinfo($fileName, PATHINFO_BASENAME)] = ucwords(str_replace(["_", "-"], " ", pathinfo($fileName, PATHINFO_FILENAME)));
             }
             natsort($filesArray);
@@ -2362,7 +2373,7 @@ class ttscastCmd extends cmd
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Custom Decoded Message) :: ' . json_encode($_options));
                 }
                 else {
-                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                    log::add('ttscast', 'warning', '[CMD] customcmd annulé — paramètre \'message\' manquant (commande personnalisée non renseignée). Options reçues : ' . json_encode($_options));
                 }                
             }
             
@@ -2383,7 +2394,8 @@ class ttscastCmd extends cmd
                     ttscast::playTTS($googleUUID, $_options['message'], isset($_options['title']) ? $_options['title'] : null, $cmdNotificationId);
                 }
                 else {
-                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour diffuser un message TTS');
+                    $missingParam = (!isset($googleUUID)) ? 'UUID de l\'équipement' : 'texte du message';
+                    log::add('ttscast', 'warning', '[CMD] TTS annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options));
                 }
             } elseif ($logicalId == 'ai_reformat' && $eqLogic->getLogicalId() == 'TTSCast_AI') {
                 log::add('ttscast', 'debug', '[CMD] ai_reformat :: ' . json_encode($_options));
@@ -2443,7 +2455,7 @@ class ttscastCmd extends cmd
                     log::add('ttscast', 'debug', '[CMD] VolumeSet :: ' . $_options['slider'] . ' / ' . $googleUUID);
                     ttscast::actionGCast($googleUUID, "volumeset", $_options['slider']);
                 } else {
-                    log::add('ttscast', 'debug', '[CMD] VolumeSet :: ERROR = Mauvais paramètre');
+                    log::add('ttscast', 'warning', '[CMD] VolumeSet :: Mauvais paramètre :: UUID=' . ($googleUUID ?? 'null') . ' / ' . json_encode($_options));
                 }
             } elseif (in_array($logicalId, ["volumedown", "volumeup", "media_pause", "media_play", "media_stop", "media_previous", "media_next", "media_quit", "media_rewind", "mute_on", "mute_off"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
@@ -2459,7 +2471,8 @@ class ttscastCmd extends cmd
                     ttscast::mediaGCast($googleUUID, $logicalId, $_options['message'], isset($_options['title']) ? $_options['title'] : null);
                 }
                 else {
-                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                    $missingParam = (!isset($googleUUID)) ? 'UUID de l\'équipement' : 'URL / chemin du média';
+                    log::add('ttscast', 'warning', '[CMD] ' . $logicalId . ' annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options));
                 }                
             } elseif (in_array($logicalId, ["radios", "customradios", "sounds", "customsounds"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
@@ -2469,7 +2482,8 @@ class ttscastCmd extends cmd
                     ttscast::mediaGCast($googleUUID, $logicalId, $_options['select'], isset($_options['title']) ? $_options['title'] : null);
                 }
                 else {
-                    log::add('ttscast', 'debug', '[CMD] Il manque un paramètre pour lancer la commande '. $logicalId);
+                    $missingParam = (!isset($googleUUID)) ? 'UUID de l\'équipement' : 'sélection (radio / son)';
+                    log::add('ttscast', 'warning', '[CMD] ' . $logicalId . ' annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options));
                 }                
             } elseif (in_array($logicalId, ["refresh", "refreshcast"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
