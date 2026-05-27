@@ -342,7 +342,7 @@ class TTSCast:
                     filecontent = fc.read()
                     fc.close()
         except Exception as e:
-            logging.error('[DAEMON][JeedomTTS] Error while retrieving TTS file :: %s', e)
+            logging.error('[DAEMON][JeedomTTS] Error while retrieving TTS file :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
             filecontent = None
         return filecontent
@@ -384,7 +384,7 @@ class TTSCast:
                 filecontent = fc.read()
                 fc.close() """
         except Exception as e:
-            logging.error('[DAEMON][VoiceRSS] Error while retrieving TTS file :: %s', e)
+            logging.error('[DAEMON][VoiceRSS] Error while retrieving TTS file :: %s | voix : %s | extrait : %s', e, ttsVoiceName, repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
             filecontent = None
         return filecontent
@@ -547,7 +547,7 @@ class TTSCast:
                             os.remove(filepath)
                         except OSError:
                             pass
-                    logging.warning('[DAEMON][TestTTS] Google Translate API ERROR :: %s', e)
+                    logging.warning('[DAEMON][TestTTS] Google Translate API ERROR :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
@@ -581,7 +581,7 @@ class TTSCast:
                     with open(filepath, 'wb') as f:
                         f.write(ttsResult)
                 else:
-                    logging.warning('[DAEMON][TestTTS] JeedomTTS Error :: Incorrect Output — lang : %s — extrait : "%.80s"', ttsLang, ttsText)
+                    logging.warning('[DAEMON][TestTTS] JeedomTTS Error :: Incorrect Output — lang : %s — extrait : %s', ttsLang, repr(ttsText[:80]))
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
@@ -616,7 +616,7 @@ class TTSCast:
                         with open(filepath, 'wb') as f:
                             f.write(ttsResult)
                     else:
-                        logging.warning('[DAEMON][TestTTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : "%.80s"', ttsRSSVoiceName, ttsText)
+                        logging.warning('[DAEMON][TestTTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : %s', ttsRSSVoiceName, repr(ttsText[:80]))
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
@@ -661,7 +661,7 @@ class TTSCast:
                 logging.info('[TIMING][GeminiStream] t0_start :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
                 prefetch = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _effectiveStyle, streaming=True)
                 if prefetch is None:
-                    logging.error('[DAEMON][TestTTS] GeminiTTS streaming :: échec de la pré-lecture')
+                    logging.error('[DAEMON][TestTTS] GeminiTTS streaming :: échec de la pré-lecture | voix : %s | extrait : %s', ttsGeminiVoiceName, repr(_textToSynth[:80]))
                     return
                 streamIter, firstChunkBytes, sampleRate, channels, streamClient = prefetch
                 streamMimeType = 'audio/wav'  # Le proxy envoie un stream WAV RIFF (PCM LE 16-bit)
@@ -683,7 +683,7 @@ class TTSCast:
                         out.write(audioBytes)
                     logging.debug('[DAEMON][TestTTS] Fichier TTS Gemini généré :: %s', filepath)
                 else:
-                    logging.error('[DAEMON][TestTTS] Echec de la génération Gemini TTS — voix : %s — extrait : "%.80s"', ttsGeminiVoiceName, _textToSynth)
+                    logging.error('[DAEMON][TestTTS] Echec de la génération Gemini TTS — voix : %s — extrait : %s', ttsGeminiVoiceName, repr(_textToSynth[:80]))
                     return
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
                 logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
@@ -861,7 +861,7 @@ class TTSCast:
                                 os.remove(filepath)
                             except OSError:
                                 pass
-                        logging.warning('[DAEMON][GenerateTTS] Google Translate API ERROR :: %s', e)
+                        logging.warning('[DAEMON][GenerateTTS] Google Translate API ERROR :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
                 else:
                     logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
@@ -886,7 +886,7 @@ class TTSCast:
                                 f.write(ttsResult)
                             logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
                         else:
-                            logging.warning('[DAEMON][GenerateTTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : "%.80s"', ttsRSSVoiceName, ttsText)
+                            logging.warning('[DAEMON][GenerateTTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : %s', ttsRSSVoiceName, repr(ttsText[:80]))
                     else:
                         logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 else:
@@ -913,13 +913,13 @@ class TTSCast:
                         f.write(audioBytes)
                     logging.debug('[DAEMON][GenerateTTS] Fichier TTS Gemini généré :: %s', filepath)
                 else:
-                    logging.warning('[DAEMON][GenerateTTS][GEMINI] Réponse invalide de l\'API Gemini TTS — voix : %s — extrait : "%.80s"', ttsGeminiVoiceName, _textToSynth)
+                    logging.warning('[DAEMON][GenerateTTS][GEMINI] Réponse invalide de l\'API Gemini TTS — voix : %s — extrait : %s', ttsGeminiVoiceName, repr(_textToSynth[:80]))
 
             else:
                 logging.error('[DAEMON][GenerateTTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts.', ttsEngine)
 
         except Exception as e:
-            logging.error('[DAEMON][GenerateTTS] Exception on TTS :: %s', e)
+            logging.error('[DAEMON][GenerateTTS] Exception on TTS :: %s | moteur : %s | extrait : %s', e, ttsEngine, repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
 
     @staticmethod
@@ -1155,7 +1155,7 @@ class TTSCast:
                                 os.remove(filepath)
                             except OSError:
                                 pass
-                        logging.warning('[DAEMON][TTS] Google Translate API ERROR :: %s', e)
+                        logging.warning('[DAEMON][TTS] Google Translate API ERROR :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
                 else:
                     logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
@@ -1189,7 +1189,7 @@ class TTSCast:
                         with open(filepath, 'wb') as f:
                             f.write(ttsResult)
                     else:
-                        logging.warning('[DAEMON][TTS] JeedomTTS Error :: Incorrect Output — lang : %s — extrait : "%.80s"', ttsLang, ttsText)
+                        logging.warning('[DAEMON][TTS] JeedomTTS Error :: Incorrect Output — lang : %s — extrait : %s', ttsLang, repr(ttsText[:80]))
                 else:
                     logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
@@ -1224,7 +1224,7 @@ class TTSCast:
                             with open(filepath, 'wb') as f:
                                 f.write(ttsResult)
                         else:
-                            logging.warning('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : "%.80s"', ttsRSSVoiceName, ttsText)
+                            logging.warning('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : %s', ttsRSSVoiceName, repr(ttsText[:80]))
                     else:
                         logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
@@ -1265,7 +1265,7 @@ class TTSCast:
                     logging.info('[TIMING][GeminiStream] t0_start :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
                     prefetch = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle, streaming=True)
                     if prefetch is None:
-                        logging.error('[DAEMON][TTS] GeminiTTS streaming :: échec de la pré-lecture')
+                        logging.error('[DAEMON][TTS] GeminiTTS streaming :: échec de la pré-lecture | voix : %s | extrait : %s', ttsGeminiVoiceName, repr(_textToSynth[:80]))
                         return False
                     streamIter, firstChunkBytes, sampleRate, channels, streamClient = prefetch
                     mimeType = 'audio/wav'  # Le proxy envoie un stream WAV RIFF (PCM LE 16-bit)
@@ -1291,7 +1291,7 @@ class TTSCast:
                             f.write(audioBytes)
                         logging.info('[DAEMON][TTS] Fichier TTS Gemini généré :: %s', filepath)
                     else:
-                        logging.error('[DAEMON][TTS] GeminiTTS Error :: Incorrect Output — voix : %s — extrait : "%.80s"', ttsGeminiVoiceName, _textToSynth)
+                        logging.error('[DAEMON][TTS] GeminiTTS Error :: Incorrect Output — voix : %s — extrait : %s', ttsGeminiVoiceName, repr(_textToSynth[:80]))
                         return False
                     urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
@@ -1303,7 +1303,7 @@ class TTSCast:
                 logging.error('[DAEMON][TTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts.', ttsEngine)
 
         except Exception as e:
-            logging.error('[DAEMON][TTS] Exception on TTS :: %s', e)
+            logging.error('[DAEMON][TTS] Exception on TTS :: %s | moteur : %s | extrait : %s', e, ttsEngine, repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
 
     @staticmethod
@@ -1678,7 +1678,7 @@ class TTSCast:
                     logging.warning('[DAEMON][GenAI][TOKENS] Aucun token reçu (input=0) - stats non envoyées à Jeedom')
                 
                 if not response.text:
-                    logging.warning('[DAEMON][GenAI] Aucune réponse générée par Gemini — extrait : "%.80s"', _aiPrompt)
+                    logging.warning('[DAEMON][GenAI] Aucune réponse générée par Gemini — extrait : %s', repr(_aiPrompt[:80]))
                     return None
                 else:
                     raw_text = response.text.strip()
@@ -1690,7 +1690,7 @@ class TTSCast:
                 logging.warning('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, "***" if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
                 return None
         except Exception as e:
-            logging.error('[DAEMON][GenAI] Erreur: %s', e)
+            logging.error('[DAEMON][GenAI] Erreur :: %s | modèle : %s | extrait : %s', e, myConfig.aiModel, repr(_aiPrompt[:80]))
             return None
 
     @staticmethod
@@ -1759,7 +1759,7 @@ class TTSCast:
                         channels = int(channels_match.group(1)) if channels_match else 1
                         logging.debug('[DAEMON][GeminiTTS] Premier chunk stream :: rate=%d | channels=%d', sampleRate, channels)
                         return streamIterator, blob.data, sampleRate, channels, client
-                logging.error('[DAEMON][GeminiTTS] Streaming :: aucun chunk audio reçu.')
+                logging.error('[DAEMON][GeminiTTS] Streaming :: aucun chunk audio reçu | voix : %s | extrait : %s', voiceName, repr(ttsText[:80]))
                 return None
 
             else:
@@ -1802,11 +1802,11 @@ class TTSCast:
                     else:
                         logging.debug('[DAEMON][GeminiTTS] Audio WAV natif retourné :: %d bytes', len(audio_data))
                     return audio_data
-                logging.warning('[DAEMON][GeminiTTS] Aucune donnée audio dans la réponse.')
+                logging.warning('[DAEMON][GeminiTTS] Aucune donnée audio dans la réponse | voix : %s | extrait : %s', voiceName, repr(ttsText[:80]))
                 return None
 
         except Exception as e:
-            logging.error('[DAEMON][GeminiTTS] Exception :: %s', e)
+            logging.error('[DAEMON][GeminiTTS] Exception :: %s | Modèle : %s | Voix : %s | Mode : %s | Extrait : %s', e, myConfig.geminiTTSModel, voiceName, 'stream' if streaming else 'buffered', repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
             return None
 
@@ -1894,7 +1894,7 @@ class TTSCast:
             logging.warning('[DAEMON][GeminiTTSStream] Client déconnecté avant la fin du stream (Broken pipe)')
             return None
         except Exception as e:
-            logging.error('[DAEMON][GeminiTTSStream] Exception :: %s', e)
+            logging.error('[DAEMON][GeminiTTSStream] Exception :: %s | chunks reçus : %d', e, len(pcmBuffer))
             logging.debug(traceback.format_exc())
             return None
         finally:
@@ -2089,7 +2089,7 @@ class Functions:
                     dev.set_volume(vol)
                     logging.debug(f'[DAEMON][GroupVol] Set {vol} on {dev.name}')
                 except Exception as ex:
-                    logging.error(f'[DAEMON][GroupVol] Error on {uuid_dev}: {ex}')
+                    logging.error('[DAEMON][GroupVol] Error on %s :: %s', uuid_dev, ex)
 
         threads = []
         for member_uuid in membersUUIDs:
@@ -2114,7 +2114,7 @@ class Functions:
                     dev.set_volume(vol)
                     logging.debug(f'[DAEMON][GroupVol] Restored {vol} on {dev.name}')
                 except Exception as ex:
-                    logging.error(f'[DAEMON][GroupVol] Error restoring {uuid_dev}: {ex}')
+                    logging.error('[DAEMON][GroupVol] Error restoring %s :: %s', uuid_dev, ex)
 
         threads = []
         for m_uuid, m_vol in volumeSnapshot.items():
