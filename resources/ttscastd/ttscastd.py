@@ -1715,7 +1715,7 @@ class TTSCast:
                     return None
                 logging.debug('[DAEMON][GeminiTTS] Chargement des credentials OAuth2 :: %s', myConfig.gCloudApiKey)
                 credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
-                client = genai.Client(vertexai=True, project=myConfig.aiProjectID, location='global', credentials=credentials, http_options=types.HttpOptions(timeout=30000))
+                client = genai.Client(enterprise=True, project=myConfig.aiProjectID, location='global', credentials=credentials, http_options=types.HttpOptions(timeout=30000))
             elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
                 logging.debug('[DAEMON][GeminiTTS] Client API key :: ***')
                 client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=30000))
