@@ -1571,7 +1571,7 @@ class TTSCast:
                         logging.debug('[DAEMON][genAI] Chargement des credentials (pour le moteur IA) à partir du fichier JSON :: %s', myConfig.gCloudApiKey)
                         credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
                         client = genai.Client(
-                            vertexai=True,
+                            enterprise=True,
                             project=myConfig.aiProjectID,
                             location="global",
                             credentials=credentials,
