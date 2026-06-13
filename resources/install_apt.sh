@@ -223,10 +223,10 @@ echo 70 > ${PROGRESS_FILE}
 log "*****************************"
 log "* Install Python3 libraries *"
 log "*****************************"
-${VENV_DIR}/bin/python3 -m pip install --upgrade pip wheel | log
+${VENV_DIR}/bin/python3 -m pip install --no-cache-dir --upgrade pip wheel | log
 log "** Install Pip / Wheel :: Done **"
 echo 75 > ${PROGRESS_FILE}
-${VENV_DIR}/bin/python3 -m pip install -r ${REQUIREMENTS_FILE} | log
+${VENV_DIR}/bin/python3 -m pip install --no-cache-dir -r ${REQUIREMENTS_FILE} | log
 log "** Install Python3 libraries :: Done **"
 echo 95 > ${PROGRESS_FILE}
 log "****************************"
