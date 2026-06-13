@@ -109,20 +109,34 @@ class ttscast extends eqLogic
         $return = array();
         $return['log'] = log::getPathToLog(__CLASS__ . '_update');
         $return['progress_file'] = jeedom::getTmpFolder(__CLASS__) . '/dependency';
+
         if (file_exists(jeedom::getTmpFolder(__CLASS__) . '/dependency')) {
             $return['state'] = 'in_progress';
         } else {
             if (exec(system::getCmdSudo() . system::get('cmd_check') . '-Ec "python3\-requests|python3\-setuptools|python3\-dev|python3\-venv"') < 4) {
-                log::add('ttscast', 'warning', '[DepInfo] Missing system dependencies');
                 $return['state'] = 'nok';
+                log::add(__CLASS__, 'debug', '[Python-Dep] System packages missing (python3-requests, python3-setuptools, python3-dev, or python3-venv)');
             } elseif (!file_exists(self::PYTHON3_PATH)) {
                 $return['state'] = 'nok';
-            } elseif (exec(self::PYTHON3_PATH . ' -m pip --no-cache-dir freeze | grep -Eiwc "' . config::byKey('pythonDepString', 'ttscast', '', true) . '"') < config::byKey('pythonDepNum', 'ttscast', 0, true)) {
-                log::add('ttscast', 'warning', '[DepInfo] Missing Python dependencies');
-                $return['state'] = 'nok';
+                log::add(__CLASS__, 'debug', '[Python-Dep] Python venv executable not found at: ' . self::PYTHON3_PATH);
             } else {
-                log::add('ttscast', 'info', '[DepInfo] All dependencies are installed');
-                $return['state'] = 'ok';
+                $expectedCount = config::byKey('pythonDepNum', 'ttscast', 0, true);
+                $pythonDepString = config::byKey('pythonDepString', 'ttscast', '', true);
+
+                $cmd = self::PYTHON3_PATH . ' -m pip --no-cache-dir freeze | grep -Ewci "' . $pythonDepString . '"';
+                $foundCount = exec($cmd);
+
+                if ($foundCount < $expectedCount) {
+                    $return['state'] = 'nok';
+                    log::add(__CLASS__, 'debug', '[Python-Dep] Missing Dependencies. Found: ' . $foundCount . ' / Expected: ' . $expectedCount);
+                    log::add(__CLASS__, 'debug', '[Python-Dep] Regex used: ' . $pythonDepString);
+                    // Log actual pip freeze content for debugging
+                    $pipFreeze = shell_exec(self::PYTHON3_PATH . ' -m pip --no-cache-dir freeze');
+                    log::add(__CLASS__, 'debug', '[Python-Dep] Pip Freeze Output: ' . str_replace(PHP_EOL, ' | ', trim($pipFreeze)));
+                } else {
+                    $return['state'] = 'ok';
+                    log::add(__CLASS__, 'debug', '[Python-Dep] Dependencies installed. State : OK');
+                }
             }
         }
         return $return;
