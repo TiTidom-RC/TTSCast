@@ -138,7 +138,7 @@ if (!isConnect()) {
                     <input type="checkbox" class="configKey" data-l1key="logFiltersEnabled" />
                 </div>
                 <div class="col-lg-2">
-                    <a class="btn btn-default customclass-openlogfilters">
+                    <a class="btn btn-primary customclass-openlogfilters">
                         <i class="fas fa-filter"></i> {{Gérer les filtres}}
                     </a>
                 </div>
