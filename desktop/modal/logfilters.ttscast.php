@@ -16,7 +16,7 @@ $logFiltersData = ttscast::getLogFiltersFileContent();
 </div>
 
 <div style="margin-bottom:10px; display:flex; gap:6px; flex-wrap:wrap;">
-    <a class="btn btn-sm btn-default" id="bt_addLogFilter"><i class="fas fa-plus"></i> {{Ajouter}}</a>
+    <a class="btn btn-sm btn-success" id="bt_addLogFilter"><i class="fas fa-plus"></i> {{Ajouter}}</a>
     <a class="btn btn-sm btn-default" id="bt_selectAllLogFilters" title="{{Tout activer}}"><i class="fas fa-check-double"></i></a>
     <a class="btn btn-sm btn-default" id="bt_unselectAllLogFilters" title="{{Tout désactiver}}"><i class="fas fa-minus-square"></i></a>
 </div>

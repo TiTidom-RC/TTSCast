@@ -1326,9 +1326,9 @@ function initConfigurationPage() {
       id: 'md_logFiltersTtscast',
       title: '{{Filtres de logs}}',
       contentUrl: 'index.php?v=d&plugin=ttscast&modal=logfilters.ttscast',
-      width: '80%',
-      height: '70%',
-      top: '10vh'
+      width: '65%',
+      height: '60%',
+      top: '18vh'
     })
   })
 }
