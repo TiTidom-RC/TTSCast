@@ -107,6 +107,7 @@
         "streamingdefault",
         "stype",
         "subdevices",
+        "TRANSLIT",
         "ttsaiapikey",
         "ttsaiauthmode",
         "ttsaicustomsysprompt",

@@ -114,6 +114,12 @@ try {
         }
 
         $safeFilename = basename($_FILES['fileCustomSound']['name']);
+        $safeFilename = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $safeFilename);
+        $safeFilename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $safeFilename);
+        $safeFilename = preg_replace('/_+/', '_', $safeFilename);
+        if (empty(pathinfo($safeFilename, PATHINFO_FILENAME))) {
+            throw new Exception('[UPLOAD][CustomSound] Nom de fichier invalide après nettoyage : ' . $safeFilename);
+        }
 
         # TODO limiter taille upload mp3 dans les customSounds ?
         /* if (filesize($_FILES['fileCustomSound']['tmp_name']) > 10000) {
