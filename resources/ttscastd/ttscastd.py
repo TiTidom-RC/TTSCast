@@ -3612,12 +3612,44 @@ def shutdown():
 
 # ***** PROGRAMME PRINCIPAL *****
 
+class PatternRemapFilter(logging.Filter):
+    """Remappe le niveau de log des records dont le message contient un pattern configuré."""
+
+    _LEVEL_MAP = {
+        'DEBUG':   logging.DEBUG,
+        'INFO':    logging.INFO,
+        'WARNING': logging.WARNING,
+        'ERROR':   logging.ERROR,
+    }
+
+    def __init__(self, entries: list) -> None:
+        super().__init__()
+        self._rules = [
+            (e['pattern'], e['level'].upper())
+            for e in entries
+            if e.get('enabled', True) and e.get('pattern', '').strip()
+        ]
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        msg = record.getMessage()
+        for pattern, level in self._rules:
+            if pattern in msg:
+                if level == 'DROP':
+                    return False
+                target = self._LEVEL_MAP.get(level)
+                if target is not None:
+                    record.levelno = target
+                    record.levelname = level
+                return True
+        return True
+
 # Instanciation de la configuration
 myConfig = Config()
 
 parser = argparse.ArgumentParser(description='TTSCast Daemon for Jeedom plugin')
 parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
 parser.add_argument("--castloglevel", help="Log Level for Chromecast libraries (pychromecast, zeroconf)", type=str, default='daemon')
+parser.add_argument("--logfiltersenabled", help="Enable log filters", type=str, default='0')
 parser.add_argument("--pluginversion", help="Plugin Version", type=str)
 parser.add_argument("--callback", help="Callback", type=str)
 parser.add_argument("--apikey", help="ApiKey", type=str)
@@ -3749,6 +3781,25 @@ if myConfig.castLogLevel != 'daemon':
     logging.getLogger('pychromecast').setLevel(_cast_level)
     logging.getLogger('zeroconf').setLevel(_cast_level)
 
+if args.logfiltersenabled:
+    myConfig.logFiltersEnabled = args.logfiltersenabled != '0'
+
+if myConfig.logFiltersEnabled:
+    try:
+        with open(myConfig.logFiltersFilePath, 'r', encoding='utf-8') as _f:
+            myConfig.logFilters = json.load(_f)
+    except FileNotFoundError:
+        logging.warning('[DAEMON][LOGFILTERS] Fichier introuvable : %s', myConfig.logFiltersFilePath)
+    except Exception as _e:
+        logging.warning('[DAEMON][LOGFILTERS] Erreur lecture filtres : %s', _e)
+
+if myConfig.logFiltersEnabled and myConfig.logFilters:
+    _remap_filter = PatternRemapFilter(myConfig.logFilters)
+    for _handler in logging.root.handlers:
+        _handler.addFilter(_remap_filter)
+    _active_count = sum(1 for r in myConfig.logFilters if r.get('enabled', True))
+    logging.info('[DAEMON][LOGFILTERS] %d filtre(s) actif(s) sur %d', _active_count, len(myConfig.logFilters))
+
 if myConfig.cycleFactor == 0:
     myConfig.cycleMain = 2.0
     myConfig.cycleComm = 0.5
@@ -3767,6 +3818,7 @@ logging.info('[DAEMON][MAIN] Plugin Version: %s', myConfig.pluginVersion)
 logging.info('[DAEMON][MAIN] Python Version: %s', sys.version)
 logging.info('[DAEMON][MAIN] Log level: %s', myConfig.logLevel)
 logging.info('[DAEMON][MAIN] Cast log level: %s', myConfig.castLogLevel)
+logging.info('[DAEMON][MAIN] Log filters enabled: %s | rules: %d', myConfig.logFiltersEnabled, len(myConfig.logFilters))
 logging.info('[DAEMON][MAIN] Socket port: %s', myConfig.socketPort)
 logging.info('[DAEMON][MAIN] Socket host: %s', myConfig.socketHost)
 logging.info('[DAEMON][MAIN] CycleFactor: %s', myConfig.cycleFactor)

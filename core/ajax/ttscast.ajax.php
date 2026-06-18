@@ -114,6 +114,12 @@ try {
         }
 
         $safeFilename = basename($_FILES['fileCustomSound']['name']);
+        $safeFilename = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $safeFilename);
+        $safeFilename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $safeFilename);
+        $safeFilename = preg_replace('/_+/', '_', $safeFilename);
+        if (empty(pathinfo($safeFilename, PATHINFO_FILENAME))) {
+            throw new Exception('[UPLOAD][CustomSound] Nom de fichier invalide après nettoyage : ' . $safeFilename);
+        }
 
         # TODO limiter taille upload mp3 dans les customSounds ?
         /* if (filesize($_FILES['fileCustomSound']['tmp_name']) > 10000) {
@@ -153,6 +159,16 @@ try {
         log::add('ttscast', 'info', "[UPLOAD][CustomRadios] Upload OK :: {$_FILES['fileCustomRadios']['name']}");
         ajax::success("{$_FILES['fileCustomRadios']['name']}");
 	}
+
+    if (init('action') == 'saveLogFilters') {
+        $data = init('logFiltersData');
+        $filters = json_decode(is_string($data) ? $data : '[]', true);
+        if (!is_array($filters)) {
+            ajax::error(__('Format de données invalide', __FILE__));
+        }
+        ttscast::saveLogFilters($filters);
+        ajax::success();
+    }
 
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
     /*     * *********Catch exception*************** */

@@ -177,6 +177,7 @@ class ttscast extends eqLogic
         $cmd = self::PYTHON3_PATH . " {$path}/ttscastd.py";
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
         $cmd .= ' --castloglevel ' . config::byKey('castLogLevel', __CLASS__, 'daemon');
+        $cmd .= ' --logfiltersenabled ' . (config::byKey('logFiltersEnabled', __CLASS__, '0') ? '1' : '0');
         $cmd .= ' --pluginversion ' . config::byKey('pluginVersion', __CLASS__, '0.0.0');
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55111');
         $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1');
@@ -535,6 +536,28 @@ class ttscast extends eqLogic
         }
         log::add('ttscast', 'info', '[Python-Version] PythonVersion (venv) :: ' . $pythonVersion);
         return $pythonVersion;
+    }
+
+    public static function createLogFiltersFile() {
+        $path = dirname(__FILE__) . '/../../data/filters/logfilters.json';
+        if (!file_exists($path)) {
+            file_put_contents($path, '[]');
+        }
+    }
+
+    public static function getLogFiltersFileContent() {
+        $path = dirname(__FILE__) . '/../../data/filters/logfilters.json';
+        if (!file_exists($path)) {
+            return array();
+        }
+        return json_decode(file_get_contents($path), true) ?: array();
+    }
+
+    public static function saveLogFilters($filters) {
+        $path = dirname(__FILE__) . '/../../data/filters/logfilters.json';
+        if (file_put_contents($path, json_encode($filters, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) === false) {
+            throw new Exception(__('Impossible d\'enregistrer le fichier logfilters.json', __FILE__));
+        }
     }
 
     public static function getPyEnvVersion() {
