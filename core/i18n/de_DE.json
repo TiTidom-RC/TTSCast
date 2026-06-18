@@ -2,6 +2,7 @@
     "plugins\/ttscast\/core\/ajax\/ttscast.ajax.php": {
         "401 - Accès non autorisé": "401 - Unauthorized Access",
         "Aucune méthode correspondante à": "Keine passende Methode zu",
+        "Format de données invalide": "Ungültiges Datenformat",
         "Le démon n\\'est pas démarré": "Der Daemon wurde nicht gestartet",
         "[UPLOAD][APIKEY] Aucun fichier trouvé. Vérifiez le paramètre PHP (post size limit)": "[UPLOAD][APIKEY] Es wurden keine Dateien gefunden. Überprüfen Sie die PHP-Einstellung (post size limit)",
         "[UPLOAD][APIKEY] Impossible de sauvegarder le fichier JSON": "[UPLOAD][APIKEY] JSON-Datei konnte nicht gespeichert werden",
@@ -37,6 +38,7 @@
         "Custom Sounds": "Custom Sounds",
         "En Ligne": "Online",
         "Idle": "Idle",
+        "Impossible d\\'enregistrer le fichier logfilters.json": "Die Datei „logfilters.json“ kann nicht gespeichert werden",
         "Impossible de lancer le démon, vérifiez le log": "Der Dämon kann nicht gestartet werden, überprüfen Sie das Log",
         "Media": "Medien",
         "Media Next": "Media Next",
@@ -115,6 +117,12 @@
         "Sélectionner la commande": "Befehl auswählen",
         "TTS": "TTS"
     },
+    "plugins\/ttscast\/desktop\/js\/logfilters.ttscast.js": {
+        "Erreur lors de la sauvegarde": "Fehler beim Speichern",
+        "Ex: Failed to connect to service": "Beispiel: Verbindung zum Dienst konnte nicht hergestellt werden",
+        "Filtres sauvegardés": "Gespeicherte Filter",
+        "Supprimer": "Delete"
+    },
     "plugins\/ttscast\/desktop\/js\/ttscast.js": {
         "Afficher": "Display",
         "Aucune": "None",
@@ -131,6 +139,18 @@
         "Supprimer la commande": "Delete Command",
         "Tester": "Test",
         "Unité": "Unit"
+    },
+    "plugins\/ttscast\/desktop\/modal\/logfilters.ttscast.php": {
+        "401 - Accès non autorisé": "401 - Unauthorized Access",
+        "Actif": "Aktiv",
+        "Ajouter": "Hinzufügen",
+        "Définissez les patterns à intercepter et le niveau de log à appliquer. Cochez\/décochez pour activer\/désactiver une règle sans la perdre.": "Legen Sie die abzufangenden Muster und die anzuwendende Protokollierungsstufe fest. Aktivieren oder deaktivieren Sie das Kontrollkästchen, um eine Regel zu aktivieren bzw. zu deaktivieren, ohne sie zu verlieren.",
+        "Niveau cible": "Zielniveau",
+        "Pattern (sous-chaîne du message de log)": "Muster (Teilzeichenfolge der Protokollmeldung)",
+        "Sauvegarder": "Save",
+        "Suggestions :": "Vorschläge:",
+        "Tout activer": "Alles aktivieren",
+        "Tout désactiver": "Alles deaktivieren"
     },
     "plugins\/ttscast\/desktop\/modal\/modal.ttscast.php": {
         "401 - Accès non autorisé": "401 - Unauthorized Access"
@@ -178,9 +198,11 @@
         "Visible": "Visible"
     },
     "plugins\/ttscast\/plugin_info\/configuration.php": {
+        "Active la personnalisation des niveaux de log. Les filtres sont définis dans la fenêtre de gestion dédiée.": "Aktiviert die Anpassung der Protokollstufen. Die Filter werden im entsprechenden Verwaltungsfenster definiert.",
         "Active le moteur de synthèse vocale Gemini TTS. Utilise la clé API Google Gemini ou le compte OAuth2 configuré ci-dessus.": "Aktiviert die Gemini-TTS-Sprachsynthese-Engine. Verwendet den oben konfigurierten Google Gemini-API-Schlüssel oder das OAuth2-Konto.",
         "Activer Gemini TTS": "Gemini TTS aktivieren",
         "Activer IA Générative": "Generative KI aktivieren",
+        "Activer les filtres de logs": "Log-Filter aktivieren",
         "Affiche le prompt système utilisé par l'IA lorsqu'aucun prompt personnalisé n'est défini. Le démon doit être démarré.": "Zeigt die vom KI verwendete Systemaufforderung an, wenn keine benutzerdefinierte Aufforderung festgelegt ist. Der Daemon muss gestartet werden.",
         "Afficher": "Display",
         "Ajouter Clé (JSON)": "Add Key (JSON)",
@@ -228,6 +250,7 @@
         "Ex: enthousiaste et humoristique": "Beispiel: enthusiastisch und humorvoll",
         "Facteur multiplicateur des cycles du démon (Défaut = x1)": "Daemon Cycle Multiplier Factor (Default = x1)",
         "Fichier JSON (Vertex AI - Google)": "JSON-Datei (Vertex AI – Google)",
+        "Filtres de logs": "Protokollfilter",
         "Force la réinitialisation de PyEnv": "Erzwingt das Zurücksetzen von PyEnv",
         "Force la réinitialisation de Venv": "Erzwingt das Zurücksetzen von Venv",
         "Force les mises à jour Systèmes": "Erzwingt Aktualisierungen Systeme",
@@ -242,6 +265,7 @@
         "Google Translate API (Internet)": "Google Translate API (Internet)",
         "Génère les fichiers TTS à chaque demande. Il est vivement recommandé de ne PAS cocher cette case, sauf pour faire des tests": "Generates TTS files on each request. It is strongly recommended that you do NOT check this box, except for testing purposes.",
         "Générer + Diffuser": "Generate + Broadcast",
+        "Gérer les filtres": "Filter verwalten",
         "IA & TTS - Gemini": "KI & TTS – Gemini",
         "Id Projet Google": "Google-Projekt-ID",
         "Identique au démon (défaut)": "Identisch mit dem Daemon (Standard)",
