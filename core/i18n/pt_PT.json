@@ -2,6 +2,7 @@
     "plugins\/ttscast\/core\/ajax\/ttscast.ajax.php": {
         "401 - Accès non autorisé": "401 - Acesso não autorizado",
         "Aucune méthode correspondante à": "Nenhum método correspondente a",
+        "Format de données invalide": "Formato de dados inválido",
         "Le démon n\\'est pas démarré": "O daemon não foi iniciado",
         "[UPLOAD][APIKEY] Aucun fichier trouvé. Vérifiez le paramètre PHP (post size limit)": "[UPLOAD][APIKEY] Nenhum ficheiro encontrado. Verificar o parâmetro PHP (limite de tamanho da publicação)",
         "[UPLOAD][APIKEY] Impossible de sauvegarder le fichier JSON": "[UPLOAD][APIKEY] Não é possível guardar o ficheiro JSON",
@@ -37,6 +38,7 @@
         "Custom Sounds": "Sons personalizados",
         "En Ligne": "Em linha",
         "Idle": "Inativo",
+        "Impossible d\\'enregistrer le fichier logfilters.json": "Não é possível guardar o ficheiro logfilters.json",
         "Impossible de lancer le démon, vérifiez le log": "Não é possível iniciar o daemon, verificar o registo",
         "Media": "Media",
         "Media Next": "Meios de comunicação social Seguinte",
@@ -115,6 +117,12 @@
         "Sélectionner la commande": "Selecionar o comando",
         "TTS": "TTS"
     },
+    "plugins\/ttscast\/desktop\/js\/logfilters.ttscast.js": {
+        "Erreur lors de la sauvegarde": "Erro ao guardar",
+        "Ex: Failed to connect to service": "Ex.: Falha ao tentar ligar-se ao serviço",
+        "Filtres sauvegardés": "Filtros guardados",
+        "Supprimer": "Eliminar"
+    },
     "plugins\/ttscast\/desktop\/js\/ttscast.js": {
         "Afficher": "Ver",
         "Aucune": "Não",
@@ -131,6 +139,18 @@
         "Supprimer la commande": "Apagar comando",
         "Tester": "Teste",
         "Unité": "Unidade"
+    },
+    "plugins\/ttscast\/desktop\/modal\/logfilters.ttscast.php": {
+        "401 - Accès non autorisé": "401 - Acesso não autorizado",
+        "Actif": "Ativo",
+        "Ajouter": "Adicionar",
+        "Définissez les patterns à intercepter et le niveau de log à appliquer. Cochez\/décochez pour activer\/désactiver une règle sans la perdre.": "Defina os padrões a interceptar e o nível de registo a aplicar. Assinale\/desassinale para ativar\/desativar uma regra sem a perder.",
+        "Niveau cible": "Nível pretendido",
+        "Pattern (sous-chaîne du message de log)": "Padrão (subcadeia da mensagem de registo)",
+        "Sauvegarder": "Guardar",
+        "Suggestions :": "Sugestões:",
+        "Tout activer": "Ativar tudo",
+        "Tout désactiver": "Desativar tudo"
     },
     "plugins\/ttscast\/desktop\/modal\/modal.ttscast.php": {
         "401 - Accès non autorisé": "401 - Acesso não autorizado"
@@ -178,9 +198,11 @@
         "Visible": "Visível"
     },
     "plugins\/ttscast\/plugin_info\/configuration.php": {
+        "Active la personnalisation des niveaux de log. Les filtres sont définis dans la fenêtre de gestion dédiée.": "Ativa a personalização dos níveis de registo. Os filtros são definidos na janela de gestão dedicada.",
         "Active le moteur de synthèse vocale Gemini TTS. Utilise la clé API Google Gemini ou le compte OAuth2 configuré ci-dessus.": "Ativa o motor de síntese de voz Gemini TTS. Utiliza a chave API do Google Gemini ou a conta OAuth2 configurada acima.",
         "Activer Gemini TTS": "Ativar o Gemini TTS",
         "Activer IA Générative": "Ativar IA Gerativa",
+        "Activer les filtres de logs": "Ativar os filtros de registos",
         "Affiche le prompt système utilisé par l'IA lorsqu'aucun prompt personnalisé n'est défini. Le démon doit être démarré.": "Exibe o prompt do sistema utilizado pela IA quando não está definido nenhum prompt personalizado. O daemon deve ser iniciado.",
         "Afficher": "Ver",
         "Ajouter Clé (JSON)": "Adicionar chave (JSON)",
@@ -228,6 +250,7 @@
         "Ex: enthousiaste et humoristique": "Ex.: entusiasta e bem-humorado",
         "Facteur multiplicateur des cycles du démon (Défaut = x1)": "Fator de multiplicação do ciclo de demonstração (Predefinição = x1)",
         "Fichier JSON (Vertex AI - Google)": "Ficheiro JSON (Vertex AI - Google)",
+        "Filtres de logs": "Filtros de registos",
         "Force la réinitialisation de PyEnv": "Forçar reinicialização do PyEnv",
         "Force la réinitialisation de Venv": "Forçar a reposição do Venv",
         "Force les mises à jour Systèmes": "Forçar actualizações do sistema",
@@ -242,6 +265,7 @@
         "Google Translate API (Internet)": "API do Google Translate (Internet)",
         "Génère les fichiers TTS à chaque demande. Il est vivement recommandé de ne PAS cocher cette case, sauf pour faire des tests": "Gera ficheiros TTS em cada pedido. Recomenda-se vivamente que NÃO assinale esta caixa, exceto para fins de teste",
         "Générer + Diffuser": "Gerar + Difundir",
+        "Gérer les filtres": "Gerir os filtros",
         "IA & TTS - Gemini": "IA e TTS - Gemini",
         "Id Projet Google": "Projeto Google ID",
         "Identique au démon (défaut)": "Idêntico ao daemon (padrão)",
