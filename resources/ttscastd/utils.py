@@ -55,6 +55,7 @@ class Config:
     
     radiosFilePath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/radios/radios.json'))
     customRadiosFilePath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/radios/custom/radios.json'))
+    logFiltersFilePath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/filters/logfilters.json'))
     # soundsPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/media'))
     # soundsCustomPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/media/custom'))
     
@@ -131,6 +132,8 @@ class Config:
     
     logLevel = "error"
     castLogLevel = "daemon"
+    logFiltersEnabled: bool = False
+    logFilters: list = []  # [{ "pattern": str, "level": str, "enabled": bool }]
     socketPort = 55111
     socketHost = 'localhost'
     pidFile = '/tmp/ttscastd.pid'
