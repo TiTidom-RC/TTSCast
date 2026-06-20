@@ -121,6 +121,7 @@
         "Erreur lors de la sauvegarde": "Erro ao guardar",
         "Ex: Failed to connect to service": "Ex.: Falha ao tentar ligar-se ao serviço",
         "Filtres sauvegardés": "Filtros guardados",
+        "Redémarrez le démon pour appliquer les changements": "Reinicie o daemon para aplicar as alterações",
         "Supprimer": "Eliminar"
     },
     "plugins\/ttscast\/desktop\/js\/ttscast.js": {

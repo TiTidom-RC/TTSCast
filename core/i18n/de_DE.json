@@ -121,6 +121,7 @@
         "Erreur lors de la sauvegarde": "Fehler beim Speichern",
         "Ex: Failed to connect to service": "Beispiel: Verbindung zum Dienst konnte nicht hergestellt werden",
         "Filtres sauvegardés": "Gespeicherte Filter",
+        "Redémarrez le démon pour appliquer les changements": "Starten Sie den Daemon neu, um die Änderungen zu übernehmen",
         "Supprimer": "Delete"
     },
     "plugins\/ttscast\/desktop\/js\/ttscast.js": {

@@ -121,6 +121,7 @@
         "Erreur lors de la sauvegarde": "Errore durante il salvataggio",
         "Ex: Failed to connect to service": "Es.: Impossibile connettersi al servizio",
         "Filtres sauvegardés": "Filtri salvati",
+        "Redémarrez le démon pour appliquer les changements": "Riavviare il demone per applicare le modifiche",
         "Supprimer": "Cancellare"
     },
     "plugins\/ttscast\/desktop\/js\/ttscast.js": {
