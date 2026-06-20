@@ -121,6 +121,7 @@
         "Erreur lors de la sauvegarde": "Error while saving",
         "Ex: Failed to connect to service": "Ex: Failed to connect to service",
         "Filtres sauvegardés": "Saved filters",
+        "Redémarrez le démon pour appliquer les changements": "Restart the daemon to apply the changes",
         "Supprimer": "Delete"
     },
     "plugins\/ttscast\/desktop\/js\/ttscast.js": {
