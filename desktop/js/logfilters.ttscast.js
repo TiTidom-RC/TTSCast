@@ -137,7 +137,7 @@ window.initLogFilters = function(data) {
                     jeedomUtils.showAlert({ message: data.result, level: 'danger' })
                     return
                 }
-                jeedomUtils.showAlert({ message: '{{Filtres sauvegardés}}', level: 'success' })
+                jeedomUtils.showAlert({ message: '{{Filtres sauvegardés}} — {{Redémarrez le démon pour appliquer les changements}}', level: 'success' })
             }
         })
     })
