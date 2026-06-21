@@ -6,6 +6,7 @@ on:
       - beta
     paths:
       - '**/*.js'
+  workflow_dispatch:
 
 jobs:
   js-lint:

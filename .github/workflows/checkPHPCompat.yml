@@ -6,6 +6,7 @@ on:
       - beta
     paths:
       - '**/*.php'
+  workflow_dispatch:
 
 jobs:
   php-compat:

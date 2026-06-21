@@ -6,6 +6,7 @@ on:
       - beta
     paths:
       - 'resources/**/*.py'
+  workflow_dispatch:
 
 jobs:
   python-check:
