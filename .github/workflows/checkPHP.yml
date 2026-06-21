@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - beta
+    paths:
+      - '**/*.php'
 
 jobs:
   php-lint:

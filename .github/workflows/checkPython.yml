@@ -4,6 +4,8 @@ on:
   pull_request:
     branches:
       - beta
+    paths:
+      - 'resources/**/*.py'
 
 jobs:
   python-check:
