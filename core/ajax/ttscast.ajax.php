@@ -114,9 +114,11 @@ try {
         }
 
         $safeFilename = basename($_FILES['fileCustomSound']['name']);
+        $safeFilename = sanitizeAccent($safeFilename);
         $safeFilename = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $safeFilename);
-        $safeFilename = preg_replace('/[^a-zA-Z0-9._-]/', '_', $safeFilename);
-        $safeFilename = preg_replace('/_+/', '_', $safeFilename);
+        $safeFilename = strtolower($safeFilename);
+        $safeFilename = preg_replace('/[^a-z0-9._-]+/', '_', $safeFilename);
+        $safeFilename = preg_replace('/^[_-]+|[_-]+(?=\.[^.]*$)/', '', $safeFilename);
         if (empty(pathinfo($safeFilename, PATHINFO_FILENAME))) {
             throw new Exception('[UPLOAD][CustomSound] Nom de fichier invalide après nettoyage : ' . $safeFilename);
         }

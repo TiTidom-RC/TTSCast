@@ -1,0 +1,23 @@
+name: JavaScript Syntax Check
+
+on:
+  pull_request:
+    branches:
+      - beta
+    paths:
+      - '**/*.js'
+  workflow_dispatch:
+
+jobs:
+  js-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+
+      - name: Check JavaScript syntax
+        run: find . -name "*.js" ! -path "./node_modules/*" -exec node --check {} \;
