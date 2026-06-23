@@ -372,16 +372,15 @@ class TTSCast:
             }
             
             response = requests.post(myConfig.ttsVoiceRSSUrl, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=True)
-            filecontent = response.content
             
             if response.status_code != requests.codes.ok:
-                filecontent = None
                 logging.warning('[DAEMON][VoiceRSS] Status Code Error :: %s (%s)', response.status_code, response.reason)
+            elif len(response.content) < 2 or not (response.content.startswith(b'ID3') or (response.content[0] == 0xFF and response.content[1] >= 0xE0)):
+                # Vérification positive des magic bytes MP3 (ID3v2 ou sync frame MPEG).
+                # Couvre : réponse vide, erreur API texte (ex: "ERROR: 1 - ..."), HTML inattendu, etc.
+                logging.warning('[DAEMON][VoiceRSS] Réponse invalide (non-MP3) :: %s', response.content[:80].decode('utf-8', errors='replace').strip())
             else:
-                """ logging.debug('[DAEMON][VoiceRSS] Response is OK. Downloading Content Now.')
-                fc = open(response.content, "rb")
-                filecontent = fc.read()
-                fc.close() """
+                filecontent = response.content
         except Exception as e:
             logging.error('[DAEMON][VoiceRSS] Erreur lors de la récupération du fichier TTS :: %s | voix : %s | extrait : %s', e, ttsVoiceName, repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
