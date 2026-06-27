@@ -579,7 +579,7 @@ class TTSCast:
                     with open(filepath, 'wb') as f:
                         f.write(ttsResult)
                 else:
-                    logging.error('[DAEMON][TestTTS] Erreur JeedomTTS :: sortie incorrecte — lang : %s — extrait : %s', ttsLang, repr(ttsText[:80]))
+                    logging.error('[DAEMON][TestTTS] Erreur JeedomTTS :: aucun fichier audio généré — lang : %s — extrait : %s', ttsLang, repr(ttsText[:80]))
                     return False
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
@@ -1188,7 +1188,7 @@ class TTSCast:
                         with open(filepath, 'wb') as f:
                             f.write(ttsResult)
                     else:
-                        logging.error('[DAEMON][TTS] Erreur JeedomTTS :: sortie incorrecte — lang : %s — extrait : %s', ttsLang, repr(ttsText[:80]))
+                        logging.error('[DAEMON][TTS] Erreur JeedomTTS :: aucun fichier audio généré — lang : %s — extrait : %s', ttsLang, repr(ttsText[:80]))
                         return False
                 else:
                     logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
