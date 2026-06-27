@@ -312,11 +312,9 @@ class TTSCast:
     def jeedomTTS(ttsText, ttsLang):
         filecontent = None
         try:
-            # ttsParams = f'tts.php?apikey={myConfig.apiTTSKey}&voice={ttsLang}&path=1&text={quote(ttsText, safe="")}'
-            # ttsFullURI = f'{myConfig.ttsWebSrvJeeTTS}{ttsParams}'
             ttsFullURI = f'{myConfig.ttsWebSrvJeeTTS}tts.php'
             logging.debug('[DAEMON][JeedomTTS] ttsFullURI :: %s', ttsFullURI)
-            logging.debug('[DAEMON][JeedomTTS] ttsText Length :: %s', str(len(ttsText)))
+            logging.debug('[DAEMON][JeedomTTS] ttsText Length :: %d', len(ttsText))
             
             ttsHeaders = {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'}
             ttsParams = {
@@ -327,22 +325,23 @@ class TTSCast:
             }
             
             response = requests.post(ttsFullURI, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=False)
-            filecontent = response.content
-            
-            # response = requests.post(ttsFullURI, timeout=30, verify=False)
-            # filecontent = response.content
             
             if response.status_code != requests.codes.ok:
-                filecontent = None
-                logging.warning('[DAEMON][JeedomTTS] Status Code Error :: %s (%s)', response.status_code, response.reason)
+                logging.error('[DAEMON][JeedomTTS] Status Code Error :: %s (%s)', response.status_code, response.reason)
             else:
-                if len(response.content) < 254 and os.path.exists(response.content):
+                # Jeedom tts.php retourne toujours un chemin de fichier (path=1).
+                # On décode proprement la réponse et on strip tout whitespace parasite
+                # (newline, BOM…) avant d'appeler os.path.exists pour éviter les faux négatifs.
+                ttsFilePath = response.content.decode('utf-8', errors='replace').strip()
+                logging.debug('[DAEMON][JeedomTTS] ttsFilePath (Jeedom) :: %s', ttsFilePath)
+                if os.path.exists(ttsFilePath):
                     logging.debug('[DAEMON][JeedomTTS] Response is a FilePath. Downloading Content Now.')
-                    fc = open(response.content, "rb")
-                    filecontent = fc.read()
-                    fc.close()
+                    with open(ttsFilePath, 'rb') as fc:
+                        filecontent = fc.read()
+                else:
+                    logging.error('[DAEMON][JeedomTTS] Fichier TTS (Jeedom) introuvable (pico/espeak absent ou en erreur, ou réponse invalide) :: %s | lang : %s | extrait : %s', ttsFilePath, ttsLang, repr(ttsText[:80]))
         except Exception as e:
-            logging.error('[DAEMON][JeedomTTS] Error while retrieving TTS file :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
+            logging.error('[DAEMON][JeedomTTS] Erreur lors de la récupération du fichier TTS :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
             filecontent = None
         return filecontent
@@ -373,18 +372,17 @@ class TTSCast:
             }
             
             response = requests.post(myConfig.ttsVoiceRSSUrl, headers=ttsHeaders, data=urlencode(ttsParams), timeout=30, verify=True)
-            filecontent = response.content
             
             if response.status_code != requests.codes.ok:
-                filecontent = None
                 logging.warning('[DAEMON][VoiceRSS] Status Code Error :: %s (%s)', response.status_code, response.reason)
+            elif len(response.content) < 2 or not (response.content.startswith(b'ID3') or (response.content[0] == 0xFF and response.content[1] >= 0xE0)):
+                # Vérification positive des magic bytes MP3 (ID3v2 ou sync frame MPEG).
+                # Couvre : réponse vide, erreur API texte (ex: "ERROR: 1 - ..."), HTML inattendu, etc.
+                logging.warning('[DAEMON][VoiceRSS] Réponse invalide (non-MP3) :: %s', response.content[:80].decode('utf-8', errors='replace').strip())
             else:
-                """ logging.debug('[DAEMON][VoiceRSS] Response is OK. Downloading Content Now.')
-                fc = open(response.content, "rb")
-                filecontent = fc.read()
-                fc.close() """
+                filecontent = response.content
         except Exception as e:
-            logging.error('[DAEMON][VoiceRSS] Error while retrieving TTS file :: %s | voix : %s | extrait : %s', e, ttsVoiceName, repr(ttsText[:80]))
+            logging.error('[DAEMON][VoiceRSS] Erreur lors de la récupération du fichier TTS :: %s | voix : %s | extrait : %s', e, ttsVoiceName, repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
             filecontent = None
         return filecontent
@@ -547,7 +545,7 @@ class TTSCast:
                             os.remove(filepath)
                         except OSError:
                             pass
-                    logging.warning('[DAEMON][TestTTS] Google Translate API ERROR :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
+                    logging.warning('[DAEMON][TestTTS] Erreur API Google Translate :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
@@ -581,7 +579,8 @@ class TTSCast:
                     with open(filepath, 'wb') as f:
                         f.write(ttsResult)
                 else:
-                    logging.warning('[DAEMON][TestTTS] JeedomTTS Error :: Incorrect Output — lang : %s — extrait : %s', ttsLang, repr(ttsText[:80]))
+                    logging.error('[DAEMON][TestTTS] Erreur JeedomTTS :: aucun fichier audio généré — lang : %s — extrait : %s', ttsLang, repr(ttsText[:80]))
+                    return False
             else:
                 logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
@@ -616,7 +615,7 @@ class TTSCast:
                         with open(filepath, 'wb') as f:
                             f.write(ttsResult)
                     else:
-                        logging.warning('[DAEMON][TestTTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : %s', ttsRSSVoiceName, repr(ttsText[:80]))
+                        logging.warning('[DAEMON][TestTTS] Erreur VoiceRSS :: sortie incorrecte — voix : %s — extrait : %s', ttsRSSVoiceName, repr(ttsText[:80]))
                 else:
                     logging.debug('[DAEMON][TestTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
@@ -861,7 +860,7 @@ class TTSCast:
                                 os.remove(filepath)
                             except OSError:
                                 pass
-                        logging.warning('[DAEMON][GenerateTTS] Google Translate API ERROR :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
+                        logging.warning('[DAEMON][GenerateTTS] Erreur API Google Translate :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
                 else:
                     logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
             
@@ -886,7 +885,7 @@ class TTSCast:
                                 f.write(ttsResult)
                             logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
                         else:
-                            logging.warning('[DAEMON][GenerateTTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : %s', ttsRSSVoiceName, repr(ttsText[:80]))
+                            logging.warning('[DAEMON][GenerateTTS] Erreur VoiceRSS :: sortie incorrecte — voix : %s — extrait : %s', ttsRSSVoiceName, repr(ttsText[:80]))
                     else:
                         logging.debug('[DAEMON][GenerateTTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 else:
@@ -919,7 +918,7 @@ class TTSCast:
                 logging.error('[DAEMON][GenerateTTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts.', ttsEngine)
 
         except Exception as e:
-            logging.error('[DAEMON][GenerateTTS] Exception on TTS :: %s | moteur : %s | extrait : %s', e, ttsEngine, repr(ttsText[:80]))
+            logging.error('[DAEMON][GenerateTTS] Exception lors de la génération TTS :: %s | moteur : %s | extrait : %s', e, ttsEngine, repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
 
     @staticmethod
@@ -1155,7 +1154,7 @@ class TTSCast:
                                 os.remove(filepath)
                             except OSError:
                                 pass
-                        logging.warning('[DAEMON][TTS] Google Translate API ERROR :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
+                        logging.warning('[DAEMON][TTS] Erreur API Google Translate :: %s | lang : %s | extrait : %s', e, ttsLang, repr(ttsText[:80]))
                 else:
                     logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
@@ -1189,7 +1188,8 @@ class TTSCast:
                         with open(filepath, 'wb') as f:
                             f.write(ttsResult)
                     else:
-                        logging.warning('[DAEMON][TTS] JeedomTTS Error :: Incorrect Output — lang : %s — extrait : %s', ttsLang, repr(ttsText[:80]))
+                        logging.error('[DAEMON][TTS] Erreur JeedomTTS :: aucun fichier audio généré — lang : %s — extrait : %s', ttsLang, repr(ttsText[:80]))
+                        return False
                 else:
                     logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                 
@@ -1224,7 +1224,7 @@ class TTSCast:
                             with open(filepath, 'wb') as f:
                                 f.write(ttsResult)
                         else:
-                            logging.warning('[DAEMON][TTS] VoiceRSS Error :: Incorrect Output — voix : %s — extrait : %s', ttsRSSVoiceName, repr(ttsText[:80]))
+                            logging.warning('[DAEMON][TTS] Erreur VoiceRSS :: sortie incorrecte — voix : %s — extrait : %s', ttsRSSVoiceName, repr(ttsText[:80]))
                     else:
                         logging.info('[DAEMON][TTS] Le fichier TTS existe déjà dans le cache :: %s', filepath)
                     
