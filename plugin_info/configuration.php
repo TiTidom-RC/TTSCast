@@ -224,15 +224,17 @@ if (file_exists($_piperCatalogPath)) {
                             </a>
                         </span>
                     </div>
-                    <small id="piper_model_status" style="display:block;margin-top:2px;margin-bottom:2px;"></small>
-                    <a class="btn btn-warning btn-xs" id="btn_piperDownload" style="display:none;">
-                        <i class="fas fa-download"></i> {{Télécharger la voix}}
-                    </a>
-                    <div id="piper_download_progress" style="display:none;">
-                        <div class="progress" style="margin-bottom:4px;">
-                            <div id="piper_progress_bar" class="progress-bar progress-bar-striped active" role="progressbar" style="min-width:2em;width:0%">0%</div>
+                    <div style="margin-top:2px;margin-bottom:2px;">
+                        <small id="piper_model_status"></small>
+                        <a class="btn btn-warning btn-xs" id="btn_piperDownload" style="display:none;">
+                            <i class="fas fa-download"></i> {{Télécharger la voix}}
+                        </a>
+                        <div id="piper_download_progress" style="display:none;">
+                            <div class="progress" style="margin-bottom:4px;">
+                                <div id="piper_progress_bar" class="progress-bar progress-bar-striped active" role="progressbar" style="min-width:2em;width:0%">0%</div>
+                            </div>
+                            <small id="piper_progress_label" class="text-muted"></small>
                         </div>
-                        <small id="piper_progress_label" class="text-muted"></small>
                     </div>
                 </div>
             </div>
