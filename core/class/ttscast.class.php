@@ -132,7 +132,7 @@ class ttscast extends eqLogic
 
                 log::add(__CLASS__, 'debug', '[Python-Dep][CHECK] foundCount=' . $foundCount . ' / expectedCount=' . $expectedCount . ' / depString=' . $pythonDepString);
 
-                if ($foundCount < $expectedCount) {
+                if ((int)$foundCount < (int)$expectedCount) {
                     $return['state'] = 'nok';
                     log::add(__CLASS__, 'debug', '[Python-Dep] Missing Dependencies. Found: ' . $foundCount . ' / Expected: ' . $expectedCount);
                     log::add(__CLASS__, 'debug', '[Python-Dep] Regex used: ' . $pythonDepString);
@@ -1118,6 +1118,9 @@ class ttscast extends eqLogic
         log::add(__CLASS__, 'debug', '[postConfig_ttsEngine] Appelé avec valeur = ' . $value);
         self::getPythonDepFromRequirements();
         log::add(__CLASS__, 'debug', '[postConfig_ttsEngine] getPythonDepFromRequirements terminé — pythonDepNum = ' . config::byKey('pythonDepNum', 'ttscast', 0, true));
+        // Invalider le cache Jeedom du badge dépendances pour forcer un rechargement réel
+        $cache = cache::byKey('dependancy' . __CLASS__);
+        $cache->remove();
     }
 
     /**
