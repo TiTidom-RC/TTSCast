@@ -908,7 +908,7 @@ class TTSCast:
                     _textToSynth = ttsAIText
                 else:
                     logging.warning('[DAEMON][TestTTS] Erreur IA. Génération Piper TTS sans IA (Backup)')
-            raw_filename = _textToSynth + '|PiperTTS|' + _piperVoice
+            raw_filename = _textToSynth + '|PiperTTS|' + _piperVoice + '|' + str(myConfig.piperSpeakerId)
             filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + '.wav'
             filepath = os.path.join(symLinkPath, filename)
             logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
