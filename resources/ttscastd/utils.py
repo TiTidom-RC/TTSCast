@@ -75,7 +75,7 @@ class Config:
     # Clés d'options consommées par le démon (jamais renvoyées comme options de notification)
     DAEMON_OPTION_KEYS = frozenset({
         'genai', 'aitone', 'aisysprompt', 'aitemp',  # IA
-        'ssml', 'markup', 'style', 'before', 'voice', # TTS voix / format
+        'ssml', 'markup', 'style', 'before', 'voice', 'speaker', # TTS voix / format
         'engine',                                     # TTS moteur (override par commande)
         'volume', 'ding', 'wait', 'force',            # TTS comportement
     })
@@ -123,6 +123,16 @@ class Config:
 
     configFolder = 'data/config'
     configFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), configFolder))
+
+    # Piper TTS
+    piperVoiceName = ''
+    piperSpeakerId = 0
+    piperVoiceCache: dict = {'key': None, 'model': None}  # Cache mémoire du modèle ONNX chargé
+    piperBaseHfUrl = 'https://huggingface.co/rhasspy/piper-voices/resolve/main'
+    piperVoicesJsonUrl = 'https://huggingface.co/rhasspy/piper-voices/resolve/main/voices.json'
+    piperModelsDir = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/models'))
+    piperVoicesCatalogPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data/config/piper_voices.json'))
+    piperTmpDir = os.path.join('/tmp/jeedom/', 'ttscast')
 
     ttsDisableCache = False
     appDisableDing = False

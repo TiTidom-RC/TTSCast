@@ -82,6 +82,16 @@ except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing modules for GenAI ::", e)
     sys.exit(1)
 
+# Import Piper TTS (optionnel — installé uniquement si l'utilisateur active Piper)
+try:
+    from piper.voice import PiperVoice
+    from piper.config import SynthesisConfig
+    _PIPER_AVAILABLE = True
+except ImportError:
+    PiperVoice = None
+    SynthesisConfig = None
+    _PIPER_AVAILABLE = False
+
 # Import Config
 try:
     from utils import Comm, Config
@@ -146,27 +156,27 @@ class Loops:
                         if message['cmd_action'] == 'ttstest':
                             logging.info('[DAEMON][SOCKET] Generate And Play Test TTS')
 
-                            if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName', 'ttsGeminiStyle', 'ttsSSML', 'ttsAI', 'ttsGemini', 'ttsStreaming')):
+                            if all(keys in message for keys in ('ttsText', 'ttsGoogleName', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName', 'ttsGeminiStyle', 'ttsSSML', 'ttsAI', 'ttsGemini', 'ttsStreaming', 'ttsPiperVoiceName')):
                                 logging.debug('[DAEMON][SOCKET] Test TTS :: %s', message['ttsText'] + ' | ' + message['ttsGoogleName'] + ' | ' + message['ttsVoiceName'] + ' | ' + message['ttsLang'] + ' | ' + message['ttsEngine'] + ' | ' + message['ttsSpeed'] + ' | ' + message['ttsRSSVoiceName'] + ' | ' + message['ttsRSSSpeed'] + ' | ' + message['ttsSSML'] + ' | ' + message['ttsAI'] + ' | geminiVoice=' + message['ttsGeminiVoiceName'] + ' | geminiStyle=' + message['ttsGeminiStyle'] + ' | gemini=' + message['ttsGemini'] + ' | streaming=' + message['ttsStreaming'])
-                                threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsGeminiStyle'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML'], message['ttsAI'], message['ttsGemini'], message['ttsStreaming']]).start()
+                                threading.Thread(target=TTSCast.generateTestTTS, args=[message['ttsText'], message['ttsGoogleName'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsGeminiStyle'], message['ttsLang'], message['ttsEngine'], message['ttsPiperVoiceName'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsSSML'], message['ttsAI'], message['ttsGemini'], message['ttsStreaming']]).start()
                             else:
                                 logging.warning('[DAEMON][SOCKET] Test TTS :: Il manque des données pour traiter la commande.')
                         
                         elif message['cmd_action'] == 'tts':
                             logging.info('[DAEMON][SOCKET] Generate And Play TTS')
                     
-                            if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName')):
+                            if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName', 'ttsPiperVoiceName')):
                                 logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))                                    
-                                threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'], message.get('cmdNotificationId', 0)]).start()
+                                threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsPiperVoiceName'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'], message.get('cmdNotificationId', 0)]).start()
                             else:
                                 logging.warning('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
                                 
                         elif message['cmd_action'] == 'generatetts':
                             logging.info('[DAEMON][SOCKET] Generate TTS as Jeedom Engine')
                             
-                            if all(keys in message for keys in ('ttsText', 'ttsFile', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName')):
+                            if all(keys in message for keys in ('ttsText', 'ttsFile', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName', 'ttsPiperVoiceName')):
                                 logging.debug('[DAEMON][SOCKET] GenerateTTS :: %s', str(message))
-                                threading.Thread(target=TTSCast.generateTTS, args=[message['ttsText'], message['ttsFile'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()
+                                threading.Thread(target=TTSCast.generateTTS, args=[message['ttsText'], message['ttsFile'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsPiperVoiceName'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions']]).start()
                             else:
                                 logging.warning('[DAEMON][SOCKET] GenerateTTS :: Il manque des données pour traiter la commande.')
                         
@@ -246,6 +256,23 @@ class Loops:
                     
                     myConfig.ScanMode = False
                     Comm.sendToJeedom.send_change_immediate({'scanState': 'scanOff'})  # type: ignore
+
+                elif message['cmd'] == 'downloadpipermodel':
+                    if 'voiceKey' in message:
+                        logging.info('[DAEMON][SOCKET] Download Piper Model :: %s', message['voiceKey'])
+                        threading.Thread(
+                            target=PiperModelManager.downloadModelWithProgress,
+                            args=[message['voiceKey'], myConfig.piperModelsDir, myConfig.piperVoicesCatalogPath, myConfig.piperTmpDir]
+                        ).start()
+                    else:
+                        logging.warning('[DAEMON][SOCKET] Download Piper Model :: voiceKey manquant')
+
+                elif message['cmd'] == 'refreshpipercatalog':
+                    logging.info('[DAEMON][SOCKET] Refresh Piper Catalog')
+                    threading.Thread(
+                        target=PiperModelManager.fetchVoicesCatalog,
+                        args=[myConfig.piperVoicesCatalogPath, True]
+                    ).start()
                     
             except Exception as e:
                 logging.error('[DAEMON][SOCKET] Send command to daemon error :: %s', e)
@@ -305,6 +332,181 @@ class Loops:
             logging.info('[DAEMON][MAINLOOP] KeyboardInterrupt on MainLoop, Shutdown.')
             shutdown()
                     
+class PiperModelManager:
+    """
+    Gère le catalogue des voix Piper (voices.json) et le téléchargement des modèles ONNX.
+    """
+    _catalog = {}
+
+    @staticmethod
+    def fetchVoicesCatalog(catalogPath, forceRefresh=False):
+        """
+        Charge le catalogue voices.json depuis le disque local ou le télécharge si absent/forcé.
+        Met à jour le cache mémoire _catalog.
+        Retourne le dict du catalogue (peut être vide si erreur).
+        """
+        if PiperModelManager._catalog and not forceRefresh:
+            return PiperModelManager._catalog
+
+        if not forceRefresh and os.path.isfile(catalogPath):
+            try:
+                with open(catalogPath, 'r', encoding='utf-8') as f:
+                    PiperModelManager._catalog = json.load(f)
+                logging.debug('[PIPER][CATALOG] Catalogue chargé (disque) :: %d voix', len(PiperModelManager._catalog))
+                return PiperModelManager._catalog
+            except Exception as e:
+                logging.warning('[PIPER][CATALOG] Erreur lecture catalogue local :: %s', e)
+
+        logging.info('[PIPER][CATALOG] Téléchargement du catalogue depuis HuggingFace...')
+        try:
+            resp = requests.get(
+                myConfig.piperVoicesJsonUrl,
+                headers={'User-Agent': 'TTSCast-Jeedom/1.0'},
+                timeout=30
+            )
+            resp.raise_for_status()
+            os.makedirs(os.path.dirname(catalogPath), exist_ok=True)
+            with open(catalogPath, 'wb') as f:
+                f.write(resp.content)
+            PiperModelManager._catalog = resp.json()
+            logging.info('[PIPER][CATALOG] Catalogue téléchargé :: %d voix', len(PiperModelManager._catalog))
+            return PiperModelManager._catalog
+        except Exception as e:
+            logging.error('[PIPER][CATALOG] Impossible de télécharger le catalogue :: %s', e)
+            return {}
+
+    @staticmethod
+    def ensureModel(voiceKey, modelsDir, catalogPath):
+        """
+        Vérifie la présence des fichiers modèle ONNX. Les télécharge si absents (lazy download).
+        Retourne (onnx_path, config_path) ou lève RuntimeError.
+        """
+        onnxPath = os.path.join(modelsDir, f'{voiceKey}.onnx')
+        configPath = os.path.join(modelsDir, f'{voiceKey}.onnx.json')
+
+        if os.path.isfile(onnxPath) and os.path.isfile(configPath):
+            return onnxPath, configPath
+
+        logging.warning('[PIPER][MODEL] Modèle absent, téléchargement (lazy) :: %s', voiceKey)
+        catalog = PiperModelManager.fetchVoicesCatalog(catalogPath)
+        if not catalog:
+            raise RuntimeError(f'Catalogue Piper indisponible — impossible de télécharger {voiceKey}')
+
+        voiceInfo = catalog.get(voiceKey)
+        if voiceInfo is None:
+            raise RuntimeError(f'Voix Piper inconnue dans le catalogue :: {voiceKey}')
+
+        os.makedirs(modelsDir, exist_ok=True)
+        files = voiceInfo.get('files', {})
+
+        for suffix, localPath in [('.onnx', onnxPath), ('.onnx.json', configPath)]:
+            if os.path.isfile(localPath):
+                continue
+            remoteKey = next((k for k in files if k.endswith(suffix)), None)
+            if remoteKey is None:
+                raise RuntimeError(f'Fichier {suffix} introuvable dans le catalogue pour {voiceKey}')
+
+            url = f'{myConfig.piperBaseHfUrl}/{remoteKey}'
+            sizeBytes = files[remoteKey].get('size_bytes', 0)
+            logging.info('[PIPER][MODEL] Téléchargement %s (%d Mo)...', os.path.basename(localPath), sizeBytes // 1024 // 1024)
+
+            tmpPath = localPath + '.tmp'
+            try:
+                with requests.get(url, headers={'User-Agent': 'TTSCast-Jeedom/1.0'}, stream=True, timeout=300) as r:
+                    r.raise_for_status()
+                    with open(tmpPath, 'wb') as f:
+                        for chunk in r.iter_content(chunk_size=65536):
+                            f.write(chunk)
+                os.rename(tmpPath, localPath)
+                logging.info('[PIPER][MODEL] Téléchargement terminé :: %s', os.path.basename(localPath))
+            except Exception as e:
+                if os.path.isfile(tmpPath):
+                    try:
+                        os.remove(tmpPath)
+                    except OSError:
+                        pass
+                raise RuntimeError(f'Échec téléchargement {os.path.basename(localPath)} :: {e}') from e
+
+        return onnxPath, configPath
+
+    @staticmethod
+    def downloadModelWithProgress(voiceKey, modelsDir, catalogPath, tmpDir):
+        """
+        Télécharge un modèle en écrivant la progression dans un fichier JSON.
+        Utilisé par la commande socket downloadpipermodel (déclenché depuis l'UI).
+        Fichier de progression : <tmpDir>/piper_download_<voiceKey>.json
+        """
+        progressFile = os.path.join(tmpDir, f'piper_download_{voiceKey}.json')
+
+        def _write(status, received=0, total=0, message=''):
+            try:
+                with open(progressFile, 'w', encoding='utf-8') as f:
+                    json.dump({'status': status, 'received': received, 'total': total, 'message': message}, f)
+            except Exception:
+                pass
+
+        try:
+            os.makedirs(tmpDir, exist_ok=True)
+            _write('starting')
+
+            catalog = PiperModelManager.fetchVoicesCatalog(catalogPath)
+            if not catalog:
+                _write('error', message='Catalogue indisponible')
+                return
+
+            voiceInfo = catalog.get(voiceKey)
+            if voiceInfo is None:
+                _write('error', message=f'Voix inconnue :: {voiceKey}')
+                return
+
+            os.makedirs(modelsDir, exist_ok=True)
+            files = voiceInfo.get('files', {})
+
+            for suffix in ['.onnx', '.onnx.json']:
+                localPath = os.path.join(modelsDir, f'{voiceKey}{suffix}')
+                if os.path.isfile(localPath):
+                    continue
+
+                remoteKey = next((k for k in files if k.endswith(suffix)), None)
+                if remoteKey is None:
+                    _write('error', message=f'Fichier {suffix} introuvable dans le catalogue')
+                    return
+
+                url = f'{myConfig.piperBaseHfUrl}/{remoteKey}'
+                total = files[remoteKey].get('size_bytes', 0)
+                received = 0
+                tmpPath = localPath + '.tmp'
+
+                try:
+                    with requests.get(url, headers={'User-Agent': 'TTSCast-Jeedom/1.0'}, stream=True, timeout=300) as r:
+                        r.raise_for_status()
+                        _lastWrite = 0.0
+                        with open(tmpPath, 'wb') as f:
+                            for chunk in r.iter_content(chunk_size=65536):
+                                f.write(chunk)
+                                received += len(chunk)
+                                _now = time.time()
+                                if _now - _lastWrite >= 1.0:
+                                    _write('downloading', received, total)
+                                    _lastWrite = _now
+                    os.rename(tmpPath, localPath)
+                except Exception as e:
+                    if os.path.isfile(tmpPath):
+                        try:
+                            os.remove(tmpPath)
+                        except OSError:
+                            pass
+                    _write('error', message=str(e))
+                    return
+
+            _write('done')
+            logging.info('[PIPER][MODEL] Téléchargement terminé (UI) :: %s', voiceKey)
+
+        except Exception as e:
+            logging.error('[PIPER][MODEL] Erreur downloadModelWithProgress :: %s', e)
+            _write('error', message=str(e))
+
+
 class TTSCast:
     """ Class TTS Cast """
 
@@ -407,7 +609,7 @@ class TTSCast:
             logging.debug('[DAEMON][TTS] ttsNotifyResult envoyé :: cmdNotificationId=%s', cmdNotificationId)
 
     @staticmethod
-    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsGeminiStyle, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0', ttsAI='0', ttsGemini='0', ttsStreaming='0'):
+    def generateTestTTS(ttsText, ttsGoogleName, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsGeminiStyle, ttsLang, ttsEngine, ttsPiperVoiceName, ttsSpeed='1.0', ttsRSSSpeed='0', ttsSSML='0', ttsAI='0', ttsGemini='0', ttsStreaming='0'):
         # Override moteur si test Gemini TTS activé
         if ttsGemini == '1' and myConfig.geminiTTSEnabled:
             ttsEngine = 'geminitts'
@@ -690,8 +892,46 @@ class TTSCast:
 
             logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
+        elif ttsEngine == "pipertts":
+            logging.debug('[DAEMON][TestTTS] TTSEngine = pipertts')
+            _piperVoice = ttsPiperVoiceName or myConfig.piperVoiceName
+            if not _piperVoice:
+                logging.error('[DAEMON][TestTTS] Piper TTS : aucune voix configurée.')
+                return False
+            _textToSynth = ttsText
+            if ttsAI == '1':
+                ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt)
+                if ttsAIText is not None:
+                    logging.debug('[DAEMON][TestTTS] Génération Piper TTS avec IA')
+                    _aiReformulatedText = ttsAIText
+                    TTSCast._sendTTSResult(_aiReformulatedText, True)
+                    _textToSynth = ttsAIText
+                else:
+                    logging.warning('[DAEMON][TestTTS] Erreur IA. Génération Piper TTS sans IA (Backup)')
+            raw_filename = _textToSynth + '|PiperTTS|' + _piperVoice
+            filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + '.wav'
+            filepath = os.path.join(symLinkPath, filename)
+            logging.debug('[DAEMON][TestTTS] Nom du fichier à générer :: %s', filepath)
+            if not os.path.isfile(filepath) or myConfig.ttsDisableCache or ttsAI == '1':
+                audioBytes = TTSCast.piperTTS(_textToSynth, _piperVoice, myConfig.piperSpeakerId)
+                if isinstance(audioBytes, bytes):
+                    with open(filepath, 'wb') as f:
+                        f.write(audioBytes)
+                    logging.debug('[DAEMON][TestTTS] Fichier WAV Piper généré :: %s', filepath)
+                else:
+                    logging.error('[DAEMON][TestTTS] Échec synthèse Piper — voix : %s', _piperVoice)
+                    return False
+            else:
+                logging.debug('[DAEMON][TestTTS] Cache Piper — fichier existant :: %s', filepath)
+            if _aiReformulatedText is None:
+                TTSCast._sendTTSResult(ttsText, True)
+            urlFileToPlay = f'{ttsSrvWeb}{filename}'
+            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+            res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType='audio/wav')
+            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+
     @staticmethod
-    def generateTTS(ttsText, ttsFile, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None):
+    def generateTTS(ttsText, ttsFile, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsLang, ttsEngine, ttsPiperVoiceName, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None):
         """
         Génère un fichier audio TTS à la demande du Core Jeedom (TTSCast utilisé comme moteur TTS natif).
 
@@ -713,6 +953,7 @@ class TTSCast:
             _useSSML = False
             _silenceBefore = None
             _ttsGeminiStyle = myConfig.geminiTTSStyle
+            _piperSpeakerId = myConfig.piperSpeakerId
             
             try:
                 if (ttsOptions is not None):
@@ -735,6 +976,9 @@ class TTSCast:
                     if _requestedEngine is not None:
                         if _requestedEngine == 'geminitts' and not myConfig.geminiTTSEnabled:
                             logging.error('[DAEMON][GenerateTTS] Option "engine: geminitts" refusée : Gemini TTS n\'est pas activé dans la configuration du plugin. Activez Gemini TTS dans la configuration avant d\'utiliser cette option. Aucun TTS diffusé.')
+                            return False
+                        elif _requestedEngine == 'pipertts' and not _PIPER_AVAILABLE:
+                            logging.error('[DAEMON][GenerateTTS] Option "engine: pipertts" refusée : piper-tts non installé. Réinstallez les dépendances depuis la page du plugin. Aucun TTS diffusé.')
                             return False
                         ttsEngine = _requestedEngine
 
@@ -761,6 +1005,12 @@ class TTSCast:
                         elif ttsEngine == "geminitts":
                             ttsGeminiVoiceName = _ttsVoiceCode
                             logging.debug('[DAEMON][GenerateTTS] Voix Custom (Gemini TTS) :: %s', ttsGeminiVoiceName)
+                        elif ttsEngine == "pipertts":
+                            ttsPiperVoiceName = _ttsVoiceCode
+                            logging.debug('[DAEMON][GenerateTTS] Voix Custom (Piper) :: %s', ttsPiperVoiceName)
+
+                    # Speaker ID override pour Piper (modèles multi-locuteurs)
+                    _piperSpeakerId = options_json.get('speaker', _piperSpeakerId)
 
                     logging.debug('[DAEMON][GenerateTTS] Options :: %s', str(options_json))
             except ValueError as e:
@@ -914,15 +1164,42 @@ class TTSCast:
                 else:
                     logging.warning('[DAEMON][GenerateTTS][GEMINI] Réponse invalide de l\'API Gemini TTS — voix : %s — extrait : %s', ttsGeminiVoiceName, repr(_textToSynth[:80]))
 
+            elif ttsEngine == "pipertts":
+                logging.debug('[DAEMON][GenerateTTS] TTSEngine = pipertts')
+                _piperVoice = ttsPiperVoiceName or myConfig.piperVoiceName
+                if not _piperVoice:
+                    logging.error('[DAEMON][GenerateTTS] Piper TTS : aucune voix configurée.')
+                    return False
+                filepath = ttsFile
+                logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
+                _textToSynth = ttsText
+                if _useAI:
+                    ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                    if ttsAIText is not None:
+                        logging.debug('[DAEMON][GenerateTTS] Génération Piper TTS avec IA')
+                        _textToSynth = ttsAIText
+                    else:
+                        logging.warning('[DAEMON][GenerateTTS] Erreur IA. Génération Piper TTS sans IA (Backup)')
+                if not os.path.isfile(filepath) or myConfig.ttsDisableCache:
+                    audioBytes = TTSCast.piperTTS(_textToSynth, _piperVoice, _piperSpeakerId)
+                    if isinstance(audioBytes, bytes):
+                        with open(filepath, 'wb') as f:
+                            f.write(audioBytes)
+                        logging.debug('[DAEMON][GenerateTTS] Fichier WAV Piper généré :: %s', filepath)
+                    else:
+                        logging.warning('[DAEMON][GenerateTTS][PIPER] Synthèse échouée — voix : %s', _piperVoice)
+                else:
+                    logging.debug('[DAEMON][GenerateTTS] Cache Piper — fichier existant :: %s', filepath)
+
             else:
-                logging.error('[DAEMON][GenerateTTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts.', ttsEngine)
+                logging.error('[DAEMON][GenerateTTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts, pipertts.', ttsEngine)
 
         except Exception as e:
             logging.error('[DAEMON][GenerateTTS] Exception lors de la génération TTS :: %s | moteur : %s | extrait : %s', e, ttsEngine, repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
 
     @staticmethod
-    def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsLang, ttsEngine, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None, cmdNotificationId=0):
+    def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsLang, ttsEngine, ttsPiperVoiceName, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None, cmdNotificationId=0):
         try:
             logging.debug('[DAEMON][TTS] Check des répertoires')
             cachePath = myConfig.ttsCacheFolderWeb
@@ -960,6 +1237,7 @@ class TTSCast:
             _originalTtsText = ttsText
             _ttsGeminiStyle = myConfig.geminiTTSStyle
             _useStreaming = myConfig.streamingDefault  # Gemini TTS uniquement — ignoré pour les autres moteurs
+            _piperSpeakerId = myConfig.piperSpeakerId
             
             try:
                 if (ttsOptions is not None):
@@ -989,6 +1267,9 @@ class TTSCast:
                     if _requestedEngine is not None:
                         if _requestedEngine == 'geminitts' and not myConfig.geminiTTSEnabled:
                             logging.error('[DAEMON][TTS] Option "engine: geminitts" refusée : Gemini TTS n\'est pas activé dans la configuration du plugin. Activez Gemini TTS dans la configuration avant d\'utiliser cette option. Aucun TTS diffusé.')
+                            return False
+                        elif _requestedEngine == 'pipertts' and not _PIPER_AVAILABLE:
+                            logging.error('[DAEMON][TTS] Option "engine: pipertts" refusée : piper-tts non installé. Réinstallez les dépendances depuis la page du plugin. Aucun TTS diffusé.')
                             return False
                         ttsEngine = _requestedEngine
 
@@ -1022,6 +1303,12 @@ class TTSCast:
                         elif ttsEngine == "geminitts":
                             ttsGeminiVoiceName = _ttsVoiceCode
                             logging.debug('[DAEMON][TTS] Voix Custom (Gemini TTS) :: %s', ttsGeminiVoiceName)
+                        elif ttsEngine == "pipertts":
+                            ttsPiperVoiceName = _ttsVoiceCode
+                            logging.debug('[DAEMON][TTS] Voix Custom (Piper) :: %s', ttsPiperVoiceName)
+
+                    # Speaker ID override pour Piper (modèles multi-locuteurs)
+                    _piperSpeakerId = options_json.get('speaker', _piperSpeakerId)
 
                     # Pass-through options for notification (non-daemon keys)
                     if cmdNotificationId:
@@ -1299,8 +1586,45 @@ class TTSCast:
 
                 logging.info('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
 
+            elif ttsEngine == "pipertts":
+                logging.info('[DAEMON][TTS] TTSEngine = pipertts')
+                _piperVoice = ttsPiperVoiceName or myConfig.piperVoiceName
+                if not _piperVoice:
+                    logging.error('[DAEMON][TTS] Piper TTS : aucune voix configurée.')
+                    return False
+                raw_filename = ttsText + '|PiperTTS|' + _piperVoice + '|' + str(_piperSpeakerId)
+                filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + '.wav'
+                filepath = os.path.join(symLinkPath, filename)
+                logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
+                _textToSynth = ttsText
+                if _useAI:
+                    ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                    if ttsAIText is not None:
+                        logging.debug('[DAEMON][TTS] Génération Piper TTS avec IA')
+                        _aiReformulatedText = ttsAIText
+                        TTSCast._sendTTSResult(_aiReformulatedText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+                        _textToSynth = ttsAIText
+                    else:
+                        logging.warning('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération Piper TTS sans IA (Backup)')
+                        TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
+                if not os.path.isfile(filepath) or myConfig.ttsDisableCache:
+                    audioBytes = TTSCast.piperTTS(_textToSynth, _piperVoice, _piperSpeakerId)
+                    if isinstance(audioBytes, bytes):
+                        with open(filepath, 'wb') as f:
+                            f.write(audioBytes)
+                        logging.info('[DAEMON][TTS] Fichier WAV Piper généré :: %s', filepath)
+                    else:
+                        logging.error('[DAEMON][TTS] Piper TTS Error :: Synthèse échouée — voix : %s — extrait : %s', _piperVoice, repr(_textToSynth[:80]))
+                        return False
+                else:
+                    logging.info('[DAEMON][TTS] Cache Piper — fichier existant :: %s', filepath)
+                urlFileToPlay = f'{ttsSrvWeb}{filename}'
+                logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
+                res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType='audio/wav')
+                logging.info('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+
             else:
-                logging.error('[DAEMON][TTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts.', ttsEngine)
+                logging.error('[DAEMON][TTS] Moteur TTS inconnu ou non supporté : "%s". Valeurs acceptées : gcloudtts, gtranslatetts, jeedomtts, voicersstts, geminitts, pipertts.', ttsEngine)
 
         except Exception as e:
             logging.error('[DAEMON][TTS] Exception on TTS :: %s | moteur : %s | extrait : %s', e, ttsEngine, repr(ttsText[:80]))
@@ -1950,6 +2274,52 @@ class TTSCast:
         """
         logging.debug('[DAEMON][SYNC][getDefaultPrompt] Requête reçue')
         return {'prompt': myConfig.aiSysPrompt()}
+
+    @staticmethod
+    def piperTTS(text, voiceKey, speakerId=0):
+        """
+        Génère l'audio TTS via Piper (local, hors-ligne).
+        Charge le modèle ONNX en cache mémoire pour éviter les rechargements successifs.
+        Retourne les bytes WAV PCM 16-bit mono, ou None en cas d'erreur.
+        """
+        try:
+            if not _PIPER_AVAILABLE or PiperVoice is None or SynthesisConfig is None:
+                logging.error('[DAEMON][PiperTTS] piper-tts non disponible (dépendances manquantes — réinstallez les dépendances depuis la page du plugin).')
+                return None
+
+            onnxPath, configPath = PiperModelManager.ensureModel(
+                voiceKey, myConfig.piperModelsDir, myConfig.piperVoicesCatalogPath
+            )
+
+            # Cache mémoire — recharger uniquement si la voix change
+            if myConfig.piperVoiceCache['key'] != voiceKey:
+                logging.debug('[DAEMON][PiperTTS] Chargement modèle ONNX :: %s', voiceKey)
+                myConfig.piperVoiceCache['model'] = PiperVoice.load(onnxPath, config_path=configPath, use_cuda=False)
+                myConfig.piperVoiceCache['key'] = voiceKey
+                logging.debug('[DAEMON][PiperTTS] Modèle chargé :: %s', voiceKey)
+
+            piperVoice = myConfig.piperVoiceCache['model']
+            if piperVoice is None:
+                raise RuntimeError(f'Modèle Piper non chargé pour la voix :: {voiceKey}')
+            synConfig = None
+            if speakerId != 0:
+                synConfig = SynthesisConfig(speaker_id=speakerId)
+
+            buf = io.BytesIO()
+            with wave.open(buf, 'wb') as wav:
+                wav.setnchannels(1)
+                wav.setsampwidth(2)
+                wav.setframerate(piperVoice.config.sample_rate)
+                for audioChunk in piperVoice.synthesize(text, synConfig):
+                    wav.writeframes(audioChunk.audio_int16_bytes)
+
+            logging.debug('[DAEMON][PiperTTS] Synthèse terminée :: %s | speaker=%d | %d bytes', voiceKey, speakerId, buf.tell())
+            return buf.getvalue()
+
+        except Exception as e:
+            logging.error('[DAEMON][PiperTTS] Erreur :: %s | voix : %s | extrait : %s', e, voiceKey, repr(text[:80]))
+            logging.debug(traceback.format_exc())
+            return None
 
 class Functions:
     """ Class Functions """
@@ -3679,6 +4049,8 @@ parser.add_argument("--geminittsmodel", help="Gemini TTS Model", type=str, defau
 parser.add_argument("--geminittsdefault", help="Use Gemini TTS as default engine", type=str, default='0')
 parser.add_argument("--geminittsstyle", help="Default style for Gemini TTS", type=str, default='')
 parser.add_argument("--streamingdefault", help="Enable streaming TTS by default", type=str, default='0')
+parser.add_argument("--pipervoicename", help="Default Piper TTS voice key", type=str, default='')
+parser.add_argument("--piperspeakerid", help="Default Piper TTS speaker ID", type=str, default='0')
 
 args = parser.parse_args()
 if args.loglevel:
@@ -3758,6 +4130,10 @@ if args.geminittsstyle is not None:
     myConfig.geminiTTSStyle = args.geminittsstyle
 if args.streamingdefault:
     myConfig.streamingDefault = args.streamingdefault != '0'
+if args.pipervoicename and args.pipervoicename != '':
+    myConfig.piperVoiceName = args.pipervoicename
+if args.piperspeakerid:
+    myConfig.piperSpeakerId = int(args.piperspeakerid)
 if args.cmdwaittimeout:
     myConfig.cmdWaitTimeout = int(args.cmdwaittimeout)
 if args.pid:

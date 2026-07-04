@@ -21,6 +21,40 @@ if (!isConnect()) {
     include_file('desktop', '404', 'php');
     die();
 }
+
+// Piper TTS — Chargement du catalogue voix (225 KB, lecture unique à la génération de la page)
+$_piperCatalogPath = dirname(__FILE__) . '/../data/config/piper_voices.json';
+$_piperSavedVoice  = config::byKey('piperVoiceName', 'ttscast', '');
+$_piperLangGroups  = [];
+if (file_exists($_piperCatalogPath)) {
+    $_raw = file_get_contents($_piperCatalogPath);
+    if ($_raw) {
+        $_catalog = json_decode($_raw, true) ?: [];
+        foreach ($_catalog as $_vKey => $_vData) {
+            $_lCode    = isset($_vData['language']['code'])           ? $_vData['language']['code']           : '';
+            $_lEn      = isset($_vData['language']['name_english'])   ? $_vData['language']['name_english']   : $_lCode;
+            $_lCountry = isset($_vData['language']['country_english'])? $_vData['language']['country_english']: '';
+            $_lLabel   = $_lCountry ? ($_lEn . ' (' . $_lCountry . ')') : $_lEn;
+            if (!isset($_piperLangGroups[$_lCode])) {
+                $_piperLangGroups[$_lCode] = ['label' => $_lLabel, 'voices' => []];
+            }
+            $_q    = isset($_vData['quality'])      ? $_vData['quality']           : '';
+            $_ns   = isset($_vData['num_speakers']) ? intval($_vData['num_speakers']): 1;
+            $_vLbl = isset($_vData['name'])         ? $_vData['name']               : $_vKey;
+            if ($_q)    $_vLbl .= ' [' . $_q . ']';
+            if ($_ns>1) $_vLbl .= ' (' . $_ns . ' loc.)';
+            $_piperLangGroups[$_lCode]['voices'][] = ['key' => $_vKey, 'label' => $_vLbl, 'ns' => $_ns];
+        }
+        uasort($_piperLangGroups, function($a,$b){ return strcmp($a['label'],$b['label']); });
+    }
+}
+// Détecter la langue de la voix sauvegardée
+$_piperSavedLangCode = '';
+foreach ($_piperLangGroups as $_lCode => $_lg) {
+    foreach ($_lg['voices'] as $_v) {
+        if ($_v['key'] === $_piperSavedVoice) { $_piperSavedLangCode = $_lCode; break 2; }
+    }
+}
 ?>
 <form class="form-horizontal">
     <fieldset>
@@ -150,11 +184,90 @@ if (!isConnect()) {
                 </label>
                 <div class="col-lg-3">
                     <select class="configKey form-control customform-ttsengine" data-l1key="ttsEngine">
-                        <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
-                        <option value="gtranslatetts">{{Google Translate API (Internet)}}</option>
-                        <option value="gcloudtts">{{Google Cloud Text-To-Speech (Clé & Internet)}}</option>
-                        <option value="voicersstts">{{Voice RSS API (Clé & Internet)}}</option>
+                        <optgroup label="{{Local}}">
+                            <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
+                            <option value="pipertts">{{Piper TTS (Local, hors-ligne)}}</option>
+                        </optgroup>
+                        <optgroup label="{{Cloud}}">
+                            <option value="gtranslatetts">{{Google Translate API (Internet)}}</option>
+                            <option value="gcloudtts">{{Google Cloud Text-To-Speech (Clé & Internet)}}</option>
+                            <option value="voicersstts">{{Voice RSS API (Clé & Internet)}}</option>
+                        </optgroup>
                     </select>
+                </div>
+            </div>
+            <!-- ── Piper TTS ─────────────────────────────────────────────────────────── -->
+            <?php if (empty($_piperLangGroups)): ?>
+            <div class="form-group customform-pipertts">
+                <div class="col-lg-9 col-lg-offset-3">
+                    <div class="alert alert-info" style="margin-bottom:8px;">
+                        <i class="fas fa-info-circle"></i>
+                        {{Le catalogue des voix Piper n'a pas encore été téléchargé. Cliquez sur}} <strong>{{Rafraîchir le catalogue}}</strong> {{ci-dessous (le démon doit être démarré).}}
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
+            <div class="form-group customform-pipertts">
+                <label class="col-lg-3 control-label">{{Langue (Piper TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Filtrez les voix par langue — le catalogue est téléchargé depuis HuggingFace la première fois}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <select id="sel_piperLanguage" class="form-control">
+                        <option value="">{{— Toutes les langues —}}</option>
+                        <?php foreach ($_piperLangGroups as $_lCode => $_lg): ?>
+                        <option value="<?php echo htmlspecialchars($_lCode); ?>"<?php echo ($_lCode === $_piperSavedLangCode) ? ' selected' : ''; ?>><?php echo htmlspecialchars($_lg['label']); ?></option>
+                        <?php endforeach; ?>
+                        <?php if (empty($_piperLangGroups)): ?>
+                        <option value="" disabled>{{— Catalogue non disponible —}}</option>
+                        <?php endif; ?>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group customform-pipertts">
+                <label class="col-lg-3 control-label">{{Voix (Piper TTS)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Voix Piper à utiliser pour la synthèse vocale locale (hors-ligne)}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <select id="sel_piperVoice" class="configKey form-control" data-l1key="piperVoiceName">
+                        <option value="">{{— Sélectionnez une voix —}}</option>
+                        <?php foreach ($_piperLangGroups as $_lCode => $_lg): ?>
+                        <?php $_show = empty($_piperSavedLangCode) || ($_lCode === $_piperSavedLangCode); ?>
+                        <optgroup label="<?php echo htmlspecialchars($_lg['label']); ?>" data-langcode="<?php echo htmlspecialchars($_lCode); ?>"<?php echo $_show ? '' : ' style="display:none;"'; ?>>
+                            <?php foreach ($_lg['voices'] as $_v): ?>
+                            <option value="<?php echo htmlspecialchars($_v['key']); ?>"<?php echo ($_v['key'] === $_piperSavedVoice) ? ' selected' : ''; ?> data-num-speakers="<?php echo intval($_v['ns']); ?>"><?php echo htmlspecialchars($_v['label']); ?></option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                        <?php endforeach; ?>
+                    </select>
+                    <small id="piper_model_status" style="display:block;margin-top:4px;"></small>
+                </div>
+            </div>
+            <div class="form-group customform-pipertts" id="row_piperSpeakerId" style="display:none;">
+                <label class="col-lg-3 control-label">{{ID Locuteur (Piper)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Pour les modèles multi-locuteurs — 0 = locuteur par défaut}}"></i></sup>
+                </label>
+                <div class="col-lg-2">
+                    <input type="number" class="configKey form-control" data-l1key="piperSpeakerId" min="0" value="0">
+                </div>
+            </div>
+            <div class="form-group customform-pipertts">
+                <label class="col-lg-3 control-label">{{Modèle (Piper TTS)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Télécharge le modèle ONNX depuis HuggingFace — nécessaire pour la synthèse hors-ligne}}"></i></sup>
+                </label>
+                <div class="col-lg-6">
+                    <a class="btn btn-success btn-sm" id="btn_piperDownload" style="display:none;">
+                        <i class="fas fa-download"></i> {{Télécharger le modèle}}
+                    </a>
+                    <a class="btn btn-default btn-sm" id="btn_piperRefreshCatalog">
+                        <i class="fas fa-sync-alt"></i> {{Rafraîchir le catalogue}}
+                    </a>
+                    <div id="piper_download_progress" style="display:none;margin-top:8px;">
+                        <div class="progress" style="margin-bottom:4px;">
+                            <div id="piper_progress_bar" class="progress-bar progress-bar-striped active" role="progressbar" style="min-width:2em;width:0%">0%</div>
+                        </div>
+                        <small id="piper_progress_label" class="text-muted"></small>
+                    </div>
                 </div>
             </div>
             <div class="form-group customform-lang">
@@ -1150,6 +1263,7 @@ const SELECTORS = Object.freeze({
   GTTS: '.customform-gtts',
   LANG: '.customform-lang',
   VOICERSS_TTS: '.customform-voicersstts',
+  PIPER_TTS: '.customform-pipertts',
   AI_AUTH_MODE: '.customform-ai-authmode',
   AI_APIKEY: '.customform-ai-apikey',
   AI_OAUTH2: '.customform-ai-oauth2',
@@ -1188,7 +1302,8 @@ const ttsSections = {
   gcloudtts: null,
   gtts: null,
   lang: null,
-  voicersstts: null
+  voicersstts: null,
+  pipertts: null
 }
 
 function ttsEngineSelect() {
@@ -1204,6 +1319,7 @@ function ttsEngineSelect() {
     ttsSections.gtts = document.querySelectorAll(SELECTORS.GTTS)
     ttsSections.lang = document.querySelectorAll(SELECTORS.LANG)
     ttsSections.voicersstts = document.querySelectorAll(SELECTORS.VOICERSS_TTS)
+    ttsSections.pipertts = document.querySelectorAll(SELECTORS.PIPER_TTS)
   }
   
   // Hide all sections first (more efficient than checking each time)
@@ -1234,6 +1350,10 @@ function ttsEngineSelect() {
       break
     case 'voicersstts':
       showSections(ttsSections.voicersstts)
+      break
+    case 'pipertts':
+      showSections(ttsSections.pipertts)
+      piperInitUI()
       break
     default:
       showSections(ttsSections.lang)
@@ -1318,6 +1438,41 @@ function initConfigurationPage() {
     }
     ttsTestGeminiToggle.addEventListener('change', updateTestGeminiStyleVisibility)
     updateTestGeminiStyleVisibility()
+  }
+
+  // Piper TTS — listeners filtre langue + boutons
+  const piperLangSel = document.getElementById('sel_piperLanguage')
+  if (piperLangSel) {
+    piperLangSel.addEventListener('change', function() {
+      piperFilterVoices(this.value)
+    })
+  }
+  const piperVoiceSel = document.getElementById('sel_piperVoice')
+  if (piperVoiceSel) {
+    piperVoiceSel.addEventListener('change', piperOnVoiceChange)
+  }
+  const piperDlBtn = document.getElementById('btn_piperDownload')
+  if (piperDlBtn) {
+    piperDlBtn.addEventListener('click', function() {
+      const vk = this.dataset.piperVoiceKey || document.getElementById('sel_piperVoice')?.value
+      if (vk) piperStartDownload(vk)
+    })
+  }
+  const piperRefreshBtn = document.getElementById('btn_piperRefreshCatalog')
+  if (piperRefreshBtn) {
+    piperRefreshBtn.addEventListener('click', function() {
+      domUtils.ajax({
+        type: 'POST',
+        url: AJAX_URL,
+        data: { action: 'refreshPiperCatalog' },
+        success: (data) => {
+          if (data.state !== 'ok') { jeedomUtils.showAlert({ message: data.result, level: 'danger' }); return }
+          jeedomUtils.showAlert({ message: '{{Catalogue Piper en cours de rafraîchissement. La page va se recharger dans 5 secondes...}}', level: 'info' })
+          setTimeout(() => window.location.reload(), 5000)
+        },
+        error: (error) => handleAjaxError(error)
+      })
+    })
   }
 
   // Filtres de logs
@@ -1588,6 +1743,147 @@ if (uploadCustomSoundInput) {
 const uploadCustomRadiosInput = document.querySelector(SELECTORS.UPLOAD_CUSTOM_RADIOS)
 if (uploadCustomRadiosInput) {
   handleFileUpload(uploadCustomRadiosInput, 'uploadCustomRadios', '{{Upload Custom Radios (OK) :: }}')
+}
+
+// ============================================================================
+// SECTION 7: Piper TTS — Filtre langue et téléchargement des modèles
+// (options générées côté PHP — pas d'AJAX catalog nécessaire)
+// ============================================================================
+
+let piperPollTimer = null
+
+function piperInitUI() {
+  const voiceSel = document.getElementById('sel_piperVoice')
+  if (voiceSel && voiceSel.value) {
+    piperUpdateModelStatus(voiceSel.value)
+  }
+}
+
+function piperFilterVoices(langCode) {
+  const voiceSel = document.getElementById('sel_piperVoice')
+  if (!voiceSel) return
+  const currentVoice = voiceSel.value
+
+  voiceSel.querySelectorAll('optgroup').forEach(grp => {
+    const show = !langCode || grp.dataset.langcode === langCode
+    grp.style.display = show ? '' : 'none'
+  })
+
+  // Reset si la voix actuelle est dans un groupe maintenant masqué
+  if (currentVoice && langCode) {
+    const selectedOpt = Array.from(voiceSel.options).find(o => o.value === currentVoice)
+    const grp = selectedOpt ? selectedOpt.closest('optgroup') : null
+    if (grp && grp.style.display === 'none') {
+      voiceSel.value = ''
+      piperOnVoiceChange()
+    }
+  }
+}
+
+function piperOnVoiceChange() {
+  const voiceSel = document.getElementById('sel_piperVoice')
+  const speakerRow = document.getElementById('row_piperSpeakerId')
+  if (!voiceSel) return
+  const voiceKey = voiceSel.value
+  if (speakerRow) {
+    const selectedOpt = voiceSel.options[voiceSel.selectedIndex]
+    const numSpeakers = parseInt(selectedOpt?.dataset.numSpeakers || '1')
+    speakerRow.style.display = numSpeakers > 1 ? '' : 'none'
+  }
+  const statusEl = document.getElementById('piper_model_status')
+  const dlBtn = document.getElementById('btn_piperDownload')
+  if (statusEl) statusEl.innerHTML = ''
+  if (dlBtn) dlBtn.style.display = 'none'
+  if (voiceKey) piperUpdateModelStatus(voiceKey)
+}
+
+function piperUpdateModelStatus(voiceKey) {
+  const statusEl = document.getElementById('piper_model_status')
+  const dlBtn = document.getElementById('btn_piperDownload')
+  if (!statusEl || !dlBtn || !voiceKey) return
+  domUtils.ajax({
+    type: 'POST',
+    url: AJAX_URL,
+    data: { action: 'checkPiperModel', voiceKey },
+    success: (data) => {
+      if (data.state === 'ok' && data.result === true) {
+        statusEl.innerHTML = '<span class="label label-success"><i class="fas fa-check"></i> {{Local}}</span>'
+        dlBtn.style.display = 'none'
+      } else {
+        statusEl.innerHTML = '<span class="label label-warning"><i class="fas fa-download"></i> {{À télécharger}}</span>'
+        dlBtn.style.display = ''
+        dlBtn.dataset.piperVoiceKey = voiceKey
+      }
+    },
+    error: () => {
+      statusEl.innerHTML = ''
+      dlBtn.style.display = voiceKey ? '' : 'none'
+      if (voiceKey) dlBtn.dataset.piperVoiceKey = voiceKey
+    }
+  })
+}
+
+function piperStartDownload(voiceKey) {
+  if (!voiceKey) return
+  const dlBtn = document.getElementById('btn_piperDownload')
+  const progressEl = document.getElementById('piper_download_progress')
+  const progressBar = document.getElementById('piper_progress_bar')
+  const progressLabel = document.getElementById('piper_progress_label')
+  const statusEl = document.getElementById('piper_model_status')
+  if (dlBtn) dlBtn.style.display = 'none'
+  if (progressEl) progressEl.style.display = ''
+  if (progressBar) { progressBar.style.width = '0%'; progressBar.textContent = '0%' }
+  if (progressLabel) progressLabel.textContent = '{{Démarrage...}}'
+  if (statusEl) statusEl.innerHTML = ''
+  domUtils.ajax({
+    type: 'POST',
+    url: AJAX_URL,
+    data: { action: 'downloadPiperModel', voiceKey },
+    success: (data) => {
+      if (data.state !== 'ok') {
+        jeedomUtils.showAlert({ message: data.result, level: 'danger' })
+        if (progressEl) progressEl.style.display = 'none'
+        return
+      }
+      piperPollDownloadStatus(voiceKey)
+    },
+    error: (error) => { handleAjaxError(error); if (progressEl) progressEl.style.display = 'none' }
+  })
+}
+
+function piperPollDownloadStatus(voiceKey) {
+  if (piperPollTimer) clearInterval(piperPollTimer)
+  piperPollTimer = setInterval(() => {
+    domUtils.ajax({
+      type: 'POST',
+      url: AJAX_URL,
+      data: { action: 'getPiperDownloadStatus', voiceKey },
+      success: (data) => {
+        if (data.state !== 'ok') return
+        const res = data.result || {}
+        const status = res.status || 'idle'
+        const progressBar = document.getElementById('piper_progress_bar')
+        const progressLabel = document.getElementById('piper_progress_label')
+        const progressEl = document.getElementById('piper_download_progress')
+        if (status === 'downloading' && res.total > 0) {
+          const pct = Math.round((res.received / res.total) * 100)
+          if (progressBar) { progressBar.style.width = pct + '%'; progressBar.textContent = pct + '%' }
+          if (progressLabel) progressLabel.textContent = `${(res.received / 1048576).toFixed(1)} Mo / ${(res.total / 1048576).toFixed(1)} Mo`
+        } else if (status === 'done' || status === 'idle') {
+          clearInterval(piperPollTimer); piperPollTimer = null
+          if (progressEl) progressEl.style.display = 'none'
+          piperUpdateModelStatus(voiceKey)
+          if (status === 'done') jeedomUtils.showAlert({ message: '{{Modèle Piper téléchargé avec succès}}', level: 'success' })
+        } else if (status === 'error') {
+          clearInterval(piperPollTimer); piperPollTimer = null
+          if (progressEl) progressEl.style.display = 'none'
+          jeedomUtils.showAlert({ message: '{{Erreur téléchargement Piper : }}' + (res.message || '{{erreur inconnue}}'), level: 'danger' })
+          piperUpdateModelStatus(voiceKey)
+        }
+      },
+      error: () => { clearInterval(piperPollTimer); piperPollTimer = null }
+    })
+  }, 1000)
 }
 
 })()
