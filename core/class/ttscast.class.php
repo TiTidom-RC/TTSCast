@@ -42,8 +42,9 @@ class ttscast extends eqLogic
 
     public static function backupExclude() {
         return [
-            'resources/venv', 
-            'resources/pyenv'
+            'resources/venv',
+            'resources/pyenv',
+            'data/models',
         ];
     }
 
@@ -102,7 +103,10 @@ class ttscast extends eqLogic
             config::save('debugRestoreVenv', '0', 'ttscast');
         }
 
-        return array('script' => __DIR__ . '/../../resources/install_#stype#.sh ' . jeedom::getTmpFolder(__CLASS__) . '/dependency' . ' ' . $script_sysUpdates . ' ' . $script_restorePyEnv . ' ' . $script_restoreVenv, 'log' => log::getPathToLog(__CLASS__ . '_update'));
+        // Piper TTS : passer PIPER_ENABLED=1 si le moteur actif est pipertts
+        $script_piperEnabled = (config::byKey('ttsEngine', 'ttscast', 'gtranslatetts') === 'pipertts') ? 1 : 0;
+
+        return array('script' => __DIR__ . '/../../resources/install_#stype#.sh ' . jeedom::getTmpFolder(__CLASS__) . '/dependency' . ' ' . $script_sysUpdates . ' ' . $script_restorePyEnv . ' ' . $script_restoreVenv . ' ' . $script_piperEnabled, 'log' => log::getPathToLog(__CLASS__ . '_update'));
     }
 
     public static function dependancy_info() {
@@ -126,7 +130,7 @@ class ttscast extends eqLogic
                 $cmd = self::PYTHON3_PATH . ' -m pip --no-cache-dir freeze | grep -Ewci "' . $pythonDepString . '"';
                 $foundCount = exec($cmd);
 
-                if ($foundCount < $expectedCount) {
+                if ((int)$foundCount < (int)$expectedCount) {
                     $return['state'] = 'nok';
                     log::add(__CLASS__, 'debug', '[Python-Dep] Missing Dependencies. Found: ' . $foundCount . ' / Expected: ' . $expectedCount);
                     log::add(__CLASS__, 'debug', '[Python-Dep] Regex used: ' . $pythonDepString);
@@ -210,6 +214,8 @@ class ttscast extends eqLogic
         $cmd .= ' --geminittsdefault ' . config::byKey('geminiTTSDefault', __CLASS__, '0');
         $cmd .= ' --geminittsstyle "' . config::byKey('geminiTTSStyle', __CLASS__, '') . '"';
         $cmd .= ' --streamingdefault ' . config::byKey('streamingDefault', __CLASS__, '0');
+        $cmd .= ' --pipervoicename "' . config::byKey('piperVoiceName', __CLASS__, '') . '"';
+        $cmd .= ' --piperspeakerid ' . config::byKey('piperSpeakerId', __CLASS__, '0');
 
         $cmd .= ' --pid ' . jeedom::getTmpFolder(__CLASS__) . '/deamon.pid'; // ne PAS modifier
         # log::add(__CLASS__, 'debug', 'Lancement du démon :: ' . $cmd);
@@ -346,7 +352,8 @@ class ttscast extends eqLogic
         $ttsGeminiVoiceName = config::byKey('geminiTTSVoice', 'ttscast', 'Aoede');
         $ttsGeminiStyle = config::byKey('ttsTestGeminiStyle', 'ttscast', '');
         $ttsTestStreaming = ($ttsTestGemini == '1') ? config::byKey('ttsTestStreaming', 'ttscast', '0') : '0';
-        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'ttsGeminiStyle' => $ttsGeminiStyle, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI, 'ttsGemini' => $ttsTestGemini, 'ttsStreaming' => $ttsTestStreaming);
+        $ttsPiperVoiceName = config::byKey('piperVoiceName', 'ttscast', '');
+        $value = array('cmd' => 'action', 'cmd_action' => 'ttstest', 'ttsEngine' => $ttsEngine, 'ttsLang' => $ttsLang, 'ttsSpeed' => $ttsSpeed, 'ttsText' => $ttsText, 'ttsGoogleName' => $ttsGoogleName, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'ttsGeminiStyle' => $ttsGeminiStyle, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsSSML' => $ttsSSML, 'ttsAI' => $ttsAI, 'ttsGemini' => $ttsTestGemini, 'ttsStreaming' => $ttsTestStreaming, 'ttsPiperVoiceName' => $ttsPiperVoiceName);
         self::sendToDaemon($value);
     }
 
@@ -371,7 +378,8 @@ class ttscast extends eqLogic
         }
         $logEngine = $engineOverride !== null ? $ttsEngine . ' → ' . $engineOverride . ' (override options)' : $ttsEngine;
         log::add('ttscast', 'info', '[GenerateTTS] Moteur: ' . $logEngine . ' | Fichier: ' . $ttsFile . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8'));
-        $value = array('cmd' => 'action', 'cmd_action' => 'generatetts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsFile' => $ttsFile, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName);
+        $ttsPiperVoiceName = config::byKey('piperVoiceName', 'ttscast', '');
+        $value = array('cmd' => 'action', 'cmd_action' => 'generatetts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsFile' => $ttsFile, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'ttsPiperVoiceName' => $ttsPiperVoiceName);
         self::sendToDaemon($value);
     }
 
@@ -396,7 +404,8 @@ class ttscast extends eqLogic
         }
         $logEngine = $engineOverride !== null ? $ttsEngine . ' → ' . $engineOverride . ' (override options)' : $ttsEngine;
         log::add('ttscast', 'info', '[PlayTTS] Moteur: ' . $logEngine . ' | UUID: ' . $ttsGoogleUUID . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8'));
-        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'cmdNotificationId' => $cmdNotificationId);
+        $ttsPiperVoiceName = config::byKey('piperVoiceName', 'ttscast', '');
+        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'cmdNotificationId' => $cmdNotificationId, 'ttsPiperVoiceName' => $ttsPiperVoiceName);
         self::sendToDaemon($value);
     }
 
@@ -510,6 +519,21 @@ class ttscast extends eqLogic
             });
             $pythonDepString = join("|", $nonEmptyLines);
             $pythonDepNum = count($nonEmptyLines);
+
+            // Piper TTS : intégrer piper-tts si le moteur actif est pipertts
+            if (config::byKey('ttsEngine', 'ttscast', 'gtranslatetts') === 'pipertts') {
+                $piperReqFile = dirname(__FILE__) . '/../../resources/requirements-piper.txt';
+                if (file_exists($piperReqFile)) {
+                    $piperData = file_get_contents($piperReqFile);
+                    if (is_string($piperData)) {
+                        $piperLines = array_filter(explode("\n", $piperData), function($line) { return trim($line) !== ''; });
+                        if (!empty($piperLines)) {
+                            $pythonDepString = ($pythonDepString !== '') ? $pythonDepString . '|' . join('|', $piperLines) : join('|', $piperLines);
+                            $pythonDepNum += count($piperLines);
+                        }
+                    }
+                }
+            }
         }
         catch (\Exception $e) {
             log::add('ttscast', 'warning', '[Python-Dep] Get requirements.txt ERROR :: ' . $e->getMessage());
@@ -1086,6 +1110,14 @@ class ttscast extends eqLogic
         // no return value
     }
     */
+
+    // Mise à jour des dépendances Python attendues lors du changement de moteur TTS
+    public static function postConfig_ttsEngine($value) {
+        self::getPythonDepFromRequirements();
+        // Invalider le cache Jeedom du badge dépendances pour forcer un rechargement réel
+        $cache = cache::byKey('dependancy' . __CLASS__);
+        $cache->remove();
+    }
 
     /**
      * Gère l'équipement virtuel TTSCast AI Stats en fonction de l'activation de l'IA

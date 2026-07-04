@@ -172,6 +172,80 @@ try {
         ajax::success();
     }
 
+    // ── Piper TTS ───────────────────────────────────────────────────────────────
+
+    if (init('action') == 'getPiperVoices') {
+        $catalogPath = __DIR__ . '/../../data/config/piper_voices.json';
+        if (!file_exists($catalogPath)) {
+            ajax::success(array());
+        }
+        $data = json_decode(file_get_contents($catalogPath), true);
+        ajax::success(is_array($data) ? $data : array());
+    }
+
+    if (init('action') == 'downloadPiperModel') {
+        $voiceKey = init('voiceKey');
+        if (empty($voiceKey) || !preg_match('/^[a-zA-Z0-9_\-]+$/', $voiceKey)) {
+            throw new Exception('[Piper] voiceKey invalide ou manquant');
+        }
+        ttscast::sendToDaemon(array('cmd' => 'downloadpipermodel', 'voiceKey' => $voiceKey));
+        ajax::success();
+    }
+
+    if (init('action') == 'getPiperDownloadStatus') {
+        $voiceKey = init('voiceKey');
+        if (empty($voiceKey) || !preg_match('/^[a-zA-Z0-9_\-]+$/', $voiceKey)) {
+            throw new Exception('[Piper] voiceKey invalide ou manquant');
+        }
+        $progressFile = jeedom::getTmpFolder('ttscast') . '/piper_download_' . $voiceKey . '.json';
+        if (!file_exists($progressFile)) {
+            ajax::success(array('status' => 'idle'));
+        }
+        $data = json_decode(file_get_contents($progressFile), true);
+        if (!is_array($data)) {
+            ajax::success(array('status' => 'idle'));
+        }
+        // Supprimer le fichier si statut terminal — PHP nettoie après lecture
+        $status = isset($data['status']) ? $data['status'] : '';
+        if ($status === 'done' || $status === 'error') {
+            @unlink($progressFile);
+        }
+        ajax::success($data);
+    }
+
+    if (init('action') == 'refreshPiperCatalog') {
+        ttscast::sendToDaemon(array('cmd' => 'refreshpipercatalog'));
+        ajax::success();
+    }
+
+    if (init('action') == 'checkPiperModel') {
+        $voiceKey = init('voiceKey');
+        if (empty($voiceKey) || !preg_match('/^[a-zA-Z0-9_\-]+$/', $voiceKey)) {
+            ajax::success(false);
+        }
+        $modelsDir = __DIR__ . '/../../data/models/';
+        $onnxPath  = $modelsDir . $voiceKey . '.onnx';
+        $confPath  = $modelsDir . $voiceKey . '.onnx.json';
+        ajax::success(file_exists($onnxPath) && file_exists($confPath));
+    }
+
+    if (init('action') == 'deletePiperModel') {
+        $voiceKey = init('voiceKey');
+        if (empty($voiceKey) || !preg_match('/^[a-zA-Z0-9_\-]+$/', $voiceKey)) {
+            throw new Exception('Clé de voix invalide');
+        }
+        $modelsDir = __DIR__ . '/../../data/models/';
+        $deleted = [];
+        foreach (['.onnx', '.onnx.json'] as $ext) {
+            $path = $modelsDir . $voiceKey . $ext;
+            if (file_exists($path)) {
+                unlink($path);
+                $deleted[] = basename($path);
+            }
+        }
+        ajax::success($deleted);
+    }
+
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
     /*     * *********Catch exception*************** */
 } catch (Exception $e) {
