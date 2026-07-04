@@ -1768,7 +1768,17 @@ function piperUpdateModelStatus(voiceKey) {
     data: { action: 'checkPiperModel', voiceKey },
     success: (data) => {
       if (data.state === 'ok' && data.result === true) {
-        statusEl.innerHTML = '<span class="label label-success"><i class="fas fa-check"></i> {{Local}}</span>'
+        statusEl.innerHTML = '<span class="label label-success"><i class="fas fa-check"></i> {{Local}}</span>' +
+          '<a class="btn btn-danger btn-xs" id="btn_piperDelete" style="margin-left:4px;" title="{{Supprimer le modèle local}}"><i class="fas fa-trash-alt"></i></a>'
+        document.getElementById('btn_piperDelete').addEventListener('click', () => {
+          if (!confirm('{{Supprimer le modèle local de cette voix ?}}')) return
+          domUtils.ajax({
+            type: 'POST', url: AJAX_URL,
+            data: { action: 'deletePiperModel', voiceKey },
+            success: () => piperUpdateModelStatus(voiceKey),
+            error: (err) => handleAjaxError(err)
+          })
+        })
       } else {
         statusEl.innerHTML = '<a class="btn btn-warning btn-xs" id="btn_piperDownload"><i class="fas fa-download"></i> {{Télécharger la voix}}</a>'
         document.getElementById('btn_piperDownload').addEventListener('click', () => piperStartDownload(voiceKey))

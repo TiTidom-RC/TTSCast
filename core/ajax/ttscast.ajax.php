@@ -229,6 +229,23 @@ try {
         ajax::success(file_exists($onnxPath) && file_exists($confPath));
     }
 
+    if (init('action') == 'deletePiperModel') {
+        $voiceKey = init('voiceKey');
+        if (empty($voiceKey) || !preg_match('/^[a-zA-Z0-9_\-]+$/', $voiceKey)) {
+            throw new Exception('Clé de voix invalide');
+        }
+        $modelsDir = __DIR__ . '/../../data/models/';
+        $deleted = [];
+        foreach (['.onnx', '.onnx.json'] as $ext) {
+            $path = $modelsDir . $voiceKey . $ext;
+            if (file_exists($path)) {
+                unlink($path);
+                $deleted[] = basename($path);
+            }
+        }
+        ajax::success($deleted);
+    }
+
     throw new Exception(__('Aucune méthode correspondante à', __FILE__) . ' : ' . init('action'));
     /*     * *********Catch exception*************** */
 } catch (Exception $e) {
