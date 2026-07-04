@@ -213,7 +213,7 @@ foreach ($_piperLangGroups as $_lCode => $_lg) {
                 </label>
                 <div class="col-lg-3">
                     <div class="input-group">
-                        <select id="sel_piperLanguage" class="form-control">
+                        <select id="sel_piperLanguage" class="form-control roundedLeft">
                             <option value="">{{— Toutes les langues —}}</option>
                             <?php foreach ($_piperLangGroups as $_lCode => $_lg): ?>
                             <option value="<?php echo htmlspecialchars($_lCode); ?>"<?php echo ($_lCode === $_piperSavedLangCode) ? ' selected' : ''; ?>><?php echo htmlspecialchars($_lg['label']); ?></option>
@@ -223,7 +223,7 @@ foreach ($_piperLangGroups as $_lCode => $_lg) {
                             <?php endif; ?>
                         </select>
                         <span class="input-group-btn">
-                            <a class="btn btn-primary btn-sm tooltips" id="btn_piperRefreshCatalog" title="{{Rafraîchir le catalogue des voix depuis HuggingFace (démon requis)}}">
+                            <a class="btn btn-primary btn-sm roundedRight tooltips" id="btn_piperRefreshCatalog" title="{{Rafraîchir le catalogue des voix depuis HuggingFace (démon requis)}}">
                                 <i class="fas fa-sync-alt"></i>
                             </a>
                         </span>
