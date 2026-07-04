@@ -225,8 +225,8 @@ if (file_exists($_piperCatalogPath)) {
                         </span>
                     </div>
                     <small id="piper_model_status" style="display:block;margin-top:4px;"></small>
-                    <a class="btn btn-success btn-sm" id="btn_piperDownload" style="display:none;margin-top:4px;">
-                        <i class="fas fa-download"></i> {{Télécharger le modèle}}
+                    <a class="btn btn-warning btn-xs" id="btn_piperDownload" style="display:none;margin-top:4px;">
+                        <i class="fas fa-download"></i> {{Télécharger la voix}}
                     </a>
                     <div id="piper_download_progress" style="display:none;margin-top:8px;">
                         <div class="progress" style="margin-bottom:4px;">
