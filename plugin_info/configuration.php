@@ -225,22 +225,7 @@ if (file_exists($_piperCatalogPath)) {
                         </span>
                     </div>
                     <small id="piper_model_status" style="display:block;margin-top:4px;"></small>
-                </div>
-            </div>
-            <div class="form-group customform-pipertts" id="row_piperSpeakerId" style="display:none;">
-                <label class="col-lg-3 control-label">{{ID Locuteur (Piper)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Pour les modèles multi-locuteurs — 0 = locuteur par défaut}}"></i></sup>
-                </label>
-                <div class="col-lg-1">
-                    <input type="number" class="configKey form-control" data-l1key="piperSpeakerId" min="0" value="0">
-                </div>
-            </div>
-            <div class="form-group customform-pipertts">
-                <label class="col-lg-3 control-label">{{Modèle (Piper TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Télécharge le modèle ONNX depuis HuggingFace — nécessaire pour la synthèse hors-ligne}}"></i></sup>
-                </label>
-                <div class="col-lg-4">
-                    <a class="btn btn-success btn-sm" id="btn_piperDownload" style="display:none;">
+                    <a class="btn btn-success btn-sm" id="btn_piperDownload" style="display:none;margin-top:4px;">
                         <i class="fas fa-download"></i> {{Télécharger le modèle}}
                     </a>
                     <div id="piper_download_progress" style="display:none;margin-top:8px;">
@@ -249,6 +234,14 @@ if (file_exists($_piperCatalogPath)) {
                         </div>
                         <small id="piper_progress_label" class="text-muted"></small>
                     </div>
+                </div>
+            </div>
+            <div class="form-group customform-pipertts" id="row_piperSpeakerId" style="display:none;">
+                <label class="col-lg-3 control-label">{{ID Locuteur (Piper)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Pour les modèles multi-locuteurs — 0 = locuteur par défaut}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input type="number" class="configKey form-control" data-l1key="piperSpeakerId" min="0" value="0">
                 </div>
             </div>
             <div class="form-group customform-lang">
@@ -1334,6 +1327,7 @@ function ttsEngineSelect() {
       break
     case 'pipertts':
       showSections(ttsSections.pipertts)
+      piperOnVoiceChange()
       piperInitUI()
       break
     default:
@@ -1790,7 +1784,6 @@ function piperUpdateModelStatus(voiceKey) {
         statusEl.innerHTML = '<span class="label label-success"><i class="fas fa-check"></i> {{Local}}</span>'
         dlBtn.style.display = 'none'
       } else {
-        statusEl.innerHTML = '<span class="label label-warning"><i class="fas fa-download"></i> {{À télécharger}}</span>'
         dlBtn.style.display = ''
         dlBtn.dataset.piperVoiceKey = voiceKey
       }
