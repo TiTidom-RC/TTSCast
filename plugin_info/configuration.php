@@ -1769,14 +1769,16 @@ function piperUpdateModelStatus(voiceKey) {
     success: (data) => {
       if (data.state === 'ok' && data.result === true) {
         statusEl.innerHTML = '<span class="label label-success"><i class="fas fa-check"></i> {{Local}}</span>' +
-          '<span class="label label-danger" id="btn_piperDelete" style="margin-left:4px;cursor:pointer;" title="{{Supprimer le modèle local}}"><i class="fas fa-trash-alt"></i></span>'
+          '<span class="label label-danger" id="btn_piperDelete" style="margin-left:4px;cursor:pointer;" title="{{Supprimer le modèle local}}"><i class="fas fa-trash-alt" style="pointer-events:none;"></i></span>'
         document.getElementById('btn_piperDelete').addEventListener('click', () => {
-          if (!confirm('{{Supprimer le modèle local de cette voix ?}}')) return
-          domUtils.ajax({
-            type: 'POST', url: AJAX_URL,
-            data: { action: 'deletePiperModel', voiceKey },
-            success: () => piperUpdateModelStatus(voiceKey),
-            error: (err) => handleAjaxError(err)
+          jeeDialog.confirm('{{Supprimer le modèle local de cette voix ?}}', function(result) {
+            if (!result) return
+            domUtils.ajax({
+              type: 'POST', url: AJAX_URL,
+              data: { action: 'deletePiperModel', voiceKey },
+              success: () => piperUpdateModelStatus(voiceKey),
+              error: (err) => handleAjaxError(err)
+            })
           })
         })
       } else {
