@@ -199,10 +199,10 @@ foreach ($_piperLangGroups as $_lCode => $_lg) {
             <!-- ── Piper TTS ─────────────────────────────────────────────────────────── -->
             <?php if (empty($_piperLangGroups)): ?>
             <div class="form-group customform-pipertts">
-                <div class="col-lg-9 col-lg-offset-3">
-                    <div class="alert alert-info" style="margin-bottom:8px;">
+                <div class="col-lg-3 col-lg-offset-3">
+                    <div class="alert alert-info" style="margin-bottom:4px;">
                         <i class="fas fa-info-circle"></i>
-                        {{Le catalogue des voix Piper n'a pas encore été téléchargé. Cliquez sur}} <strong>{{Rafraîchir le catalogue}}</strong> {{ci-dessous (le démon doit être démarré).}}
+                        {{Catalogue absent — démarrez le démon puis cliquez sur Rafraîchir.}}
                     </div>
                 </div>
             </div>
@@ -212,15 +212,22 @@ foreach ($_piperLangGroups as $_lCode => $_lg) {
                     <sup><i class="fas fa-question-circle tooltips" title="{{Filtrez les voix par langue — le catalogue est téléchargé depuis HuggingFace la première fois}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
-                    <select id="sel_piperLanguage" class="form-control">
-                        <option value="">{{— Toutes les langues —}}</option>
-                        <?php foreach ($_piperLangGroups as $_lCode => $_lg): ?>
-                        <option value="<?php echo htmlspecialchars($_lCode); ?>"<?php echo ($_lCode === $_piperSavedLangCode) ? ' selected' : ''; ?>><?php echo htmlspecialchars($_lg['label']); ?></option>
-                        <?php endforeach; ?>
-                        <?php if (empty($_piperLangGroups)): ?>
-                        <option value="" disabled>{{— Catalogue non disponible —}}</option>
-                        <?php endif; ?>
-                    </select>
+                    <div class="input-group">
+                        <select id="sel_piperLanguage" class="form-control">
+                            <option value="">{{— Toutes les langues —}}</option>
+                            <?php foreach ($_piperLangGroups as $_lCode => $_lg): ?>
+                            <option value="<?php echo htmlspecialchars($_lCode); ?>"<?php echo ($_lCode === $_piperSavedLangCode) ? ' selected' : ''; ?>><?php echo htmlspecialchars($_lg['label']); ?></option>
+                            <?php endforeach; ?>
+                            <?php if (empty($_piperLangGroups)): ?>
+                            <option value="" disabled>{{— Catalogue non disponible —}}</option>
+                            <?php endif; ?>
+                        </select>
+                        <span class="input-group-btn">
+                            <a class="btn btn-primary btn-sm tooltips" id="btn_piperRefreshCatalog" title="{{Rafraîchir le catalogue des voix depuis HuggingFace (démon requis)}}">
+                                <i class="fas fa-sync-alt"></i>
+                            </a>
+                        </span>
+                    </div>
                 </div>
             </div>
             <div class="form-group customform-pipertts">
@@ -247,7 +254,7 @@ foreach ($_piperLangGroups as $_lCode => $_lg) {
                 <label class="col-lg-3 control-label">{{ID Locuteur (Piper)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Pour les modèles multi-locuteurs — 0 = locuteur par défaut}}"></i></sup>
                 </label>
-                <div class="col-lg-2">
+                <div class="col-lg-1">
                     <input type="number" class="configKey form-control" data-l1key="piperSpeakerId" min="0" value="0">
                 </div>
             </div>
@@ -255,12 +262,9 @@ foreach ($_piperLangGroups as $_lCode => $_lg) {
                 <label class="col-lg-3 control-label">{{Modèle (Piper TTS)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Télécharge le modèle ONNX depuis HuggingFace — nécessaire pour la synthèse hors-ligne}}"></i></sup>
                 </label>
-                <div class="col-lg-6">
+                <div class="col-lg-4">
                     <a class="btn btn-success btn-sm" id="btn_piperDownload" style="display:none;">
                         <i class="fas fa-download"></i> {{Télécharger le modèle}}
-                    </a>
-                    <a class="btn btn-default btn-sm" id="btn_piperRefreshCatalog">
-                        <i class="fas fa-sync-alt"></i> {{Rafraîchir le catalogue}}
                     </a>
                     <div id="piper_download_progress" style="display:none;margin-top:8px;">
                         <div class="progress" style="margin-bottom:4px;">
