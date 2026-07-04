@@ -48,13 +48,7 @@ if (file_exists($_piperCatalogPath)) {
         uasort($_piperLangGroups, function($a,$b){ return strcmp($a['label'],$b['label']); });
     }
 }
-// Détecter la langue de la voix sauvegardée
-$_piperSavedLangCode = '';
-foreach ($_piperLangGroups as $_lCode => $_lg) {
-    foreach ($_lg['voices'] as $_v) {
-        if ($_v['key'] === $_piperSavedVoice) { $_piperSavedLangCode = $_lCode; break 2; }
-    }
-}
+// (fin du chargement catalogue Piper)
 ?>
 <form class="form-horizontal">
     <fieldset>
@@ -208,19 +202,21 @@ foreach ($_piperLangGroups as $_lCode => $_lg) {
             </div>
             <?php endif; ?>
             <div class="form-group customform-pipertts">
-                <label class="col-lg-3 control-label">{{Langue (Piper TTS)}}
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Filtrez les voix par langue — le catalogue est téléchargé depuis HuggingFace la première fois}}"></i></sup>
+                <label class="col-lg-3 control-label">{{Voix (Piper TTS)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Voix Piper à utiliser pour la synthèse vocale locale (hors-ligne)}}"></i></sup>
                 </label>
                 <div class="col-lg-3">
                     <div class="input-group">
-                        <select id="sel_piperLanguage" class="form-control roundedLeft">
-                            <option value="">{{— Toutes les langues —}}</option>
+                        <select id="sel_piperVoice" class="configKey form-control roundedLeft" data-l1key="piperVoiceName">
+                            <option value="">{{— Sélectionnez une voix —}}</option>
                             <?php foreach ($_piperLangGroups as $_lCode => $_lg): ?>
-                            <option value="<?php echo htmlspecialchars($_lCode); ?>"<?php echo ($_lCode === $_piperSavedLangCode) ? ' selected' : ''; ?>><?php echo htmlspecialchars($_lg['label']); ?></option>
+                            <optgroup label="<?php echo htmlspecialchars($_lg['label']); ?>" data-langcode="<?php echo htmlspecialchars($_lCode); ?>">
+                                <?php foreach ($_lg['voices'] as $_v): ?>
+                                <option value="<?php echo htmlspecialchars($_v['key']); ?>"<?php echo ($_v['key'] === $_piperSavedVoice) ? ' selected' : ''; ?> data-num-speakers="<?php echo intval($_v['ns']); ?>"><?php echo htmlspecialchars($_v['label']); ?></option>
+                                <?php endforeach; ?>
+                            </optgroup>
                             <?php endforeach; ?>
-                            <?php if (empty($_piperLangGroups)): ?>
-                            <option value="" disabled>{{— Catalogue non disponible —}}</option>
-                            <?php endif; ?>
                         </select>
                         <span class="input-group-btn">
                             <a class="btn btn-primary roundedRight tooltips" id="btn_piperRefreshCatalog" title="{{Rafraîchir le catalogue des voix depuis HuggingFace (démon requis)}}">
@@ -228,25 +224,6 @@ foreach ($_piperLangGroups as $_lCode => $_lg) {
                             </a>
                         </span>
                     </div>
-                </div>
-            </div>
-            <div class="form-group customform-pipertts">
-                <label class="col-lg-3 control-label">{{Voix (Piper TTS)}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Voix Piper à utiliser pour la synthèse vocale locale (hors-ligne)}}"></i></sup>
-                </label>
-                <div class="col-lg-3">
-                    <select id="sel_piperVoice" class="configKey form-control" data-l1key="piperVoiceName">
-                        <option value="">{{— Sélectionnez une voix —}}</option>
-                        <?php foreach ($_piperLangGroups as $_lCode => $_lg): ?>
-                        <?php $_show = empty($_piperSavedLangCode) || ($_lCode === $_piperSavedLangCode); ?>
-                        <optgroup label="<?php echo htmlspecialchars($_lg['label']); ?>" data-langcode="<?php echo htmlspecialchars($_lCode); ?>"<?php echo $_show ? '' : ' style="display:none;"'; ?>>
-                            <?php foreach ($_lg['voices'] as $_v): ?>
-                            <option value="<?php echo htmlspecialchars($_v['key']); ?>"<?php echo ($_v['key'] === $_piperSavedVoice) ? ' selected' : ''; ?> data-num-speakers="<?php echo intval($_v['ns']); ?>"><?php echo htmlspecialchars($_v['label']); ?></option>
-                            <?php endforeach; ?>
-                        </optgroup>
-                        <?php endforeach; ?>
-                    </select>
                     <small id="piper_model_status" style="display:block;margin-top:4px;"></small>
                 </div>
             </div>
@@ -1444,13 +1421,7 @@ function initConfigurationPage() {
     updateTestGeminiStyleVisibility()
   }
 
-  // Piper TTS — listeners filtre langue + boutons
-  const piperLangSel = document.getElementById('sel_piperLanguage')
-  if (piperLangSel) {
-    piperLangSel.addEventListener('change', function() {
-      piperFilterVoices(this.value)
-    })
-  }
+  // Piper TTS — listeners voix + boutons
   const piperVoiceSel = document.getElementById('sel_piperVoice')
   if (piperVoiceSel) {
     piperVoiceSel.addEventListener('change', piperOnVoiceChange)
@@ -1465,16 +1436,42 @@ function initConfigurationPage() {
   const piperRefreshBtn = document.getElementById('btn_piperRefreshCatalog')
   if (piperRefreshBtn) {
     piperRefreshBtn.addEventListener('click', function() {
+      piperRefreshBtn.disabled = true
+      const origHtml = piperRefreshBtn.innerHTML
+      piperRefreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'
       domUtils.ajax({
         type: 'POST',
         url: AJAX_URL,
         data: { action: 'refreshPiperCatalog' },
         success: (data) => {
-          if (data.state !== 'ok') { jeedomUtils.showAlert({ message: data.result, level: 'danger' }); return }
-          jeedomUtils.showAlert({ message: '{{Catalogue Piper en cours de rafraîchissement. La page va se recharger dans 5 secondes...}}', level: 'info' })
-          setTimeout(() => window.location.reload(), 5000)
+          if (data.state !== 'ok') {
+            jeedomUtils.showAlert({ message: data.result, level: 'danger' })
+            piperRefreshBtn.disabled = false; piperRefreshBtn.innerHTML = origHtml
+            return
+          }
+          jeedomUtils.showAlert({ message: '{{Rafraîchissement du catalogue en cours...}}', level: 'info' })
+          setTimeout(() => {
+            domUtils.ajax({
+              type: 'POST',
+              url: AJAX_URL,
+              data: { action: 'getPiperVoices' },
+              success: (res) => {
+                piperRefreshBtn.disabled = false; piperRefreshBtn.innerHTML = origHtml
+                if (res.state === 'ok' && res.result && typeof res.result === 'object' && !Array.isArray(res.result) && Object.keys(res.result).length > 0) {
+                  _piperRebuildSelects(res.result)
+                  jeedomUtils.showAlert({ message: '{{Catalogue Piper mis à jour}}', level: 'success' })
+                } else {
+                  jeedomUtils.showAlert({ message: '{{Catalogue vide — réessayez dans quelques secondes}}', level: 'warning' })
+                }
+              },
+              error: () => {
+                piperRefreshBtn.disabled = false; piperRefreshBtn.innerHTML = origHtml
+                jeedomUtils.showAlert({ message: '{{Impossible de charger le nouveau catalogue}}', level: 'danger' })
+              }
+            })
+          }, 4000)
         },
-        error: (error) => handleAjaxError(error)
+        error: (error) => { piperRefreshBtn.disabled = false; piperRefreshBtn.innerHTML = origHtml; handleAjaxError(error) }
       })
     })
   }
@@ -1750,8 +1747,8 @@ if (uploadCustomRadiosInput) {
 }
 
 // ============================================================================
-// SECTION 7: Piper TTS — Filtre langue et téléchargement des modèles
-// (options générées côté PHP — pas d'AJAX catalog nécessaire)
+// SECTION 7: Piper TTS — Téléchargement des modèles
+// (options générées côté PHP — pas d'AJAX catalog nécessaire au chargement)
 // ============================================================================
 
 let piperPollTimer = null
@@ -1760,27 +1757,6 @@ function piperInitUI() {
   const voiceSel = document.getElementById('sel_piperVoice')
   if (voiceSel && voiceSel.value) {
     piperUpdateModelStatus(voiceSel.value)
-  }
-}
-
-function piperFilterVoices(langCode) {
-  const voiceSel = document.getElementById('sel_piperVoice')
-  if (!voiceSel) return
-  const currentVoice = voiceSel.value
-
-  voiceSel.querySelectorAll('optgroup').forEach(grp => {
-    const show = !langCode || grp.dataset.langcode === langCode
-    grp.style.display = show ? '' : 'none'
-  })
-
-  // Reset si la voix actuelle est dans un groupe maintenant masqué
-  if (currentVoice && langCode) {
-    const selectedOpt = Array.from(voiceSel.options).find(o => o.value === currentVoice)
-    const grp = selectedOpt ? selectedOpt.closest('optgroup') : null
-    if (grp && grp.style.display === 'none') {
-      voiceSel.value = ''
-      piperOnVoiceChange()
-    }
   }
 }
 
@@ -1888,6 +1864,47 @@ function piperPollDownloadStatus(voiceKey) {
       error: () => { clearInterval(piperPollTimer); piperPollTimer = null }
     })
   }, 1000)
+}
+
+function _piperRebuildSelects(catalog) {
+  const voiceSel = document.getElementById('sel_piperVoice')
+  if (!voiceSel) return
+
+  // Regrouper par langue
+  const langs = {}
+  for (const [vKey, voice] of Object.entries(catalog)) {
+    const lang = voice.language || {}
+    const code = lang.code || ''
+    if (!code) continue
+    if (!langs[code]) {
+      const nameEn = lang.name_english || code
+      const country = lang.country_english || ''
+      langs[code] = { label: country ? `${nameEn} (${country})` : nameEn, voices: [] }
+    }
+    const q = voice.quality || ''
+    const ns = voice.num_speakers || 1
+    let label = voice.name || vKey
+    if (q) label += ` [${q}]`
+    if (ns > 1) label += ` (${ns} loc.)`
+    langs[code].voices.push({ key: vKey, label, ns })
+  }
+  const sortedLangs = Object.entries(langs).sort((a, b) => a[1].label.localeCompare(b[1].label))
+
+  // Reconstruire sel_piperVoice
+  voiceSel.innerHTML = '<option value="">{{— Sélectionnez une voix —}}</option>'
+  for (const [code, lang] of sortedLangs) {
+    const grp = document.createElement('optgroup')
+    grp.label = lang.label; grp.dataset.langcode = code
+    for (const v of lang.voices.sort((a, b) => a.label.localeCompare(b.label))) {
+      const opt = document.createElement('option')
+      opt.value = v.key; opt.textContent = v.label; opt.dataset.numSpeakers = v.ns
+      grp.appendChild(opt)
+    }
+    voiceSel.appendChild(grp)
+  }
+
+  // Supprimer l'alerte "catalogue absent" si présente
+  document.querySelector('.customform-pipertts .alert-info')?.closest('.form-group')?.remove()
 }
 
 })()
