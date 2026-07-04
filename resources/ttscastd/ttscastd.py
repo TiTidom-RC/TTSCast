@@ -3982,6 +3982,13 @@ def shutdown():
 
 # ***** PROGRAMME PRINCIPAL *****
 
+class PiperLogFilter(logging.Filter):
+    """Préfixe les logs de la bibliothèque piper-tts."""
+    def filter(self, record: logging.LogRecord) -> bool:
+        record.msg = '[PIPER] ' + str(record.msg)
+        return True
+
+
 class PatternRemapFilter(logging.Filter):
     """Remappe le niveau de log des records dont le message contient un pattern configuré."""
 
@@ -4156,6 +4163,8 @@ if myConfig.castLogLevel != 'daemon':
     _cast_level = jeedom_utils.convert_log_level(myConfig.castLogLevel)
     logging.getLogger('pychromecast').setLevel(_cast_level)
     logging.getLogger('zeroconf').setLevel(_cast_level)
+
+logging.getLogger('piper').addFilter(PiperLogFilter())
 
 if args.logfiltersenabled:
     myConfig.logFiltersEnabled = args.logfiltersenabled != '0'
