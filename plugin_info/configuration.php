@@ -223,7 +223,7 @@ foreach ($_piperLangGroups as $_lCode => $_lg) {
                             <?php endif; ?>
                         </select>
                         <span class="input-group-btn">
-                            <a class="btn btn-primary btn-sm roundedRight tooltips" id="btn_piperRefreshCatalog" title="{{Rafraîchir le catalogue des voix depuis HuggingFace (démon requis)}}">
+                            <a class="btn btn-primary roundedRight tooltips" id="btn_piperRefreshCatalog" title="{{Rafraîchir le catalogue des voix depuis HuggingFace (démon requis)}}">
                                 <i class="fas fa-sync-alt"></i>
                             </a>
                         </span>
