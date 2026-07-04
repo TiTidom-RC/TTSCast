@@ -3983,9 +3983,10 @@ def shutdown():
 # ***** PROGRAMME PRINCIPAL *****
 
 class PiperLogFilter(logging.Filter):
-    """Préfixe les logs de la bibliothèque piper-tts."""
+    """Préfixe les logs de la bibliothèque piper-tts (piper.voice, piper.config…)."""
     def filter(self, record: logging.LogRecord) -> bool:
-        record.msg = '[PIPER] ' + str(record.msg)
+        if record.name.startswith('piper'):
+            record.msg = '[PIPER] ' + str(record.msg)
         return True
 
 
@@ -4164,7 +4165,9 @@ if myConfig.castLogLevel != 'daemon':
     logging.getLogger('pychromecast').setLevel(_cast_level)
     logging.getLogger('zeroconf').setLevel(_cast_level)
 
-logging.getLogger('piper').addFilter(PiperLogFilter())
+_piper_filter = PiperLogFilter()
+for _h in logging.root.handlers:
+    _h.addFilter(_piper_filter)
 
 if args.logfiltersenabled:
     myConfig.logFiltersEnabled = args.logfiltersenabled != '0'
