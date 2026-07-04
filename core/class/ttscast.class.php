@@ -130,6 +130,8 @@ class ttscast extends eqLogic
                 $cmd = self::PYTHON3_PATH . ' -m pip --no-cache-dir freeze | grep -Ewci "' . $pythonDepString . '"';
                 $foundCount = exec($cmd);
 
+                log::add(__CLASS__, 'debug', '[Python-Dep][CHECK] foundCount=' . $foundCount . ' / expectedCount=' . $expectedCount . ' / depString=' . $pythonDepString);
+
                 if ($foundCount < $expectedCount) {
                     $return['state'] = 'nok';
                     log::add(__CLASS__, 'debug', '[Python-Dep] Missing Dependencies. Found: ' . $foundCount . ' / Expected: ' . $expectedCount);
