@@ -185,13 +185,13 @@ foreach ($_piperLangGroups as $_lCode => $_lg) {
                 <div class="col-lg-3">
                     <select class="configKey form-control customform-ttsengine" data-l1key="ttsEngine">
                         <optgroup label="{{Local}}">
-                            <option value="jeedomtts">{{Jeedom TTS (Local)}}</option>
-                            <option value="pipertts">{{Piper TTS (Local, hors-ligne)}}</option>
+                            <option value="jeedomtts">{{Jeedom TTS}}</option>
+                            <option value="pipertts">{{Piper TTS}}</option>
                         </optgroup>
                         <optgroup label="{{Cloud}}">
-                            <option value="gtranslatetts">{{Google Translate API (Internet)}}</option>
-                            <option value="gcloudtts">{{Google Cloud Text-To-Speech (Clé & Internet)}}</option>
-                            <option value="voicersstts">{{Voice RSS API (Clé & Internet)}}</option>
+                            <option value="gtranslatetts">{{Google Translate}}</option>
+                            <option value="gcloudtts">{{Google Cloud TTS (Clé API)}}</option>
+                            <option value="voicersstts">{{Voice RSS (Clé API)}}</option>
                         </optgroup>
                     </select>
                 </div>
