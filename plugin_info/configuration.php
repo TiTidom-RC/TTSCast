@@ -225,9 +225,6 @@ if (file_exists($_piperCatalogPath)) {
                         </span>
                     </div>
                     <small id="piper_model_status" style="display:block;margin-top:1px;"></small>
-                    <a class="btn btn-warning btn-xs" id="btn_piperDownload" style="display:none;margin-top:1px;">
-                        <i class="fas fa-download"></i> {{Télécharger la voix}}
-                    </a>
                     <div id="piper_download_progress" style="display:none;margin-top:1px;">
                         <div class="progress" style="margin-bottom:4px;">
                             <div id="piper_progress_bar" class="progress-bar progress-bar-striped active" role="progressbar" style="min-width:2em;width:0%">0%</div>
@@ -1420,13 +1417,6 @@ function initConfigurationPage() {
   if (piperVoiceSel) {
     piperVoiceSel.addEventListener('change', piperOnVoiceChange)
   }
-  const piperDlBtn = document.getElementById('btn_piperDownload')
-  if (piperDlBtn) {
-    piperDlBtn.addEventListener('click', function() {
-      const vk = this.dataset.piperVoiceKey || document.getElementById('sel_piperVoice')?.value
-      if (vk) piperStartDownload(vk)
-    })
-  }
   const piperRefreshBtn = document.getElementById('btn_piperRefreshCatalog')
   if (piperRefreshBtn) {
     piperRefreshBtn.addEventListener('click', function() {
@@ -1765,16 +1755,13 @@ function piperOnVoiceChange() {
     speakerRow.style.display = numSpeakers > 1 ? '' : 'none'
   }
   const statusEl = document.getElementById('piper_model_status')
-  const dlBtn = document.getElementById('btn_piperDownload')
   if (statusEl) statusEl.innerHTML = ''
-  if (dlBtn) dlBtn.style.display = 'none'
   if (voiceKey) piperUpdateModelStatus(voiceKey)
 }
 
 function piperUpdateModelStatus(voiceKey) {
   const statusEl = document.getElementById('piper_model_status')
-  const dlBtn = document.getElementById('btn_piperDownload')
-  if (!statusEl || !dlBtn || !voiceKey) return
+  if (!statusEl || !voiceKey) return
   domUtils.ajax({
     type: 'POST',
     url: AJAX_URL,
@@ -1782,28 +1769,29 @@ function piperUpdateModelStatus(voiceKey) {
     success: (data) => {
       if (data.state === 'ok' && data.result === true) {
         statusEl.innerHTML = '<span class="label label-success"><i class="fas fa-check"></i> {{Local}}</span>'
-        dlBtn.style.display = 'none'
       } else {
-        dlBtn.style.display = ''
-        dlBtn.dataset.piperVoiceKey = voiceKey
+        statusEl.innerHTML = '<a class="btn btn-warning btn-xs" id="btn_piperDownload"><i class="fas fa-download"></i> {{Télécharger la voix}}</a>'
+        document.getElementById('btn_piperDownload').addEventListener('click', () => piperStartDownload(voiceKey))
       }
     },
     error: () => {
-      statusEl.innerHTML = ''
-      dlBtn.style.display = voiceKey ? '' : 'none'
-      if (voiceKey) dlBtn.dataset.piperVoiceKey = voiceKey
+      if (voiceKey) {
+        statusEl.innerHTML = '<a class="btn btn-warning btn-xs" id="btn_piperDownload"><i class="fas fa-download"></i> {{Télécharger la voix}}</a>'
+        document.getElementById('btn_piperDownload').addEventListener('click', () => piperStartDownload(voiceKey))
+      } else {
+        statusEl.innerHTML = ''
+      }
     }
   })
 }
 
 function piperStartDownload(voiceKey) {
   if (!voiceKey) return
-  const dlBtn = document.getElementById('btn_piperDownload')
   const progressEl = document.getElementById('piper_download_progress')
   const progressBar = document.getElementById('piper_progress_bar')
   const progressLabel = document.getElementById('piper_progress_label')
   const statusEl = document.getElementById('piper_model_status')
-  if (dlBtn) dlBtn.style.display = 'none'
+  if (statusEl) statusEl.innerHTML = ''
   if (progressEl) progressEl.style.display = ''
   if (progressBar) { progressBar.style.width = '0%'; progressBar.textContent = '0%' }
   if (progressLabel) progressLabel.textContent = '{{Démarrage...}}'
