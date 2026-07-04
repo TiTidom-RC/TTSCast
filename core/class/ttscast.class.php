@@ -1113,7 +1113,9 @@ class ttscast extends eqLogic
 
     // Mise à jour des dépendances Python attendues lors du changement de moteur TTS
     public static function postConfig_ttsEngine($value) {
+        log::add(__CLASS__, 'debug', '[postConfig_ttsEngine] Appelé avec valeur = ' . $value);
         self::getPythonDepFromRequirements();
+        log::add(__CLASS__, 'debug', '[postConfig_ttsEngine] getPythonDepFromRequirements terminé — pythonDepNum = ' . config::byKey('pythonDepNum', 'ttscast', 0, true));
     }
 
     /**
