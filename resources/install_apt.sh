@@ -24,6 +24,7 @@ PYTHON_VERSION=3.12.13
 FORCE_INST_UPDATES=0
 FORCE_INIT_PYENV=0
 FORCE_INIT_VENV=0
+PIPER_ENABLED=0
 
 if [ ! -z $2 ]; then
 	FORCE_INST_UPDATES=$2
@@ -33,6 +34,9 @@ if [ ! -z $3 ]; then
 fi
 if [ ! -z $4 ]; then
 	FORCE_INIT_VENV=$4
+fi
+if [ ! -z $5 ]; then
+	PIPER_ENABLED=$5
 fi
 
 cd ${BASE_DIR}
@@ -57,6 +61,11 @@ if [ "$FORCE_INIT_VENV" -eq 1 ]; then
 	log "** Force Reinit Venv :: YES **"
 else
 	log "** Force Reinit Venv :: NO **"
+fi
+if [ "$PIPER_ENABLED" -eq 1 ]; then
+	log "** Install Piper TTS Dependencies :: YES **"
+else
+	log "** Install Piper TTS Dependencies :: NO **"
 fi
 echo 1 > ${PROGRESS_FILE}
 log "*******************"
@@ -88,7 +97,6 @@ log "* Update apt-get *"
 log "******************"
 echo 3 > ${PROGRESS_FILE}
 export DEBIAN_FRONTEND=noninteractive
-echo 4 > ${PROGRESS_FILE}
 apt-get clean | log
 log "** Clean apt-get :: Done **"
 echo 5 > ${PROGRESS_FILE}
@@ -228,6 +236,19 @@ log "** Install Pip / Wheel :: Done **"
 echo 75 > ${PROGRESS_FILE}
 ${VENV_DIR}/bin/python3 -m pip install --no-cache-dir -r ${REQUIREMENTS_FILE} | log
 log "** Install Python3 libraries :: Done **"
+echo 87 > ${PROGRESS_FILE}
+if [ "$PIPER_ENABLED" -eq 1 ]; then
+	log "************************************"
+	log "* Install Piper TTS dependencies   *"
+	log "************************************"
+	ARCH=$(uname -m)
+	if [ "$ARCH" = "armv7l" ] || [ "$ARCH" = "i686" ] || [ "$ARCH" = "i386" ]; then
+		log "[ERROR] Architecture 32 bits non supportée ($ARCH). Piper TTS requiert une architecture 64 bits."
+	else
+		${VENV_DIR}/bin/python3 -m pip install --no-cache-dir -r ${BASE_DIR}/requirements-piper.txt | log
+		log "** Install Piper TTS dependencies :: Done **"
+	fi
+fi
 echo 95 > ${PROGRESS_FILE}
 log "****************************"
 log "* Set Owner on Directories *"

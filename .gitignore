@@ -1,6 +1,8 @@
 # Plugin Configuration
 data/config/*.json
 data/filters/*.json
+data/models/*.onnx
+data/models/*.onnx.json
 
 # IDE & Editors
 .vscode/*
