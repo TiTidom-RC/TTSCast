@@ -864,7 +864,7 @@ if (file_exists($_piperCatalogPath)) {
                 <div class="col-lg-2">
                     <select class="configKey form-control customform-ai-authmode" data-l1key="ttsAIAuthMode">
                         <option value="apikey">{{Clé API (Google AI Studio)}}</option>
-                        <option value="oauth2">{{Fichier JSON (Vertex AI - Google)}}</option>
+                        <option value="oauth2">{{Fichier JSON (Agent Platform - Google)}}</option>
                     </select>
                 </div>
             </div>
