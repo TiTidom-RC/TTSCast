@@ -256,7 +256,7 @@
         "Ex: Répond à la question s'il y en a une et reformule la phrase": "Ex: Responde à pergunta, se houver alguma, e reformula a frase",
         "Ex: enthousiaste et humoristique": "Ex.: entusiasta e bem-humorado",
         "Facteur multiplicateur des cycles du démon (Défaut = x1)": "Fator de multiplicação do ciclo de demonstração (Predefinição = x1)",
-        "Fichier JSON (Vertex AI - Google)": "Ficheiro JSON (Vertex AI - Google)",
+        "Fichier JSON (Agent Platform - Google)": "Ficheiro JSON (Agent Platform - Google)",
         "Filtres de logs": "Filtros de registos",
         "Force la réinitialisation de PyEnv": "Forçar reinicialização do PyEnv",
         "Force la réinitialisation de Venv": "Forçar a reposição do Venv",
