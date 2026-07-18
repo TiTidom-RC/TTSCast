@@ -2433,7 +2433,7 @@ class Functions:
         elif int(cmdWait) > 1 and myConfig.cmdWaitQueue[targetUUID] == 0:
             time.sleep(0.1)
             if myConfig.cmdWaitQueue[targetUUID] == 0:
-                logging.debug(f'[DAEMON][WaitQueue][{callerName}] No prior wait detected for {targetUUID}, proceeding standalone')
+                logging.debug(f'[DAEMON][WaitQueue][{callerName}] No prior notification active, playing directly for {targetUUID}')
 
         # Prise de ticket (Bitmask logic: 2^wait)
         myConfig.cmdWaitQueue[targetUUID] += 2 ** int(cmdWait)
