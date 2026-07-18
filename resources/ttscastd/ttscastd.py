@@ -1546,30 +1546,44 @@ class TTSCast:
 
                 if _useStreaming:
                     logging.debug('[DAEMON][TTS] Mode streaming activé pour Gemini TTS')
-
-                    # Pré-lecture du premier chunk : détection du format audio réel avant de lancer le Chromecast
-                    _t = time.time()
-                    logging.info('[TIMING][GeminiStream] t0_start :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
-                    prefetch = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle, streaming=True)
-                    if prefetch is None:
-                        logging.error('[DAEMON][TTS] GeminiTTS streaming :: échec de la pré-lecture | voix : %s | extrait : %s', ttsGeminiVoiceName, repr(_textToSynth[:80]))
-                        return False
-                    streamIter, firstChunkBytes, sampleRate, channels, streamClient = prefetch
                     mimeType = 'audio/wav'  # Le proxy envoie un stream WAV RIFF (PCM LE 16-bit)
-                    logging.debug('[DAEMON][TTS] Format stream détecté :: %s', mimeType)
-
                     streamDir = myConfig.ttsStreamFolderTmp
                     os.makedirs(streamDir, exist_ok=True)
-                    pipeName = str(uuid4()) + '.l16'
-                    pipePath = os.path.join(streamDir, pipeName)
-                    os.mkfifo(pipePath)  # type: ignore[attr-defined]  # POSIX only — cible Debian
-                    pipeUrl = f'{myConfig.ttsWebSrvMediaProxy}?type=stream&file={pipeName}&rate={sampleRate}&channels={channels}'
-                    logging.debug('[DAEMON][TTS] Pipe créé :: %s | URL :: %s', pipePath, pipeUrl)
 
-                    threading.Thread(target=TTSCast.geminiTTSStream, args=[streamIter, firstChunkBytes, sampleRate, channels, pipePath, filepath, streamClient]).start()
-                    _t = time.time()
-                    logging.info('[TIMING][GeminiStream] t1_castStart :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
-                    res = TTSCast.castToGoogleHome(urltoplay=pipeUrl, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType=mimeType, streamType='LIVE')
+                    def _streamPipe(
+                        _text=_textToSynth, _voiceName=ttsGeminiVoiceName, _style=_ttsGeminiStyle,
+                        _streamDir=streamDir, _filepath=filepath
+                    ):
+                        """Génère le TTS, crée le pipe FIFO et démarre le thread de streaming.
+                        Appelé après waitQueueEnter — la génération TTS est différée pour éviter
+                        l'expiration du stream HTTP quelle que soit la durée d'attente en queue."""
+                        _t = time.time()
+                        logging.info('[TIMING][GeminiStream] t0_start :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
+                        _prefetch = TTSCast.geminiTTS(_text, _voiceName, _style, streaming=True)
+                        if _prefetch is None:
+                            logging.error('[DAEMON][TTS] GeminiTTS streaming :: échec de la pré-lecture | voix : %s | extrait : %s', _voiceName, repr(_text[:80]))
+                            return None
+                        _streamIter, _firstChunk, _sampleRate, _channels, _client = _prefetch
+                        logging.debug('[DAEMON][TTS] Format stream détecté :: audio/wav (rate=%d, channels=%d)', _sampleRate, _channels)
+
+                        _pipeName = str(uuid4()) + '.l16'
+                        _pipePath = os.path.join(_streamDir, _pipeName)
+                        try:
+                            os.mkfifo(_pipePath)  # type: ignore[attr-defined]  # POSIX only — cible Debian
+                        except Exception as _e:
+                            logging.error('[DAEMON][TTS] Streaming :: impossible de créer le pipe :: %s', _e)
+                            return None
+                        _pipeUrl = f'{myConfig.ttsWebSrvMediaProxy}?type=stream&file={_pipeName}&rate={_sampleRate}&channels={_channels}'
+                        logging.debug('[DAEMON][TTS] Pipe créé :: %s | URL :: %s', _pipePath, _pipeUrl)
+                        threading.Thread(
+                            target=TTSCast.geminiTTSStream,
+                            args=[_streamIter, _firstChunk, _sampleRate, _channels, _pipePath, _filepath, _client]
+                        ).start()
+                        _t = time.time()
+                        logging.info('[TIMING][GeminiStream] t1_castStart :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
+                        return _pipeUrl
+
+                    res = TTSCast.castToGoogleHome(urltoplay='', googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, cmdWait=_cmdWait, cmdForce=_cmdForce, mimeType=mimeType, streamType='LIVE', postQueuePipe=_streamPipe)
 
                 else:
                     audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle)
@@ -1631,7 +1645,7 @@ class TTSCast:
             logging.debug(traceback.format_exc())
 
     @staticmethod
-    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None, cmdForce=False, mimeType='audio/mp3', streamType='BUFFERED'):
+    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, cmdWait=None, cmdForce=False, mimeType='audio/mp3', streamType='BUFFERED', postQueuePipe=None):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion (Test) sur le Google Home :: %s', googleName)
             
@@ -1771,7 +1785,16 @@ class TTSCast:
                 if not allowed:
                     return False
                 # ----------------------------------------
-                
+
+                # Streaming : création du pipe après la résolution de la file d'attente
+                # pour éviter que le thread d'écriture n'expire avant que le Chromecast se connecte
+                if postQueuePipe is not None:
+                    _postUrl = postQueuePipe()
+                    if _postUrl is None:
+                        Functions.waitQueueExit(_targetWaitUUID, cmdWait, cmdForce, 'Cast')
+                        return False
+                    urltoplay = _postUrl
+
                 # Si DashCast alors sortir de l'appli avant sinon cela plante 
                 if not cmdForce: 
                     Functions.checkIfDashCast(cast)
