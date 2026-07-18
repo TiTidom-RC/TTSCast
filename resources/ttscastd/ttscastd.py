@@ -678,7 +678,7 @@ class TTSCast:
                                 ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText, True, "TestTTS")
                             _aiReformulatedText = ttsAIText
                             TTSCast._sendTTSResult(_aiReformulatedText, True)
-                            text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
+                            text_input = googleCloudTTS.SynthesisInput(text=Functions.markdownToPlainText(ttsAIText))
                         else:
                             logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                             if myConfig.appConvertSingleQuote:
@@ -753,7 +753,7 @@ class TTSCast:
                             logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                             _aiReformulatedText = ttsAIText
                             TTSCast._sendTTSResult(_aiReformulatedText, True)
-                            ttsText = ttsAIText
+                            ttsText = Functions.markdownToPlainText(ttsAIText)
                         else:
                             logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                     client = gTTS(ttsText, lang=langToTTS)
@@ -790,7 +790,7 @@ class TTSCast:
                         logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                         _aiReformulatedText = ttsAIText
                         TTSCast._sendTTSResult(_aiReformulatedText, True)
-                        ttsText = ttsAIText
+                        ttsText = Functions.markdownToPlainText(ttsAIText)
                     else:
                         logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                 ttsResult = TTSCast.jeedomTTS(ttsText, ttsLang)
@@ -826,7 +826,7 @@ class TTSCast:
                             logging.debug('[DAEMON][TestTTS] Génération du TTS avec IA')
                             _aiReformulatedText = ttsAIText
                             TTSCast._sendTTSResult(_aiReformulatedText, True)
-                            ttsText = ttsAIText
+                            ttsText = Functions.markdownToPlainText(ttsAIText)
                         else:
                             logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                     ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, True if ttsSSML == '1' else False)
@@ -1059,7 +1059,7 @@ class TTSCast:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 if myConfig.appConvertSingleQuote:
                                     ttsAIText = Functions.convertSingleQuoteToDoubleQuote(ttsAIText)
-                                text_input = googleCloudTTS.SynthesisInput(text=ttsAIText)
+                                text_input = googleCloudTTS.SynthesisInput(text=Functions.markdownToPlainText(ttsAIText))
                             else:
                                 logging.warning('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                                 if myConfig.appConvertSingleQuote:
@@ -1115,7 +1115,7 @@ class TTSCast:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
-                                ttsText = ttsAIText
+                                ttsText = Functions.markdownToPlainText(ttsAIText)
                             else:
                                 logging.warning('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                         client = gTTS(ttsText, lang=langToTTS)
@@ -1143,7 +1143,7 @@ class TTSCast:
                             ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
-                                ttsText = ttsAIText
+                                ttsText = Functions.markdownToPlainText(ttsAIText)
                             else:
                                 logging.warning('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                         ttsResult = TTSCast.voiceRSS(ttsText, ttsRSSVoiceName, ttsRSSSpeed, _useSSML)
