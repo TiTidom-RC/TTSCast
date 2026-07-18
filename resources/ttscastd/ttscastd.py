@@ -2448,7 +2448,7 @@ class Functions:
     def waitQueueExit(targetUUID, cmdWait, cmdForce, callerName="Unknown"):
         """ Gère la sortie de la file d'attente (libération du token) """
         if cmdWait is not None and cmdForce is False:
-            if targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[targetUUID] > 0:
+            if targetUUID in myConfig.cmdWaitQueue:
                 myConfig.cmdWaitQueue[targetUUID] &= ~(2 ** int(cmdWait))
                 logging.debug(f'[DAEMON][WaitQueue][{callerName}] Out {cmdWait} for {targetUUID} (Queue: {myConfig.cmdWaitQueue[targetUUID]})')
 
