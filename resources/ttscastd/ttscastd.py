@@ -1885,11 +1885,14 @@ class TTSCast:
                 logging.debug(traceback.format_exc())
                 
                 if volumeBeforePlay is not None:
-                    if isGroup and groupSnapshot:
-                        Functions.restoreGroupMembersVolume(groupSnapshot)
-                    else:
-                        if cast is not None:
-                            cast.set_volume(volume=volumeBeforePlay)
+                    try:
+                        if isGroup and groupSnapshot:
+                            Functions.restoreGroupMembersVolume(groupSnapshot)
+                        else:
+                            if cast is not None:
+                                cast.set_volume(volume=volumeBeforePlay)
+                    except Exception as _ve:
+                        logging.debug('[DAEMON][Cast] Volume restore failed :: %s', _ve)
                 
                 # --- Wait Queue Management (Exit - Error) ---
                 Functions.waitQueueExit(_targetWaitUUID, cmdWait, cmdForce, 'Cast')
