@@ -162,10 +162,8 @@ if (file_exists($_piperCatalogPath)) {
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Active la personnalisation des niveaux de log. Les filtres sont définis dans la fenêtre de gestion dédiée.}}"></i></sup>
                 </label>
-                <div class="col-lg-1">
-                    <input type="checkbox" class="configKey" data-l1key="logFiltersEnabled" />
-                </div>
-                <div class="col-lg-2">
+                <div class="col-lg-3">
+                    <input type="checkbox" class="configKey" data-l1key="logFiltersEnabled" style="vertical-align:middle; margin-right:10px;" />
                     <a class="btn btn-primary customclass-openlogfilters">
                         <i class="fas fa-filter"></i> {{Gérer les filtres}}
                     </a>
