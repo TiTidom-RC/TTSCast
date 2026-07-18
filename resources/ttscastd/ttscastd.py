@@ -2391,13 +2391,8 @@ class Functions:
         if targetUUID not in myConfig.cmdWaitQueue:
             myConfig.cmdWaitQueue[targetUUID] = 0
 
-        # 4. Wait=1 : reset (je suis le premier de la séquence)
-        if int(cmdWait) == 1:
-            myConfig.cmdWaitQueue[targetUUID] = 0
-            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Register wait=1 reset for {targetUUID}')
-
-        # 5. Prise de ticket (bitmask 2^wait)
-        myConfig.cmdWaitQueue[targetUUID] += 2 ** int(cmdWait)
+        # 4. Prise de ticket (bitmask |= 2^wait — idempotent, pas d'overflow possible)
+        myConfig.cmdWaitQueue[targetUUID] |= 2 ** int(cmdWait)
         logging.debug(f'[DAEMON][WaitQueue][{callerName}] Registered wait={cmdWait} for {targetUUID} (Queue: {myConfig.cmdWaitQueue[targetUUID]})')
         return True, targetUUID
 
@@ -2454,7 +2449,7 @@ class Functions:
         """ Gère la sortie de la file d'attente (libération du token) """
         if cmdWait is not None and cmdForce is False:
             if targetUUID in myConfig.cmdWaitQueue and myConfig.cmdWaitQueue[targetUUID] > 0:
-                myConfig.cmdWaitQueue[targetUUID] -= 2 ** int(cmdWait)
+                myConfig.cmdWaitQueue[targetUUID] &= ~(2 ** int(cmdWait))
                 logging.debug(f'[DAEMON][WaitQueue][{callerName}] Out {cmdWait} for {targetUUID} (Queue: {myConfig.cmdWaitQueue[targetUUID]})')
 
     @staticmethod
