@@ -1720,13 +1720,13 @@ class TTSCast:
                             logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
                     time.sleep(0.1)
                 
-                cast.quit_app()
-                
-                if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
+                if (volumeForPlay is not None):  # que ce soit appDing ou not appDing — restaurer AVANT quit_app
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
+
+                cast.quit_app()
                 
                 # Libération de la mémoire
                 cast = None
@@ -1842,13 +1842,13 @@ class TTSCast:
                             logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
                     time.sleep(0.1)
             
-                cast.quit_app()
-                
-                if (volumeForPlay is not None):  # que ce soit appDing ou not appDing
+                if (volumeForPlay is not None):  # que ce soit appDing ou not appDing — restaurer AVANT quit_app
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
+
+                cast.quit_app()
                 
                 # Libération de la mémoire
                 cast = None
@@ -3103,12 +3103,13 @@ class Functions:
                     
                     time.sleep(0.1)
     
-                cast.quit_app()
-                if (_volume is not None):
+                if (_volume is not None):  # restaurer AVANT quit_app
                     if isGroup:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
+
+                cast.quit_app()
             
                 return True
 
