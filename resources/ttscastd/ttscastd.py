@@ -2428,15 +2428,12 @@ class Functions:
             myConfig.cmdWaitQueue[targetUUID] = 0
             logging.debug(f'[DAEMON][WaitQueue][{callerName}] Reset requested for {targetUUID}')
         
-        # Wait > 1 : Attendre que la file soit vide (0) avant de prendre un ticket
+        # Wait > 1 : fenêtre de 100ms pour laisser les niveaux inférieurs s'enregistrer d'abord
+        # (couvre les systèmes chargés) — si queue toujours à 0, on joue seul sans annuler
         elif int(cmdWait) > 1 and myConfig.cmdWaitQueue[targetUUID] == 0:
-            t = 10
-            while (myConfig.cmdWaitQueue[targetUUID] == 0 and t > 0):
-                time.sleep(0.1)
-                t -= 1
+            time.sleep(0.1)
             if myConfig.cmdWaitQueue[targetUUID] == 0:
-                logging.debug(f'[DAEMON][WaitQueue][{callerName}] Cancelled (Wait > 1 timeout) for {targetUUID}')
-                return False, targetUUID
+                logging.debug(f'[DAEMON][WaitQueue][{callerName}] No prior wait detected for {targetUUID}, proceeding standalone')
 
         # Prise de ticket (Bitmask logic: 2^wait)
         myConfig.cmdWaitQueue[targetUUID] += 2 ** int(cmdWait)
