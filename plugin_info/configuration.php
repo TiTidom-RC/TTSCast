@@ -972,7 +972,7 @@ if (file_exists($_piperCatalogPath)) {
                         <option disabled>--- {{Gemini 3.x (Recommandé)}} ---</option>
                         <option value="gemini-3.1-flash-tts-preview" selected>Gemini 3.1 Flash TTS Preview</option>
                         <!-- Gemini 2.5 -->
-                        <option disabled>--- {{Gemini 2.5}} ---</option>
+                        <option disabled>--- {{Gemini 2.5 (Dépréciés mai 2025)}} ---</option>
                         <option value="gemini-2.5-flash-preview-tts">Gemini 2.5 Flash TTS Preview</option>
                         <option value="gemini-2.5-pro-preview-tts">Gemini 2.5 Pro TTS Preview</option>
                     </select>
