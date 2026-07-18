@@ -76,10 +76,17 @@ except ImportError as e:
 try:
     from google import genai
     from google.genai import types
-    import markdown
-    from bs4 import BeautifulSoup
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing modules for GenAI ::", e)
+    sys.exit(1)
+
+# Import traitement de texte (Markdown → plain text, strip emojis)
+try:
+    import markdown
+    from bs4 import BeautifulSoup
+    import emoji
+except ImportError as e:
+    print("[DAEMON][IMPORT] Error: importing modules for text processing ::", e)
     sys.exit(1)
 
 # Import Piper TTS (optionnel — installé uniquement si l'utilisateur active Piper)
@@ -856,7 +863,7 @@ class TTSCast:
                     logging.debug('[DAEMON][TestTTS] Génération Gemini TTS avec IA')
                     _aiReformulatedText = ttsAIText
                     TTSCast._sendTTSResult(_aiReformulatedText, True)
-                    _textToSynth = ttsAIText
+                    _textToSynth = Functions.markdownToPlainText(ttsAIText)
                 else:
                     logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
             if myConfig.appConvertSingleQuote:
@@ -915,7 +922,7 @@ class TTSCast:
                     logging.debug('[DAEMON][TestTTS] Génération Piper TTS avec IA')
                     _aiReformulatedText = ttsAIText
                     TTSCast._sendTTSResult(_aiReformulatedText, True)
-                    _textToSynth = ttsAIText
+                    _textToSynth = Functions.markdownToPlainText(ttsAIText)
                 else:
                     logging.warning('[DAEMON][TestTTS] Erreur IA. Génération Piper TTS sans IA (Backup)')
             raw_filename = _textToSynth + '|PiperTTS|' + _piperVoice + '|' + str(myConfig.piperSpeakerId)
@@ -1161,7 +1168,7 @@ class TTSCast:
                     ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                     if ttsAIText is not None:
                         logging.debug('[DAEMON][GenerateTTS] Génération Gemini TTS avec IA')
-                        _textToSynth = ttsAIText
+                        _textToSynth = Functions.markdownToPlainText(ttsAIText)
                     else:
                         logging.warning('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                 if myConfig.appConvertSingleQuote:
@@ -1187,7 +1194,7 @@ class TTSCast:
                     ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                     if ttsAIText is not None:
                         logging.debug('[DAEMON][GenerateTTS] Génération Piper TTS avec IA')
-                        _textToSynth = ttsAIText
+                        _textToSynth = Functions.markdownToPlainText(ttsAIText)
                     else:
                         logging.warning('[DAEMON][GenerateTTS] Erreur IA. Génération Piper TTS sans IA (Backup)')
                 if not os.path.isfile(filepath) or myConfig.ttsDisableCache:
@@ -1343,8 +1350,7 @@ class TTSCast:
             if _useAI and not _useSSML:
                 _aiResult = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
                 if _aiResult is not None:
-                    _aiPrecomputed = _aiResult
-                    _aiReformulatedText = _aiResult
+                    _aiPrecomputed = Functions.markdownToPlainText(_aiResult)  # version clean pour le moteur TTS
                     TTSCast._sendTTSResult(_aiResult, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
                 else:
                     logging.warning('[DAEMON][TTS] Erreur lors de la génération du TTS avec IA. Génération sans IA (Backup)')
@@ -1997,9 +2003,7 @@ class TTSCast:
                 else:
                     raw_text = response.text.strip()
                     logging.debug('[DAEMON][GenAI] Réponse générée par Gemini (repr) :: %s', repr(raw_text))
-                    clean_text = Functions.markdownToPlainText(raw_text)
-                    logging.debug('[DAEMON][GenAI] Réponse après nettoyage Markdown (repr) :: %s', repr(clean_text))
-                    return clean_text
+                    return raw_text
             else:
                 logging.warning('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, "***" if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
                 return None
@@ -2561,11 +2565,14 @@ class Functions:
 
     @staticmethod
     def markdownToPlainText(text):
-        """ Convert Markdown text to plain text """
+        """ Convert Markdown text to plain text and strip emojis for TTS engines """
         # Convert Markdown to HTML and then extract text
         html = markdown.markdown(text)
         soup = BeautifulSoup(html, "html.parser")
-        return soup.get_text().strip()
+        plain = soup.get_text()
+        # Strip emojis — not suitable for TTS synthesis (pass through to notifications)
+        plain = emoji.replace_emoji(plain, replace=' ')
+        return ' '.join(plain.split())
 
     @staticmethod
     def convertSingleQuoteToDoubleQuote(text: str, showLogs: bool = False, callerFunc: str = "SingleQuote") -> str:

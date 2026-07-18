@@ -99,7 +99,7 @@ class Config:
             '- Pour toute question nécessitant des données actuelles ou factuelles (météo, actualités, résultats…), utilise la recherche en ligne.\n\n'
             'Format de tes réponses :\n'
             '- Réponds en phrases courtes et fluides, adaptées à une diffusion vocale.\n'
-            '- Réponds sans mise en forme Markdown (**, *, #, >, tirets de liste) ni emojis. Conserve impérativement les accents, apostrophes et caractères typographiques de la langue.\n'
+            '- Conserve impérativement les accents, apostrophes et caractères typographiques de la langue.\n'
             '- Ne décris pas tes propres actions ni le processus de génération.'
         )
 
