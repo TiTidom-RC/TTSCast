@@ -138,7 +138,12 @@ class Config:
     appDisableDing = False
     appConvertSingleQuote = False  # Convertit les apostrophes simples en guillemets doubles pour contourner un bug de prononciation Google TTS
     cmdWaitTimeout = 60
-    cmdWaitQueue = {}
+    # File d'attente automatique des notifications — par équipement (targetUUID résolu via resolveWaitQueueUUID) :
+    # { targetUUID: { 'tail': int, 'serving': int, 'blocksByPid': {pid: ticket}, 'blocksByTicket': {ticket: {'bitmask': int, 'pendingCount': int, 'pid': pid}}, 'forceActive': int, 'lock': threading.Lock() } }
+    # 'tail' = prochain ticket à émettre (0-indexé, incrémenté APRÈS assignation) ; 'serving' = ticket dont c'est le tour
+    # (les deux démarrent à 0 — le tout premier ticket émis vaut 0 et correspond donc immédiatement à serving)
+    # 'pid' dans blocksByTicket permet de retrouver/nettoyer l'entrée blocksByPid en O(1) depuis waitQueueExit()
+    deviceQueues = {}
     
     logLevel = "error"
     castLogLevel = "daemon"

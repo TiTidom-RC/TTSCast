@@ -405,7 +405,7 @@ class ttscast extends eqLogic
         $logEngine = $engineOverride !== null ? $ttsEngine . ' → ' . $engineOverride . ' (override options)' : $ttsEngine;
         log::add('ttscast', 'info', '[PlayTTS] Moteur: ' . $logEngine . ' | UUID: ' . $ttsGoogleUUID . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8'));
         $ttsPiperVoiceName = config::byKey('piperVoiceName', 'ttscast', '');
-        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'cmdNotificationId' => $cmdNotificationId, 'ttsPiperVoiceName' => $ttsPiperVoiceName);
+        $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'cmdNotificationId' => $cmdNotificationId, 'ttsPiperVoiceName' => $ttsPiperVoiceName, 'callerPid' => getmypid());
         self::sendToDaemon($value);
     }
 
@@ -418,7 +418,7 @@ class ttscast extends eqLogic
 
     public static function mediaGCast($gHomeUUID=null, $action=null, $message=null, $options=null) {
         log::add('ttscast', 'info', '[MediaGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options);
-        $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID, 'options' => $options);
+        $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID, 'options' => $options, 'callerPid' => getmypid());
         log::add('ttscast', 'debug', '[MediaGCast] ArrayToSend :: ' . json_encode($value));
         self::sendToDaemon($value);
     }

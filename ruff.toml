@@ -1,0 +1,21 @@
+target-version = "py312"
+
+[lint]
+# F = pyflakes (imports inutilisés, variables indéfinies)
+# E = pycodestyle errors (W exclu — non sélectionné)
+select = ["E", "F"]
+ignore = [
+    "E101",  # indentation contains mixed spaces and tabs
+    "E117",  # over-indented
+    "E203",  # whitespace before ':'
+    "E221",  # multiple spaces before operator
+    "E241",  # multiple spaces after ','
+    "E272",  # multiple spaces before keyword
+    "E302",  # expected 2 blank lines
+    "E305",  # expected 2 blank lines after class or function definition
+    "E402",  # module level import not at top of file
+    "E501",  # line too long
+]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]  # imports non utilisés normaux dans les __init__
