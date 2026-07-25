@@ -2431,7 +2431,10 @@ class ttscastCmd extends cmd
     public function execute($_options = array()) {
         $eqLogic = $this->getEqLogic();
         $logicalId = $this->getLogicalId();
-        
+
+        // TODO TEMPORAIRE — instrumentation pour valider l'hypothèse "PID = identifiant de run de scénario" (à retirer une fois validé/décidé)
+        log::add('ttscast', 'debug', '[PID-TEST] getmypid()=' . getmypid() . ' | logicalId=' . $logicalId . ' | cmdId=' . $this->getId() . ' | microtime=' . microtime(true));
+
         log::add('ttscast', 'debug', '[CMD] LogicalId :: ' . $logicalId);
 
         if ( $this->getType() == "action" ) {
