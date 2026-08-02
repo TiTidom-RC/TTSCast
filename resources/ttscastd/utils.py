@@ -144,7 +144,12 @@ class Config:
     # (les deux démarrent à 0 — le tout premier ticket émis vaut 0 et correspond donc immédiatement à serving)
     # 'pid' dans blocksByTicket permet de retrouver/nettoyer l'entrée blocksByPid en O(1) depuis waitQueueExit()
     deviceQueues = {}
-    
+
+    # Tracking de session Cast par équipement (targetUUID résolu) — utilisé pour calculer playback_owner :
+    # { targetUUID: { 'sessionId': str, 'controller': str } } — mis à jour à chaque lancement plugin réussi (quick_play/start_app)
+    # 'controller' vaut 'tts'/'sounds'/'customsounds' (notification, transitoire) ou 'radios'/'customradios'/'media'/'youtube'/'dashcast'/'start_app' (plugin, persistant)
+    pluginSessions = {}
+
     logLevel = "error"
     castLogLevel = "daemon"
     logFiltersEnabled: bool = False
