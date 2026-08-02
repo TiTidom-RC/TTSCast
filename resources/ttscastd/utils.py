@@ -146,7 +146,7 @@ class Config:
     deviceQueues = {}
 
     # Tracking de session Cast par équipement (targetUUID résolu) — utilisé pour calculer playback_owner :
-    # { targetUUID: { 'sessionId': str, 'controller': str } } — mis à jour à chaque lancement plugin réussi (quick_play/start_app)
+    # { targetUUID: { 'mediaSessionId': int|None, 'controller': str } } — mis à jour à chaque lancement plugin réussi (quick_play/start_app)
     # 'controller' vaut 'tts'/'sounds'/'customsounds' (notification, transitoire) ou 'radios'/'customradios'/'media'/'youtube'/'dashcast'/'start_app' (plugin, persistant)
     pluginSessions = {}
 

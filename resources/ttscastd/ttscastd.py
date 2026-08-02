@@ -2389,32 +2389,32 @@ class Functions:
 
     @staticmethod
     def trackPluginSession(googleUUID, controller, cast):
-        """Mémorise la session Cast (session_id) associée au dernier lancement plugin réussi sur ce device.
+        """Mémorise le media_session_id associé au dernier lancement plugin réussi sur ce device.
         Utilisé par computePlaybackOwner() pour distinguer une lecture pilotée par le plugin d'une lecture externe.
         Résout l'UUID canonique en interne — accepte indifféremment un UUID brut ou déjà résolu (idempotent)."""
         targetUUID = Functions.resolveCanonicalUUID(googleUUID)
+        mediaSessionId = cast.media_controller.status.media_session_id
         myConfig.pluginSessions[targetUUID] = {
-            'sessionId': cast.status.session_id,
+            'mediaSessionId': mediaSessionId,
             'controller': controller
         }
-        logging.debug(f'[DAEMON][PlaybackOwner] TrackSession {targetUUID} :: controller={controller} sessionId={cast.status.session_id}')
+        logging.debug(f'[DAEMON][PlaybackOwner] TrackSession {targetUUID} :: controller={controller} mediaSessionId={mediaSessionId}')
 
     @staticmethod
     def isMediaBusy(mediaStatus):
         """Retourne True si un media_controller.status indique une lecture en cours (PLAYING ou PAUSED).
-        Centralise la formule utilisée pour is_busy/playback_owner (scan périodique, MyMediaStatusListener, MyCastStatusListener)."""
+        Centralise la formule utilisée pour is_busy/playback_owner (scan périodique, MyMediaStatusListener)."""
         return bool(mediaStatus and (mediaStatus.player_is_playing or mediaStatus.player_is_paused))
 
     @staticmethod
-    def computePlaybackOwner(targetUUID, currentSessionId, isBusy):
-        """Retourne 'IDLE' / 'NOTIFICATION' / 'PLUGIN' / 'EXTERNAL' selon qui possède la session Cast active.
-        'NOTIFICATION' = TTS/son en cours (transitoire) ; 'PLUGIN' = média persistant lancé par le plugin (radio/media/youtube/dashcast/start_app).
-        Purge l'entrée pluginSessions dès qu'elle ne correspond plus à la session active (idle ou external)."""
+    def computePlaybackOwner(targetUUID, currentMediaSessionId, isBusy):
+        """Retourne 'IDLE' / 'NOTIFICATION' / 'PLUGIN' / 'EXTERNAL' selon qui possède la session média active.
+        'NOTIFICATION' = TTS/son ; 'PLUGIN' = média persistant (radio/media/youtube/dashcast/start_app).
+        Compare currentMediaSessionId à l'entrée trackée dans pluginSessions ; purge uniquement sur mismatch."""
         if not isBusy:
-            myConfig.pluginSessions.pop(targetUUID, None)
             return 'IDLE'
         tracked = myConfig.pluginSessions.get(targetUUID)
-        if tracked and tracked['sessionId'] == currentSessionId:
+        if tracked and tracked['mediaSessionId'] == currentMediaSessionId:
             return 'NOTIFICATION' if tracked['controller'] in ('tts', 'sounds', 'customsounds') else 'PLUGIN'
         myConfig.pluginSessions.pop(targetUUID, None)
         return 'EXTERNAL'
@@ -3566,7 +3566,7 @@ class Functions:
                             
                             castPlaybackOwner = Functions.computePlaybackOwner(
                                 Functions.resolveCanonicalUUID(str(cast.uuid)),
-                                cast.status.session_id,
+                                cast.media_controller.status.media_session_id,
                                 mediaIsBusy == '1'
                             )
                             
@@ -3853,12 +3853,6 @@ class myCast:
                 castStatusText = status.status_text if status.status_text is not None else "N/A"
                 castIsStandBy = '1' if status.is_stand_by else '0'
                 
-                castPlaybackOwner = Functions.computePlaybackOwner(
-                    Functions.resolveCanonicalUUID(str(self.cast.uuid)),
-                    castSessionId,
-                    Functions.isMediaBusy(self.cast.media_controller.status)
-                )
-                
                 data = {
                     'uuid': str(self.cast.uuid),
                     'is_stand_by': castIsStandBy,
@@ -3867,11 +3861,16 @@ class myCast:
                     'display_name': castAppDisplayName,
                     'app_id': castAppId,
                     'session_id': castSessionId,
-                    'playback_owner': castPlaybackOwner,
                     'status_text': castStatusText,
                     'realtime': 1,
                     'status_type': 'cast'
                 }
+
+                # playback_owner : media_controller.status peut être périmé ici (flux MediaStatus asynchrone) ;
+                # seul app_id est garanti à jour. Force IDLE sur retour Backdrop, sinon omis (new_media_status fait foi).
+                if status.app_id in (None, pychromecast.IDLE_APP_ID):
+                    myConfig.pluginSessions.pop(Functions.resolveCanonicalUUID(str(self.cast.uuid)), None)
+                    data['playback_owner'] = 'IDLE'
 
                 # Envoi vers Jeedom
                 Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)  # type: ignore
@@ -3922,7 +3921,7 @@ class myCast:
 
                 castPlaybackOwner = Functions.computePlaybackOwner(
                     Functions.resolveCanonicalUUID(str(self.cast.uuid)),
-                    self.cast.status.session_id,
+                    self.cast.media_controller.status.media_session_id,
                     mediaIsBusy == '1'
                 )
 
