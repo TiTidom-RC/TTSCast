@@ -139,6 +139,7 @@ class Config:
     appConvertSingleQuote = False  # Convertit les apostrophes simples en guillemets doubles pour contourner un bug de prononciation Google TTS
     cmdWaitTimeout = 60
     mediaActivationTimeout = 15  # secondes — borne l'attente d'activation de la session média (block_until_active)
+    dashCastAppId = '84912283'  # app_id du récepteur Chromecast DashCast
     # File d'attente automatique des notifications — par équipement (targetUUID résolu via resolveWaitQueueUUID) :
     # { targetUUID: { 'tail': int, 'serving': int, 'blocksByPid': {pid: ticket}, 'blocksByTicket': {ticket: {'bitmask': int, 'pendingCount': int, 'pid': pid}}, 'forceActive': int, 'lock': threading.Lock() } }
     # 'tail' = prochain ticket à émettre (0-indexé, incrémenté APRÈS assignation) ; 'serving' = ticket dont c'est le tour
@@ -149,6 +150,7 @@ class Config:
     # Tracking de session Cast par équipement (targetUUID résolu) — utilisé pour calculer playback_owner :
     # { targetUUID: { 'mediaSessionId': int|None, 'controller': str } } — mis à jour à chaque lancement plugin réussi (quick_play/start_app)
     # 'controller' vaut 'tts'/'sounds'/'customsounds' (notification, transitoire) ou 'radios'/'customradios'/'media'/'youtube'/'dashcast'/'start_app' (plugin, persistant)
+    # DASHCAST est déterminé via app_id (computePlaybackOwner), indépendamment de ce dict.
     pluginSessions = {}
 
     logLevel = "error"

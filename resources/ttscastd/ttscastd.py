@@ -2407,10 +2407,13 @@ class Functions:
         return bool(mediaStatus and (mediaStatus.player_is_playing or mediaStatus.player_is_paused))
 
     @staticmethod
-    def computePlaybackOwner(targetUUID, currentMediaSessionId, isBusy):
-        """Retourne 'IDLE' / 'NOTIFICATION' / 'PLUGIN' / 'EXTERNAL' selon qui possède la session média active.
-        'NOTIFICATION' = TTS/son ; 'PLUGIN' = média persistant (radio/media/youtube/dashcast/start_app).
-        Compare currentMediaSessionId à l'entrée trackée dans pluginSessions ; purge uniquement sur mismatch."""
+    def computePlaybackOwner(targetUUID, currentMediaSessionId, isBusy, appId=None):
+        """Retourne 'IDLE' / 'NOTIFICATION' / 'PLUGIN' / 'EXTERNAL' / 'DASHCAST' selon qui possède la session média active.
+        'NOTIFICATION' = TTS/son ; 'PLUGIN' = média persistant (radio/media/youtube) ; 'DASHCAST' = app DashCast active (sans session média).
+        start_app ne remonte 'PLUGIN' que si l'app lancée expose elle-même une session média standard.
+        Compare currentMediaSessionId à l'entrée enregistrée dans pluginSessions ; purge uniquement sur mismatch."""
+        if appId == myConfig.dashCastAppId:
+            return 'DASHCAST'
         if not isBusy:
             return 'IDLE'
         tracked = myConfig.pluginSessions.get(targetUUID)
@@ -2734,7 +2737,7 @@ class Functions:
 
     @staticmethod
     def checkIfDashCast(chromecast=None):
-        if chromecast is not None and (chromecast.status.app_id == '84912283'):  # DashCast = '84912283'
+        if chromecast is not None and (chromecast.status.app_id == myConfig.dashCastAppId):
             logging.debug('[DAEMON][checkIfDashCast] QuitDashCastApp')
             chromecast.quit_app()
             t = 5
@@ -3567,7 +3570,8 @@ class Functions:
                             castPlaybackOwner = Functions.computePlaybackOwner(
                                 Functions.resolveCanonicalUUID(str(cast.uuid)),
                                 cast.media_controller.status.media_session_id,
-                                mediaIsBusy == '1'
+                                mediaIsBusy == '1',
+                                cast.status.app_id
                             )
                             
                             data = {
@@ -3870,6 +3874,8 @@ class myCast:
                 if status.app_id in (None, pychromecast.IDLE_APP_ID):
                     myConfig.pluginSessions.pop(str(self.cast.uuid), None)
                     data['playback_owner'] = 'IDLE'
+                elif status.app_id == myConfig.dashCastAppId:
+                    data['playback_owner'] = 'DASHCAST'
 
                 # Envoi vers Jeedom
                 Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)  # type: ignore
@@ -3921,7 +3927,8 @@ class myCast:
                 castPlaybackOwner = Functions.computePlaybackOwner(
                     Functions.resolveCanonicalUUID(str(self.cast.uuid)),
                     self.cast.media_controller.status.media_session_id,
-                    mediaIsBusy == '1'
+                    mediaIsBusy == '1',
+                    self.cast.status.app_id
                 )
 
                 data = {
@@ -3982,7 +3989,7 @@ class myCast:
                     castIsOnline = '1'
                 else:
                     castIsOnline = '0'
-                    # Device déconnecté : purge la session trackée (évite une entrée pluginSessions orpheline).
+                    # Device déconnecté : purge la session enregistrée (évite une entrée pluginSessions orpheline).
                     myConfig.pluginSessions.pop(str(self.cast.uuid), None)
                 
                 data = {
