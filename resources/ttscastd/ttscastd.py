@@ -1714,7 +1714,7 @@ class TTSCast:
                     if volumeBeforePlay is not None:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                cast.media_controller.block_until_active()
+                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
                 
                 logging.info('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
                 
@@ -1838,7 +1838,7 @@ class TTSCast:
                     if volumeBeforePlay is not None:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                cast.media_controller.block_until_active()
+                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
 
                 logging.info('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
             
@@ -2817,7 +2817,7 @@ class Functions:
                 else:
                     cast.set_volume(volume=volumeBeforePlay)
             
-            cast.media_controller.block_until_active()
+            cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
             
             logging.debug(f'[DAEMON][controllerActions] StartApp :: Application lancée :: {str(_value)}')
             
@@ -2902,7 +2902,7 @@ class Functions:
                 else:
                     cast.set_volume(volume=volumeBeforePlay)
             
-            cast.media_controller.block_until_active()
+            cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
             
             logging.info(f'[DAEMON][controllerActions] YouTube :: Diffusion lancée :: {cast.name} | ID: {_value}')
             
@@ -3072,7 +3072,7 @@ class Functions:
                             else:
                                 cast.set_volume(volume=volumeBeforePlay)
                         
-                        cast.media_controller.block_until_active()
+                        cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
                         
                         logging.info(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: {cast.name} | {radioTitle}')
                         
@@ -3186,7 +3186,7 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                cast.media_controller.block_until_active()
+                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
                 
                 logging.info(f'[DAEMON][controllerActions] Diffusion {soundType} lancée :: {cast.name} | {_value}')
                 
@@ -3347,7 +3347,7 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                cast.media_controller.block_until_active()
+                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
                 
                 logging.info(f'[DAEMON][controllerActions] Diffusion Media lancée :: {cast.name} | {_value}')
                 
@@ -3866,11 +3866,7 @@ class myCast:
                     'status_type': 'cast'
                 }
 
-                # playback_owner : media_controller.status peut être périmé ici (flux MediaStatus asynchrone) ;
-                # seul app_id est garanti à jour. Force IDLE sur retour Backdrop, sinon omis (new_media_status fait foi).
-                # Clé NON résolue (pas de resolveCanonicalUUID) : cette résolution sert au partage de file d'attente
-                # Member<->Group et redirigerait à tort vers un membre actif quand ce cast est un groupe (app_id
-                # toujours None sur les wrappers de routage volume type "Toutes les Enceintes").
+                # IDLE forcé (UUID non résolu) uniquement sur app_id Backdrop/None, sinon la clé est omise.
                 if status.app_id in (None, pychromecast.IDLE_APP_ID):
                     myConfig.pluginSessions.pop(str(self.cast.uuid), None)
                     data['playback_owner'] = 'IDLE'
@@ -3986,6 +3982,8 @@ class myCast:
                     castIsOnline = '1'
                 else:
                     castIsOnline = '0'
+                    # Device déconnecté : purge la session trackée (évite une entrée pluginSessions orpheline).
+                    myConfig.pluginSessions.pop(str(self.cast.uuid), None)
                 
                 data = {
                     'uuid': str(self.cast.uuid),

@@ -138,6 +138,7 @@ class Config:
     appDisableDing = False
     appConvertSingleQuote = False  # Convertit les apostrophes simples en guillemets doubles pour contourner un bug de prononciation Google TTS
     cmdWaitTimeout = 60
+    mediaActivationTimeout = 15  # secondes — borne l'attente d'activation de la session média (block_until_active)
     # File d'attente automatique des notifications — par équipement (targetUUID résolu via resolveWaitQueueUUID) :
     # { targetUUID: { 'tail': int, 'serving': int, 'blocksByPid': {pid: ticket}, 'blocksByTicket': {ticket: {'bitmask': int, 'pendingCount': int, 'pid': pid}}, 'forceActive': int, 'lock': threading.Lock() } }
     # 'tail' = prochain ticket à émettre (0-indexé, incrémenté APRÈS assignation) ; 'serving' = ticket dont c'est le tour
