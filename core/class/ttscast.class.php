@@ -1914,6 +1914,23 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
+        $cmd = $this->getCmd(null, 'playback_owner');
+        if (!is_object($cmd)) {
+            $cmd = new ttscastCmd();
+            $cmd->setName(__('Playback Owner', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->setLogicalId('playback_owner');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setDisplay('forceReturnLineBefore', '1');
+            $cmd->setDisplay('forceReturnLineAfter', '1');
+            $cmd->setIsVisible(1);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
         $cmd = $this->getCmd(null, 'display_name');
         if (!is_object($cmd)) {
             $cmd = new ttscastCmd();

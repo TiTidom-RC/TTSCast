@@ -268,6 +268,10 @@ class Loops:
                             myConfig.deviceQueues.pop(message['uuid'], None)
                             logging.debug('[DAEMON][SOCKET] Remove Wait Queue for Device :: %s', message['uuid'])
                         
+                        if message['uuid'] in myConfig.pluginSessions:
+                            myConfig.pluginSessions.pop(message['uuid'], None)
+                            logging.debug('[DAEMON][SOCKET] Remove Plugin Session Tracking for Device :: %s', message['uuid'])
+                        
                 elif message['cmd'] == "scanOn":
                     logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
                     
@@ -1710,9 +1714,11 @@ class TTSCast:
                     if volumeBeforePlay is not None:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                cast.media_controller.block_until_active()
+                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
                 
                 logging.info('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
+                
+                Functions.trackPluginSession(str(cast.uuid), 'tts', cast)
                 
                 media_player_state = None
                 media_has_played = False
@@ -1832,9 +1838,11 @@ class TTSCast:
                     if volumeBeforePlay is not None:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                cast.media_controller.block_until_active()
+                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
 
                 logging.info('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
+            
+                Functions.trackPluginSession(googleUUID, 'tts', cast)
             
                 media_player_state = None
                 media_has_played = False
@@ -2326,9 +2334,11 @@ class Functions:
     """ Class Functions """
 
     @staticmethod
-    def resolveWaitQueueUUID(current_uuid_str):
+    def resolveCanonicalUUID(current_uuid_str):
         """
-        Trouve un UUID 'canonique' pour la file d'attente (WaitQueue).
+        Trouve un UUID 'canonique' pour un équipement (Member <-> Group), basé sur l'activité de la file d'attente.
+        Utilisée à la fois par le système de queue (waitQueueRegister) et par le tracking de session (trackPluginSession/
+        computePlaybackOwner) — un membre et son groupe doivent partager la même identité pour ces deux usages.
         Permet de lier Member -> Group ou Group -> Member si une file est déjà active.
         """
         try:
@@ -2359,7 +2369,7 @@ class Functions:
             if member_found:
                 # Si ce groupe a une file active, on s'y greffe
                 if _queueActive(str(group_uuid)):
-                    logging.debug(f'[DAEMON][ResolveWait] Redirected Member {current_uuid_str} to Group {str(group_uuid)}')
+                    logging.debug(f'[DAEMON][ResolveCanonical] Redirected Member {current_uuid_str} to Group {str(group_uuid)}')
                     return str(group_uuid)
 
         # 3. Si c'est un groupe, est-ce qu'un membre est actif ?
@@ -2370,7 +2380,7 @@ class Functions:
                     m_uuid = UUID(m_str)
                     m_key = str(m_uuid)
                     if _queueActive(m_key):
-                        logging.debug(f'[DAEMON][ResolveWait] Redirected Group {current_uuid_str} to Member {m_key}')
+                        logging.debug(f'[DAEMON][ResolveCanonical] Redirected Group {current_uuid_str} to Member {m_key}')
                         return m_key
             except Exception:
                 pass
@@ -2378,12 +2388,47 @@ class Functions:
         return current_uuid_str
 
     @staticmethod
+    def trackPluginSession(googleUUID, controller, cast):
+        """Mémorise le media_session_id associé au dernier lancement plugin réussi sur ce device.
+        Utilisé par computePlaybackOwner() pour distinguer une lecture pilotée par le plugin d'une lecture externe.
+        Résout l'UUID canonique en interne — accepte indifféremment un UUID brut ou déjà résolu (idempotent)."""
+        targetUUID = Functions.resolveCanonicalUUID(googleUUID)
+        mediaSessionId = cast.media_controller.status.media_session_id
+        myConfig.pluginSessions[targetUUID] = {
+            'mediaSessionId': mediaSessionId,
+            'controller': controller
+        }
+        logging.debug(f'[DAEMON][PlaybackOwner] TrackSession {targetUUID} :: controller={controller} mediaSessionId={mediaSessionId}')
+
+    @staticmethod
+    def isMediaBusy(mediaStatus):
+        """Retourne True si un media_controller.status indique une lecture en cours (PLAYING ou PAUSED).
+        Centralise la formule utilisée pour is_busy/playback_owner (scan périodique, MyMediaStatusListener)."""
+        return bool(mediaStatus and (mediaStatus.player_is_playing or mediaStatus.player_is_paused))
+
+    @staticmethod
+    def computePlaybackOwner(targetUUID, currentMediaSessionId, isBusy, appId=None):
+        """Retourne 'IDLE' / 'NOTIFICATION' / 'PLUGIN' / 'EXTERNAL' / 'DASHCAST' selon qui possède la session média active.
+        'NOTIFICATION' = TTS/son ; 'PLUGIN' = média persistant (radio/media/youtube) ; 'DASHCAST' = app DashCast active (sans session média).
+        start_app ne remonte 'PLUGIN' que si l'app lancée expose elle-même une session média standard.
+        Compare currentMediaSessionId à l'entrée enregistrée dans pluginSessions ; purge uniquement sur mismatch."""
+        if appId == myConfig.dashCastAppId:
+            return 'DASHCAST'
+        if not isBusy:
+            return 'IDLE'
+        tracked = myConfig.pluginSessions.get(targetUUID)
+        if tracked and tracked['mediaSessionId'] == currentMediaSessionId:
+            return 'NOTIFICATION' if tracked['controller'] in ('tts', 'sounds', 'customsounds') else 'PLUGIN'
+        myConfig.pluginSessions.pop(targetUUID, None)
+        return 'EXTERNAL'
+
+    @staticmethod
     def waitQueueRegister(cast, googleUUID, cmdWait, cmdForce, callerPid, callerName="Unknown"):
         """Prend le ticket de queue IMMÉDIATEMENT, sans attendre le tour.
         Appelée depuis socketRegisterQueue (socket handler), avant le démarrage du thread.
         Retourne (registered, targetUUID, ticket) — ticket=None uniquement pour le cas force."""
 
-        targetUUID = Functions.resolveWaitQueueUUID(googleUUID)
+        targetUUID = Functions.resolveCanonicalUUID(googleUUID)
         if targetUUID != googleUUID:
             logging.debug(f'[DAEMON][WaitQueue][{callerName}] Resolved Linked UUID {googleUUID} -> {targetUUID}')
 
@@ -2692,7 +2737,7 @@ class Functions:
 
     @staticmethod
     def checkIfDashCast(chromecast=None):
-        if chromecast is not None and (chromecast.status.app_id == '84912283'):  # DashCast = '84912283'
+        if chromecast is not None and (chromecast.status.app_id == myConfig.dashCastAppId):
             logging.debug('[DAEMON][checkIfDashCast] QuitDashCastApp')
             chromecast.quit_app()
             t = 5
@@ -2775,9 +2820,11 @@ class Functions:
                 else:
                     cast.set_volume(volume=volumeBeforePlay)
             
-            cast.media_controller.block_until_active()
+            cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
             
             logging.debug(f'[DAEMON][controllerActions] StartApp :: Application lancée :: {str(_value)}')
+            
+            Functions.trackPluginSession(_googleUUID, 'start_app', cast)
             
             return True
             
@@ -2858,9 +2905,11 @@ class Functions:
                 else:
                     cast.set_volume(volume=volumeBeforePlay)
             
-            cast.media_controller.block_until_active()
+            cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
             
             logging.info(f'[DAEMON][controllerActions] YouTube :: Diffusion lancée :: {cast.name} | ID: {_value}')
+            
+            Functions.trackPluginSession(_googleUUID, 'youtube', cast)
             
             return True
         except Exception as e:
@@ -2907,6 +2956,8 @@ class Functions:
                 logging.debug(f'[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: {_value} | {str(options_json)}')
                 player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)  # type: ignore
                 time.sleep(2)
+                
+                Functions.trackPluginSession(_googleUUID, 'dashcast', cast)
                 
                 cast.unregister_handler(player)
                 time.sleep(1)
@@ -3024,9 +3075,11 @@ class Functions:
                             else:
                                 cast.set_volume(volume=volumeBeforePlay)
                         
-                        cast.media_controller.block_until_active()
+                        cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
                         
                         logging.info(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: {cast.name} | {radioTitle}')
+                        
+                        Functions.trackPluginSession(_googleUUID, _controller, cast)
                     
                     return True
                 except Exception as e:
@@ -3136,9 +3189,11 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                cast.media_controller.block_until_active()
+                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
                 
                 logging.info(f'[DAEMON][controllerActions] Diffusion {soundType} lancée :: {cast.name} | {_value}')
+                
+                Functions.trackPluginSession(_googleUUID, _controller, cast)
                 
                 media_player_state = None
                 media_has_played = False
@@ -3295,9 +3350,11 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                cast.media_controller.block_until_active()
+                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
                 
                 logging.info(f'[DAEMON][controllerActions] Diffusion Media lancée :: {cast.name} | {_value}')
+                
+                Functions.trackPluginSession(_googleUUID, 'media', cast)
                 
                 return True
                 
@@ -3494,7 +3551,7 @@ class Functions:
                                 mediaLastUpdated = "N/A"
                             
                             mediaIsIdle = '1' if cast.media_controller.status.player_is_idle or cast.media_controller.status.player_state == 'UNKNOWN' else '0'
-                            mediaIsBusy = '1' if cast.media_controller.status.player_is_playing or cast.media_controller.status.player_is_paused else '0'
+                            mediaIsBusy = '1' if Functions.isMediaBusy(cast.media_controller.status) else '0'
                             mediaPlayerState = cast.media_controller.status.player_state if cast.media_controller.status.player_state is not None else "N/A"
                             mediaTitle = cast.media_controller.status.title if cast.media_controller.status.title is not None else "N/A"
                             mediaArtist = cast.media_controller.status.artist if cast.media_controller.status.artist is not None else "N/A"
@@ -3510,6 +3567,13 @@ class Functions:
                             mediaContentType = cast.media_controller.status.content_type if cast.media_controller.status.content_type is not None else "N/A"
                             mediaStreamType = cast.media_controller.status.stream_type if cast.media_controller.status.stream_type is not None else "N/A"
                             
+                            castPlaybackOwner = Functions.computePlaybackOwner(
+                                Functions.resolveCanonicalUUID(str(cast.uuid)),
+                                cast.media_controller.status.media_session_id,
+                                mediaIsBusy == '1',
+                                cast.status.app_id
+                            )
+                            
                             data = {
                                 'uuid': str(cast.uuid),
                                 'lastschedule': currentTimeStr,
@@ -3519,6 +3583,7 @@ class Functions:
                                 'is_stand_by': castIsStandBy,
                                 'is_idle': mediaIsIdle,
                                 'is_busy': mediaIsBusy,
+                                'playback_owner': castPlaybackOwner,
                                 'volume_muted': castIsMuted,
                                 'app_id': castAppId,
                                 'session_id': castSessionId,
@@ -3805,6 +3870,13 @@ class myCast:
                     'status_type': 'cast'
                 }
 
+                # IDLE forcé (UUID non résolu) uniquement sur app_id Backdrop/None, sinon la clé est omise.
+                if status.app_id in (None, pychromecast.IDLE_APP_ID):
+                    myConfig.pluginSessions.pop(str(self.cast.uuid), None)
+                    data['playback_owner'] = 'IDLE'
+                elif status.app_id == myConfig.dashCastAppId:
+                    data['playback_owner'] = 'DASHCAST'
+
                 # Envoi vers Jeedom
                 Comm.sendToJeedom.add_changes('castsRT::' + data['uuid'], data)  # type: ignore
             except Exception as e:
@@ -3835,7 +3907,7 @@ class myCast:
                     castIsOnline = '0' """
                 
                 mediaIsIdle = '1' if status.player_is_idle or status.player_state == 'UNKNOWN' else '0'
-                mediaIsBusy = '1' if status.player_is_playing or status.player_is_paused else '0'
+                mediaIsBusy = '1' if Functions.isMediaBusy(status) else '0'
                 
                 mediaPlayerState = status.player_state if status.player_state is not None else "N/A"
                 mediaTitle = status.title if status.title is not None else "N/A"
@@ -3852,11 +3924,19 @@ class myCast:
                 mediaContentType = status.content_type if status.content_type is not None else "N/A"
                 mediaStreamType = status.stream_type if status.stream_type is not None else "N/A"
 
+                castPlaybackOwner = Functions.computePlaybackOwner(
+                    Functions.resolveCanonicalUUID(str(self.cast.uuid)),
+                    self.cast.media_controller.status.media_session_id,
+                    mediaIsBusy == '1',
+                    self.cast.status.app_id
+                )
+
                 data = {
                     'uuid': str(self.cast.uuid),
                     'player_state': mediaPlayerState,
                     'is_idle': mediaIsIdle,
                     'is_busy': mediaIsBusy,
+                    'playback_owner': castPlaybackOwner,
                     'title': mediaTitle,
                     'artist': mediaArtist,
                     'duration': mediaDuration,
@@ -3909,6 +3989,8 @@ class myCast:
                     castIsOnline = '1'
                 else:
                     castIsOnline = '0'
+                    # Device déconnecté : purge la session enregistrée (évite une entrée pluginSessions orpheline).
+                    myConfig.pluginSessions.pop(str(self.cast.uuid), None)
                 
                 data = {
                     'uuid': str(self.cast.uuid),
