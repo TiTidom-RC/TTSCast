@@ -3868,8 +3868,11 @@ class myCast:
 
                 # playback_owner : media_controller.status peut être périmé ici (flux MediaStatus asynchrone) ;
                 # seul app_id est garanti à jour. Force IDLE sur retour Backdrop, sinon omis (new_media_status fait foi).
+                # Clé NON résolue (pas de resolveCanonicalUUID) : cette résolution sert au partage de file d'attente
+                # Member<->Group et redirigerait à tort vers un membre actif quand ce cast est un groupe (app_id
+                # toujours None sur les wrappers de routage volume type "Toutes les Enceintes").
                 if status.app_id in (None, pychromecast.IDLE_APP_ID):
-                    myConfig.pluginSessions.pop(Functions.resolveCanonicalUUID(str(self.cast.uuid)), None)
+                    myConfig.pluginSessions.pop(str(self.cast.uuid), None)
                     data['playback_owner'] = 'IDLE'
 
                 # Envoi vers Jeedom
