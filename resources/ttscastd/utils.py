@@ -85,7 +85,7 @@ class Config:
     aiAuthMode = 'noMode'  # 'noMode', 'apikey', 'oauth2'
     aiProjectID = 'noProjectID'  # Google Cloud Project ID for AI
     aiApiKey = ''
-    aiModel = 'noModel'  # 'noModel', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro'
+    aiModel = 'noModel'  # 'noModel', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'
     aiDefaultTone = 'enthousiaste et humoristique'  # Default tone for AI TTS
     
     def aiSysPrompt(self, aiCustomTone=None):
