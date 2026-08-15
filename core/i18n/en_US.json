@@ -280,7 +280,7 @@
         "Identique au démon (défaut)": "Same as the (default) daemon",
         "Impossible de charger le nouveau catalogue": "Unable to load the new catalog",
         "Info": "Info",
-        "Instruction de style transmise au modèle Gemini TTS (ex: Parle d'une voix chaleureure et rassurante). Laissez vide pour le style par défaut.": "Style instruction sent to the Gemini TTS model (e.g., \"Speak in a warm and reassuring voice\"). Leave blank for the default style.",
+        "Instruction de style transmise au modèle Gemini TTS (ex: Parle d'une voix chaleureuse et rassurante). Laissez vide pour le style par défaut.": "Style instruction provided to the Gemini TTS model (e.g., \"Speak in a warm and reassuring voice\"). Leave blank for the default style.",
         "Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.": "Style instruction provided to the Gemini TTS model for all notifications (e.g., \"Speak in a warm and reassuring voice\"). Can be overridden by the style option in scenarios. Leave blank for the default neutral style.",
         "Italien (it-IT)": "Italian (it-IT)",
         "Jeedom TTS": "Jeedom TTS",

@@ -280,7 +280,7 @@
         "Identique au démon (défaut)": "Identisch mit dem Daemon (Standard)",
         "Impossible de charger le nouveau catalogue": "Der neue Katalog kann nicht geladen werden",
         "Info": "Info",
-        "Instruction de style transmise au modèle Gemini TTS (ex: Parle d'une voix chaleureure et rassurante). Laissez vide pour le style par défaut.": "Anweisung zum Stil, die an das Gemini TTS-Modell übermittelt wird (z. B.: Sprich mit einer warmen und beruhigenden Stimme). Lassen Sie das Feld leer, um den Standardstil beizubehalten.",
+        "Instruction de style transmise au modèle Gemini TTS (ex: Parle d'une voix chaleureuse et rassurante). Laissez vide pour le style par défaut.": "Anweisung zum Stil, die an das Gemini-TTS-Modell übermittelt wird (z. B.: „Sprich mit einer warmen und beruhigenden Stimme“). Lassen Sie das Feld leer, um den Standardstil beizubehalten.",
         "Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.": "Anweisung zum Stil, die dem Gemini TTS-Modell für alle Benachrichtigungen übermittelt wird (z. B.: „Sprich mit einer warmen und beruhigenden Stimme“). Kann durch die Option „style:“ in den Szenarien überschrieben werden. Lassen Sie das Feld leer, um den neutralen Standardstil beizubehalten.",
         "Italien (it-IT)": "Italian (it-IT)",
         "Jeedom TTS": "Jeedom TTS",
