@@ -240,7 +240,7 @@ class Loops:
                         
                         if message['friendly_name'] not in myConfig.GCAST_NAMES: 
                             myConfig.GCAST_NAMES.append(message['friendly_name'])
-                            _changes.append('name')
+                            _changes.append('friendly_name')
                         
                         if _uuid not in myConfig.GCAST_UUID:
                             myConfig.GCAST_UUID.append(_uuid)
@@ -250,7 +250,7 @@ class Loops:
                         
                         # Une seule ligne pour l'événement (au lieu d'une ligne par liste modifiée)
                         logging.debug(
-                            '[DAEMON][SOCKET] Add Cast :: %s (%s) | ajouté=%s | KNOWN Devices (%d) | GCAST Names (%d) | GCAST UUID (%d)',
+                            '[DAEMON][SOCKET] Add Cast :: %s (%s) | added = %s | KNOWN_HOSTS (%d) | GCAST_NAMES (%d) | GCAST_UUID (%d)',
                             message['friendly_name'], message['host'], ', '.join(_changes) or 'aucun',
                             len(myConfig.KNOWN_HOSTS), len(myConfig.GCAST_NAMES), len(myConfig.GCAST_UUID)
                         )
@@ -266,7 +266,7 @@ class Loops:
                         
                         if message['friendly_name'] in myConfig.GCAST_NAMES: 
                             myConfig.GCAST_NAMES.remove(message['friendly_name'])
-                            _changes.append('name')
+                            _changes.append('friendly_name')
                         
                         if _uuid in myConfig.GCAST_UUID:
                             myConfig.GCAST_UUID.remove(_uuid)
@@ -275,15 +275,15 @@ class Loops:
                         
                         if message['uuid'] in myConfig.deviceQueues:
                             myConfig.deviceQueues.pop(message['uuid'], None)
-                            _changes.append('waitQueue')
+                            _changes.append('deviceQueues')
                         
                         if message['uuid'] in myConfig.pluginSessions:
                             myConfig.pluginSessions.pop(message['uuid'], None)
-                            _changes.append('pluginSession')
+                            _changes.append('pluginSessions')
                         
                         # Une seule ligne pour l'événement (au lieu d'une ligne par liste modifiée)
                         logging.debug(
-                            '[DAEMON][SOCKET] Remove Cast :: %s (%s) | retiré=%s | KNOWN Devices (%d) | GCAST Names (%d) | GCAST UUID (%d)',
+                            '[DAEMON][SOCKET] Remove Cast :: %s (%s) | removed = %s | KNOWN_HOSTS (%d) | GCAST_NAMES (%d) | GCAST_UUID (%d)',
                             message['friendly_name'], message['host'], ', '.join(_changes) or 'aucun',
                             len(myConfig.KNOWN_HOSTS), len(myConfig.GCAST_NAMES), len(myConfig.GCAST_UUID)
                         )
