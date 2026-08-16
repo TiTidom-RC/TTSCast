@@ -755,12 +755,10 @@ class TTSCast:
                 if _aiReformulatedText is None:
                     TTSCast._sendTTSResult(ttsText, True)
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
-                logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                
                 _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
 
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType=_mimeType)
-                logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Google Cloud TTS) invalide :: ' + myConfig.gCloudApiKey)
         
@@ -798,10 +796,9 @@ class TTSCast:
             if _aiReformulatedText is None:
                 TTSCast._sendTTSResult(ttsText, True)
             urlFileToPlay = f'{ttsSrvWeb}{filename}'
-            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
-            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+            logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
         
         elif ttsEngine == "jeedomtts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = jeedomtts')
@@ -833,10 +830,9 @@ class TTSCast:
             if _aiReformulatedText is None:
                 TTSCast._sendTTSResult(ttsText, True)
             urlFileToPlay = f'{ttsSrvWeb}{filename}'
-            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
-            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+            logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
         elif ttsEngine == "voicersstts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = voicersstts')
             logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
@@ -868,10 +864,9 @@ class TTSCast:
                 if _aiReformulatedText is None:
                     TTSCast._sendTTSResult(ttsText, True)
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
-                logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
-                logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Voice RSS) invalide :: ' + myConfig.apiRSSKey)
 
@@ -970,9 +965,8 @@ class TTSCast:
             if _aiReformulatedText is None:
                 TTSCast._sendTTSResult(ttsText, True)
             urlFileToPlay = f'{ttsSrvWeb}{filename}'
-            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType='audio/wav')
-            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+            logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
 
     @staticmethod
     def generateTTS(ttsText, ttsFile, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsLang, ttsEngine, ttsPiperVoiceName, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None):
