@@ -250,7 +250,7 @@ class Loops:
                         
                         # Une seule ligne pour l'événement (au lieu d'une ligne par liste modifiée)
                         logging.debug(
-                            '[DAEMON][SOCKET] Add Cast :: %s (%s) | added = %s | KNOWN_HOSTS (%d) | GCAST_NAMES (%d) | GCAST_UUID (%d)',
+                            '[DAEMON][SOCKET] Add Cast :: %s (%s) | fields = %s | KNOWN_HOSTS (%d) | GCAST_NAMES (%d) | GCAST_UUID (%d)',
                             message['friendly_name'], message['host'], ', '.join(_changes) or 'aucun',
                             len(myConfig.KNOWN_HOSTS), len(myConfig.GCAST_NAMES), len(myConfig.GCAST_UUID)
                         )
@@ -283,7 +283,7 @@ class Loops:
                         
                         # Une seule ligne pour l'événement (au lieu d'une ligne par liste modifiée)
                         logging.debug(
-                            '[DAEMON][SOCKET] Remove Cast :: %s (%s) | removed = %s | KNOWN_HOSTS (%d) | GCAST_NAMES (%d) | GCAST_UUID (%d)',
+                            '[DAEMON][SOCKET] Remove Cast :: %s (%s) | fields = %s | KNOWN_HOSTS (%d) | GCAST_NAMES (%d) | GCAST_UUID (%d)',
                             message['friendly_name'], message['host'], ', '.join(_changes) or 'aucun',
                             len(myConfig.KNOWN_HOSTS), len(myConfig.GCAST_NAMES), len(myConfig.GCAST_UUID)
                         )
