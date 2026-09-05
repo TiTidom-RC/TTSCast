@@ -692,22 +692,17 @@ class ttscast extends eqLogic
             return false;
         }
         else {
-            /* $cmd = $updttscast->getCmd('info', 'online');
-            if (is_object($cmd)) {
-                $cmd->event('1');
-                log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd event :: online');
-            } */
+            $updatedFields = array();
             foreach($updttscast->getCmd('info') as $cmd) {
                 $logicalId = $cmd->getLogicalId();
-                # log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd :: ' . $logicalId);
                 if (key_exists($logicalId, $_data)) {
-                    log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd event :: ' . $logicalId . ' = ' . $_data[$logicalId]);
                     $cmd->event($_data[$logicalId]);
+                    $updatedFields[] = $logicalId . '=' . $_data[$logicalId];
                 } else {
-                    # log::add('ttscast', 'debug', '[SCHEDULE][CAST] Cast cmd NON EXIST :: ' . $logicalId);
                     continue;       
                 }
             }
+            log::add('ttscast', 'debug', '[SCHEDULE][CAST] ' . $_data['uuid'] . ' :: ' . implode(', ', $updatedFields));
         }
     }
 
@@ -720,8 +715,6 @@ class ttscast extends eqLogic
         if (!isset($_data['status_type'])) {
             log::add('ttscast', 'warning', '[REALTIME][CAST] Information manquante (Status_Type) pour mettre à jour l\'équipement');
             return false;
-        } else {
-            log::add('ttscast', 'debug', '[REALTIME][CAST] Status Type :: ' . $_data['status_type']);
         }
         $rtcast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
         if (!is_object($rtcast)) {
@@ -729,17 +722,17 @@ class ttscast extends eqLogic
             return false;
         }
         else {
+            $updatedFields = array();
             foreach($rtcast->getCmd('info') as $cmd) {
                 $logicalId = $cmd->getLogicalId();
-                # log::add('ttscast', 'debug', '[REALTIME][CAST] Cast cmd :: ' . $logicalId);
                 if (key_exists($logicalId, $_data)) {
-                    log::add('ttscast', 'debug', '[REALTIME][CAST] Cast cmd event :: ' . $logicalId . ' = ' . $_data[$logicalId]);
                     $cmd->event($_data[$logicalId]);
+                    $updatedFields[] = $logicalId . '=' . $_data[$logicalId];
                 } else {
-                    log::add('ttscast', 'debug', '[REALTIME][CAST] Cast cmd NON EXIST :: ' . $logicalId);
                     continue;
                 }
             }
+            log::add('ttscast', 'debug', '[REALTIME][CAST] ' . $_data['uuid'] . ' (' . $_data['status_type'] . ') :: ' . implode(', ', $updatedFields));
         }
     }
 
