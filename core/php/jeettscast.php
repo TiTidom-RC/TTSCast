@@ -79,15 +79,12 @@ try {
         
             
     } elseif (isset($result['devices'])) {
-        log::add('ttscast','debug','[CALLBACK] TTSCast Devices Discovery');
+        log::add('ttscast','debug','[CALLBACK] TTSCast Devices Discovery :: ' . count($result['devices']) . ' device(s) reçu(s)');
         foreach ($result['devices'] as $key => $data) {
             if (!isset($data['uuid'])) {
-                log::add('ttscast','debug','[CALLBACK] TTSCast Device :: UUID non défini !');
                 continue;
             }
-            log::add('ttscast','debug','[CALLBACK] TTSCast Device :: ' . $data['uuid']);
             if ($data['scanmode'] != 1) {
-                log::add('ttscast','debug','[CALLBACK] TTSCast Device :: NoScanMode');
                 continue;
             }
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
@@ -109,22 +106,18 @@ try {
             }
         }
     } elseif (isset($result['casts'])) {
-        log::add('ttscast','debug','[CALLBACK] TTSCast Schedule');
+        $uuids = array_column($result['casts'], 'uuid');
+        log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: ' . count($result['casts']) . ' cast(s) reçu(s) :: ' . implode(', ', $uuids));
         foreach ($result['casts'] as $key => $data) {
             if (!isset($data['uuid'])) {
-                log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: UUID non défini !');
                 continue;
             }
-            log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: ' . $data['uuid']);
             if ($data['schedule'] != 1) {
-                # log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: NoScheduleMode');
                 continue;
             }
-            # log::add('ttscast','debug','[CALLBACK] TTSCast Schedule Volume :: ' . $data['uuid'] . ' = ' . $data['volume_level']);
 
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
             if (!is_object($ttscast)) {    
-                # log::add('ttscast','debug','[CALLBACK] TTSCast Schedule NON EXIST :: ' . $data['uuid']);
                 continue;
             }
             else {
@@ -132,20 +125,17 @@ try {
             }
         }
     } elseif (isset($result['castsRT'])) {
-        log::add('ttscast','debug','[CALLBACK] TTSCast RealTime');
+        $uuids = array_column($result['castsRT'], 'uuid');
+        log::add('ttscast','debug','[CALLBACK] TTSCast RealTime :: ' . count($result['castsRT']) . ' event(s) reçu(s) :: ' . implode(', ', $uuids));
         foreach ($result['castsRT'] as $key => $data) {
             if (!isset($data['uuid'])) {
-                log::add('ttscast','debug','[CALLBACK] TTSCast RealTime :: UUID non défini !');
                 continue;
             }
-            log::add('ttscast','debug','[CALLBACK] TTSCast RealTime :: ' . $data['uuid']);
             if ($data['realtime'] != 1) {
-                # log::add('ttscast','debug','[CALLBACK] TTSCast RealTime :: NoRealTimeMode');
                 continue;
             }
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
             if (!is_object($ttscast)) {    
-                # log::add('ttscast','debug','[CALLBACK] TTSCast RealTime NON EXIST :: ' . $data['uuid']);
                 continue;
             }
             else {
@@ -153,13 +143,11 @@ try {
             }
         }
     } elseif (isset($result['aiStats'])) {
-        log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats');
         foreach ($result['aiStats'] as $key => $data) {
             if ($key != 'TTSCast_AI_Stats') {
                 log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: LogicalId non reconnu: ' . $key);
                 continue;
             }
-            log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: Mise à jour des tokens');
             
             $statsEq = ttscast::byLogicalId('TTSCast_AI_Stats', 'ttscast');
             if (!is_object($statsEq)) {
@@ -167,12 +155,14 @@ try {
                 continue;
             }
             
+            $logParts = array();
+            
             // Mise à jour des commandes de tokens (valeur de l'appel en cours)
             if (isset($data['ai_tokens_input'])) {
                 $cmd = $statsEq->getCmd('info', 'ai_tokens_input');
                 if (is_object($cmd)) {
                     $cmd->event(intval($data['ai_tokens_input']));
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Input tokens: ' . $data['ai_tokens_input']);
+                    $logParts[] = 'Input=' . $data['ai_tokens_input'];
                 }
             }
             
@@ -180,7 +170,7 @@ try {
                 $cmd = $statsEq->getCmd('info', 'ai_tokens_output');
                 if (is_object($cmd)) {
                     $cmd->event(intval($data['ai_tokens_output']));
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Output tokens: ' . $data['ai_tokens_output']);
+                    $logParts[] = 'Output=' . $data['ai_tokens_output'];
                 }
             }
             
@@ -188,7 +178,7 @@ try {
                 $cmd = $statsEq->getCmd('info', 'ai_tokens_total');
                 if (is_object($cmd)) {
                     $cmd->event(intval($data['ai_tokens_total']));
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Total tokens: ' . $data['ai_tokens_total']);
+                    $logParts[] = 'Total=' . $data['ai_tokens_total'];
                 }
             }
             
@@ -220,7 +210,7 @@ try {
                 $cmd = $statsEq->getCmd('info', 'ai_finish_reason');
                 if (is_object($cmd)) {
                     $cmd->event($data['ai_finish_reason']);
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Finish reason: ' . $data['ai_finish_reason']);
+                    $logParts[] = 'FinishReason=' . $data['ai_finish_reason'];
                 }
             }
             
@@ -236,9 +226,11 @@ try {
                 $cmd = $statsEq->getCmd('info', 'ai_safety_blocked');
                 if (is_object($cmd)) {
                     $cmd->event(intval($data['ai_safety_blocked']));
-                    log::add('ttscast','debug','[CALLBACK] AI Stats :: Safety blocked: ' . $data['ai_safety_blocked']);
+                    $logParts[] = 'SafetyBlocked=' . $data['ai_safety_blocked'];
                 }
             }
+            
+            log::add('ttscast','debug','[CALLBACK] TTSCast AI Stats :: ' . implode(' | ', $logParts));
         }
     } elseif (isset($result['ttsTestResult'])) {
         log::add('ttscast', 'debug', '[CALLBACK] TTSCast TTS Test Result');

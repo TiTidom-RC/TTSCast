@@ -232,45 +232,61 @@ class Loops:
                     
                     if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
                         _uuid = UUID(message['uuid'])
+                        _changes = []
                         
                         if message['host'] not in myConfig.KNOWN_HOSTS:
                             myConfig.KNOWN_HOSTS.append(message['host'])
-                            logging.debug('[DAEMON][SOCKET] Add Cast to KNOWN Devices :: %s', str(myConfig.KNOWN_HOSTS))
+                            _changes.append('host')
                         
                         if message['friendly_name'] not in myConfig.GCAST_NAMES: 
                             myConfig.GCAST_NAMES.append(message['friendly_name'])
-                            logging.debug('[DAEMON][SOCKET] Add Cast to GCAST Names :: %s', str(myConfig.GCAST_NAMES))
+                            _changes.append('friendly_name')
                         
                         if _uuid not in myConfig.GCAST_UUID:
                             myConfig.GCAST_UUID.append(_uuid)
-                            logging.debug('[DAEMON][SOCKET] Add Cast to GCAST UUID :: %s', str(myConfig.GCAST_UUID))
+                            _changes.append('uuid')
                             myCast.castListeners(uuid=_uuid)
                         # deviceQueues[uuid] est créée paresseusement au premier enregistrement (waitQueueRegister) — pas d'init ici
+                        
+                        # Une seule ligne pour l'événement (au lieu d'une ligne par liste modifiée)
+                        logging.debug(
+                            '[DAEMON][SOCKET] Add Cast :: %s (%s) | fields = %s | KNOWN_HOSTS (%d) | GCAST_NAMES (%d) | GCAST_UUID (%d)',
+                            message['friendly_name'], message['host'], ', '.join(_changes) or 'none',
+                            len(myConfig.KNOWN_HOSTS), len(myConfig.GCAST_NAMES), len(myConfig.GCAST_UUID)
+                        )
                             
                 elif message['cmd'] == "removecast":
                     if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
                         _uuid = UUID(message['uuid'])
+                        _changes = []
                         
                         if message['host'] in myConfig.KNOWN_HOSTS:
                             myConfig.KNOWN_HOSTS.remove(message['host'])
-                            logging.debug('[DAEMON][SOCKET] Remove Cast from KNOWN Devices :: %s', str(myConfig.KNOWN_HOSTS))
+                            _changes.append('host')
                         
                         if message['friendly_name'] in myConfig.GCAST_NAMES: 
                             myConfig.GCAST_NAMES.remove(message['friendly_name'])
-                            logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST Names :: %s', str(myConfig.GCAST_NAMES))
+                            _changes.append('friendly_name')
                         
                         if _uuid in myConfig.GCAST_UUID:
                             myConfig.GCAST_UUID.remove(_uuid)
-                            logging.debug('[DAEMON][SOCKET] Remove Cast from GCAST UUID :: %s', str(myConfig.GCAST_UUID))
+                            _changes.append('uuid')
                             myCast.castRemove(uuid=_uuid)
                         
                         if message['uuid'] in myConfig.deviceQueues:
                             myConfig.deviceQueues.pop(message['uuid'], None)
-                            logging.debug('[DAEMON][SOCKET] Remove Wait Queue for Device :: %s', message['uuid'])
+                            _changes.append('deviceQueues')
                         
                         if message['uuid'] in myConfig.pluginSessions:
                             myConfig.pluginSessions.pop(message['uuid'], None)
-                            logging.debug('[DAEMON][SOCKET] Remove Plugin Session Tracking for Device :: %s', message['uuid'])
+                            _changes.append('pluginSessions')
+                        
+                        # Une seule ligne pour l'événement (au lieu d'une ligne par liste modifiée)
+                        logging.debug(
+                            '[DAEMON][SOCKET] Remove Cast :: %s (%s) | fields = %s | KNOWN_HOSTS (%d) | GCAST_NAMES (%d) | GCAST_UUID (%d)',
+                            message['friendly_name'], message['host'], ', '.join(_changes) or 'none',
+                            len(myConfig.KNOWN_HOSTS), len(myConfig.GCAST_NAMES), len(myConfig.GCAST_UUID)
+                        )
                         
                 elif message['cmd'] == "scanOn":
                     logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
@@ -346,7 +362,7 @@ class Loops:
                         if myConfig.ScanMode and (myConfig.ScanLastTime < myConfig.ScanModeStart):
                             threading.Thread(target=Functions.scanChromeCast, args=('ScanMode',)).start()
                         elif (myConfig.ScanLastTime + myConfig.ScanSchedule <= currentTime):
-                            logging.debug('[DAEMON][SCANNER][SCHEDULE][CALL] GCAST Names :: %s', str(myConfig.GCAST_NAMES))
+                            # Détail (GCAST Names, chromecasts scannés...) loggé en une seule entrée dans scanChromeCast
                             threading.Thread(target=Functions.scanChromeCast, args=('ScheduleMode',)).start()
                     else:
                         logging.debug('[DAEMON][MAINLOOP] ScanMode : SCAN PENDING !')
@@ -739,12 +755,10 @@ class TTSCast:
                 if _aiReformulatedText is None:
                     TTSCast._sendTTSResult(ttsText, True)
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
-                logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
-                
                 _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
 
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType=_mimeType)
-                logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Google Cloud TTS) invalide :: ' + myConfig.gCloudApiKey)
         
@@ -782,10 +796,9 @@ class TTSCast:
             if _aiReformulatedText is None:
                 TTSCast._sendTTSResult(ttsText, True)
             urlFileToPlay = f'{ttsSrvWeb}{filename}'
-            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
-            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+            logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
         
         elif ttsEngine == "jeedomtts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = jeedomtts')
@@ -817,10 +830,9 @@ class TTSCast:
             if _aiReformulatedText is None:
                 TTSCast._sendTTSResult(ttsText, True)
             urlFileToPlay = f'{ttsSrvWeb}{filename}'
-            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
-            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+            logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
         elif ttsEngine == "voicersstts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = voicersstts')
             logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
@@ -852,10 +864,9 @@ class TTSCast:
                 if _aiReformulatedText is None:
                     TTSCast._sendTTSResult(ttsText, True)
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
-                logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                 
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName)
-                logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+                logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
             else:
                 logging.warning('[DAEMON][TestTTS] Clé API (Voice RSS) invalide :: ' + myConfig.apiRSSKey)
 
@@ -954,9 +965,8 @@ class TTSCast:
             if _aiReformulatedText is None:
                 TTSCast._sendTTSResult(ttsText, True)
             urlFileToPlay = f'{ttsSrvWeb}{filename}'
-            logging.debug('[DAEMON][TestTTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
             res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType='audio/wav')
-            logging.debug('[DAEMON][TestTTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
+            logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
 
     @staticmethod
     def generateTTS(ttsText, ttsFile, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsLang, ttsEngine, ttsPiperVoiceName, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None):
@@ -2588,9 +2598,12 @@ class Functions:
                 try:
                     dev = myConfig.NETCAST_DEVICES[uuid_dev]
                     dev.set_volume(vol)
-                    logging.debug(f'[DAEMON][GroupVol] Set {vol} on {dev.name}')
                 except Exception as ex:
                     logging.error('[DAEMON][GroupVol] Error on %s :: %s', uuid_dev, ex)
+
+        # Une seule ligne pour tout le groupe (au lieu d'une ligne par membre) — succès individuels non répétés, erreurs toujours détaillées
+        _names = [myConfig.NETCAST_DEVICES[u].name for u in membersUUIDs if u in myConfig.NETCAST_DEVICES]
+        logging.debug('[DAEMON][GroupVol] Set volume=%s sur %d membre(s) :: %s', targetVolume, len(membersUUIDs), ', '.join(_names) or '(aucun)')
 
         threads = []
         for member_uuid in membersUUIDs:
@@ -2613,9 +2626,15 @@ class Functions:
                 try:
                     dev = myConfig.NETCAST_DEVICES[uuid_dev]
                     dev.set_volume(vol)
-                    logging.debug(f'[DAEMON][GroupVol] Restored {vol} on {dev.name}')
                 except Exception as ex:
                     logging.error('[DAEMON][GroupVol] Error restoring %s :: %s', uuid_dev, ex)
+
+        # Une seule ligne pour tout le groupe (au lieu d'une ligne par membre) — succès individuels non répétés, erreurs toujours détaillées
+        logging.debug(
+            '[DAEMON][GroupVol] Restore volume sur %d membre(s) :: %s',
+            len(volumeSnapshot),
+            ', '.join(f'{myConfig.NETCAST_DEVICES[u].name}={v}' for u, v in volumeSnapshot.items() if u in myConfig.NETCAST_DEVICES) or '(aucun)'
+        )
 
         threads = []
         for m_uuid, m_vol in volumeSnapshot.items():
@@ -2636,23 +2655,18 @@ class Functions:
             dict: { uuid: volume_float } ou vide si ce n'est pas un groupe.
         """
         snapshot = {}
-        logging.debug(f"[DAEMON][GroupSnapshot] Start for cast: {cast.name} ({cast.uuid})")
+        isStereoPair = False
         try:
             if cast.uuid in myConfig.NETCAST_GROUPS:
                 mz = myConfig.NETCAST_GROUPS[cast.uuid]
-                logging.debug(f"[DAEMON][GroupSnapshot] Members found for {cast.name}: {mz.members}")
                 
                 # Detection Paire Stéréo (multichannelDevices)
                 # Si présent, on traite le groupe comme un appareil unique (la Paire) et non comme une liste de membres.
-                isStereoPair = False
                 if hasattr(mz, 'multizone_status') and 'multichannelDevices' in mz.multizone_status and mz.multizone_status['multichannelDevices']:
                     isStereoPair = True
-                    logging.debug(f"[DAEMON][GroupSnapshot] Stereo Pair detected (multichannelDevices). Treating {cast.name} as single device.")
-                    
                     # On ajoute uniquement l'UUID de la paire elle-même au snapshot
                     if cast.uuid in myConfig.NETCAST_DEVICES:
                         snapshot[cast.uuid] = cast.status.volume_level
-                        logging.debug(f"[DAEMON][GroupSnapshot] Added Pair Device {cast.name} ({cast.uuid}) to snapshot")
 
                 if not isStereoPair:
                     for member_uuid_str in mz.members:
@@ -2670,7 +2684,6 @@ class Functions:
                         if member_uuid in myConfig.NETCAST_DEVICES:
                             dev = myConfig.NETCAST_DEVICES[member_uuid]
                             snapshot[member_uuid] = dev.status.volume_level
-                            logging.debug(f"[DAEMON][GroupSnapshot] Added member {dev.name} ({member_uuid}) with volume {dev.status.volume_level}")
                         else:
                             logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
             else:
@@ -2678,7 +2691,11 @@ class Functions:
         except Exception as e:
             logging.error(f"[DAEMON][GroupSnapshot] Error: {e}")
         
-        logging.debug(f"[DAEMON][GroupSnapshot] Final snapshot: {snapshot}")
+        # Une seule ligne consolidée : membres attendus, mode paire stéréo, et snapshot final (uuid=volume déjà présent, pas besoin d'une ligne par membre)
+        logging.debug(
+            "[DAEMON][GroupSnapshot] %s (%s) :: stereoPair=%s | snapshot=%s",
+            cast.name, cast.uuid, isStereoPair, snapshot
+        )
         return snapshot
 
     @staticmethod
@@ -3496,9 +3513,15 @@ class Functions:
                 browser.start_discovery()
                 logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...') """
                 
-                logging.debug('[DAEMON][SCANNER] Devices découverts :: %s', len(myConfig.NETCAST_DEVICES))
+                logging.debug(
+                    '[DAEMON][SCANNER] Devices découverts (%d) :: %s',
+                    len(myConfig.NETCAST_DEVICES),
+                    '; '.join(
+                        '%s (%s) @ %s:%s uuid:%s' % (d.cast_info.friendly_name, d.cast_info.model_name, d.cast_info.host, d.cast_info.port, d.uuid)
+                        for d in myConfig.NETCAST_DEVICES.values()
+                    ) or '(aucun)'
+                )
                 for device in myConfig.NETCAST_DEVICES.values():
-                    logging.debug('[DAEMON][SCANNER] Device Chromecast :: %s (%s) @ %s:%s uuid: %s', device.cast_info.friendly_name, device.cast_info.model_name, device.cast_info.host, device.cast_info.port, device.uuid)
                     data = {
                         'friendly_name': device.cast_info.friendly_name,
                         'uuid': str(device.uuid),
@@ -3519,14 +3542,18 @@ class Functions:
                 
                 _gcast_names = myConfig.GCAST_NAMES.copy()
                 
-                logging.debug('[DAEMON][SCANNER][SCHEDULE] GCAST Names :: %s', str(_gcast_names))
-                
                 chromecasts = [mycast for mycast in myConfig.NETCAST_DEVICES.values() if mycast.name in _gcast_names]
-                logging.debug('[DAEMON][SCANNER][SCHEDULE] Nb NetCast vs JeeCast :: %s vs %s', len(myConfig.NETCAST_DEVICES), len(chromecasts))
+                
+                # Un seul log consolidé pour tout le cycle (au lieu d'une ligne par cast) — même détail, moins de bruit
+                # " | " comme séparateur de champs : reste sur une seule ligne, lisible dans un fichier de log brut
+                logging.debug(
+                    '[DAEMON][SCANNER][SCHEDULE] Cycle de scan :: GCAST Names (%d) = %s | NetCast vs JeeCast = %s vs %s | Chromecasts scannés = %s',
+                    len(_gcast_names), ', '.join(_gcast_names),
+                    len(myConfig.NETCAST_DEVICES), len(chromecasts),
+                    ', '.join(cast.name for cast in chromecasts) or '(aucun)'
+                )
                 
                 for cast in chromecasts: 
-                    
-                    logging.debug('[DAEMON][SCANNER][SCHEDULE] Chromecast Name :: %s', cast.name)
                     try:
                         if (cast.status is not None and cast.media_controller.status is not None):
                             castVolumeLevel = int(cast.status.volume_level * 100)
@@ -3657,11 +3684,18 @@ class Functions:
             path = myConfig.ttsCacheFolderTmp
             try:
                 if os.path.exists(path):
-                    for f in os.listdir(path):
-                        logging.debug("[DAEMON][PURGE-CACHE] Age for " + f + " is " + str(int((now - (os.stat(os.path.join(path, f)).st_mtime)) / 86400)) + " days")
-                        if os.stat(os.path.join(path, f)).st_mtime < (now - (int(nbDays) * 86400)):
-                            os.remove(os.path.join(path, f))
-                            logging.info("[DAEMON][PURGE-CACHE] File Removed " + f + " due to expiration (" + nbDays + " days)")
+                    allFiles = os.listdir(path)
+                    nbRemoved = 0
+                    for f in allFiles:
+                        fPath = os.path.join(path, f)
+                        if os.stat(fPath).st_mtime < (now - (int(nbDays) * 86400)):
+                            os.remove(fPath)
+                            nbRemoved += 1
+                    # Noms de fichiers = hash MD5, sans valeur informative individuelle — seul le compte importe
+                    logging.info(
+                        '[DAEMON][PURGE-CACHE] Clean Cache (OK) :: %d/%d fichier(s) supprimé(s) (> %s jours)',
+                        nbRemoved, len(allFiles), nbDays
+                    )
             except Exception as e:
                 logging.error('[DAEMON][PURGE-CACHE] Error while cleaning cache based on files age :: %s', e)
                 logging.debug(traceback.format_exc())
