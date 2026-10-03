@@ -887,14 +887,14 @@ if (file_exists($_piperCatalogPath)) {
             <br>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Modèle IA (Reformulation)}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/><b>Gemini 3.8 (Recommandé) :</b><br/>• Gemini 3.8 Flash : In $0.75 | Out $3.75 (jusqu'au 31/12/2026)<br/><br/><b>Gemini 3.5 :</b><br/>• Gemini 3.5 Flash : In $1.50 | Out $9.00<br/>• Gemini 3.5 Flash-Lite : In $0.30 | Out $2.50<br/><br/><b>Gemini 3.1 :</b><br/>• Gemini 3.1 Flash-Lite : In $0.25 | Out $1.50 (arrêt prévu le 07/05/2027)<br/><br/><b>Versions Latest (Mise à jour auto) :</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta) :</b><br/>• Gemini 3.1 Pro Preview : In $2.00 | Out $12.00"></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/><b>Gemini 3.8 :</b><br/>• Gemini 3.8 Flash : In $0.75 | Out $3.75 (jusqu'au 31/12/2026)<br/><br/><b>Gemini 3.5 :</b><br/>• Gemini 3.5 Flash : In $1.50 | Out $9.00<br/>• Gemini 3.5 Flash-Lite : In $0.30 | Out $2.50<br/><br/><b>Gemini 3.1 :</b><br/>• Gemini 3.1 Flash-Lite : In $0.25 | Out $1.50 (arrêt prévu le 07/05/2027)<br/><br/><b>Versions Latest (Mise à jour auto) :</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta) :</b><br/>• Gemini 3.1 Pro Preview : In $2.00 | Out $12.00"></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsAIModel">
-                        <!-- Gemini 3.8 (Recommandé) -->
-                        <option disabled>--- {{Gemini 3.8 (Recommandé)}} ---</option>
+                        <!-- Gemini 3.8 -->
+                        <option disabled>--- {{Gemini 3.8}} ---</option>
                         <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
                         <!-- Gemini 3.5 -->
                         <option disabled>--- {{Gemini 3.5}} ---</option>
