@@ -887,25 +887,22 @@ if (file_exists($_piperCatalogPath)) {
             <br>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Modèle IA (Reformulation)}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/><b>Modèles Stables Gemini 3.x (Recommandés) :</b><br/>• Gemini 3.8 Flash : In $0.75 | Out $3.75 (jusqu'au 31/12/2026)<br/>• Gemini 3.7 Flash : In $0.75 | Out $3.75 (jusqu'au 31/12/2026)<br/>• Gemini 3.6 Flash : In $0.75 | Out $3.75 (jusqu'au 31/12/2026)<br/>• Gemini 3.5 Flash : In $1.50 | Out $9.00<br/>• Gemini 3.5 Flash-Lite : In $0.30 | Out $2.50<br/>• Gemini 3.1 Flash-Lite : In $0.25 | Out $1.50<br/><br/><b>Modèles Gemini 2.5 (Dépréciés oct. 2026) :</b><br/>• Gemini 2.5 Flash-Lite : In $0.10 | Out $0.40<br/>• Gemini 2.5 Flash : In $0.30 | Out $2.50<br/>• Gemini 2.5 Pro : In $1.25 | Out $10.00<br/><br/><b>Versions Latest (Mise à jour auto) :</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta) :</b><br/>• Gemini 3.1 Pro Preview : In $2.00 | Out $12.00<br/>• Gemini 3 Flash Preview : In $0.50 | Out $3.00"></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/><b>Gemini 3.8 :</b><br/>• Gemini 3.8 Flash : In $0.75 | Out $3.75 (jusqu'au 31/12/2026)<br/><br/><b>Gemini 3.5 :</b><br/>• Gemini 3.5 Flash : In $1.50 | Out $9.00<br/>• Gemini 3.5 Flash-Lite : In $0.30 | Out $2.50<br/><br/><b>Gemini 3.1 :</b><br/>• Gemini 3.1 Flash-Lite : In $0.25 | Out $1.50 (arrêt prévu le 07/05/2027)<br/><br/><b>Versions Latest (Mise à jour auto) :</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta) :</b><br/>• Gemini 3.1 Pro Preview : In $2.00 | Out $12.00"></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsAIModel">
-                        <!-- Modèles Recommandés (Stables) -->
-                        <option disabled>--- {{Modèles Stables Gemini 3.x (Recommandés)}} ---</option>
+                        <!-- Gemini 3.8 -->
+                        <option disabled>--- {{Gemini 3.8}} ---</option>
                         <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
-                        <option value="gemini-3.7-flash">Gemini 3.7 Flash</option>
-                        <option value="gemini-3.6-flash">Gemini 3.6 Flash</option>
+                        <!-- Gemini 3.5 -->
+                        <option disabled>--- {{Gemini 3.5}} ---</option>
                         <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
                         <option value="gemini-3.5-flash-lite" selected>Gemini 3.5 Flash-Lite</option>
+                        <!-- Gemini 3.1 -->
+                        <option disabled>--- {{Gemini 3.1}} ---</option>
                         <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
-                        <!-- Modèles Gemini 2.5 (Dépréciés en oct. 2026) -->
-                        <option disabled>--- {{Modèles Gemini 2.5 (Dépréciés oct. 2026)}} ---</option>
-                        <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash-Lite</option>
-                        <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
-                        <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
                         <!-- Versions Latest (Mise à jour automatique) -->
                         <option disabled>--- {{Versions Latest (Mise à jour auto)}} ---</option>
                         <option value="gemini-flash-lite-latest">⚠️ Gemini Flash Lite Latest</option>
@@ -913,7 +910,6 @@ if (file_exists($_piperCatalogPath)) {
                         <!-- Modèles Preview (Nouvelles fonctionnalités) -->
                         <option disabled>--- {{Versions Preview (Beta)}} ---</option>
                         <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
-                        <option value="gemini-3-flash-preview">Gemini 3 Flash Preview</option>
                     </select>
                 </div>
             </div>
@@ -966,19 +962,19 @@ if (file_exists($_piperCatalogPath)) {
             </div>
             <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Modèle Gemini TTS}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/>• Gemini 2.5 Flash TTS : In $0.50 | Out $10.00 (audio)<br/>• Gemini 2.5 Pro TTS : In $1.00 | Out $20.00 (audio)<br/>• Gemini 3.1 Flash TTS : In $1.00 | Out $20.00 (audio)<br/><br/>⚠️ 25 tokens audio = 1 seconde. Un message de 5s ≈ 125 tokens audio.<br/>En usage domotique typique, le coût reste raisonnable (&lt;$0.002 / 1 000 notifs)."></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens (palier Standard) :</b><br/><br/><b>Gemini 3.8 :</b><br/>• Gemini 3.8 Flash-Lite TTS : In $0.50 | Out $6.00 (audio) jusqu'au 31/12/2026, puis In $1.00 | Out $12.00<br/>• Gemini 3.8 Flash TTS : In $0.50 | Out $9.00 (audio) jusqu'au 31/12/2026, puis In $1.00 | Out $18.00<br/><br/><b>Gemini 3.1 :</b><br/>• Gemini 3.1 Flash TTS : In $1.00 | Out $20.00 (audio)<br/><br/>⚠️ 25 tokens audio = 1 seconde. Un message de 5s ≈ 125 tokens audio.<br/>En usage domotique typique, le coût reste raisonnable (&lt;$0.002 / 1 000 notifs)."></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Modèle Gemini TTS à utiliser. Flash est plus économique, Pro est plus expressif.}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Modèle Gemini TTS à utiliser. Flash-Lite est rapide et économique, adapté aux notifications. Flash est plus expressif, pour un rendu plus soigné.}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="geminiTTSModel">
-                        <!-- Gemini 3.x (Recommandé) -->
-                        <option disabled>--- {{Gemini 3.x (Recommandé)}} ---</option>
-                        <option value="gemini-3.1-flash-tts-preview" selected>Gemini 3.1 Flash TTS Preview</option>
-                        <!-- Gemini 2.5 -->
-                        <option disabled>--- {{Gemini 2.5 (Dépréciés mai 2025)}} ---</option>
-                        <option value="gemini-2.5-flash-preview-tts">Gemini 2.5 Flash TTS Preview</option>
-                        <option value="gemini-2.5-pro-preview-tts">Gemini 2.5 Pro TTS Preview</option>
+                        <!-- Gemini 3.8 (Recommandé) -->
+                        <option disabled>--- {{Gemini 3.8 (Recommandé)}} ---</option>
+                        <option value="gemini-3.8-flash-tts">Gemini 3.8 Flash TTS</option>
+                        <option value="gemini-3.8-flash-lite-tts" selected>Gemini 3.8 Flash-Lite TTS</option>
+                        <!-- Gemini 3.1 -->
+                        <option disabled>--- {{Gemini 3.1}} ---</option>
+                        <option value="gemini-3.1-flash-tts-preview">Gemini 3.1 Flash TTS Preview</option>
                     </select>
                 </div>
             </div>
@@ -1023,6 +1019,15 @@ if (file_exists($_piperCatalogPath)) {
                 </div>
             </div>
             <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Style par défaut (Gemini TTS)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="geminittsstyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Utiliser Gemini TTS par défaut}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, toutes les notifications utilisent Gemini TTS par défaut.}}"></i></sup>
@@ -1038,15 +1043,6 @@ if (file_exists($_piperCatalogPath)) {
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="streamingDefault" />
-                </div>
-            </div>
-            <div class="form-group customform-geminiTTS">
-                <label class="col-lg-3 control-label">{{Style par défaut (Gemini TTS)}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.}}"></i></sup>
-                </label>
-                <div class="col-lg-3">
-                    <input class="configKey form-control" type="text" data-l1key="geminittsstyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
                 </div>
             </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
@@ -1167,6 +1163,15 @@ if (file_exists($_piperCatalogPath)) {
                 </label>
                 <div class="col-lg-1">
                     <input class="configKey form-control" type="number" data-l1key="ttsGenTimeout" min="5" max="300" placeholder="{{Timeout}}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Timeout IA avec réflexion (secondes)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Temps maximal (entre 30 et 300 sec) accordé à l'IA lorsque l'option <b>aithinking</b> est utilisée pour une commande (par défaut : 60sec). Sans cette option, le délai reste de 30sec.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" type="number" data-l1key="ttsAIMaxTimeout" min="30" max="300" placeholder="{{Timeout}}" />
                 </div>
             </div>
             <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, CustomRadios, Sounds, Custom Sounds)}}</legend>
