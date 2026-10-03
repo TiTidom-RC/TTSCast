@@ -1955,6 +1955,7 @@ class TTSCast:
         """
         Reformule une phrase en utilisant l'API Gemini avec un ton spécifique.
         """
+        _aiModelId = myConfig.aiModel
         try:
             _aiModelId, _aiThinkingLevel = TTSCast.resolveAiModelAndThinking(_aiCustomModel, _aiCustomThinking)
             _aiHttpTimeout = 60000 if _aiThinkingLevel else 30000  # la réflexion (et la recherche Google) allonge la durée de l'appel
@@ -2100,7 +2101,7 @@ class TTSCast:
                 logging.warning('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, "***" if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
                 return None
         except Exception as e:
-            logging.error('[DAEMON][GenAI] Erreur :: %s | modèle : %s | extrait : %s', e, myConfig.aiModel, repr(_aiPrompt[:80]))
+            logging.error('[DAEMON][GenAI] Erreur :: %s | modèle : %s | extrait : %s', e, _aiModelId, repr(_aiPrompt[:80]))
             return None
 
     @staticmethod
