@@ -88,7 +88,7 @@ class Config:
     aiModel = 'noModel'  # 'noModel', 'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.1-pro-preview'
     aiDefaultTone = 'enthousiaste et humoristique'  # Default tone for AI TTS
     aiBaseTimeout = 30  # secondes — délai de l'appel IA sans réflexion
-    aiMaxTimeout = 60  # secondes — délai maximal de l'appel IA (avec réflexion), défini côté PHP (AI_MAX_TIMEOUT) et transmis au démarrage
+    aiMaxTimeout = 60  # secondes — délai maximal de l'appel IA (avec réflexion), réglage de la page de configuration (ttsAIMaxTimeout), transmis au démarrage
     # Modèles de reformulation autorisés via l'option aimodel (à garder alignés sur la liste de plugin_info/configuration.php)
     aiAllowedModels = (
         'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite',

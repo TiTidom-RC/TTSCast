@@ -942,6 +942,15 @@ if (file_exists($_piperCatalogPath)) {
                 </div>
             </div>
             <div class="form-group">
+                <label class="col-lg-3 control-label">{{Timeout IA avec réflexion (secondes)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Temps maximal (entre 30 et 300 sec) accordé à l'IA lorsque l'option <b>aithinking</b> est utilisée pour une commande (par défaut : 60sec). Sans cette option, le délai reste de 30sec.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" type="number" data-l1key="ttsAIMaxTimeout" min="30" max="300" placeholder="{{Timeout}}" />
+                </div>
+            </div>
+            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Prompt Système par Défaut}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Affiche le prompt système utilisé par l'IA lorsqu'aucun prompt personnalisé n'est défini. Le démon doit être démarré.}}"></i></sup>
                 </label>
