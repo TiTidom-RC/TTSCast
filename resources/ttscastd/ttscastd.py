@@ -1958,7 +1958,8 @@ class TTSCast:
                         system_instruction=SYSTEM_INSTRUCTION,
                         temperature=TEMPERATURE,
                         thinking_config=THINKING_CONFIG,
-                        tools=[GOOGLE_SEARCH_TOOL]
+                        tools=[GOOGLE_SEARCH_TOOL],
+                        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)  # aucun outil de fonction Python : l'AFC du SDK n'a pas lieu d'être activé
                     )
                 )
                 
@@ -2080,6 +2081,7 @@ class TTSCast:
                 prompt = f"{style}\n\n### TRANSCRIPT\n{ttsText}" if style else ttsText
             genConfig = types.GenerateContentConfig(
                 response_modalities=['AUDIO'],
+                automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True),  # aucun outil de fonction Python : l'AFC du SDK n'a pas lieu d'être activé
                 speech_config=types.SpeechConfig(
                     voice_config=types.VoiceConfig(
                         prebuilt_voice_config=types.PrebuiltVoiceConfig(voice_name=voiceName)
