@@ -2455,9 +2455,15 @@ class ttscastCmd extends cmd
     // Permet d'empêcher la suppression des commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
     public function dontRemoveCmd() {
         $eqLogic = $this->getEqLogic();
-        // Empêcher la suppression automatique des commandes des équipements virtuels IA
-        if (is_object($eqLogic) && in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
-            return true;
+        if (is_object($eqLogic)) {
+            // Équipements virtuels IA : seules les commandes créées par le plugin (manageAIEquipments) sont protégées
+            $protectedAICmds = [
+                'TTSCast_AI_Stats' => ['ai_tokens_input', 'ai_tokens_output', 'ai_tokens_thoughts', 'ai_google_searches', 'ai_tokens_total', 'ai_finish_reason', 'ai_safety_blocked'],
+                'TTSCast_AI' => ['ai_reformat', 'ai_reformat_message', 'ai_reformat_input'],
+            ];
+            if (isset($protectedAICmds[$eqLogic->getLogicalId()])) {
+                return in_array($this->getLogicalId(), $protectedAICmds[$eqLogic->getLogicalId()]);
+            }
         }
         return false;
     }
