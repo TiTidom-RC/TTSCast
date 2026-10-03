@@ -24,6 +24,8 @@ class ttscast extends eqLogic
 
     const PYTHON3_PATH = __DIR__ . '/../../resources/venv/bin/python3';
     const PYENV_PATH = '/opt/pyenv/bin/pyenv';
+    const AI_MAX_TIMEOUT = 60; // secondes — délai maximal d'un appel IA (avec réflexion), transmis au démon
+    const AI_SYNC_MARGIN = 10; // secondes — marge ajoutée à l'attente PHP d'une réponse synchrone du démon
 
     /* ************************** Attributs ****************************** */
 
@@ -200,6 +202,7 @@ class ttscast extends eqLogic
         $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, '0');
         $cmd .= ' --appconvertsinglequote ' . config::byKey('appConvertSingleQuote', __CLASS__, '0');
         $cmd .= ' --cmdwaittimeout ' . config::byKey('cmdWaitTimeout', __CLASS__, '60');
+        $cmd .= ' --aimaxtimeout ' . self::AI_MAX_TIMEOUT;
         $cmd .= ' --aienabled ' . config::byKey('ttsAIEnable', __CLASS__, '0');
         $cmd .= ' --aidefault ' . config::byKey('ttsAIDefault', __CLASS__, '0');
         $cmd .= ' --aiauthmode ' . config::byKey('ttsAIAuthMode', __CLASS__, 'noMode');
@@ -2550,7 +2553,7 @@ class ttscastCmd extends cmd
                     'text' => $text,
                     'ttsOptions' => isset($_options['title']) ? $_options['title'] : null,
                 ];
-                $result = ttscast::sendToDaemonSync($payload);
+                $result = ttscast::sendToDaemonSync($payload, self::AI_MAX_TIMEOUT + self::AI_SYNC_MARGIN);
                 if ($result === null || isset($result['error'])) {
                     log::add('ttscast', 'warning', '[CMD] ai_reformat :: Pas de réponse du démon, retour texte original');
                     $result = ['reformulated' => $text, 'original' => $text];

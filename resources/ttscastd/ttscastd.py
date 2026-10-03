@@ -1958,7 +1958,7 @@ class TTSCast:
         _aiModelId = myConfig.aiModel
         try:
             _aiModelId, _aiThinkingLevel = TTSCast.resolveAiModelAndThinking(_aiCustomModel, _aiCustomThinking)
-            _aiHttpTimeout = 60000 if _aiThinkingLevel else 30000  # la réflexion (et la recherche Google) allonge la durée de l'appel
+            _aiHttpTimeout = (myConfig.aiMaxTimeout if _aiThinkingLevel else myConfig.aiBaseTimeout) * 1000  # la réflexion (et la recherche Google) allonge la durée de l'appel
             if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProject') or myConfig.aiApiKey != 'noKey':
                 # Initialisation du client Gemini
                 credentials = None
@@ -4244,6 +4244,7 @@ parser.add_argument("--ttsdisablecache", help="TTS Disable Cache", type=str)
 parser.add_argument("--appdisableding", help="App Disable Ding Parameter", type=str)
 parser.add_argument("--appconvertsinglequote", help="App Convert Single Quote Parameter", type=str)
 parser.add_argument("--cmdwaittimeout", help="Cmd Wait Timeout Parameter", type=str)
+parser.add_argument("--aimaxtimeout", help="AI Max Timeout Parameter (seconds)", type=str)
 parser.add_argument("--pid", help="Pid file", type=str)
 parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
 parser.add_argument("--aienabled", help="Enable AI", type=str, default='0')
@@ -4347,6 +4348,8 @@ if args.piperspeakerid:
     myConfig.piperSpeakerId = int(args.piperspeakerid)
 if args.cmdwaittimeout:
     myConfig.cmdWaitTimeout = int(args.cmdwaittimeout)
+if args.aimaxtimeout:
+    myConfig.aiMaxTimeout = int(args.aimaxtimeout)
 if args.pid:
     myConfig.pidFile = args.pid
 if args.cyclefactor:
@@ -4447,6 +4450,7 @@ logging.info('[DAEMON][MAIN] Gemini TTS Default: %s', str(myConfig.geminiTTSDefa
 logging.info('[DAEMON][MAIN] Gemini TTS Style: %s', myConfig.geminiTTSStyle if myConfig.geminiTTSStyle else 'N/A')
 logging.info('[DAEMON][MAIN] Gemini TTS Streaming Default: %s', str(myConfig.streamingDefault))
 logging.info('[DAEMON][MAIN] Cmd Wait Timeout: %s', str(myConfig.cmdWaitTimeout))
+logging.info('[DAEMON][MAIN] AI Timeout: %s s (max: %s s)', str(myConfig.aiBaseTimeout), str(myConfig.aiMaxTimeout))
 logging.info('[DAEMON][MAIN] Piper TTS Voice: %s', myConfig.piperVoiceName if myConfig.piperVoiceName else 'N/A')
 logging.info('[DAEMON][MAIN] Piper TTS Speaker ID: %s', str(myConfig.piperSpeakerId))
 logging.info('[DAEMON][MAIN] Piper TTS Available: %s', str(_PIPER_AVAILABLE))
