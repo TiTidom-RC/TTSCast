@@ -182,11 +182,11 @@ try {
                 }
             }
             
-            if (isset($data['ai_tokens_tool'])) {
-                $cmd = $statsEq->getCmd('info', 'ai_tokens_tool');
+            if (isset($data['ai_google_searches'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_google_searches');
                 if (is_object($cmd)) {
-                    $cmd->event(intval($data['ai_tokens_tool']));
-                    $logParts[] = 'Tool=' . $data['ai_tokens_tool'];
+                    $cmd->event(intval($data['ai_google_searches']));
+                    $logParts[] = 'GoogleSearches=' . $data['ai_google_searches'];
                 }
             }
             

@@ -1243,16 +1243,16 @@ class ttscast extends eqLogic
                 $cmd->save();
             }
             
-            // Commande: Tokens d'outils (recherche Google)
-            $cmd = $statsEq->getCmd(null, 'ai_tokens_tool');
+            // Commande: Recherches Google (grounding), facturées à part par Google
+            $cmd = $statsEq->getCmd(null, 'ai_google_searches');
             if (!is_object($cmd)) {
                 $cmd = new ttscastCmd();
-                $cmd->setName(__('Tokens IA Outils', __FILE__));
+                $cmd->setName(__('Recherches Google IA', __FILE__));
                 $cmd->setEqLogic_id($statsEq->getId());
-                $cmd->setLogicalId('ai_tokens_tool');
+                $cmd->setLogicalId('ai_google_searches');
                 $cmd->setType('info');
                 $cmd->setSubType('numeric');
-                $cmd->setUnite('Tokens');
+                $cmd->setUnite('Recherches');
                 $cmd->setIsVisible(1);
                 $cmd->setIsHistorized(1);
                 

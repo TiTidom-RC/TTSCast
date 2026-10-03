@@ -2075,7 +2075,7 @@ class TTSCast:
                             'ai_tokens_input': input_tokens,
                             'ai_tokens_output': output_tokens,
                             'ai_tokens_thoughts': thoughts_tokens,
-                            'ai_tokens_tool': tool_tokens,
+                            'ai_google_searches': len(searchQueries),
                             'ai_tokens_total': total_tokens,
                             # 'ai_cache_tokens': cache_tokens,
                             'ai_finish_reason': finish_reason,
