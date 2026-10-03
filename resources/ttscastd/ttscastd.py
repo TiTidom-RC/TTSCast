@@ -2029,6 +2029,7 @@ class TTSCast:
                 total_tokens = 0
                 finish_reason = ''
                 safety_blocked = 0
+                searchQueries = []
                 
                 if hasattr(response, 'usage_metadata') and response.usage_metadata:
                     usage = response.usage_metadata
@@ -2047,6 +2048,10 @@ class TTSCast:
                     # Finish reason
                     if hasattr(candidate, 'finish_reason') and candidate.finish_reason:
                         finish_reason = str(candidate.finish_reason).replace('FinishReason.', '')
+                    # Recherches Google effectuées (grounding) : les tokens de l'outil ne sont pas forcément comptés dans Tool
+                    groundingMetadata = getattr(candidate, 'grounding_metadata', None)
+                    if groundingMetadata and getattr(groundingMetadata, 'web_search_queries', None):
+                        searchQueries = list(groundingMetadata.web_search_queries)
                     # Avg logprobs
                     # if hasattr(candidate, 'avg_logprobs') and candidate.avg_logprobs is not None:
                     #     avg_logprobs = float(candidate.avg_logprobs)
@@ -2058,7 +2063,9 @@ class TTSCast:
                                 break
                 
                 # Log complet des stats IA
-                logging.info('[DAEMON][GenAI][TOKENS] Model: %s | Input: %d | Output: %d | Thoughts: %d | Tool: %d | Total: %d | FinishReason: %s | SafetyBlocked: %d', MODEL_ID, input_tokens, output_tokens, thoughts_tokens, tool_tokens, total_tokens, finish_reason, safety_blocked)
+                logging.info('[DAEMON][GenAI][TOKENS] Model: %s | Input: %d | Output: %d | Thoughts: %d | Tool: %d | Total: %d | FinishReason: %s | SafetyBlocked: %d | GoogleSearches: %d', MODEL_ID, input_tokens, output_tokens, thoughts_tokens, tool_tokens, total_tokens, finish_reason, safety_blocked, len(searchQueries))
+                if searchQueries:
+                    logging.debug('[DAEMON][GenAI] Recherches Google effectuées :: %s', searchQueries)
                 
                 # Envoyer les tokens à l'équipement virtuel TTSCast AI Stats uniquement si input_tokens > 0
                 # (car input_tokens devrait toujours être > 0 si l'API a fonctionné normalement)
