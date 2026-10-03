@@ -988,6 +988,9 @@ class TTSCast:
             _aiCustomTone = None
             _aiCustomSysPrompt = myConfig.aiCustomSysPrompt if (myConfig.aiEnabled and myConfig.aiUseCustomSysPrompt) else None
             _aiCustomTemp = None
+            _aiCustomModel = None
+            _aiCustomThinking = None
+            _ttsModel = None
             _useSSML = False
             _silenceBefore = None
             _ttsGeminiStyle = myConfig.geminiTTSStyle
@@ -1003,12 +1006,16 @@ class TTSCast:
                         _aiCustomTone = options_json.get('aitone', None)
                         _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
                         _aiCustomTemp = options_json.get('aitemp', None)
+                        _aiCustomModel = options_json.get('aimodel', None)
+                        _aiCustomThinking = options_json.get('aithinking', None)
                     # SSML
                     _useSSML = options_json.get('ssml', False)
                     # Before
                     _silenceBefore = options_json.get('before', None)
                     # Gemini TTS Style
                     _ttsGeminiStyle = options_json.get('style', _ttsGeminiStyle)
+                    # Gemini TTS Model override (par notification)
+                    _ttsModel = options_json.get('ttsmodel', None)
                     # Engine override (par notification)
                     _requestedEngine = options_json.get('engine', None)
                     if _requestedEngine is not None:
@@ -1075,7 +1082,7 @@ class TTSCast:
                             logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec SSML')
                             text_input = googleCloudTTS.SynthesisInput(ssml=ttsText)
                         elif _useAI:
-                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp, _aiCustomModel, _aiCustomThinking)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 if myConfig.appConvertSingleQuote:
@@ -1133,7 +1140,7 @@ class TTSCast:
                     langToTTS = ttsLang.split('-')[0]
                     try:
                         if _useAI:
-                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp, _aiCustomModel, _aiCustomThinking)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 ttsText = Functions.markdownToPlainText(ttsAIText)
@@ -1161,7 +1168,7 @@ class TTSCast:
 
                     if not os.path.isfile(filepath) or myConfig.ttsDisableCache or (_useAI and not _useSSML):
                         if _useAI and not _useSSML:
-                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                            ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp, _aiCustomModel, _aiCustomThinking)
                             if ttsAIText is not None:
                                 logging.debug('[DAEMON][GenerateTTS] Génération du TTS avec IA')
                                 ttsText = Functions.markdownToPlainText(ttsAIText)
@@ -1186,7 +1193,7 @@ class TTSCast:
                 logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
                 _textToSynth = ttsText
                 if _useAI:
-                    ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                    ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp, _aiCustomModel, _aiCustomThinking)
                     if ttsAIText is not None:
                         logging.debug('[DAEMON][GenerateTTS] Génération Gemini TTS avec IA')
                         _textToSynth = Functions.markdownToPlainText(ttsAIText)
@@ -1194,7 +1201,7 @@ class TTSCast:
                         logging.warning('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
                 if myConfig.appConvertSingleQuote:
                     _textToSynth = Functions.convertSingleQuoteToDoubleQuote(_textToSynth)
-                audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle)
+                audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle, model=_ttsModel)
                 if isinstance(audioBytes, bytes):
                     with open(filepath, 'wb') as f:
                         f.write(audioBytes)
@@ -1212,7 +1219,7 @@ class TTSCast:
                 logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
                 _textToSynth = ttsText
                 if _useAI:
-                    ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                    ttsAIText = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp, _aiCustomModel, _aiCustomThinking)
                     if ttsAIText is not None:
                         logging.debug('[DAEMON][GenerateTTS] Génération Piper TTS avec IA')
                         _textToSynth = Functions.markdownToPlainText(ttsAIText)
@@ -1269,6 +1276,9 @@ class TTSCast:
             _aiCustomTone = None
             _aiCustomSysPrompt = myConfig.aiCustomSysPrompt if (myConfig.aiEnabled and myConfig.aiUseCustomSysPrompt) else None
             _aiCustomTemp = None
+            _aiCustomModel = None
+            _aiCustomThinking = None
+            _ttsModel = None
             _useSSML = False
             _silenceBefore = None
             _aiReformulatedText = None
@@ -1292,12 +1302,16 @@ class TTSCast:
                         _aiCustomTone = options_json.get('aitone', None)
                         _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
                         _aiCustomTemp = options_json.get('aitemp', None)
+                        _aiCustomModel = options_json.get('aimodel', None)
+                        _aiCustomThinking = options_json.get('aithinking', None)
                     # SSML
                     _useSSML = options_json.get('ssml', False)
                     # Silent Before
                     _silenceBefore = options_json.get('before', None)
                     # Gemini TTS Style
                     _ttsGeminiStyle = options_json.get('style', _ttsGeminiStyle)
+                    # Gemini TTS Model override (par notification)
+                    _ttsModel = options_json.get('ttsmodel', None)
                     # Streaming mode
                     _useStreaming = options_json.get('streaming', myConfig.streamingDefault)
                     # Engine override (par notification)
@@ -1369,7 +1383,7 @@ class TTSCast:
             # ══════════════════════════════════════════════════════════════════════
             _aiPrecomputed = None
             if _useAI and not _useSSML:
-                _aiResult = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp)
+                _aiResult = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp, _aiCustomModel, _aiCustomThinking)
                 if _aiResult is not None:
                     _aiPrecomputed = Functions.markdownToPlainText(_aiResult)  # version clean pour le moteur TTS
                     TTSCast._sendTTSResult(_aiResult, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
@@ -1545,7 +1559,7 @@ class TTSCast:
             elif ttsEngine == "geminitts":
                 logging.info('[DAEMON][TTS] TTSEngine = geminitts')
                 # Pas de cache pour Gemini TTS : sortie LLM non déterministe, toujours régénérer
-                raw_filename = ttsText + "|GeminiTTS|" + ttsGeminiVoiceName + "|" + myConfig.geminiTTSModel
+                raw_filename = ttsText + "|GeminiTTS|" + ttsGeminiVoiceName + "|" + (_ttsModel or myConfig.geminiTTSModel)
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".wav"
                 filepath = os.path.join(symLinkPath, filename)
                 logging.debug('[DAEMON][TTS] Nom du fichier à générer :: %s', filepath)
@@ -1563,7 +1577,7 @@ class TTSCast:
                     os.makedirs(streamDir, exist_ok=True)
 
                     def _streamPipe(
-                        _text=_textToSynth, _voiceName=ttsGeminiVoiceName, _style=_ttsGeminiStyle,
+                        _text=_textToSynth, _voiceName=ttsGeminiVoiceName, _style=_ttsGeminiStyle, _model=_ttsModel,
                         _streamDir=streamDir, _filepath=filepath
                     ):
                         """Génère le TTS, crée le pipe FIFO et démarre le thread de streaming.
@@ -1571,7 +1585,7 @@ class TTSCast:
                         l'expiration du stream HTTP quelle que soit la durée d'attente en queue."""
                         _t = time.time()
                         logging.info('[TIMING][GeminiStream] t0_start :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
-                        _prefetch = TTSCast.geminiTTS(_text, _voiceName, _style, streaming=True)
+                        _prefetch = TTSCast.geminiTTS(_text, _voiceName, _style, streaming=True, model=_model)
                         if _prefetch is None:
                             logging.error('[DAEMON][TTS] GeminiTTS streaming :: échec de la pré-lecture | voix : %s | extrait : %s', _voiceName, repr(_text[:80]))
                             return None
@@ -1598,7 +1612,7 @@ class TTSCast:
                     res = TTSCast.castToGoogleHome(urltoplay='', googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, mimeType=mimeType, streamType='LIVE', postQueuePipe=_streamPipe)
 
                 else:
-                    audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle)
+                    audioBytes = TTSCast.geminiTTS(_textToSynth, ttsGeminiVoiceName, _ttsGeminiStyle, model=_ttsModel)
                     if isinstance(audioBytes, bytes):
                         with open(filepath, 'wb') as f:
                             f.write(audioBytes)
@@ -1900,11 +1914,50 @@ class TTSCast:
             return False
 
     @staticmethod
-    def genAI(_aiPrompt, _aiCustomSysPrompt=None, _aiCustomTone=None, _aiCustomTemp=None):
+    def resolveAiModelAndThinking(requestedModel, requestedThinking):
+        """
+        Valide les options aimodel / aithinking d'une notification.
+        Retourne (modelId, thinkingLevel) ; thinkingLevel vaut None si aucun niveau n'est demandé ou accepté.
+        Une valeur invalide est ignorée (avertissement dans le log) : la reformulation utilise alors la configuration par défaut.
+        """
+        modelId = myConfig.aiModel
+        if requestedModel:
+            if requestedModel in myConfig.aiAllowedModels:
+                modelId = requestedModel
+            else:
+                logging.warning('[DAEMON][GenAI] Option "aimodel" ignorée : modèle "%s" non autorisé (modèles autorisés : %s). Modèle par défaut utilisé : %s', requestedModel, ', '.join(myConfig.aiAllowedModels), modelId)
+
+        thinkingLevel = None
+        if requestedThinking:
+            level = str(requestedThinking).strip().lower()
+            supportedLevels = myConfig.aiThinkingLevels.get(modelId)
+            if supportedLevels is None:
+                logging.warning('[DAEMON][GenAI] Option "aithinking" ignorée : le modèle "%s" n\'a pas de niveaux de réflexion documentés (modèles compatibles : %s).', modelId, ', '.join(myConfig.aiThinkingLevels))
+            elif level not in supportedLevels:
+                logging.warning('[DAEMON][GenAI] Option "aithinking" ignorée : niveau "%s" non accepté par le modèle "%s" (niveaux acceptés : %s).', requestedThinking, modelId, ', '.join(supportedLevels))
+            else:
+                thinkingLevel = level
+        return modelId, thinkingLevel
+
+    @staticmethod
+    def resolveGeminiTTSModel(requestedModel):
+        """
+        Valide l'option ttsmodel d'une notification. Une valeur invalide est ignorée (avertissement dans le log) : le modèle par défaut est utilisé.
+        """
+        if requestedModel:
+            if requestedModel in myConfig.geminiTTSAllowedModels:
+                return requestedModel
+            logging.warning('[DAEMON][GeminiTTS] Option "ttsmodel" ignorée : modèle "%s" non autorisé (modèles autorisés : %s). Modèle par défaut utilisé : %s', requestedModel, ', '.join(myConfig.geminiTTSAllowedModels), myConfig.geminiTTSModel)
+        return myConfig.geminiTTSModel
+
+    @staticmethod
+    def genAI(_aiPrompt, _aiCustomSysPrompt=None, _aiCustomTone=None, _aiCustomTemp=None, _aiCustomModel=None, _aiCustomThinking=None):
         """
         Reformule une phrase en utilisant l'API Gemini avec un ton spécifique.
         """
         try:
+            _aiModelId, _aiThinkingLevel = TTSCast.resolveAiModelAndThinking(_aiCustomModel, _aiCustomThinking)
+            _aiHttpTimeout = 60000 if _aiThinkingLevel else 30000  # la réflexion (et la recherche Google) allonge la durée de l'appel
             if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProject') or myConfig.aiApiKey != 'noKey':
                 # Initialisation du client Gemini
                 credentials = None
@@ -1920,24 +1973,28 @@ class TTSCast:
                             project=myConfig.aiProjectID,
                             location="global",
                             credentials=credentials,
-                            http_options=types.HttpOptions(timeout=30000),
+                            http_options=types.HttpOptions(timeout=_aiHttpTimeout),
                         )   
                     else:
                         logging.warning('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return None
                 elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
                     logging.debug('[DAEMON][genAI] Chargement du moteur IA en utilisant la clé API :: %s', "***" if myConfig.aiApiKey else "N/A")
-                    client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=30000))
+                    client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=_aiHttpTimeout))
                 else:
                     logging.warning('[DAEMON][genAI] Mode d\'authentification invalide ou clé API manquante (mode configuré : %s).', myConfig.aiAuthMode)
                     return None
                 
                 logging.debug('[DAEMON][genAI] Reformulation de texte via IA')
                 
-                MODEL_ID = myConfig.aiModel
+                MODEL_ID = _aiModelId
                 logging.debug('[DAEMON][GenAI] Utilisation du modèle :: %s', MODEL_ID)
                 
-                THINKING_CONFIG = types.ThinkingConfig(thinking_budget=0)
+                if _aiThinkingLevel:
+                    THINKING_CONFIG = types.ThinkingConfig(thinking_level=types.ThinkingLevel[_aiThinkingLevel.upper()])
+                    logging.debug('[DAEMON][GenAI] Niveau de réflexion :: %s', _aiThinkingLevel)
+                else:
+                    THINKING_CONFIG = types.ThinkingConfig(thinking_budget=0)
                 GOOGLE_SEARCH_TOOL = types.Tool(google_search=types.GoogleSearch())
                 
                 TEMPERATURE = 1.0 if _aiCustomTemp is None else float(_aiCustomTemp)
@@ -1967,6 +2024,8 @@ class TTSCast:
                 # Initialisation des variables par défaut
                 input_tokens = 0
                 output_tokens = 0
+                thoughts_tokens = 0
+                tool_tokens = 0
                 total_tokens = 0
                 finish_reason = ''
                 safety_blocked = 0
@@ -1975,10 +2034,10 @@ class TTSCast:
                     usage = response.usage_metadata
                     input_tokens = getattr(usage, 'prompt_token_count', 0) or 0
                     output_tokens = getattr(usage, 'candidates_token_count', 0) or 0
+                    thoughts_tokens = getattr(usage, 'thoughts_token_count', 0) or 0
+                    tool_tokens = getattr(usage, 'tool_use_prompt_token_count', 0) or 0
                     total_tokens = getattr(usage, 'total_token_count', 0) or 0
                     # cache_tokens = getattr(usage, 'cached_content_token_count', 0) or 0
-                    # tool_tokens = getattr(usage, 'tool_use_prompt_token_count', 0) or 0
-                    # thoughts_tokens = getattr(usage, 'thoughts_token_count', 0) or 0
                 else:
                     logging.warning('[DAEMON][GenAI][TOKENS] usage_metadata absent ou vide dans la réponse - stats à 0')
                 
@@ -1999,7 +2058,7 @@ class TTSCast:
                                 break
                 
                 # Log complet des stats IA
-                logging.info('[DAEMON][GenAI][TOKENS] Model: %s | Input: %d | Output: %d | Total: %d | FinishReason: %s | SafetyBlocked: %d', MODEL_ID, input_tokens, output_tokens, total_tokens, finish_reason, safety_blocked)
+                logging.info('[DAEMON][GenAI][TOKENS] Model: %s | Input: %d | Output: %d | Thoughts: %d | Tool: %d | Total: %d | FinishReason: %s | SafetyBlocked: %d', MODEL_ID, input_tokens, output_tokens, thoughts_tokens, tool_tokens, total_tokens, finish_reason, safety_blocked)
                 
                 # Envoyer les tokens à l'équipement virtuel TTSCast AI Stats uniquement si input_tokens > 0
                 # (car input_tokens devrait toujours être > 0 si l'API a fonctionné normalement)
@@ -2008,10 +2067,10 @@ class TTSCast:
                         data = {
                             'ai_tokens_input': input_tokens,
                             'ai_tokens_output': output_tokens,
+                            'ai_tokens_thoughts': thoughts_tokens,
+                            'ai_tokens_tool': tool_tokens,
                             'ai_tokens_total': total_tokens,
                             # 'ai_cache_tokens': cache_tokens,
-                            # 'ai_tool_tokens': tool_tokens,
-                            # 'ai_thoughts_tokens': thoughts_tokens,
                             'ai_finish_reason': finish_reason,
                             # 'ai_avg_logprobs': avg_logprobs,
                             'ai_safety_blocked': safety_blocked
@@ -2038,14 +2097,16 @@ class TTSCast:
             return None
 
     @staticmethod
-    def geminiTTS(ttsText: str, voiceName: str, style: str = '', streaming: bool = False):
+    def geminiTTS(ttsText: str, voiceName: str, style: str = '', streaming: bool = False, model: str | None = None):
         """
         Génère l'audio TTS via l'API Gemini.
+        - model : modèle Gemini TTS pour cette synthèse (option ttsmodel) ; None = modèle par défaut du plugin.
         - streaming=False (défaut) : bloquant, retourne les bytes WAV complets ou None.
         - streaming=True : pré-lit le premier chunk pour détecter le format audio réel,
           retourne (stream_iterator, first_chunk_bytes, sampleRate, channels) ou None.
           Utilisé exclusivement par le mode streaming Gemini TTS dans getTTS.
         """
+        modelId = TTSCast.resolveGeminiTTSModel(model)
         try:
             # ── Authentification ──────────────────────────────────────────────
             if not ((myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProjectID') or myConfig.aiApiKey != 'noKey'):
@@ -2068,7 +2129,7 @@ class TTSCast:
                 return None
 
             # ── Prompt & configuration audio ──────────────────────────────────
-            if myConfig.geminiTTSUsesSpeechMetadata():
+            if myConfig.geminiTTSUsesSpeechMetadata(modelId):
                 # Le texte est une transcription verbatim : le style passe par speech_metadata
                 # (sinon les instructions seraient lues à voix haute).
                 prompt = [types.Content(role='user', parts=[types.Part(
@@ -2089,13 +2150,13 @@ class TTSCast:
                 )
             )
             logging.debug('[DAEMON][GeminiTTS] Modèle :: %s | Voix :: %s | Style :: %s | Mode :: %s',
-                          myConfig.geminiTTSModel, voiceName, style if style else 'N/A',
+                          modelId, voiceName, style if style else 'N/A',
                           'stream' if streaming else 'buffered')
 
             if streaming:
                 # ── Mode streaming : pré-lecture du premier chunk ─────────────
                 streamIterator = client.models.generate_content_stream(
-                    model=myConfig.geminiTTSModel,
+                    model=modelId,
                     contents=prompt,
                     config=genConfig,
                 )
@@ -2118,7 +2179,7 @@ class TTSCast:
             else:
                 # ── Mode buffered : réponse complète, encapsulation WAV ───────
                 response = client.models.generate_content(
-                    model=myConfig.geminiTTSModel,
+                    model=modelId,
                     contents=prompt,
                     config=genConfig,
                 )
@@ -2128,7 +2189,7 @@ class TTSCast:
                     output_tokens = getattr(usage, 'candidates_token_count', 0) or 0
                     total_tokens = getattr(usage, 'total_token_count', 0) or 0
                     logging.info('[DAEMON][GeminiTTS][TOKENS] Model: %s | Input: %d | Output: %d | Total: %d',
-                                 myConfig.geminiTTSModel, input_tokens, output_tokens, total_tokens)
+                                 modelId, input_tokens, output_tokens, total_tokens)
                 if (response.candidates
                         and (content := response.candidates[0].content)
                         and content.parts
@@ -2159,7 +2220,7 @@ class TTSCast:
                 return None
 
         except Exception as e:
-            logging.error('[DAEMON][GeminiTTS] Exception :: %s | Modèle : %s | Voix : %s | Mode : %s | Extrait : %s', e, myConfig.geminiTTSModel, voiceName, 'stream' if streaming else 'buffered', repr(ttsText[:80]))
+            logging.error('[DAEMON][GeminiTTS] Exception :: %s | Modèle : %s | Voix : %s | Mode : %s | Extrait : %s', e, modelId, voiceName, 'stream' if streaming else 'buffered', repr(ttsText[:80]))
             logging.debug(traceback.format_exc())
             return None
 
@@ -2278,16 +2339,20 @@ class TTSCast:
         aiSysPrompt = None
         aiTone = None
         aiTemp = None
+        aiModel = None
+        aiThinking = None
         if ttsOptions:
             try:
                 options_json = json.loads('{' + ttsOptions + '}')
                 aiSysPrompt = options_json.get('aisysprompt')
                 aiTone = options_json.get('aitone')
                 aiTemp = options_json.get('aitemp')
+                aiModel = options_json.get('aimodel')
+                aiThinking = options_json.get('aithinking')
             except Exception as e:
                 logging.warning('[DAEMON][SYNC][aiReformat] Impossible de parser les options :: %s', e)
 
-        reformulated = TTSCast.genAI(text, aiSysPrompt, aiTone, aiTemp)
+        reformulated = TTSCast.genAI(text, aiSysPrompt, aiTone, aiTemp, aiModel, aiThinking)
         if reformulated is None:
             logging.warning('[DAEMON][SYNC][aiReformat] genAI retourne None — retour texte original')
             reformulated = text

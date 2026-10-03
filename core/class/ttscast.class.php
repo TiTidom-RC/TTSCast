@@ -451,7 +451,7 @@ class ttscast extends eqLogic
             # Options
             $optionKeys = [
                 'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
-                'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp',
+                'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp', 'aimodel', 'aithinking', 'ttsmodel',
                 'engine', 'streaming'
             ];
             foreach ($optionKeys as $key) {
@@ -1204,6 +1204,62 @@ class ttscast extends eqLogic
                     $cmd->setDisplay($key, $value);
                 }
                 $cmd->setDisplay('icon', '<i class="fas fa-arrow-circle-up"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            // Commande: Tokens de réflexion (thinking)
+            $cmd = $statsEq->getCmd(null, 'ai_tokens_thoughts');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Tokens IA Réflexion', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_tokens_thoughts');
+                $cmd->setType('info');
+                $cmd->setSubType('numeric');
+                $cmd->setUnite('Tokens');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-brain"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            // Commande: Tokens d'outils (recherche Google)
+            $cmd = $statsEq->getCmd(null, 'ai_tokens_tool');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Tokens IA Outils', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_tokens_tool');
+                $cmd->setType('info');
+                $cmd->setSubType('numeric');
+                $cmd->setUnite('Tokens');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-search"></i>');
                 
                 foreach ($tokenConfig as $key => $value) {
                     $cmd->setConfiguration($key, $value);

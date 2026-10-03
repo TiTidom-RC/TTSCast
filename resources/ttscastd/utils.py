@@ -74,8 +74,8 @@ class Config:
     # AI Configuration
     # Clés d'options consommées par le démon (jamais renvoyées comme options de notification)
     DAEMON_OPTION_KEYS = frozenset({
-        'genai', 'aitone', 'aisysprompt', 'aitemp',  # IA
-        'ssml', 'markup', 'style', 'before', 'voice', 'speaker', # TTS voix / format
+        'genai', 'aitone', 'aisysprompt', 'aitemp', 'aimodel', 'aithinking',  # IA
+        'ssml', 'markup', 'style', 'before', 'voice', 'speaker', 'ttsmodel',  # TTS voix / format
         'engine',                                     # TTS moteur (override par commande)
         'volume', 'ding', 'wait', 'force',            # TTS comportement
     })
@@ -87,6 +87,19 @@ class Config:
     aiApiKey = ''
     aiModel = 'noModel'  # 'noModel', 'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.1-pro-preview'
     aiDefaultTone = 'enthousiaste et humoristique'  # Default tone for AI TTS
+    # Modèles de reformulation autorisés via l'option aimodel (à garder alignés sur la liste de plugin_info/configuration.php)
+    aiAllowedModels = (
+        'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite',
+        'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.1-pro-preview',
+    )
+    # Niveaux de réflexion (thinking_level) acceptés par modèle, d'après la documentation officielle Google.
+    # Un modèle absent de cette table n'accepte pas l'option aithinking (niveaux non documentés).
+    aiThinkingLevels = {
+        'gemini-3.8-flash': ('low', 'medium', 'high'),
+        'gemini-3.5-flash': ('minimal', 'low', 'medium', 'high'),
+        'gemini-3.5-flash-lite': ('minimal', 'low', 'medium', 'high'),
+        'gemini-3.1-pro-preview': ('low', 'medium', 'high'),
+    }
     
     def aiSysPrompt(self, aiCustomTone=None):
         _aiTone = aiCustomTone if aiCustomTone else self.aiDefaultTone
@@ -110,6 +123,8 @@ class Config:
     # Gemini TTS Configuration
     geminiTTSEnabled = False
     geminiTTSModel   = 'noModel'
+    # Modèles Gemini TTS autorisés via l'option ttsmodel (à garder alignés sur la liste de plugin_info/configuration.php)
+    geminiTTSAllowedModels = ('gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts', 'gemini-3.1-flash-tts-preview')
     # Modèles Gemini TTS dont le texte est une transcription verbatim : le style passe par speech_metadata
     # (à compléter pour les futurs modèles, ex. 3.9). Les autres modèles utilisent le prompt "style + ### TRANSCRIPT".
     geminiTTSSpeechMetadataModels = ('gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts')
@@ -117,8 +132,8 @@ class Config:
     geminiTTSStyle   = ''  # Style par défaut, peut être surchargé par style: dans les options de scénario
     streamingDefault = False  # Gemini TTS uniquement — ignoré pour les autres moteurs
 
-    def geminiTTSUsesSpeechMetadata(self):
-        return self.geminiTTSModel in self.geminiTTSSpeechMetadataModels
+    def geminiTTSUsesSpeechMetadata(self, modelId):
+        return modelId in self.geminiTTSSpeechMetadataModels
     
     # Paths for various resources
     mediaFolder = 'data/media'
