@@ -85,7 +85,7 @@ class Config:
     aiAuthMode = 'noMode'  # 'noMode', 'apikey', 'oauth2'
     aiProjectID = 'noProjectID'  # Google Cloud Project ID for AI
     aiApiKey = ''
-    aiModel = 'noModel'  # 'noModel', 'gemini-3.8-flash', 'gemini-3.7-flash', 'gemini-3.6-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.1-pro-preview', 'gemini-3-flash-preview'
+    aiModel = 'noModel'  # 'noModel', 'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.1-pro-preview'
     aiDefaultTone = 'enthousiaste et humoristique'  # Default tone for AI TTS
     
     def aiSysPrompt(self, aiCustomTone=None):
@@ -110,9 +110,15 @@ class Config:
     # Gemini TTS Configuration
     geminiTTSEnabled = False
     geminiTTSModel   = 'noModel'
+    # Modèles Gemini TTS dont le texte est une transcription verbatim : le style passe par speech_metadata
+    # (à compléter pour les futurs modèles, ex. 3.9). Les autres modèles utilisent le prompt "style + ### TRANSCRIPT".
+    geminiTTSSpeechMetadataModels = ('gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts')
     geminiTTSDefault = False
     geminiTTSStyle   = ''  # Style par défaut, peut être surchargé par style: dans les options de scénario
     streamingDefault = False  # Gemini TTS uniquement — ignoré pour les autres moteurs
+
+    def geminiTTSUsesSpeechMetadata(self):
+        return self.geminiTTSModel in self.geminiTTSSpeechMetadataModels
     
     # Paths for various resources
     mediaFolder = 'data/media'

@@ -2067,9 +2067,17 @@ class TTSCast:
                 return None
 
             # ── Prompt & configuration audio ──────────────────────────────────
-            # Le délimiteur ### TRANSCRIPT indique au modèle où commence le texte
-            # à synthétiser, évitant qu'il lise les instructions de style à voix haute.
-            prompt = f"{style}\n\n### TRANSCRIPT\n{ttsText}" if style else ttsText
+            if myConfig.geminiTTSUsesSpeechMetadata():
+                # Le texte est une transcription verbatim : le style passe par speech_metadata
+                # (sinon les instructions seraient lues à voix haute).
+                prompt = [types.Content(role='user', parts=[types.Part(
+                    text=ttsText,
+                    speech_metadata=types.SpeechMetadata(style=style) if style else None
+                )])]
+            else:
+                # Le délimiteur ### TRANSCRIPT indique au modèle où commence le texte
+                # à synthétiser, évitant qu'il lise les instructions de style à voix haute.
+                prompt = f"{style}\n\n### TRANSCRIPT\n{ttsText}" if style else ttsText
             genConfig = types.GenerateContentConfig(
                 response_modalities=['AUDIO'],
                 speech_config=types.SpeechConfig(
@@ -2100,7 +2108,7 @@ class TTSCast:
                         channels_match = re.search(r'channels=(\d+)', mime_type)
                         sampleRate = int(rate_match.group(1)) if rate_match else 24000
                         channels = int(channels_match.group(1)) if channels_match else 1
-                        logging.debug('[DAEMON][GeminiTTS] Premier chunk stream :: rate=%d | channels=%d', sampleRate, channels)
+                        logging.debug('[DAEMON][GeminiTTS] Premier chunk stream :: mime=%s | rate=%d | channels=%d | riff=%s', mime_type, sampleRate, channels, blob.data[:4] == b'RIFF')
                         return streamIterator, blob.data, sampleRate, channels, client
                 logging.error('[DAEMON][GeminiTTS] Streaming :: aucun chunk audio reçu | voix : %s | extrait : %s', voiceName, repr(ttsText[:80]))
                 return None
