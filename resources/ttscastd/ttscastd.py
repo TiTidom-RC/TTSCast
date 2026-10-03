@@ -2794,7 +2794,7 @@ class Functions:
     @staticmethod
     def convertSingleQuoteToDoubleQuote(text: str, showLogs: bool = False, callerFunc: str = "SingleQuote") -> str:
         """
-        Remplace une apostrophe (') par un guillemet double (") uniquement si le caractère suivant est une lettre accentuée.
+        Remplace une apostrophe (' droite ou ’ typographique) par un guillemet double (") uniquement si le caractère suivant est une lettre accentuée.
         
         Args:
             text: La chaîne de caractères à traiter.
@@ -2808,12 +2808,12 @@ class Functions:
         char_accented = "éèêëàâäôöîïûüùçÉÈÊËÀÂÄÔÖÎÏÛÜÙÇ"
         
         # L'expression régulière se décompose ainsi :
-        # '      : recherche une apostrophe littérale.
+        # ['’]   : recherche une apostrophe droite ou typographique (les modèles IA produisent souvent la seconde).
         # (      : commence un groupe de capture.
         # [...]  : une classe de caractères, recherche n'importe quel caractère listé à l'intérieur.
         # )      : termine le groupe de capture.
         # Le groupe de capture permet de "retenir" le caractère accentué pour le réutiliser.
-        pattern = f"'([{char_accented}])"
+        pattern = f"['’]([{char_accented}])"
         
         # La chaîne de remplacement :
         # "      : un guillemet double littéral.
