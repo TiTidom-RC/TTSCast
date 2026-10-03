@@ -942,15 +942,6 @@ if (file_exists($_piperCatalogPath)) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Timeout IA avec réflexion (secondes)}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Temps maximal (entre 30 et 300 sec) accordé à l'IA lorsque l'option <b>aithinking</b> est utilisée pour une commande (par défaut : 60sec). Sans cette option, le délai reste de 30sec.}}"></i></sup>
-                </label>
-                <div class="col-lg-1">
-                    <input class="configKey form-control" type="number" data-l1key="ttsAIMaxTimeout" min="30" max="300" placeholder="{{Timeout}}" />
-                </div>
-            </div>
-            <div class="form-group">
                 <label class="col-lg-3 control-label">{{Prompt Système par Défaut}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Affiche le prompt système utilisé par l'IA lorsqu'aucun prompt personnalisé n'est défini. Le démon doit être démarré.}}"></i></sup>
                 </label>
@@ -1028,6 +1019,15 @@ if (file_exists($_piperCatalogPath)) {
                 </div>
             </div>
             <div class="form-group customform-geminiTTS">
+                <label class="col-lg-3 control-label">{{Style par défaut (Gemini TTS)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input class="configKey form-control" type="text" data-l1key="geminittsstyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
+                </div>
+            </div>
+            <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Utiliser Gemini TTS par défaut}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Si activé, toutes les notifications utilisent Gemini TTS par défaut.}}"></i></sup>
@@ -1043,15 +1043,6 @@ if (file_exists($_piperCatalogPath)) {
                 </label>
                 <div class="col-lg-1">
                     <input type="checkbox" class="configKey" data-l1key="streamingDefault" />
-                </div>
-            </div>
-            <div class="form-group customform-geminiTTS">
-                <label class="col-lg-3 control-label">{{Style par défaut (Gemini TTS)}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Instruction de style transmise au modèle Gemini TTS pour toutes les notifications (ex: Parle d'une voix chaleureuse et rassurante). Peut être surchargé par l'option style: dans les scénarios. Laissez vide pour le style neutre par défaut.}}"></i></sup>
-                </label>
-                <div class="col-lg-3">
-                    <input class="configKey form-control" type="text" data-l1key="geminittsstyle" placeholder="{{Ex: Parle d'une voix chaleureuse et rassurante.}}" />
                 </div>
             </div>
             <legend><i class="fas fa-clipboard-check"></i> {{Tests}}</legend>
@@ -1172,6 +1163,15 @@ if (file_exists($_piperCatalogPath)) {
                 </label>
                 <div class="col-lg-1">
                     <input class="configKey form-control" type="number" data-l1key="ttsGenTimeout" min="5" max="300" placeholder="{{Timeout}}" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Timeout IA avec réflexion (secondes)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Temps maximal (entre 30 et 300 sec) accordé à l'IA lorsque l'option <b>aithinking</b> est utilisée pour une commande (par défaut : 60sec). Sans cette option, le délai reste de 30sec.}}"></i></sup>
+                </label>
+                <div class="col-lg-1">
+                    <input class="configKey form-control" type="number" data-l1key="ttsAIMaxTimeout" min="30" max="300" placeholder="{{Timeout}}" />
                 </div>
             </div>
             <legend><i class="fas fa-list-ol"></i> {{Listes (Radios, CustomRadios, Sounds, Custom Sounds)}}</legend>
