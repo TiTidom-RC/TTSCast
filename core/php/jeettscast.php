@@ -174,6 +174,22 @@ try {
                 }
             }
             
+            if (isset($data['ai_tokens_thoughts'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_tokens_thoughts');
+                if (is_object($cmd)) {
+                    $cmd->event(intval($data['ai_tokens_thoughts']));
+                    $logParts[] = 'Thoughts=' . $data['ai_tokens_thoughts'];
+                }
+            }
+            
+            if (isset($data['ai_google_searches'])) {
+                $cmd = $statsEq->getCmd('info', 'ai_google_searches');
+                if (is_object($cmd)) {
+                    $cmd->event(intval($data['ai_google_searches']));
+                    $logParts[] = 'GoogleSearches=' . $data['ai_google_searches'];
+                }
+            }
+            
             if (isset($data['ai_tokens_total'])) {
                 $cmd = $statsEq->getCmd('info', 'ai_tokens_total');
                 if (is_object($cmd)) {
@@ -187,22 +203,6 @@ try {
             //     if (is_object($cmd)) {
             //         $cmd->event(intval($data['ai_cache_tokens']));
             //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Cache tokens: ' . $data['ai_cache_tokens']);
-            //     }
-            // }
-            
-            // if (isset($data['ai_tool_tokens'])) {
-            //     $cmd = $statsEq->getCmd('info', 'ai_tool_tokens');
-            //     if (is_object($cmd)) {
-            //         $cmd->event(intval($data['ai_tool_tokens']));
-            //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Tool tokens: ' . $data['ai_tool_tokens']);
-            //     }
-            // }
-            
-            // if (isset($data['ai_thoughts_tokens'])) {
-            //     $cmd = $statsEq->getCmd('info', 'ai_thoughts_tokens');
-            //     if (is_object($cmd)) {
-            //         $cmd->event(intval($data['ai_thoughts_tokens']));
-            //         log::add('ttscast','debug','[CALLBACK] AI Stats :: Thoughts tokens: ' . $data['ai_thoughts_tokens']);
             //     }
             // }
             

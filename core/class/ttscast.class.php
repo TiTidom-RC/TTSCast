@@ -200,6 +200,7 @@ class ttscast extends eqLogic
         $cmd .= ' --appdisableding ' . config::byKey('appDisableDing', __CLASS__, '0');
         $cmd .= ' --appconvertsinglequote ' . config::byKey('appConvertSingleQuote', __CLASS__, '0');
         $cmd .= ' --cmdwaittimeout ' . config::byKey('cmdWaitTimeout', __CLASS__, '60');
+        $cmd .= ' --aimaxtimeout ' . config::byKey('ttsAIMaxTimeout', __CLASS__, '60');
         $cmd .= ' --aienabled ' . config::byKey('ttsAIEnable', __CLASS__, '0');
         $cmd .= ' --aidefault ' . config::byKey('ttsAIDefault', __CLASS__, '0');
         $cmd .= ' --aiauthmode ' . config::byKey('ttsAIAuthMode', __CLASS__, 'noMode');
@@ -451,7 +452,7 @@ class ttscast extends eqLogic
             # Options
             $optionKeys = [
                 'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
-                'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp',
+                'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp', 'aimodel', 'aithinking', 'ttsmodel',
                 'engine', 'streaming'
             ];
             foreach ($optionKeys as $key) {
@@ -1204,6 +1205,62 @@ class ttscast extends eqLogic
                     $cmd->setDisplay($key, $value);
                 }
                 $cmd->setDisplay('icon', '<i class="fas fa-arrow-circle-up"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            // Commande: Tokens de réflexion (thinking)
+            $cmd = $statsEq->getCmd(null, 'ai_tokens_thoughts');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Tokens IA Réflexion', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_tokens_thoughts');
+                $cmd->setType('info');
+                $cmd->setSubType('numeric');
+                $cmd->setUnite('Tokens');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-brain"></i>');
+                
+                foreach ($tokenConfig as $key => $value) {
+                    $cmd->setConfiguration($key, $value);
+                }
+                
+                $cmd->setTemplate('dashboard', 'core::tile');
+                $cmd->setTemplate('mobile', 'core::tile');
+                $cmd->setOrder($orderCmd++);
+                $cmd->save();
+            }
+            
+            // Commande: Recherches Google (grounding), facturées à part par Google
+            $cmd = $statsEq->getCmd(null, 'ai_google_searches');
+            if (!is_object($cmd)) {
+                $cmd = new ttscastCmd();
+                $cmd->setName(__('Recherches Google IA', __FILE__));
+                $cmd->setEqLogic_id($statsEq->getId());
+                $cmd->setLogicalId('ai_google_searches');
+                $cmd->setType('info');
+                $cmd->setSubType('numeric');
+                $cmd->setUnite('Recherches');
+                $cmd->setIsVisible(1);
+                $cmd->setIsHistorized(1);
+                
+                foreach ($tokenDisplayConfig as $key => $value) {
+                    $cmd->setDisplay($key, $value);
+                }
+                $cmd->setDisplay('icon', '<i class="fas fa-search"></i>');
                 
                 foreach ($tokenConfig as $key => $value) {
                     $cmd->setConfiguration($key, $value);
@@ -2399,9 +2456,15 @@ class ttscastCmd extends cmd
     // Permet d'empêcher la suppression des commandes même si elles ne sont pas dans la nouvelle configuration de l'équipement envoyé en JS
     public function dontRemoveCmd() {
         $eqLogic = $this->getEqLogic();
-        // Empêcher la suppression automatique des commandes des équipements virtuels IA
-        if (is_object($eqLogic) && in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
-            return true;
+        if (is_object($eqLogic)) {
+            // Équipements virtuels IA : seules les commandes créées par le plugin (manageAIEquipments) sont protégées
+            $protectedAICmds = [
+                'TTSCast_AI_Stats' => ['ai_tokens_input', 'ai_tokens_output', 'ai_tokens_thoughts', 'ai_google_searches', 'ai_tokens_total', 'ai_finish_reason', 'ai_safety_blocked'],
+                'TTSCast_AI' => ['ai_reformat', 'ai_reformat_message', 'ai_reformat_input'],
+            ];
+            if (isset($protectedAICmds[$eqLogic->getLogicalId()])) {
+                return in_array($this->getLogicalId(), $protectedAICmds[$eqLogic->getLogicalId()]);
+            }
         }
         return false;
     }
@@ -2488,7 +2551,7 @@ class ttscastCmd extends cmd
                     'text' => $text,
                     'ttsOptions' => isset($_options['title']) ? $_options['title'] : null,
                 ];
-                $result = ttscast::sendToDaemonSync($payload);
+                $result = ttscast::sendToDaemonSync($payload, (int) config::byKey('ttsAIMaxTimeout', __CLASS__, '60') + 10); // +10s : le délai de l'IA ne démarre qu'après l'authentification
                 if ($result === null || isset($result['error'])) {
                     log::add('ttscast', 'warning', '[CMD] ai_reformat :: Pas de réponse du démon, retour texte original');
                     $result = ['reformulated' => $text, 'original' => $text];
