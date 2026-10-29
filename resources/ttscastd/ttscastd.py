@@ -74,7 +74,9 @@ except ImportError as e:
 
 # Import GenAI (Gemini)
 try:
+    import httpx  # dépendance de google-genai : erreurs de connexion relancées par callGeminiWithRetry
     from google import genai
+    from google.genai import errors as genaiErrors
     from google.genai import types
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing modules for GenAI ::", e)
@@ -1925,6 +1927,61 @@ class TTSCast:
         return myConfig.geminiTTSModel
 
     @staticmethod
+    def geminiRetryDelay(error):
+        """
+        Retourne le délai d'attente (en secondes) demandé par Gemini dans une erreur (RetryInfo.retryDelay, ex : "37s"), ou None.
+        """
+        details = getattr(error, 'details', None)
+        if not isinstance(details, dict):
+            return None
+        body = details.get('error', details)
+        for item in body.get('details') or []:
+            if isinstance(item, dict) and str(item.get('@type', '')).endswith('google.rpc.RetryInfo'):
+                match = re.fullmatch(r'(\d+(?:\.\d+)?)s', str(item.get('retryDelay', '')))
+                if match:
+                    return float(match.group(1))
+        return None
+
+    @staticmethod
+    def geminiConfigWithTimeout(config, timeoutMs):
+        """Copie de la configuration d'un appel Gemini avec le délai HTTP de la tentative en cours (en ms)."""
+        return config.model_copy(update={'http_options': types.HttpOptions(timeout=timeoutMs)})
+
+    @staticmethod
+    def callGeminiWithRetry(logTag, budgetSeconds, call):
+        """
+        Exécute call(timeoutMs) — un appel Gemini — en relançant les erreurs transitoires rapides, sans jamais dépasser
+        budgetSeconds au total : le délai de l'appel reste celui attendu par les appelants (PHP, file d'attente).
+        - Relancées : erreurs Gemini de code myConfig.geminiRetryHttpCodes et erreurs de connexion. Jamais un timeout (budget épuisé).
+        - Chaque tentative reçoit le temps restant comme délai HTTP. Attente : retryDelay indiqué par Gemini, sinon myConfig.geminiRetryDelays.
+        - Toute autre erreur, ou la dernière, est relevée telle quelle.
+        """
+        deadline = time.monotonic() + budgetSeconds
+        attempt = 1
+        while True:
+            timeoutMs = max(1000, int((deadline - time.monotonic()) * 1000))
+            try:
+                return call(timeoutMs)
+            except (genaiErrors.APIError, httpx.ConnectError) as e:
+                code = getattr(e, 'code', None)
+                if isinstance(e, genaiErrors.APIError) and code not in myConfig.geminiRetryHttpCodes:
+                    raise
+                retryDelay = TTSCast.geminiRetryDelay(e)
+                if retryDelay is not None:
+                    logging.warning('%s Gemini demande d\'attendre %gs avant de réessayer (code %s, tentative %d/%d)', logTag, retryDelay, code, attempt, myConfig.geminiRetryAttempts)
+                if attempt >= myConfig.geminiRetryAttempts:
+                    raise
+                wait = retryDelay if retryDelay is not None else myConfig.geminiRetryDelays[min(attempt, len(myConfig.geminiRetryDelays)) - 1]
+                remaining = deadline - time.monotonic() - wait
+                if remaining < myConfig.geminiRetryMinRemaining:
+                    if retryDelay is not None:
+                        logging.warning('%s Pas de nouvelle tentative : l\'attente demandée par Gemini (%gs) dépasse le délai disponible — quota Gemini probablement atteint (par minute ou journalier)', logTag, retryDelay)
+                    raise
+                logging.warning('%s Erreur transitoire (%s) — nouvelle tentative %d/%d dans %gs (temps restant : %ds)', logTag, code if code is not None else type(e).__name__, attempt + 1, myConfig.geminiRetryAttempts, wait, int(remaining))
+                time.sleep(wait)
+                attempt += 1
+
+    @staticmethod
     def genAI(_aiPrompt, _aiCustomSysPrompt=None, _aiCustomTone=None, _aiCustomTemp=None, _aiCustomModel=None, _aiCustomThinking=None):
         """
         Reformule une phrase en utilisant l'API Gemini avec un ton spécifique.
@@ -1932,7 +1989,7 @@ class TTSCast:
         _aiModelId = myConfig.aiModel
         try:
             _aiModelId, _aiThinkingLevel = TTSCast.resolveAiModelAndThinking(_aiCustomModel, _aiCustomThinking)
-            _aiHttpTimeout = (myConfig.aiMaxTimeout if _aiThinkingLevel else myConfig.aiBaseTimeout) * 1000  # la réflexion (et la recherche Google) allonge la durée de l'appel
+            _aiTimeout = myConfig.aiMaxTimeout if _aiThinkingLevel else myConfig.aiBaseTimeout  # secondes, relances comprises — la réflexion (et la recherche Google) allonge la durée de l'appel
             if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProject') or myConfig.aiApiKey != 'noKey':
                 # Initialisation du client Gemini
                 credentials = None
@@ -1948,14 +2005,13 @@ class TTSCast:
                             project=myConfig.aiProjectID,
                             location="global",
                             credentials=credentials,
-                            http_options=types.HttpOptions(timeout=_aiHttpTimeout),
-                        )   
+                        )
                     else:
                         logging.warning('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return None
                 elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
                     logging.debug('[DAEMON][genAI] Chargement du moteur IA en utilisant la clé API :: %s', myConfig.secretMask if myConfig.aiApiKey else "N/A")
-                    client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=_aiHttpTimeout))
+                    client = genai.Client(api_key=myConfig.aiApiKey)
                 else:
                     logging.warning('[DAEMON][genAI] Mode d\'authentification invalide ou clé API manquante (mode configuré : %s).', myConfig.aiAuthMode)
                     return None
@@ -1983,17 +2039,18 @@ class TTSCast:
                     SYSTEM_INSTRUCTION = myConfig.aiSysPrompt()
                 logging.debug('[DAEMON][GenAI] Instructions Système (repr) :: %s', repr(SYSTEM_INSTRUCTION))
                 
-                response = client.models.generate_content(
+                genConfig = types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    temperature=TEMPERATURE,
+                    thinking_config=THINKING_CONFIG,
+                    tools=[GOOGLE_SEARCH_TOOL],
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)  # aucun outil de fonction Python : l'AFC du SDK n'a pas lieu d'être activé
+                )
+                response = TTSCast.callGeminiWithRetry('[DAEMON][GenAI]', _aiTimeout, lambda timeoutMs: client.models.generate_content(
                     model=MODEL_ID,
                     contents=_aiPrompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
-                        temperature=TEMPERATURE,
-                        thinking_config=THINKING_CONFIG,
-                        tools=[GOOGLE_SEARCH_TOOL],
-                        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)  # aucun outil de fonction Python : l'AFC du SDK n'a pas lieu d'être activé
-                    )
-                )
+                    config=TTSCast.geminiConfigWithTimeout(genConfig, timeoutMs),
+                ))
                 
                 # Logger l'utilisation des tokens et les envoyer à Jeedom
                 # Initialisation des variables par défaut
@@ -2102,10 +2159,10 @@ class TTSCast:
                     return None
                 logging.debug('[DAEMON][GeminiTTS] Chargement des credentials OAuth2 :: %s', myConfig.gCloudApiKey)
                 credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
-                client = genai.Client(enterprise=True, project=myConfig.aiProjectID, location='global', credentials=credentials, http_options=types.HttpOptions(timeout=30000))
+                client = genai.Client(enterprise=True, project=myConfig.aiProjectID, location='global', credentials=credentials)
             elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
                 logging.debug('[DAEMON][GeminiTTS] Client API key :: %s', myConfig.secretMask)
-                client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=30000))
+                client = genai.Client(api_key=myConfig.aiApiKey)
             else:
                 logging.error('[DAEMON][GeminiTTS] Mode auth invalide ou clé manquante (mode configuré : %s).', myConfig.aiAuthMode)
                 return None
@@ -2137,34 +2194,42 @@ class TTSCast:
 
             if streaming:
                 # ── Mode streaming : pré-lecture du premier chunk ─────────────
-                streamIterator = client.models.generate_content_stream(
-                    model=modelId,
-                    contents=prompt,
-                    config=genConfig,
-                )
-                for chunk in streamIterator:
-                    if (chunk.candidates
-                            and (content := chunk.candidates[0].content)
-                            and content.parts
-                            and (blob := content.parts[0].inline_data)
-                            and blob.data):
-                        mime_type = blob.mime_type or ''
-                        rate_match = re.search(r'rate=(\d+)', mime_type)
-                        channels_match = re.search(r'channels=(\d+)', mime_type)
-                        sampleRate = int(rate_match.group(1)) if rate_match else 24000
-                        channels = int(channels_match.group(1)) if channels_match else 1
-                        logging.debug('[DAEMON][GeminiTTS] Premier chunk stream :: mime=%s | rate=%d | channels=%d | riff=%s', mime_type, sampleRate, channels, blob.data[:4] == b'RIFF')
-                        return streamIterator, blob.data, sampleRate, channels, client
+                # La relance ne couvre que l'ouverture du flux, jusqu'au premier chunk audio : une coupure en cours de lecture n'est pas relancée
+                def openStream(timeoutMs):
+                    streamIterator = client.models.generate_content_stream(
+                        model=modelId,
+                        contents=prompt,
+                        config=TTSCast.geminiConfigWithTimeout(genConfig, timeoutMs),
+                    )
+                    for chunk in streamIterator:
+                        if (chunk.candidates
+                                and (content := chunk.candidates[0].content)
+                                and content.parts
+                                and (blob := content.parts[0].inline_data)
+                                and blob.data):
+                            return streamIterator, blob
+                    return None
+
+                opened = TTSCast.callGeminiWithRetry('[DAEMON][GeminiTTS]', myConfig.geminiTTSTimeout, openStream)
+                if opened is not None:
+                    streamIterator, blob = opened
+                    mime_type = blob.mime_type or ''
+                    rate_match = re.search(r'rate=(\d+)', mime_type)
+                    channels_match = re.search(r'channels=(\d+)', mime_type)
+                    sampleRate = int(rate_match.group(1)) if rate_match else 24000
+                    channels = int(channels_match.group(1)) if channels_match else 1
+                    logging.debug('[DAEMON][GeminiTTS] Premier chunk stream :: mime=%s | rate=%d | channels=%d | riff=%s', mime_type, sampleRate, channels, blob.data[:4] == b'RIFF')
+                    return streamIterator, blob.data, sampleRate, channels, client
                 logging.error('[DAEMON][GeminiTTS] Streaming :: aucun chunk audio reçu | voix : %s | extrait : %s', voiceName, repr(ttsText[:80]))
                 return None
 
             else:
                 # ── Mode buffered : réponse complète, encapsulation WAV ───────
-                response = client.models.generate_content(
+                response = TTSCast.callGeminiWithRetry('[DAEMON][GeminiTTS]', myConfig.geminiTTSTimeout, lambda timeoutMs: client.models.generate_content(
                     model=modelId,
                     contents=prompt,
-                    config=genConfig,
-                )
+                    config=TTSCast.geminiConfigWithTimeout(genConfig, timeoutMs),
+                ))
                 if hasattr(response, 'usage_metadata') and response.usage_metadata:
                     usage = response.usage_metadata
                     input_tokens = getattr(usage, 'prompt_token_count', 0) or 0
