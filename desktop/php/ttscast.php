@@ -81,7 +81,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
                 echo '<img src="' . $eqLogic->getImage() . '"/>';
                 // Icône « mis à jour via IP », masquée en vue tableau ; dans un <span> pour échapper au style Core des icônes de tuile (div.cursor > i)
                 if ($isIp) {
-                    echo '<span class="hiddenAsTable" style="position:absolute; top:8px; left:calc(50% - 50px); font-size:12px; line-height:1; color:var(--txt-color); opacity:0.6;" title="{{Mis à jour via son adresse IP}}"><i class="fas fa-network-wired"></i></span>';
+                    echo '<span class="hiddenAsTable" style="position:absolute; top:15px; left:calc(50% - 50px); font-size:12px; line-height:1; color:var(--txt-color); opacity:0.6;" title="{{Mis à jour via son adresse IP}}"><i class="fas fa-network-wired"></i></span>';
                 }
                 echo '<br>';
                 echo '<span class="name">' . $eqLogic->getHumanName(true, true) . '</span>';
