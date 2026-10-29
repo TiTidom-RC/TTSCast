@@ -28,6 +28,7 @@ const SELECTORS = Object.freeze({
   SCAN_BUTTONS: '.customclass-scanState',
   SCAN_ICONS: '.customicon-scanState',
   SCAN_TEXTS: '.customtext-scanState',
+  ADD_BY_IP: '.customclass-addByIp',
   VALUE_SELECT: '.cmdAttr[data-l1key=value]',
   OPEN_LOCATION: '.pluginAction[data-action=openLocation]'
 })
@@ -38,7 +39,8 @@ if (typeof jQuery !== 'undefined' && !window.ttscastBridgeAttached) {
   
   const eventsToBridge = [
     'ttscast::newDevice',
-    'ttscast::scanState'
+    'ttscast::scanState',
+    'ttscast::hostSearch'
   ]
   
   eventsToBridge.forEach(eventName => {
@@ -162,6 +164,30 @@ document.body.addEventListener('click', (event) => {
     if (scanState) {
       changeScanState(scanState)
     }
+    return
+  }
+
+  // Handle "Scan (IP)" button (modale Jeedom, comme « Gérer les filtres »)
+  const addByIpTarget = event.target.closest(SELECTORS.ADD_BY_IP)
+  if (addByIpTarget) {
+    if (addByIpTarget.getAttribute('data-enabled') !== '1') {
+      jeedomUtils.showAlert({ message: '{{La découverte par IP est désactivée : activez-la dans la configuration du plugin (section Démon)}}', level: 'warning' })
+      return
+    }
+    jeeDialog.dialog({
+      id: 'md_addHostsTtscast',
+      title: '{{Scan (IP)}}',
+      contentUrl: 'index.php?v=d&plugin=ttscast&modal=addhosts.ttscast',
+      width: '70%',
+      height: '70%',
+      top: '15vh',
+      onClose: function() {
+        // Équipements ajoutés / mis à jour : rechargement pour afficher les nouvelles vignettes (avec leur badge « IP »)
+        if (typeof window.closeAddHosts === 'function' && window.closeAddHosts()) {
+          window.location.reload()
+        }
+      }
+    })
     return
   }
 })
