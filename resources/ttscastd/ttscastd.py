@@ -107,32 +107,6 @@ except ImportError as e:
     sys.exit(1)
 
 
-class MyMultizoneController(MultizoneController):
-    def __init__(self, uuid):
-        super().__init__(uuid)
-        self.multizone_status = {}
-
-    def receive_message(self, message, data):
-        # Capture the status message if it is a MULTIZONE_STATUS
-        if data.get("type") == "MULTIZONE_STATUS":
-            self.multizone_status = data.get("status", {})
-            
-        return super().receive_message(message, data)
-        
-class MyMultizoneStatusListener(MultiZoneControllerListener):
-    def __init__(self, name, cast):
-        self.name = name
-        self.cast = cast
-
-    def multizone_member_added(self, uuid):
-        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Added :: %s', self.name, uuid)
-
-    def multizone_member_removed(self, uuid):
-        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Removed :: %s', self.name, uuid)
-
-    def multizone_status_received(self):
-        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Status Received', self.name)
-        
 class Loops:
     # *** Boucle events from Jeedom ***
     @staticmethod
@@ -3908,9 +3882,9 @@ class myCast:
                 if chromecast.cast_info.cast_type == 'group':
                     if chromecast.uuid not in myConfig.NETCAST_GROUPS:
                         logging.debug('[DAEMON][NETCAST][CastCallBack] Group detected, adding MultizoneController :: %s', str(chromecast.name))
-                        mz = MyMultizoneController(chromecast.uuid)
+                        mz = myCast.MyMultizoneController(chromecast.uuid)
                         chromecast.register_handler(mz)
-                        mz.register_listener(MyMultizoneStatusListener(chromecast.name, chromecast))
+                        mz.register_listener(myCast.MyMultizoneStatusListener(chromecast.name, chromecast))
                         # On force une update pour peupler la liste initialement
                         mz.update_members()
                         myConfig.NETCAST_GROUPS[chromecast.uuid] = mz
@@ -4121,6 +4095,20 @@ class myCast:
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Connect_Status] Exception :: %s', e)
                 logging.debug(traceback.format_exc())
+
+    class MyMultizoneController(MultizoneController):
+        """Multizone Controller capturing the raw MULTIZONE_STATUS (used for stereo pair detection)."""
+
+        def __init__(self, uuid):
+            super().__init__(uuid)
+            self.multizone_status = {}
+
+        def receive_message(self, message, data):
+            # Capture the status message if it is a MULTIZONE_STATUS
+            if data.get("type") == "MULTIZONE_STATUS":
+                self.multizone_status = data.get("status", {})
+
+            return super().receive_message(message, data)
 
     class MyMultizoneStatusListener(MultiZoneControllerListener):
         """Listener for Multizone Controller events."""
