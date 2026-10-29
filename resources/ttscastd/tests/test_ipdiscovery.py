@@ -1,5 +1,5 @@
 """ Découverte par IP : normalisation des adresses (démon et PHP), adresses interrogées par PyChromecast, commande « Découverte »,
-recherche par IP (fenêtre « Scan (IP) »).
+données exportées par le Scan, recherche par IP (fenêtre « Scan (IP) »).
 Lancement depuis resources/ttscastd :  python -m unittest discover -s tests -t .
 Tests sur appareils réels (ignorés par défaut) : définir TTSCAST_TEST_HOSTS avec des adresses d'appareils Cast du réseau, séparées
 par des virgules (ex. TTSCAST_TEST_HOSTS=192.168.1.20,192.168.1.21), et optionnellement TTSCAST_TEST_HOSTNAME avec un nom d'hôte
@@ -15,7 +15,7 @@ import unittest
 from unittest import mock
 from uuid import UUID
 
-from pychromecast.models import HostServiceInfo, MDNSServiceInfo
+from pychromecast.models import CastInfo, HostServiceInfo, MDNSServiceInfo
 
 import ttscastd
 from tests.helpers import FakeHostBrowser, newCast, resetDaemonState, stopAllConnections
@@ -136,6 +136,96 @@ class DiscoveryTest(unittest.TestCase):
         _, chromecast = newCast()  # ajouté par la recherche par IP : chemins de l'objet lui-même
         myConfig.NETCAST_BROWSER = pytypes.SimpleNamespace(devices={})
         self.assertEqual(myCast.discoveryOf(chromecast), 'IP')
+
+
+class ScanDataTest(unittest.TestCase):
+    """ Le Scan exporte les informations à jour du navigateur, pas cast_info (figé à la création de l'objet) """
+
+    def setUp(self):
+        resetDaemonState()
+
+    def tearDown(self):
+        stopAllConnections()
+
+    def testBrowserInformationIsExported(self):
+        uuid, chromecast = newCast(name='Ancien nom', host='192.168.2.71', port=8009)
+        renamed = CastInfo({MDNSServiceInfo('x')}, uuid, 'Google Nest Mini', 'Nouveau nom', '192.168.2.80', 8009, 'audio', 'Google Inc.')
+        myConfig.NETCAST_BROWSER = pytypes.SimpleNamespace(devices={uuid: renamed})
+        data = myCast.scanDataOf(chromecast, '29/10/2026 - 12:00:00')
+        self.assertEqual((data['friendly_name'], data['host'], data['model_name'], data['manufacturer']),
+                         ('Nouveau nom', '192.168.2.80', 'Google Nest Mini', 'Google Inc.'))
+        self.assertEqual((data['uuid'], data['updatedBy'], data['scanmode']), (str(uuid), 'mdns', 1))
+
+    def testMissingBrowserValuesFallBackToTheObject(self):
+        # Modèle inconnu de PyChromecast (type et fabricant à None dans le navigateur), nom absent de l'annonce mDNS
+        uuid, chromecast = newCast(name='Nom connu', castType='cast', host='192.168.2.71', port=8009)
+        partial = CastInfo({MDNSServiceInfo('x')}, uuid, 'Modèle exotique', None, '192.168.2.80', 8009, None, None)
+        myConfig.NETCAST_BROWSER = pytypes.SimpleNamespace(devices={uuid: partial})
+        data = myCast.scanDataOf(chromecast, '')
+        self.assertEqual((data['friendly_name'], data['cast_type'], data['manufacturer'], data['host']), ('Nom connu', 'cast', 'Test', '192.168.2.80'))
+
+    def testDeviceNotSeenByTheBrowser(self):
+        _, chromecast = newCast(name='Par IP', host='192.168.2.71', port=8009)
+        myConfig.NETCAST_BROWSER = pytypes.SimpleNamespace(devices={})
+        self.assertEqual((myCast.scanDataOf(chromecast, '')['friendly_name'], myCast.scanDataOf(chromecast, '')['host']), ('Par IP', '192.168.2.71'))
+
+
+class SyncDataTest(unittest.TestCase):
+    """ Synchronisation des fiches : champs du Scan toujours fournis, adresse seulement si elle est fiable et utile """
+
+    OLD, NEW = '192.168.2.20', '192.168.2.35'
+
+    def setUp(self):
+        resetDaemonState()
+        self.hostBrowser = FakeHostBrowser()
+        self.uuid, self.chromecast = newCast(name='Salon', host=self.OLD, port=8009)
+
+    def tearDown(self):
+        stopAllConnections()
+
+    def browse(self, *services):
+        info = CastInfo(set(services), self.uuid, 'Google Nest Mini', 'Salon renommé', self.NEW, 8009, 'audio', 'Google Inc.')
+        myConfig.NETCAST_BROWSER = pytypes.SimpleNamespace(host_browser=self.hostBrowser, devices={self.uuid: info})
+
+    def failures(self, count):
+        self.hostBrowser._known_hosts[self.OLD] = pytypes.SimpleNamespace(failcount=count)
+
+    def testMdnsWithoutIpDiscovery(self):
+        myConfig.ipDiscoveryEnabled = False
+        self.browse(MDNSServiceInfo('x'))
+        sync = myCast.syncDataOf(self.chromecast)
+        self.assertEqual((sync['host'], sync['friendly_name'], sync['port']), (self.NEW, 'Salon renommé', 8009))
+
+    def testFicheAddressStillAnswering(self):
+        myCast.setIpHost(self.uuid, self.OLD)
+        self.browse(MDNSServiceInfo('x'), HostServiceInfo(self.OLD, 8009))
+        self.failures(0)
+        self.assertNotIn('host', myCast.syncDataOf(self.chromecast))
+
+    def testFicheAddressNotPolledYet(self):
+        # Démarrage du démon : adresse pas encore interrogée, elle ne doit pas être remplacée
+        myCast.setIpHost(self.uuid, self.OLD)
+        self.browse(MDNSServiceInfo('x'))
+        self.hostBrowser._known_hosts.pop(self.OLD, None)
+        self.assertNotIn('host', myCast.syncDataOf(self.chromecast))
+
+    def testFicheAddressDead(self):
+        myCast.setIpHost(self.uuid, self.OLD)
+        self.browse(MDNSServiceInfo('x'))
+        self.failures(ttscastd.HOSTLISTENER_MAX_FAIL)
+        self.assertEqual(myCast.syncDataOf(self.chromecast)['host'], self.NEW)
+
+    def testFicheWithoutAddress(self):
+        self.browse(MDNSServiceInfo('x'))
+        self.assertEqual(myCast.syncDataOf(self.chromecast)['host'], self.NEW)
+
+    def testIpOnlyDeviceGivesNoAddress(self):
+        myCast.setIpHost(self.uuid, self.OLD)
+        self.browse(HostServiceInfo(self.NEW, 8009))
+        self.failures(ttscastd.HOSTLISTENER_MAX_FAIL)
+        sync = myCast.syncDataOf(self.chromecast)
+        self.assertNotIn('host', sync)
+        self.assertEqual(sync['friendly_name'], 'Salon renommé')
 
 
 def fakeDeviceInfo(uuid, name, multizone=True):
