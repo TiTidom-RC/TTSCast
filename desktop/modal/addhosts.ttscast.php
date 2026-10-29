@@ -12,11 +12,9 @@ foreach (eqLogic::byType('ttscast') as $eqLogic) {
 }
 ?>
 
-<div style="margin-bottom:10px;">
-    <span class="text-muted">
-        <i class="fas fa-info-circle"></i>
-        {{Saisissez une ou plusieurs adresses IP (IPv4 ou IPv6) ou noms d'hôte, une par ligne ou séparées par des virgules ou des espaces. Les appareils Cast qui répondent à ces adresses, ainsi que les groupes qu'ils hébergent, sont ajoutés ou mis à jour.}}
-    </span>
+<div class="alert alert-info" style="margin-bottom:10px;">
+    <i class="fas fa-info-circle"></i> {{Saisissez une ou plusieurs adresses IP (IPv4 ou IPv6) ou noms d'hôte, une par ligne ou séparées par des virgules ou des espaces.}}<br>
+    {{Les appareils Cast qui répondent, ainsi que les groupes qu'ils hébergent, sont ajoutés ou mis à jour.}}
 </div>
 
 <div style="display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap; margin-bottom:8px;">
