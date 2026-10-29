@@ -21,7 +21,6 @@ class Config:
     # Découverte par IP : adresse de chaque équipement actif, interrogée en complément du mDNS { UUID: 'adresse' }
     IP_HOSTS = {}
     GCAST_UUID = []
-    GCAST_NAMES = []
     
     NETCAST_BROWSER = None
     NETCAST_DEVICES = {}
