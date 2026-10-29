@@ -22,10 +22,12 @@ const EVENT_NAME = 'ttscast::hostSearch'
 // Le démon interroge les adresses en parallèle (8 s max par requête), puis les groupes des appareils multizone
 const RESPONSE_TIMEOUT = 90000
 
-// Scan (IP) en cours (identifiant renvoyé par startHostSearch), délai d'attente du compte rendu, équipements ajoutés / mis à jour
-let currentSearchId = ''
+// État de la fenêtre tenu sur window et non dans ce script : s'il est exécuté plusieurs fois (fenêtre rechargée), le compte rendu
+// et la fermeture pourraient sinon lire deux copies différentes :
+// - ttscastAddHostsSearchId : Scan (IP) en cours (identifiant renvoyé par startHostSearch)
+// - ttscastAddHostsChanged : équipements ajoutés / mis à jour (rechargement de la page à la fermeture)
+// Délai d'attente du compte rendu
 let responseTimeout = null
-let changed = false
 
 const TYPE_LABELS = {
     device: '{{Appareil}}',
@@ -93,7 +95,7 @@ function renderReport(report) {
 
     for (const device of (Array.isArray(report.devices) ? report.devices : [])) {
         const ok = device.status !== 'failed'
-        if (ok) changed = true
+        if (ok) window.ttscastAddHostsChanged = true
         addRow(ok ? 'fa-check-circle' : 'fa-times-circle', ok ? 'var(--al-success-color)' : 'var(--al-danger-color)',
             formatAddress(device.host, device.port),
             device.friendly_name + ' (' + (TYPE_LABELS[device.type] || device.type) + ')',
@@ -117,9 +119,9 @@ function renderReport(report) {
 // Compte rendu poussé par Jeedom (rappel du démon) : seul celui du Scan (IP) lancé depuis cette fenêtre est pris en compte
 function onHostSearch(event) {
     const report = event.detail || {}
-    if (!currentSearchId || report.searchId !== currentSearchId) return
+    if (!window.ttscastAddHostsSearchId || report.searchId !== window.ttscastAddHostsSearchId) return
     clearTimeout(responseTimeout)
-    currentSearchId = ''
+    window.ttscastAddHostsSearchId = ''
     setBusy(false)
     renderReport(report)
 }
@@ -148,10 +150,10 @@ function startHostSearch() {
                 jeedomUtils.showAlert({ message: data.result, level: 'danger' })
                 return
             }
-            currentSearchId = data.result
+            window.ttscastAddHostsSearchId = data.result
             clearTimeout(responseTimeout)
             responseTimeout = setTimeout(function() {
-                currentSearchId = ''
+                window.ttscastAddHostsSearchId = ''
                 setBusy(false)
                 jeedomUtils.showAlert({ message: '{{Pas de réponse du démon : consultez les logs}}', level: 'warning' })
             }, RESPONSE_TIMEOUT)
@@ -177,8 +179,8 @@ function addIpHosts(event) {
 }
 
 window.initAddHosts = function() {
-    currentSearchId = ''
-    changed = false
+    window.ttscastAddHostsSearchId = ''
+    window.ttscastAddHostsChanged = false
     const button = document.getElementById('bt_ttscastSearchHosts')
     if (button) {
         button.dataset.label = button.innerHTML
@@ -199,16 +201,16 @@ window.initAddHosts = function() {
 // Fermeture de la fenêtre : retire l'écouteur et indique si des équipements ont été ajoutés / mis à jour (rechargement de la page)
 window.closeAddHosts = function() {
     clearTimeout(responseTimeout)
-    if (currentSearchId) {
+    if (window.ttscastAddHostsSearchId) {
         // Le démon termine la recherche et les équipements sont bien ajoutés, mais le compte rendu ne sera plus affiché
         jeedomUtils.showAlert({ message: '{{Scan (IP) en cours : rafraîchissez la page dans quelques secondes pour voir les équipements ajoutés}}', level: 'info' })
     }
-    currentSearchId = ''
+    window.ttscastAddHostsSearchId = ''
     if (window.ttscastHostSearchHandler) {
         document.body.removeEventListener(EVENT_NAME, window.ttscastHostSearchHandler)
         window.ttscastHostSearchHandler = null
     }
-    return changed
+    return window.ttscastAddHostsChanged === true
 }
 
 })()

@@ -146,7 +146,12 @@ function addCmdToTable(_cmd) {
 window.addCmdToTable = addCmdToTable
 
 // Event delegation for dynamic elements (optimal: single listener for multiple actions)
-document.body.addEventListener('click', (event) => {
+// Gestionnaire nommé, retiré avant d'être réinscrit : Jeedom réexécute ce script à chaque retour sur la page (navigation sans
+// rechargement complet), un gestionnaire anonyme s'ajouterait à chaque fois (une action par clic et par passage sur la page)
+if (window.ttscastClickHandler) {
+  document.body.removeEventListener('click', window.ttscastClickHandler)
+}
+window.ttscastClickHandler = (event) => {
   // Handle open location action
   const locationTarget = event.target.closest(SELECTORS.OPEN_LOCATION)
   if (locationTarget) {
@@ -190,7 +195,8 @@ document.body.addEventListener('click', (event) => {
     })
     return
   }
-})
+}
+document.body.addEventListener('click', window.ttscastClickHandler)
 
 // Function to change scan state via AJAX
 const changeScanState = (_scanState) => {
