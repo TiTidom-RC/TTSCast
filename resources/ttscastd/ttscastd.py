@@ -70,7 +70,6 @@ try:
     from pychromecast.controllers.multizone import MultizoneController, MultiZoneControllerListener
     from pychromecast.error import NotConnected
     from pychromecast.dial import get_device_info, get_multizone_status, get_ssl_context
-    from pychromecast.discovery import HOSTLISTENER_MAX_FAIL
     from pychromecast.models import CastInfo, HostServiceInfo, MDNSServiceInfo
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
@@ -4052,25 +4051,19 @@ class myCast:
 
     @staticmethod
     def syncDataOf(chromecast):
-        """ Synchronisation des fiches Jeedom (cycle ScheduleMode) : champs du Scan à jour, appliqués par PHP s'ils ont changé.
-        L'adresse n'est fournie que si l'appareil est vu en mDNS (seule source fiable d'une nouvelle adresse) et, découverte par IP
-        activée, si l'adresse de la fiche ne répond plus (HOSTLISTENER_MAX_FAIL échecs) : une adresse saisie qui répond (IPv6…)
-        est conservée, y compris au démarrage du démon, avant sa première interrogation """
-        data = myCast.scanDataOf(chromecast, '')
-        sync = {key: data[key] for key in ('friendly_name', 'model_name', 'manufacturer', 'cast_type', 'port')}
-        if 'mDNS' not in (myCast.discoveryOf(chromecast) or ''):
-            return sync
-        if not myConfig.ipDiscoveryEnabled:
-            sync['host'] = data['host']
-            return sync
-        ipHost = myConfig.IP_HOSTS.get(chromecast.uuid)
-        if not ipHost:  # fiche sans adresse (ou adresse invalide) : rien à protéger
-            sync['host'] = data['host']
-            return sync
-        browser = myConfig.NETCAST_BROWSER
-        hostStatus = getattr(browser.host_browser, '_known_hosts', {}).get(ipHost) if browser is not None else None
-        if hostStatus is not None and hostStatus.failcount >= HOSTLISTENER_MAX_FAIL:
-            sync['host'] = data['host']
+        """ Synchronisation des fiches Jeedom (cycle ScheduleMode), appliquée par PHP champ par champ s'il a changé : le Scan en continu.
+        Seuls le nom, l'adresse et le port sont synchronisés (ce qui change réellement) : modèle, fabricant et type n'ont pas la même
+        source en mDNS et par IP, et basculeraient à chaque réécriture du navigateur.
+        Adresse et port : là où l'appareil est actuellement vu (mDNS ou IP), donc toujours cohérents entre eux (groupe déplacé sur une
+        autre enceinte, TV interrogée une seule fois…). Rien si l'appareil n'est plus vu ; adresse omise si elle n'est pas utilisable
+        (IPv6 link-local fournie par le mDNS) """
+        if (myCast.discoveryOf(chromecast) or 'Aucun') == 'Aucun':
+            return {}
+        info = myCast.castInfoOf(chromecast)
+        sync = {'friendly_name': info.friendly_name or chromecast.cast_info.friendly_name, 'port': info.port}
+        host = myCast.normalizeHost(info.host)
+        if host is not None:
+            sync['host'] = host
         return sync
 
     @staticmethod
