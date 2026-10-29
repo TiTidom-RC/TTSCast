@@ -25,7 +25,7 @@ foreach (eqLogic::byType('ttscast') as $eqLogic) {
             <i class="fas fa-list"></i> {{Ajouter les adresses des équipements IP existants}}
         </a>
         <!-- Aide à côté du bouton : un bouton .disabled ne reçoit pas le survol, une infobulle sur lui ne s'afficherait pas -->
-        <sup><i class="fas fa-question-circle tooltips" title="{{Ajoute à la saisie l'adresse des équipements existants qui portent le badge IP (mis à jour via leur adresse IP), actifs ou non : pour les mettre à jour, ou vérifier qu'ils répondent. Bouton grisé si aucun équipement n'a ce badge : lancez d'abord un Scan (IP).}}"></i></sup>
+        <sup><i class="fas fa-question-circle tooltips" title="{{Ajoute à la saisie l'adresse des équipements existants mis à jour via leur adresse IP (icône réseau sur leur vignette), actifs ou non : pour les mettre à jour, ou vérifier qu'ils répondent. Bouton grisé si aucun équipement n'est dans ce cas : lancez d'abord un Scan (IP).}}"></i></sup>
     </span>
     <a class="btn btn-success btn-sm" id="bt_ttscastSearchHosts">
         <i class="fas fa-network-wired"></i> {{Lancer le Scan (IP)}}

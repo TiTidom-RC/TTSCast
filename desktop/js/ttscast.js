@@ -187,7 +187,7 @@ window.ttscastClickHandler = (event) => {
       height: '60%',
       top: '20vh',
       onClose: function() {
-        // Équipements ajoutés / mis à jour : rechargement pour afficher les nouvelles vignettes (avec leur badge « IP »)
+        // Équipements ajoutés / mis à jour : rechargement pour afficher les nouvelles vignettes (avec leur icône IP)
         if (typeof window.closeAddHosts === 'function' && window.closeAddHosts()) {
           window.location.reload()
         }
