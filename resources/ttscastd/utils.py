@@ -18,7 +18,8 @@ import os
 import time
 
 class Config:
-    KNOWN_HOSTS = []
+    # Découverte par IP : adresse de chaque équipement actif, interrogée en complément du mDNS { UUID: 'adresse' }
+    IP_HOSTS = {}
     GCAST_UUID = []
     GCAST_NAMES = []
     
@@ -186,6 +187,7 @@ class Config:
     castLogLevel = "daemon"
     logFiltersEnabled: bool = False
     logFilters: list = []  # [{ "pattern": str, "level": str, "enabled": bool }]
+    ipDiscoveryEnabled: bool = False
     socketPort = 55111
     socketHost = 'localhost'
     pidFile = '/tmp/ttscastd.pid'

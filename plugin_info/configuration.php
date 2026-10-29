@@ -169,6 +169,15 @@ if (file_exists($_piperCatalogPath)) {
                     </a>
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Activer la découverte par IP}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet d'ajouter des équipements par leur adresse IP (bouton Ajouter par IP), et interroge l'adresse de tous les équipements actifs en complément du mDNS. Si désactivée, seuls le mDNS et le Scan sont utilisés.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input type="checkbox" class="configKey" data-l1key="ipDiscoveryEnabled" />
+                </div>
+            </div>
             <legend><i class="fab fa-chromecast"></i> {{TTS (Text To Speech)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Moteur TTS}}
