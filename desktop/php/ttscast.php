@@ -36,10 +36,10 @@ $eqLogics = eqLogic::byType($plugin->getId());
                     }
                     $ipDiscoveryEnabled = (config::byKey('ipDiscoveryEnabled', 'ttscast', '1') == '1');
                     ?>
-                    <div class="cursor eqLogicAction logoSecondary customclass-addByIp" data-action="addByIp" data-enabled="<?= $ipDiscoveryEnabled ? '1' : '0' ?>"<?= $ipDiscoveryEnabled ? '' : ' style="opacity:0.4;"' ?> title="<?= $ipDiscoveryEnabled ? '{{Ajouter des équipements à partir de leur adresse IP}}' : '{{Activez la découverte par IP dans la configuration du plugin}}' ?>">
+                    <div class="cursor eqLogicAction logoSecondary customclass-addByIp" data-action="addByIp" data-enabled="<?= $ipDiscoveryEnabled ? '1' : '0' ?>"<?= $ipDiscoveryEnabled ? '' : ' style="opacity:0.4;"' ?> title="<?= $ipDiscoveryEnabled ? '{{Ajouter ou mettre à jour des équipements à partir de leur adresse IP}}' : '{{Activez la découverte par IP dans la configuration du plugin}}' ?>">
                         <i class="fas fa-network-wired"></i>
                         <br>
-                        <span style="color:var(--txt-color)">{{Ajouter par IP}}</span>
+                        <span style="color:var(--txt-color)">{{Scan (IP)}}</span>
                     </div>
                     <div class="cursor eqLogicAction logoSecondary" data-action="gotoPluginConf">
                         <i class="fas fa-wrench"></i>
@@ -79,8 +79,8 @@ $eqLogics = eqLogic::byType($plugin->getId());
                 echo '<div class="eqLogicDisplayCard cursor ' . $opacity . '" data-eqLogic_id="' . $eqLogic->getId() . '">';
                 echo '<img src="' . $eqLogic->getImage() . '"/>';
                 echo '<br>';
-                // Badge « IP » : équipement ajouté par son adresse IP (badge et non label : le Core met en forme les labels du nom en vue tableau)
-                $ipBadge = ($eqLogic->getConfiguration('addedBy', 'mdns') == 'ip') ? ' <span class="badge" style="font-size:9px;padding:2px 5px;vertical-align:middle;background-color:var(--al-info-color);" title="{{Ajouté par adresse IP}}">IP</span>' : '';
+                // Badge « IP » : équipement mis à jour via son adresse IP (badge et non label : le Core met en forme les labels du nom en vue tableau)
+                $ipBadge = ($eqLogic->getConfiguration('updatedBy', 'mdns') == 'ip') ? ' <span class="badge" style="font-size:9px;padding:2px 5px;vertical-align:middle;background-color:var(--al-info-color);" title="{{Mis à jour via son adresse IP}}">IP</span>' : '';
                 echo '<span class="name">' . $eqLogic->getHumanName(true, true) . $ipBadge . '</span>';
                 echo '<span class="hiddenAsCard displayTableRight hidden">';
                 echo ($eqLogic->getIsVisible() == 1) ? '<i class="fas fa-eye" title="{{Equipement visible}}"></i>' : '<i class="fas fa-eye-slash" title="{{Equipement non visible}}"></i>';
@@ -208,10 +208,15 @@ $eqLogics = eqLogic::byType($plugin->getId());
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="col-sm-4 control-label">{{Ajouté par}}</label>
+                                <label class="col-sm-4 control-label">{{Mis à jour via}}
+                                    <sup><i class="fas fa-question-circle tooltips" title="{{Origine des informations actuelles de l'équipement : dernier Scan (mDNS) ou fenêtre Scan (IP). Vide pour un équipement existant tant qu'aucun Scan n'a été lancé.}}"></i></sup>
+                                </label>
                                 <div class="col-sm-6">
-                                    <!-- Rempli par printEqLogic (ttscast.js) à partir de configuration.addedBy -->
-                                    <input type="text" class="form-control" id="in_ttscastAddedBy" readonly>
+                                    <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="updatedBy" disabled>
+                                        <option value="">{{N/A}}</option>
+                                        <option value="mdns">{{Scan (mDNS)}}</option>
+                                        <option value="ip">{{Adresse IP}}</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="form-group">
