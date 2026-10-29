@@ -817,6 +817,7 @@ class ttscast extends eqLogic
             log::add('ttscast', 'warning', '[SCHEDULE][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
             return false;
         }
+        /** @var ttscast $updttscast */
         $updttscast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
         if (!is_object($updttscast)) {
             log::add('ttscast', 'warning', '[SCHEDULE][CAST] Équipement introuvable dans Jeedom (UUID : ' . $_data['uuid'] . ') — il a peut-être été supprimé. Relancez un scan pour mettre à jour la liste des équipements.');
