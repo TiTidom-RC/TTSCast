@@ -4043,7 +4043,8 @@ class myCast:
             'model_name': info.model_name,
             'cast_type': info.cast_type or initial.cast_type,
             'manufacturer': info.manufacturer or initial.manufacturer,
-            'host': info.host,
+            # Adresse utilisable uniquement ('' sinon, ex. IPv6 link-local annoncée passagèrement par le mDNS) : PHP conserve alors l'actuelle
+            'host': myCast.normalizeHost(info.host) or '',
             'port': info.port,
             'scanmode': 1,
             'updatedBy': 'mdns'
