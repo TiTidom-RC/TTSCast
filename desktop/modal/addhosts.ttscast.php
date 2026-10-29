@@ -12,7 +12,8 @@ foreach (eqLogic::byType('ttscast') as $eqLogic) {
 }
 ?>
 
-<div class="alert alert-info" style="margin-bottom:10px;">
+<!-- Encadré neutre (pas alert-info : même bleu que les infobulles, qui s'y confondraient) -->
+<div style="margin-bottom:10px; padding:8px 12px; border-left:4px solid var(--al-info-color); background-color:rgba(128,128,128,0.12); border-radius:3px;">
     <i class="fas fa-info-circle"></i> {{Saisissez une ou plusieurs adresses IP (IPv4 ou IPv6) ou noms d'hôte, une par ligne ou séparées par des virgules ou des espaces.}}<br>
     {{Les appareils Cast qui répondent, ainsi que les groupes qu'ils hébergent, sont ajoutés ou mis à jour.}}
 </div>
