@@ -95,16 +95,8 @@ try {
         ajax::success();
     }
 
-    if (init('action') == 'searchHosts') {
-        ajax::success(ttscast::searchHosts(init('hosts')));
-    }
-
-    if (init('action') == 'addHosts') {
-        $items = json_decode(init('items', '[]'), true);
-        if (!is_array($items)) {
-            throw new Exception(__('Format de données invalide', __FILE__));
-        }
-        ajax::success(ttscast::addHosts($items));
+    if (init('action') == 'startHostSearch') {
+        ajax::success(ttscast::startHostSearch(init('hosts')));
     }
 
     if (init('action') == 'getDefaultPrompt') {
