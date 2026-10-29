@@ -1655,7 +1655,7 @@ class TTSCast:
             isGroup = False
             
             try:
-                chromecasts = [mycast for mycast in myConfig.NETCAST_DEVICES.values() if mycast.name == googleName]
+                chromecasts = [mycast for mycast in list(myConfig.NETCAST_DEVICES.values()) if mycast.name == googleName]
                 if not chromecasts:
                     logging.warning('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
                     return False
@@ -2487,7 +2487,7 @@ class Functions:
             return current_uuid_str
 
         # 2. Si c'est un membre, est-il dans un groupe actif ?
-        for group_uuid, mz in myConfig.NETCAST_GROUPS.items():
+        for group_uuid, mz in list(myConfig.NETCAST_GROUPS.items()):  # copie : le dictionnaire peut être modifié par la découverte / castRemove
             # mz.members contient des chaines UUID (parfois sans tirets)
             member_found = False
             try:
@@ -2505,8 +2505,8 @@ class Functions:
                     return str(group_uuid)
 
         # 3. Si c'est un groupe, est-ce qu'un membre est actif ?
-        if current_uuid in myConfig.NETCAST_GROUPS:
-            mz = myConfig.NETCAST_GROUPS[current_uuid]
+        mz = myConfig.NETCAST_GROUPS.get(current_uuid)  # lecture unique : le groupe peut être retiré entre un test et un accès
+        if mz is not None:
             try:
                 for m_str in mz.members:
                     m_uuid = UUID(m_str)
@@ -2779,9 +2779,9 @@ class Functions:
         snapshot = {}
         isStereoPair = False
         try:
-            if cast.uuid in myConfig.NETCAST_GROUPS:
-                mz = myConfig.NETCAST_GROUPS[cast.uuid]
-                
+            mz = myConfig.NETCAST_GROUPS.get(cast.uuid)  # lecture unique : le groupe peut être retiré entre un test et un accès
+            if mz is not None:
+
                 # Detection Paire Stéréo (multichannelDevices)
                 # Si présent, on traite le groupe comme un appareil unique (la Paire) et non comme une liste de membres.
                 if hasattr(mz, 'multizone_status') and 'multichannelDevices' in mz.multizone_status and mz.multizone_status['multichannelDevices']:
@@ -3640,10 +3640,10 @@ class Functions:
                     len(myConfig.NETCAST_DEVICES),
                     '; '.join(
                         '%s (%s) @ %s:%s uuid:%s' % (d.cast_info.friendly_name, d.cast_info.model_name, d.cast_info.host, d.cast_info.port, d.uuid)
-                        for d in myConfig.NETCAST_DEVICES.values()
+                        for d in list(myConfig.NETCAST_DEVICES.values())
                     ) or '(aucun)'
                 )
-                for device in myConfig.NETCAST_DEVICES.values():
+                for device in list(myConfig.NETCAST_DEVICES.values()):
                     data = {
                         'friendly_name': device.cast_info.friendly_name,
                         'uuid': str(device.uuid),
@@ -3664,7 +3664,7 @@ class Functions:
                 
                 _gcast_names = myConfig.GCAST_NAMES.copy()
                 
-                chromecasts = [mycast for mycast in myConfig.NETCAST_DEVICES.values() if mycast.name in _gcast_names]
+                chromecasts = [mycast for mycast in list(myConfig.NETCAST_DEVICES.values()) if mycast.name in _gcast_names]
                 
                 # Un seul log consolidé pour tout le cycle (au lieu d'une ligne par cast) — même détail, moins de bruit
                 # " | " comme séparateur de champs : reste sur une seule ligne, lisible dans un fichier de log brut
@@ -3833,9 +3833,24 @@ class Functions:
         
 class myCast:
 
+    # Sérialise l'inscription et la désactivation des listeners : castListeners est appelé depuis le thread des messages Jeedom (addcast)
+    # et depuis celui de la découverte (castCallBack) — sans verrou, les deux pourraient inscrire chacun leurs listeners pour le même appareil
+    _listenersLock = threading.RLock()
+
     @staticmethod
     def castListeners(chromecast=None, uuid=None):
         """ Connect and Add Listener for Chromecast """
+        with myCast._listenersLock:
+            return myCast._castListeners(chromecast, uuid)
+
+    @staticmethod
+    def castRemove(chromecast=None, uuid=None):
+        """ Remove Listener and Connection for Chromecast """
+        with myCast._listenersLock:
+            return myCast._castRemove(chromecast, uuid)
+
+    @staticmethod
+    def _castListeners(chromecast=None, uuid=None):
         if not chromecast:
             if uuid in myConfig.NETCAST_DEVICES:
                 chromecast = myConfig.NETCAST_DEVICES[uuid]
@@ -3903,9 +3918,7 @@ class myCast:
                 logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: MultizoneController already active', str(chromecast.name))
 
     @staticmethod
-    def castRemove(chromecast=None, uuid=None):
-        """ Remove Listener and Connection for Chromecast """
-        
+    def _castRemove(chromecast=None, uuid=None):
         if not chromecast:
             if uuid in myConfig.NETCAST_DEVICES:
                 chromecast = myConfig.NETCAST_DEVICES[uuid]
@@ -4159,6 +4172,13 @@ class myCast:
                 
                 if status.status in [CONNECTION_STATUS_CONNECTED]:
                     castIsOnline = '1'
+                    # Groupe : (re)lecture des membres à chaque (re)connexion — PyChromecast ne le fait que via MultizoneManager, non utilisé ici
+                    mz = myConfig.NETCAST_GROUPS.get(self.cast.uuid)
+                    if mz is not None:
+                        try:
+                            mz.update_members()
+                        except Exception as e:  # l'état "en ligne" doit être remonté à Jeedom même si la lecture des membres échoue
+                            logging.warning('[DAEMON][NETCAST][New_Connect_Status] %s :: Lecture des membres du groupe impossible :: %s', self.name, e)
                 else:
                     castIsOnline = '0'
                     # Device déconnecté : purge la session enregistrée (évite une entrée pluginSessions orpheline).
@@ -4221,7 +4241,7 @@ def shutdown():
     myConfig.IS_ENDING = True  # type: ignore
     logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
     try:
-        for chromecast in myConfig.NETCAST_DEVICES.values():
+        for chromecast in list(myConfig.NETCAST_DEVICES.values()):
             chromecast.disconnect(timeout=5)
         logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
         if myConfig.NETCAST_BROWSER is not None: 
@@ -4333,6 +4353,22 @@ class SecretMaskFilter(logging.Filter):
         if record.stack_info:
             record.stack_info = self._redact(record.stack_info)
         return True
+
+
+def logUncaughtException(excType, excValue, excTraceback):
+    """Journalise une exception non interceptée via logging (format habituel, secrets masqués) au lieu de l'écrire brute sur la sortie d'erreur."""
+    if issubclass(excType, KeyboardInterrupt):
+        sys.__excepthook__(excType, excValue, excTraceback)
+        return
+    logging.critical('[DAEMON] Exception non interceptée', exc_info=(excType, excValue, excTraceback))
+
+
+def logUncaughtThreadException(args):
+    """Équivalent de logUncaughtException pour les exceptions non interceptées d'un thread."""
+    if args.exc_type is SystemExit:
+        return
+    logging.error('[DAEMON] Exception non interceptée dans le thread %s', args.thread.name if args.thread else '?',
+                  exc_info=(args.exc_type, args.exc_value, args.exc_traceback))
 
 # Instanciation de la configuration
 myConfig = Config()
@@ -4480,6 +4516,9 @@ jeedom_utils.set_log_level(myConfig.logLevel)
 _secret_filter = SecretMaskFilter([myConfig.apiKey, myConfig.apiTTSKey, myConfig.apiRSSKey, myConfig.aiApiKey], myConfig.secretMask)
 for _h in logging.root.handlers:
     _h.addFilter(_secret_filter)
+# Exceptions non interceptées (thread principal et threads) : via logging, pour passer par le filtre des secrets
+sys.excepthook = logUncaughtException
+threading.excepthook = logUncaughtThreadException
 
 if myConfig.castLogLevel != 'daemon':
     _cast_level = jeedom_utils.convert_log_level(myConfig.castLogLevel)
