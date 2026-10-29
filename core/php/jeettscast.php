@@ -105,6 +105,9 @@ try {
                 $updttscast = ttscast::createAndUpdCastFromScan($data);
             }
         }
+    } elseif (isset($result['hostSearch'])) {
+        log::add('ttscast', 'debug', '[CALLBACK] TTSCast Scan (IP) :: ' . json_encode($result['hostSearch']));
+        ttscast::hostSearchResult($result['hostSearch']);
     } elseif (isset($result['casts'])) {
         $uuids = array_column($result['casts'], 'uuid');
         log::add('ttscast','debug','[CALLBACK] TTSCast Schedule :: ' . count($result['casts']) . ' cast(s) reçu(s) :: ' . implode(', ', $uuids));
