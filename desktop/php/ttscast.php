@@ -209,7 +209,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
                             </div>
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">{{Mis à jour via}}
-                                    <sup><i class="fas fa-question-circle tooltips" title="{{Origine des informations actuelles de l'équipement : dernier Scan (mDNS) ou fenêtre Scan (IP). Vide pour un équipement existant tant qu'aucun Scan n'a été lancé.}}"></i></sup>
+                                    <sup><i class="fas fa-question-circle tooltips" title="{{Moyen par lequel l'équipement a été ajouté ou mis à jour pour la dernière fois : bouton Scan (mDNS) ou bouton Scan (IP). N/A pour un équipement existant tant qu'aucun Scan n'a été lancé.}}"></i></sup>
                                 </label>
                                 <div class="col-sm-6">
                                     <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="updatedBy" disabled>
@@ -223,6 +223,14 @@ $eqLogics = eqLogic::byType($plugin->getId());
                                 <label class="col-sm-4 control-label">{{Dernier Scan}}</label>
                                 <div class="col-sm-6">
                                     <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="lastscan" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">{{Dernière synchronisation}}
+                                    <sup><i class="fas fa-question-circle tooltips" title="{{Date de la dernière mise à jour automatique de la fiche par le démon (adresse, nom, port…), sans Scan. Le détail est dans le centre de messages.}}"></i></sup>
+                                </label>
+                                <div class="col-sm-6">
+                                    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="lastSync" readonly>
                                 </div>
                             </div>
                         </div>
