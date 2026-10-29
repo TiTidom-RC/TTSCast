@@ -2780,46 +2780,32 @@ class Functions:
             dict: { uuid: volume_float } ou vide si ce n'est pas un groupe.
         """
         snapshot = {}
-        isStereoPair = False
         try:
             mz = myConfig.NETCAST_GROUPS.get(cast.uuid)  # lecture unique : le groupe peut être retiré entre un test et un accès
             if mz is not None:
+                # Une paire stéréo apparaît comme un seul membre (l'enceinte leader), dont le volume pilote les deux enceintes : aucun cas particulier
+                for member_uuid_str in mz.members:
+                    # Convert string UUID to UUID object used in NETCAST_DEVICES
+                    try:
+                        member_uuid = UUID(member_uuid_str)
+                    except ValueError:
+                        logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID string: {member_uuid_str}")
+                        continue
 
-                # Detection Paire Stéréo (multichannelDevices)
-                # Si présent, on traite le groupe comme un appareil unique (la Paire) et non comme une liste de membres.
-                if hasattr(mz, 'multizone_status') and 'multichannelDevices' in mz.multizone_status and mz.multizone_status['multichannelDevices']:
-                    isStereoPair = True
-                    # On ajoute uniquement l'UUID de la paire elle-même au snapshot
-                    if cast.uuid in myConfig.NETCAST_DEVICES:
-                        snapshot[cast.uuid] = cast.status.volume_level
-
-                if not isStereoPair:
-                    for member_uuid_str in mz.members:
-                        # Convert string UUID (no dashes) to UUID object used in NETCAST_DEVICES
-                        try:
-                            member_uuid = UUID(member_uuid_str)
-                        except ValueError:
-                            logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID string: {member_uuid_str}")
-                            continue
-                        
-                        # Avoid duplicates if already added via multichannel
-                        if member_uuid in snapshot:
-                            continue
-
-                        if member_uuid in myConfig.NETCAST_DEVICES:
-                            dev = myConfig.NETCAST_DEVICES[member_uuid]
-                            snapshot[member_uuid] = dev.status.volume_level
-                        else:
-                            logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
+                    if member_uuid in myConfig.NETCAST_DEVICES:
+                        dev = myConfig.NETCAST_DEVICES[member_uuid]
+                        snapshot[member_uuid] = dev.status.volume_level
+                    else:
+                        logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
             else:
                 logging.debug(f"[DAEMON][GroupSnapshot] Cast {cast.name} ({cast.uuid}) not in NETCAST_GROUPS")
         except Exception as e:
             logging.error(f"[DAEMON][GroupSnapshot] Error: {e}")
         
-        # Une seule ligne consolidée : membres attendus, mode paire stéréo, et snapshot final (uuid=volume déjà présent, pas besoin d'une ligne par membre)
+        # Une seule ligne consolidée : snapshot final (uuid=volume déjà présent, pas besoin d'une ligne par membre)
         logging.debug(
-            "[DAEMON][GroupSnapshot] %s (%s) :: stereoPair=%s | snapshot=%s",
-            cast.name, cast.uuid, isStereoPair, snapshot
+            "[DAEMON][GroupSnapshot] %s (%s) :: snapshot=%s",
+            cast.name, cast.uuid, snapshot
         )
         return snapshot
 
@@ -3907,7 +3893,7 @@ class myCast:
         if chromecast.cast_info.cast_type == 'group':
             if uuid not in myConfig.NETCAST_GROUPS:
                 try:
-                    mz = myCast.MyMultizoneController(chromecast.uuid)
+                    mz = MultizoneController(chromecast.uuid)
                     chromecast.register_handler(mz)
                     mz.register_listener(myCast.MyMultizoneStatusListener(chromecast.name, chromecast))
                     myConfig.NETCAST_GROUPS[uuid] = mz
@@ -4203,20 +4189,6 @@ class myCast:
             except Exception as e:
                 logging.error('[DAEMON][NETCAST][New_Connect_Status] Exception :: %s', e)
                 logging.debug(traceback.format_exc())
-
-    class MyMultizoneController(MultizoneController):
-        """Multizone Controller capturing the raw MULTIZONE_STATUS (used for stereo pair detection)."""
-
-        def __init__(self, uuid):
-            super().__init__(uuid)
-            self.multizone_status = {}
-
-        def receive_message(self, message, data):
-            # Capture the status message if it is a MULTIZONE_STATUS
-            if data.get("type") == "MULTIZONE_STATUS":
-                self.multizone_status = data.get("status", {})
-
-            return super().receive_message(message, data)
 
     class MyMultizoneStatusListener(MultiZoneControllerListener):
         """Listener for Multizone Controller events."""
