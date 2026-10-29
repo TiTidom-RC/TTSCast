@@ -845,20 +845,22 @@ class ttscast extends eqLogic
             'host' => __('adresse', __FILE__),
             'port' => __('port', __FILE__)
         );
+        // L'adresse et le port sont mis à jour ensemble ou pas du tout : quand un groupe est déplacé sur une autre enceinte, les deux
+        // changent, et un port seul ne correspondrait pas à l'adresse de la fiche. L'adresse suit la même règle que le Scan : une
+        // adresse IP est remplacée, un nom d'hôte saisi par l'utilisateur est conservé (et le port avec lui)
+        $currentHost = (string) $this->getConfiguration('host', '');
+        $newHost = isset($_sync['host']) ? self::normalizeHostAddress($_sync['host']) : false;
+        $applyAddress = $newHost !== false && ($currentHost == '' || filter_var(trim($currentHost, '[]'), FILTER_VALIDATE_IP) !== false);
         $changes = array();
         foreach ($labels as $key => $label) {
             if (!isset($_sync[$key]) || $_sync[$key] === '') {
                 continue;
             }
-            $current = (string) $this->getConfiguration($key, '');
-            $new = (string) $_sync[$key];
-            if ($key == 'host') {
-                // Même règle que le Scan : une adresse IP est remplacée, un nom d'hôte saisi par l'utilisateur est conservé
-                $new = self::normalizeHostAddress($new);
-                if ($new === false || ($current != '' && filter_var(trim($current, '[]'), FILTER_VALIDATE_IP) === false)) {
-                    continue;
-                }
+            if (($key == 'host' || $key == 'port') && !$applyAddress) {
+                continue;
             }
+            $current = (string) $this->getConfiguration($key, '');
+            $new = ($key == 'host') ? $newHost : (string) $_sync[$key];
             if ($current === $new) {
                 continue;
             }
