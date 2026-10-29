@@ -18,12 +18,13 @@ foreach (eqLogic::byType('ttscast') as $eqLogic) {
 </div>
 
 <div style="display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap; margin-bottom:8px;">
-    <!-- Infobulle sur l'enveloppe : un bouton .disabled ne reçoit pas le survol (pointer-events: none), son title ne s'afficherait pas -->
-    <span title="<?php echo (count($ipHosts) == 0) ? '{{Aucun équipement existant mis à jour via son adresse IP (badge IP) : lancez d\'abord un Scan (IP)}}' : '{{Ajoute à la saisie l\'adresse des équipements existants mis à jour via leur adresse IP (badge IP), actifs ou non : pour les mettre à jour, ou vérifier qu\'ils répondent}}'; ?>">
+    <span>
         <a class="btn btn-default btn-sm<?php echo (count($ipHosts) == 0) ? ' disabled' : ''; ?>" id="bt_ttscastAddIpHosts"
             data-hosts="<?php echo htmlspecialchars(json_encode($ipHosts), ENT_QUOTES, 'UTF-8'); ?>">
             <i class="fas fa-list"></i> {{Ajouter les adresses des équipements IP existants}}
         </a>
+        <!-- Aide à côté du bouton : un bouton .disabled ne reçoit pas le survol, une infobulle sur lui ne s'afficherait pas -->
+        <sup><i class="fas fa-question-circle tooltips" title="{{Ajoute à la saisie l'adresse des équipements existants qui portent le badge IP (mis à jour via leur adresse IP), actifs ou non : pour les mettre à jour, ou vérifier qu'ils répondent. Bouton grisé si aucun équipement n'a ce badge : lancez d'abord un Scan (IP).}}"></i></sup>
     </span>
     <a class="btn btn-success btn-sm" id="bt_ttscastSearchHosts">
         <i class="fas fa-network-wired"></i> {{Lancer le Scan (IP)}}
