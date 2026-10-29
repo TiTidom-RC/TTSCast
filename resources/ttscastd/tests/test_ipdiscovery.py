@@ -1,5 +1,5 @@
 """ Découverte par IP : normalisation des adresses (démon et PHP), adresses interrogées par PyChromecast, commande « Découverte »,
-recherche par IP (fenêtre « Ajouter par IP »).
+recherche par IP (fenêtre « Scan (IP) »).
 Lancement depuis resources/ttscastd :  python -m unittest discover -s tests -t .
 Tests sur appareils réels (ignorés par défaut) : définir TTSCAST_TEST_HOSTS avec des adresses d'appareils Cast du réseau, séparées
 par des virgules (ex. TTSCAST_TEST_HOSTS=192.168.1.20,192.168.1.21), et optionnellement TTSCAST_TEST_HOSTNAME avec un nom d'hôte
@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import types as pytypes
 import unittest
+from unittest import mock
 from uuid import UUID
 
 from pychromecast.models import HostServiceInfo, MDNSServiceInfo
@@ -137,6 +138,15 @@ class DiscoveryTest(unittest.TestCase):
         self.assertEqual(myCast.discoveryOf(chromecast), 'IP')
 
 
+def fakeDeviceInfo(uuid, name, multizone=True):
+    return pytypes.SimpleNamespace(uuid=uuid, friendly_name=name, model_name='Google Nest Mini', manufacturer='Google Inc.',
+                                   cast_type='audio', multizone_supported=multizone)
+
+
+def fakeGroup(uuid, name, host, port):
+    return pytypes.SimpleNamespace(uuid=uuid, friendly_name=name, host=host, port=port)
+
+
 class SearchHostsTest(unittest.TestCase):
     def setUp(self):
         resetDaemonState()
@@ -146,33 +156,77 @@ class SearchHostsTest(unittest.TestCase):
 
     def testDisabledOption(self):
         myConfig.ipDiscoveryEnabled = False
-        self.assertEqual(myCast.handleSearchHosts({'hosts': ['192.168.2.71']}), {'error': 'disabled', 'results': []})
+        self.assertEqual(myCast.searchHosts(['192.168.2.71']), {'error': 'disabled', 'devices': [], 'errors': [], 'groupsNotAdded': []})
 
     def testInvalidAndUnresolvedInputs(self):
-        results = myCast.handleSearchHosts({'hosts': ['fe80::1', '999.1.1.1', 'nom-inexistant.invalid']})['results']
-        reasons = {r['input']: r['reason'] for r in results}
+        result = myCast.searchHosts(['fe80::1', '999.1.1.1', 'nom-inexistant.invalid'])
+        reasons = {r['input']: r['reason'] for r in result['errors']}
         self.assertEqual(reasons, {'fe80::1': 'invalid', '999.1.1.1': 'invalid', 'nom-inexistant.invalid': 'unresolved'})
+        self.assertEqual(result['devices'], [])
+
+    def testGroupRule(self):
+        """ Groupe hébergé à l'adresse saisie (port fourni) : ajouté avec cette adresse ; hébergé ailleurs : signalé seulement ;
+        paire stéréo (sans hôte) : ignorée ; appareil saisi sous deux adresses : un seul résultat """
+        hub, bain, local, remote, stereo = UUID(int=11), UUID(int=12), UUID(int=21), UUID(int=22), UUID(int=23)
+        infos = {
+            '192.168.2.73': fakeDeviceInfo(hub, 'Hub'),
+            '::ffff:192.168.2.73': fakeDeviceInfo(hub, 'Hub'),
+            '192.168.2.71': fakeDeviceInfo(bain, 'Bain', multizone=False),
+            '192.168.2.99': None,
+        }
+        multizone = pytypes.SimpleNamespace(
+            dynamic_groups=[],
+            groups=[fakeGroup(local, 'Maison', '192.168.2.73', 32187), fakeGroup(remote, 'Étage', '192.168.2.66', None),
+                    fakeGroup(stereo, 'Paire', None, None)])
+        with mock.patch.object(ttscastd, 'get_device_info', side_effect=lambda host, **kw: infos[host]), \
+                mock.patch.object(ttscastd, 'get_multizone_status', return_value=multizone) as getMultizone, \
+                mock.patch.object(myCast, '_registerHostDevice', staticmethod(lambda entry: None)):
+            result = myCast.searchHosts(['192.168.2.73', '::ffff:192.168.2.73', '192.168.2.71', '192.168.2.99'])
+
+        self.assertEqual(getMultizone.call_count, 1, 'Bain ne gère pas le multizone ; Hub dédoublonné (normalisé en IPv4)')
+        devices = {d['uuid']: d for d in result['devices']}
+        self.assertEqual(set(devices), {str(hub), str(bain), str(local)})
+        self.assertEqual((devices[str(local)]['type'], devices[str(local)]['host'], devices[str(local)]['port']), ('group', '192.168.2.73', 32187))
+        self.assertTrue(all(d['updatedBy'] == 'ip' for d in result['devices']))
+        self.assertEqual(result['groupsNotAdded'], [{'uuid': str(remote), 'friendly_name': 'Étage', 'host': '192.168.2.66'}])
+        self.assertEqual(result['errors'], [{'input': '192.168.2.99', 'reason': 'noDevice'}])
+
+    def testRunHostSearchSendsTheReport(self):
+        sent = []
+        with mock.patch.object(myCast, 'searchHosts', staticmethod(lambda inputs: {'devices': [], 'errors': [], 'groupsNotAdded': []})), \
+                mock.patch.object(ttscastd.Comm, 'sendToJeedom', pytypes.SimpleNamespace(send_change_immediate=sent.append), create=True):
+            myCast.runHostSearch('abc', ['192.168.2.71'])
+        self.assertEqual(sent, [{'hostSearch': {'devices': [], 'errors': [], 'groupsNotAdded': [], 'searchId': 'abc'}}])
+
+    def testRunHostSearchReportsAnException(self):
+        sent = []
+        with mock.patch.object(myCast, 'searchHosts', staticmethod(mock.Mock(side_effect=RuntimeError('boom')))), \
+                mock.patch.object(ttscastd.Comm, 'sendToJeedom', pytypes.SimpleNamespace(send_change_immediate=sent.append), create=True):
+            myCast.runHostSearch('abc', [])
+        self.assertEqual(sent[0]['hostSearch']['error'], 'exception')
+        self.assertEqual(sent[0]['hostSearch']['searchId'], 'abc')
 
     @unittest.skipUnless(os.environ.get('TTSCAST_TEST_HOSTS'), 'TTSCAST_TEST_HOSTS non défini (adresses d\'appareils Cast réels)')
     def testRealDevices(self):
         hosts = [h.strip() for h in os.environ['TTSCAST_TEST_HOSTS'].split(',') if h.strip()]
-        results = myCast.handleSearchHosts({'hosts': hosts + hosts[:1]})['results']  # doublon volontaire
-        found = [r for r in results if r['type'] != 'error']
-        self.assertTrue(found, results)
-        self.assertEqual(len({r['uuid'] for r in found}), len(found), 'résultats dédoublonnés par UUID')
-        for result in found:
-            self.assertIn(result['type'], ('device', 'group'))
-            self.assertTrue(result['port'])
-            self.assertIn(UUID(result['uuid']), myConfig.NETCAST_DEVICES, 'ajouté aux appareils connus')
-        for result in (r for r in found if r['type'] == 'group'):
-            self.assertNotEqual(result['port'], 8009, 'port propre au groupe')
+        result = myCast.searchHosts(hosts + hosts[:1])  # doublon volontaire
+        found = result['devices']
+        self.assertTrue(found, result)
+        self.assertEqual(len({d['uuid'] for d in found}), len(found), 'résultats dédoublonnés par UUID')
+        for device in found:
+            self.assertIn(device['type'], ('device', 'group'))
+            self.assertIn(device['host'], [myCast.normalizeHost(h) for h in hosts], 'seules les adresses saisies sont retenues')
+            self.assertTrue(device['port'])
+            self.assertIn(UUID(device['uuid']), myConfig.NETCAST_DEVICES, 'ajouté aux appareils connus')
+        for device in (d for d in found if d['type'] == 'group'):
+            self.assertNotEqual(device['port'], 8009, 'port propre au groupe')
 
     @unittest.skipUnless(os.environ.get('TTSCAST_TEST_HOSTNAME'), 'TTSCAST_TEST_HOSTNAME non défini (nom d\'hôte d\'un appareil Cast réel)')
     def testRealDeviceByHostname(self):
         hostname = myCast.normalizeHost(os.environ['TTSCAST_TEST_HOSTNAME'])
-        results = myCast.handleSearchHosts({'hosts': [hostname]})['results']
-        device = next((r for r in results if r['type'] == 'device'), None)
-        self.assertIsNotNone(device, results)
+        result = myCast.searchHosts([hostname])
+        device = next((d for d in result['devices'] if d['type'] == 'device'), None)
+        self.assertIsNotNone(device, result)
         self.assertEqual(device['host'], hostname, 'adresse conservée sous forme de nom')
         chromecast = myConfig.NETCAST_DEVICES[UUID(device['uuid'])]
         myCast.castConnect(chromecast, timeout=15)  # connexion Cast par le nom (résolu par le système)
