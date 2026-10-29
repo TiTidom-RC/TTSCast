@@ -19,19 +19,18 @@ foreach (eqLogic::byType('ttscast') as $eqLogic) {
     </span>
 </div>
 
-<div style="display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; margin-bottom:10px;">
-    <textarea class="form-control" id="ta_ttscastHosts" rows="4" style="flex:1; min-width:250px; font-family:monospace;" placeholder="192.168.1.20&#10;192.168.1.21, 192.168.1.22&#10;2001:db8::20&#10;nest-salon.lan"></textarea>
-    <div style="display:flex; flex-direction:column; gap:6px;">
-        <a class="btn btn-primary btn-sm" id="bt_ttscastSearchHosts">
-            <i class="fas fa-network-wired"></i> {{Lancer le Scan (IP)}}
-        </a>
-        <a class="btn btn-default btn-sm<?php echo (count($ipHosts) == 0) ? ' disabled' : ''; ?>" id="bt_ttscastAddIpHosts"
-            data-hosts="<?php echo htmlspecialchars(json_encode($ipHosts), ENT_QUOTES, 'UTF-8'); ?>"
-            title="<?php echo (count($ipHosts) == 0) ? '{{Aucun équipement mis à jour via son adresse IP}}' : '{{Ajoute à la saisie l\'adresse des équipements mis à jour via leur adresse IP (badge IP), actifs ou non : pour les mettre à jour, ou vérifier qu\'ils répondent}}'; ?>">
-            <i class="fas fa-list"></i> {{Ajouter les adresses des équipements IP}}
-        </a>
-    </div>
+<div style="display:flex; gap:8px; justify-content:space-between; flex-wrap:wrap; margin-bottom:8px;">
+    <a class="btn btn-default btn-sm<?php echo (count($ipHosts) == 0) ? ' disabled' : ''; ?>" id="bt_ttscastAddIpHosts"
+        data-hosts="<?php echo htmlspecialchars(json_encode($ipHosts), ENT_QUOTES, 'UTF-8'); ?>"
+        title="<?php echo (count($ipHosts) == 0) ? '{{Aucun équipement mis à jour via son adresse IP}}' : '{{Ajoute à la saisie l\'adresse des équipements mis à jour via leur adresse IP (badge IP), actifs ou non : pour les mettre à jour, ou vérifier qu\'ils répondent}}'; ?>">
+        <i class="fas fa-list"></i> {{Ajouter les adresses des équipements IP}}
+    </a>
+    <a class="btn btn-success btn-sm" id="bt_ttscastSearchHosts">
+        <i class="fas fa-network-wired"></i> {{Lancer le Scan (IP)}}
+    </a>
 </div>
+
+<textarea class="form-control" id="ta_ttscastHosts" rows="5" style="width:100%; font-family:monospace; margin-bottom:10px;" placeholder="192.168.1.20&#10;192.168.1.21, 192.168.1.22&#10;2001:db8::20&#10;nest-salon.lan"></textarea>
 
 <div id="div_ttscastHostsResults" style="display:none;">
     <table class="table table-bordered table-condensed" style="width:100%; table-layout:fixed;">

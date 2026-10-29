@@ -299,7 +299,8 @@ class ttscast extends eqLogic
     }
 
     // Adresse normalisée, sinon false (même règles que normalizeHost du démon) :
-    // - adresse IPv4 / IPv6 (crochets IPv6 acceptés), hors link-local (169.254.x.x, fe80::/10)
+    // - adresse IPv4 / IPv6 (crochets IPv6 acceptés) en forme canonique (minuscules, zéros compressés), IPv6 mappée ramenée en IPv4 ;
+    //   link-local (169.254.x.x, fe80::/10), adresse non spécifiée (0.0.0.0, ::) et multicast refusées
     // - nom d'hôte (RFC 1123) en minuscules, point final retiré ; une chaîne de chiffres et de points qui n'est pas une IP valide est refusée
     public static function normalizeHostAddress($_host) {
         $host = trim(trim((string) $_host), '[]');
@@ -307,7 +308,14 @@ class ttscast extends eqLogic
             return false;
         }
         if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-            if (strpos($host, '169.254.') === 0 || preg_match('/^fe[89ab][0-9a-f]:/i', $host)) {
+            // Forme canonique, identique à celle du démon : une même adresse ne doit pas être vue comme un changement
+            $host = inet_ntop(inet_pton($host));
+            if (stripos($host, '::ffff:') === 0 && filter_var(substr($host, 7), FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+                $host = substr($host, 7);
+            }
+            if (strpos($host, '169.254.') === 0 || preg_match('/^fe[89ab][0-9a-f]:/i', $host)
+                || $host === '0.0.0.0' || $host === '::'
+                || preg_match('/^(22[4-9]|23[0-9])\./', $host) || preg_match('/^ff[0-9a-f]{2}:/i', $host)) {
                 return false;
             }
             return $host;

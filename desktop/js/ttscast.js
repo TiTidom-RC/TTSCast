@@ -178,9 +178,9 @@ document.body.addEventListener('click', (event) => {
       id: 'md_addHostsTtscast',
       title: '{{Scan (IP)}}',
       contentUrl: 'index.php?v=d&plugin=ttscast&modal=addhosts.ttscast',
-      width: '70%',
-      height: '70%',
-      top: '15vh',
+      width: '50%',
+      height: '60%',
+      top: '20vh',
       onClose: function() {
         // Équipements ajoutés / mis à jour : rechargement pour afficher les nouvelles vignettes (avec leur badge « IP »)
         if (typeof window.closeAddHosts === 'function' && window.closeAddHosts()) {

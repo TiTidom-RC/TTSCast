@@ -29,6 +29,13 @@ PHP_CLASS = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'core', 'c
 NORMALIZE_CASES = {
     ' 192.168.2.75 ': '192.168.2.75',
     '[2a01:e0a::1]': '2a01:e0a::1',
+    '2A01:0E0A:0000::1': '2a01:e0a::1',   # forme canonique : minuscules, zéros compressés
+    '::ffff:192.168.2.73': '192.168.2.73',  # IPv6 mappée ramenée en IPv4
+    '::ffff:c0a8:249': '192.168.2.73',
+    '0.0.0.0': None,                      # non spécifiée
+    '::': None,
+    '224.0.0.251': None,                  # multicast
+    'ff02::1': None,
     'fe80::1%eth0': None,                 # link-local (IPv6, avec interface)
     '169.254.1.1': None,                  # link-local (IPv4)
     'Nest-Salon.Lan.': 'nest-salon.lan',  # nom d'hôte : minuscules, point final retiré
@@ -63,7 +70,8 @@ class NormalizeHostTest(unittest.TestCase):
 
     @unittest.skipUnless(shutil.which('php'), 'php non disponible')
     def testPhpRulesAreTheSame(self):
-        source = open(PHP_CLASS, encoding='utf-8').read()
+        with open(PHP_CLASS, encoding='utf-8') as phpClass:
+            source = phpClass.read()
         function = re.search(r'public static function normalizeHostAddress\(\$_host\) \{.*?\n    \}\n', source, re.S).group(0)
         script = function.replace('public static function', 'function') + \
             '$out = array(); foreach (json_decode(stream_get_contents(STDIN), true) as $c) { $r = normalizeHostAddress($c); $out[] = ($r === false) ? null : $r; }' \

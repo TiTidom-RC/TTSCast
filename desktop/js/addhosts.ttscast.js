@@ -199,6 +199,10 @@ window.initAddHosts = function() {
 // Fermeture de la fenêtre : retire l'écouteur et indique si des équipements ont été ajoutés / mis à jour (rechargement de la page)
 window.closeAddHosts = function() {
     clearTimeout(responseTimeout)
+    if (currentSearchId) {
+        // Le démon termine la recherche et les équipements sont bien ajoutés, mais le compte rendu ne sera plus affiché
+        jeedomUtils.showAlert({ message: '{{Scan (IP) en cours : rafraîchissez la page dans quelques secondes pour voir les équipements ajoutés}}', level: 'info' })
+    }
     currentSearchId = ''
     if (window.ttscastHostSearchHandler) {
         document.body.removeEventListener(EVENT_NAME, window.ttscastHostSearchHandler)
