@@ -76,18 +76,15 @@ $eqLogics = eqLogic::byType($plugin->getId());
             echo '<div class="eqLogicThumbnailContainer">';
             foreach ($eqLogics as $eqLogic) {
                 $opacity = ($eqLogic->getIsEnable()) ? '' : 'disableCard';
-                echo '<div class="eqLogicDisplayCard cursor ' . $opacity . '" data-eqLogic_id="' . $eqLogic->getId() . '">';
+                $isIp = ($eqLogic->getConfiguration('updatedBy', 'mdns') == 'ip');
+                echo '<div class="eqLogicDisplayCard cursor ' . $opacity . '" data-eqLogic_id="' . $eqLogic->getId() . '"' . ($isIp ? ' style="position:relative;"' : '') . '>';
                 echo '<img src="' . $eqLogic->getImage() . '"/>';
-                echo '<br>';
-                // Badge « IP » : équipement mis à jour via son adresse IP (badge et non label : le Core met en forme les labels du nom).
-                // Placé dans le <strong> du nom, que le Core affiche en bloc : après lui, il passerait à la ligne et serait coupé par le
-                // bas de la vignette (hauteur fixe)
-                $humanName = $eqLogic->getHumanName(true, true);
-                if ($eqLogic->getConfiguration('updatedBy', 'mdns') == 'ip') {
-                    $ipBadge = ' <span class="badge" style="font-size:9px; padding:2px 5px; vertical-align:middle; background-color:var(--al-info-color);" title="{{Mis à jour via son adresse IP}}">IP</span>';
-                    $humanName = preg_replace('#</strong>$#', $ipBadge . '</strong>', $humanName);
+                // Icône « mis à jour via IP », masquée en vue tableau ; dans un <span> pour échapper au style Core des icônes de tuile (div.cursor > i)
+                if ($isIp) {
+                    echo '<span class="hiddenAsTable" style="position:absolute; top:8px; left:8px; font-size:12px; line-height:1; color:var(--txt-color); opacity:0.6;" title="{{Mis à jour via son adresse IP}}"><i class="fas fa-network-wired"></i></span>';
                 }
-                echo '<span class="name">' . $humanName . '</span>';
+                echo '<br>';
+                echo '<span class="name">' . $eqLogic->getHumanName(true, true) . '</span>';
                 echo '<span class="hiddenAsCard displayTableRight hidden">';
                 echo ($eqLogic->getIsVisible() == 1) ? '<i class="fas fa-eye" title="{{Equipement visible}}"></i>' : '<i class="fas fa-eye-slash" title="{{Equipement non visible}}"></i>';
                 echo '</span>';
