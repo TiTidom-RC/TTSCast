@@ -88,13 +88,12 @@ try {
                 continue;
             }
             $ttscast = ttscast::byLogicalId($data['uuid'], 'ttscast');
-            if (!is_object($ttscast)) {    
+            if (!is_object($ttscast)) {
                 log::add('ttscast','debug','[CALLBACK] NEW TTSCast détecté :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
                 /* event::add('ttscast::newDevice', array(
                     'friendly_name' => $data['friendly_name'],
                     'newone' => '1'
                 )); */
-                $newttscast = ttscast::createAndUpdCastFromScan($data);
             }
             else {
                 log::add('ttscast','debug','[CALLBACK] TTSCast Update :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ')');
@@ -102,7 +101,11 @@ try {
                     'friendly_name' => $data['friendly_name'],
                     'newone' => '0'
                 )); */
-                $updttscast = ttscast::createAndUpdCastFromScan($data);
+            }
+            try {
+                ttscast::createAndUpdCastFromScan($data);
+            } catch (Exception $e) {  // un équipement en erreur ne doit pas interrompre le traitement des autres
+                log::add('ttscast', 'error', '[CALLBACK] TTSCast Scan :: ' . $data['friendly_name'] . ' (' . $data['uuid'] . ') :: ' . $e->getMessage());
             }
         }
     } elseif (isset($result['hostSearch'])) {

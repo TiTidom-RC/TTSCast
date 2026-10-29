@@ -171,61 +171,50 @@ class ScanDataTest(unittest.TestCase):
 
 
 class SyncDataTest(unittest.TestCase):
-    """ Synchronisation des fiches : champs du Scan toujours fournis, adresse seulement si elle est fiable et utile """
+    """ Synchronisation des fiches (le Scan en continu) : nom, adresse et port là où l'appareil est actuellement vu """
 
     OLD, NEW = '192.168.2.20', '192.168.2.35'
 
     def setUp(self):
         resetDaemonState()
-        self.hostBrowser = FakeHostBrowser()
         self.uuid, self.chromecast = newCast(name='Salon', host=self.OLD, port=8009)
 
     def tearDown(self):
         stopAllConnections()
 
-    def browse(self, *services):
-        info = CastInfo(set(services), self.uuid, 'Google Nest Mini', 'Salon renommé', self.NEW, 8009, 'audio', 'Google Inc.')
-        myConfig.NETCAST_BROWSER = pytypes.SimpleNamespace(host_browser=self.hostBrowser, devices={self.uuid: info})
+    def browse(self, services, host=NEW, port=8009, name='Salon renommé'):
+        info = CastInfo(set(services), self.uuid, 'Google Nest Mini', name, host, port, 'audio', 'Google Inc.')
+        myConfig.NETCAST_BROWSER = pytypes.SimpleNamespace(host_browser=FakeHostBrowser(), devices={self.uuid: info})
 
-    def failures(self, count):
-        self.hostBrowser._known_hosts[self.OLD] = pytypes.SimpleNamespace(failcount=count)
+    def testNewAddressSeenInMdns(self):
+        # DHCP : le mDNS annonce la nouvelle adresse (vaut aussi pour une TV, interrogée une seule fois par IP)
+        self.browse([MDNSServiceInfo('x')])
+        self.assertEqual(myCast.syncDataOf(self.chromecast), {'friendly_name': 'Salon renommé', 'host': self.NEW, 'port': 8009})
 
-    def testMdnsWithoutIpDiscovery(self):
-        myConfig.ipDiscoveryEnabled = False
-        self.browse(MDNSServiceInfo('x'))
-        sync = myCast.syncDataOf(self.chromecast)
-        self.assertEqual((sync['host'], sync['friendly_name'], sync['port']), (self.NEW, 'Salon renommé', 8009))
+    def testGroupMovedToAnotherSpeaker(self):
+        # Groupe vu uniquement par IP, désormais hébergé par une autre enceinte : adresse et port restent cohérents
+        self.browse([HostServiceInfo(self.NEW, 32190)], port=32190, name='Maison')
+        self.assertEqual(myCast.syncDataOf(self.chromecast), {'friendly_name': 'Maison', 'host': self.NEW, 'port': 32190})
 
-    def testFicheAddressStillAnswering(self):
-        myCast.setIpHost(self.uuid, self.OLD)
-        self.browse(MDNSServiceInfo('x'), HostServiceInfo(self.OLD, 8009))
-        self.failures(0)
-        self.assertNotIn('host', myCast.syncDataOf(self.chromecast))
+    def testDeviceNoLongerSeen(self):
+        # Appareil vu uniquement par IP dont l'adresse ne répond plus : plus aucun service, rien n'est synchronisé
+        self.browse([])
+        self.assertEqual(myCast.syncDataOf(self.chromecast), {})
 
-    def testFicheAddressNotPolledYet(self):
-        # Démarrage du démon : adresse pas encore interrogée, elle ne doit pas être remplacée
-        myCast.setIpHost(self.uuid, self.OLD)
-        self.browse(MDNSServiceInfo('x'))
-        self.hostBrowser._known_hosts.pop(self.OLD, None)
-        self.assertNotIn('host', myCast.syncDataOf(self.chromecast))
-
-    def testFicheAddressDead(self):
-        myCast.setIpHost(self.uuid, self.OLD)
-        self.browse(MDNSServiceInfo('x'))
-        self.failures(ttscastd.HOSTLISTENER_MAX_FAIL)
-        self.assertEqual(myCast.syncDataOf(self.chromecast)['host'], self.NEW)
-
-    def testFicheWithoutAddress(self):
-        self.browse(MDNSServiceInfo('x'))
-        self.assertEqual(myCast.syncDataOf(self.chromecast)['host'], self.NEW)
-
-    def testIpOnlyDeviceGivesNoAddress(self):
-        myCast.setIpHost(self.uuid, self.OLD)
-        self.browse(HostServiceInfo(self.NEW, 8009))
-        self.failures(ttscastd.HOSTLISTENER_MAX_FAIL)
+    def testLinkLocalAddressIsOmitted(self):
+        self.browse([MDNSServiceInfo('x')], host='fe80::1%eth0')
         sync = myCast.syncDataOf(self.chromecast)
         self.assertNotIn('host', sync)
         self.assertEqual(sync['friendly_name'], 'Salon renommé')
+
+    def testMissingNameFallsBackToTheObject(self):
+        self.browse([MDNSServiceInfo('x')], name=None)
+        self.assertEqual(myCast.syncDataOf(self.chromecast)['friendly_name'], 'Salon')
+
+    def testDeviceNotYetSeenByTheBrowser(self):
+        # Ajouté par le Scan (IP), pas encore vu par le navigateur : informations de l'objet lui-même
+        myConfig.NETCAST_BROWSER = pytypes.SimpleNamespace(host_browser=FakeHostBrowser(), devices={})
+        self.assertEqual(myCast.syncDataOf(self.chromecast), {'friendly_name': 'Salon', 'host': self.OLD, 'port': 8009})
 
 
 def fakeDeviceInfo(uuid, name, multizone=True):
