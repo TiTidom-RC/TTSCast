@@ -787,7 +787,7 @@ class ttscast extends eqLogic
 
     }
 
-    public function disableCastToDaemon()
+    public function disableCastToDaemon($_setOffline = true)
     {
         if (in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
             return;
@@ -800,6 +800,14 @@ class ttscast extends eqLogic
                 'friendly_name' => $this->getConfiguration('friendly_name')
             );
             self::sendToDaemon($value);
+        }
+        // Équipement désactivé : le démon le déconnecte, et cron5 ne traite que les équipements actifs -> passage hors ligne ici.
+        // Inutile à la suppression ($_setOffline = false depuis preRemove).
+        if ($_setOffline) {
+            $cmd = $this->getCmd('info', 'online');
+            if (is_object($cmd)) {
+                $cmd->event('0');
+            }
         }
     }
 
@@ -2414,7 +2422,7 @@ class ttscast extends eqLogic
     public function preRemove() {
         // Ne pas notifier le démon pour les équipements virtuels IA
         if (!in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
-            $this->disableCastToDaemon();
+            $this->disableCastToDaemon(false);
         }
     }
 

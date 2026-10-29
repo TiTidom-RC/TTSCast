@@ -1654,7 +1654,8 @@ class TTSCast:
             volumeBeforePlay = None
             groupSnapshot = None
             isGroup = False
-            
+            testConnectedUUID = None
+
             try:
                 chromecasts = [mycast for mycast in list(myConfig.NETCAST_DEVICES.values()) if mycast.name == googleName]
                 if not chromecasts:
@@ -1662,7 +1663,9 @@ class TTSCast:
                     return False
                 cast = chromecasts[0]
                 logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
-                # Test possible sur un appareil non actif dans Jeedom (donc non connecté) : connexion à la demande
+                # Test possible sur un appareil non actif dans Jeedom (donc non connecté) : connexion à la demande, refermée en fin de test
+                if not cast.socket_client.is_alive():
+                    testConnectedUUID = cast.uuid
                 myCast.castConnect(cast, timeout=10)
 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
@@ -1763,7 +1766,10 @@ class TTSCast:
                 cast = None
                 chromecasts = None
                 return False
-        
+            finally:
+                if testConnectedUUID is not None:
+                    myCast.releaseTestCast(testConnectedUUID)
+
         elif googleUUID != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
             
@@ -3861,17 +3867,24 @@ class myCast:
 
     @staticmethod
     def isActiveGroupMember(uuid):
-        """ True si l'appareil est membre d'au moins un groupe actif dans Jeedom """
-        uuidStr = str(uuid)
-        return any(uuidStr in mz.members for mz in list(myConfig.NETCAST_GROUPS.values()))  # copie : modifié par la découverte / castRemove
+        """ True si l'appareil (UUID) est membre d'au moins un groupe actif dans Jeedom """
+        # Comparaison sur des UUID et non des chaînes : les appareils annoncent leurs membres avec ou sans tirets
+        for mz in list(myConfig.NETCAST_GROUPS.values()):  # copie : modifié par la découverte / castRemove
+            for member in mz.members:
+                try:
+                    if UUID(member) == uuid:
+                        return True
+                except ValueError:
+                    continue
+        return False
 
     @staticmethod
     def connectGroupMember(uuid):
         """ Connexion en amont (sans listeners) d'un membre de groupe actif non actif dans Jeedom, pour régler son volume lors des diffusions sur le groupe.
         Déclenchée par les événements (membre annoncé par le groupe, appareil découvert), jamais lors d'une diffusion : aucune latence ajoutée.
         Pas de déconnexion si l'appareil quitte le groupe (bascules internes de Google en rafale) : seule la désactivation dans Jeedom déconnecte. """
-        if uuid in myConfig.GCAST_UUID or not myCast.isActiveGroupMember(uuid):
-            return  # actif dans Jeedom (connecté avec ses listeners, cf. castListeners) ou membre d'aucun groupe actif
+        if myConfig.IS_ENDING or uuid in myConfig.GCAST_UUID or not myCast.isActiveGroupMember(uuid):
+            return  # arrêt du démon en cours, actif dans Jeedom (connecté avec ses listeners, cf. castListeners) ou membre d'aucun groupe actif
         chromecast = myConfig.NETCAST_DEVICES.get(uuid)
         if chromecast is None or chromecast.socket_client.is_alive():
             return  # pas encore découvert (castCallBack s'en chargera) ou déjà connecté
@@ -3881,6 +3894,15 @@ class myCast:
         except Exception as e:
             logging.error('[DAEMON][NETCAST][GroupMember] Exception (%s) :: %s', str(chromecast.name), e)
             logging.debug(traceback.format_exc())
+
+    @staticmethod
+    def releaseTestCast(uuid):
+        """ Referme la connexion ouverte pour un TTS de test, si l'appareil n'est ni actif dans Jeedom ni membre d'un groupe actif
+        (sinon elle resterait ouverte jusqu'au redémarrage du démon) """
+        if uuid in myConfig.GCAST_UUID or myCast.isActiveGroupMember(uuid):
+            return
+        logging.debug('[DAEMON][Cast] Test terminé :: fermeture de la connexion ouverte pour le test (%s)', uuid)
+        myCast.castRemove(uuid=uuid)
 
     @staticmethod
     def _castListeners(chromecast=None, uuid=None):
@@ -3991,8 +4013,8 @@ class myCast:
             logging.error('[DAEMON][NETCAST][CastRemove] Exception (%s) :: %s', str(chromecast.name), e)
             logging.debug(traceback.format_exc())
 
-        # État hors ligne envoyé ici (déterministe) : le DISCONNECTED tardif de l'ancien objet est ignoré (cf. isStaleCast)
-        Comm.sendToJeedom.add_changes('castsRT::' + str(uuid), {'uuid': str(uuid), 'realtime': 1, 'status_type': 'connect', 'online': '0'})  # type: ignore
+        # Rien n'est envoyé à Jeedom (le DISCONNECTED tardif de l'ancien objet est ignoré, cf. isStaleCast) : l'équipement peut déjà
+        # être supprimé. Le passage hors ligne d'un équipement désactivé est fait côté PHP (disableCastToDaemon)
 
         # Toujours membre d'un groupe actif : la copie neuve est reconnectée sans listeners, pour le volume des diffusions sur le groupe
         myCast.connectGroupMember(uuid)
@@ -4268,21 +4290,45 @@ def handler(signum=None, frame=None):
 def shutdown():
     logging.info("[DAEMON] Shutdown :: Begin...")
     myConfig.IS_ENDING = True  # type: ignore
-    logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
+    # Chaque étape a son propre try : l'échec de l'une n'empêche pas les suivantes
+    # 1. Arrêt de la découverte en premier : aucune nouvelle connexion ne doit être lancée pendant l'arrêt
     try:
-        for chromecast in list(myConfig.NETCAST_DEVICES.values()):
-            if chromecast.socket_client.is_alive():  # ni actifs dans Jeedom ni membres d'un groupe actif : jamais connectés
-                chromecast.disconnect(timeout=5)
-        logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
-        if myConfig.NETCAST_BROWSER is not None: 
+        if myConfig.NETCAST_BROWSER is not None:
             myConfig.NETCAST_BROWSER.stop_discovery()
         logging.info("[DAEMON] Shutdown :: Browser Stop :: OK")
-        if myConfig.NETCAST_ZCONF is not None: 
+    except Exception as e:
+        logging.error('[DAEMON] Shutdown :: Browser Stop :: Exception :: %s', e)
+        logging.debug(traceback.format_exc())
+
+    # 2. Déconnexion demandée à tous les appareils, puis attente avec un délai global : un appareil en cours de reconnexion
+    # (thread en attente entre deux tentatives) ne bloque pas les autres et ne fait plus échouer la suite de l'arrêt
+    logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
+    try:
+        connected = [c for c in list(myConfig.NETCAST_DEVICES.values()) if c.socket_client.is_alive()]  # les autres n'ont jamais été connectés
+        for chromecast in connected:
+            try:
+                chromecast.socket_client.disconnect()
+            except Exception as e:
+                logging.error('[DAEMON] Shutdown :: Disconnect (%s) :: Exception :: %s', chromecast.name, e)
+        deadline = time.monotonic() + 6  # > délai entre deux tentatives de reconnexion (retry_wait = 5 s)
+        for chromecast in connected:
+            chromecast.socket_client.join(timeout=max(0.0, deadline - time.monotonic()))
+        notStopped = [c.name for c in connected if c.socket_client.is_alive()]
+        if notStopped:
+            logging.warning('[DAEMON] Shutdown :: Devices Disconnect :: Connexions non terminées dans le délai :: %s', ', '.join(notStopped))
+        else:
+            logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK (%d)", len(connected))
+    except Exception as e:
+        logging.error('[DAEMON] Shutdown :: Devices Disconnect :: Exception :: %s', e)
+        logging.debug(traceback.format_exc())
+
+    # 3. Zeroconf fermé en dernier : il sert encore aux appareils pendant leur déconnexion
+    try:
+        if myConfig.NETCAST_ZCONF is not None:
             myConfig.NETCAST_ZCONF.close()
         logging.info("[DAEMON] Shutdown :: ZeroConf Close :: OK")
     except Exception as e:
-        # pass
-        logging.error('[DAEMON] Exception on Shutdown :: %s', e)
+        logging.error('[DAEMON] Shutdown :: ZeroConf Close :: Exception :: %s', e)
         logging.debug(traceback.format_exc())
     logging.debug("[DAEMON] Removing PID file %s", myConfig.pidFile)
     try:
