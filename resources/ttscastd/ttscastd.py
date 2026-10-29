@@ -61,6 +61,7 @@ try:
     from pychromecast.socket_client import ConnectionStatusListener
     from pychromecast.controllers import dashcast
     from pychromecast.controllers.multizone import MultizoneController, MultiZoneControllerListener
+    from pychromecast.error import NotConnected
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
     sys.exit(1)
@@ -1953,7 +1954,7 @@ class TTSCast:
         Exécute call(timeoutMs) — un appel Gemini — en relançant les erreurs transitoires rapides, sans jamais dépasser
         budgetSeconds au total : le délai de l'appel reste celui attendu par les appelants (PHP, file d'attente).
         - Relancées : erreurs Gemini de code myConfig.geminiRetryHttpCodes et erreurs de connexion. Jamais un timeout (budget épuisé).
-        - Chaque tentative reçoit le temps restant comme délai HTTP. Attente : retryDelay indiqué par Gemini, sinon myConfig.geminiRetryDelays.
+        - call reçoit le temps restant (en ms), à utiliser comme délai HTTP de la tentative. Attente : retryDelay indiqué par Gemini, sinon myConfig.geminiRetryDelays.
         - Toute autre erreur, ou la dernière, est relevée telle quelle.
         """
         deadline = time.monotonic() + budgetSeconds
@@ -1990,7 +1991,7 @@ class TTSCast:
         try:
             _aiModelId, _aiThinkingLevel = TTSCast.resolveAiModelAndThinking(_aiCustomModel, _aiCustomThinking)
             _aiTimeout = myConfig.aiMaxTimeout if _aiThinkingLevel else myConfig.aiBaseTimeout  # secondes, relances comprises — la réflexion (et la recherche Google) allonge la durée de l'appel
-            if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProject') or myConfig.aiApiKey != 'noKey':
+            if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProjectID') or myConfig.aiApiKey != 'noKey':
                 # Initialisation du client Gemini
                 credentials = None
                 client = None
@@ -2195,11 +2196,13 @@ class TTSCast:
             if streaming:
                 # ── Mode streaming : pré-lecture du premier chunk ─────────────
                 # La relance ne couvre que l'ouverture du flux, jusqu'au premier chunk audio : une coupure en cours de lecture n'est pas relancée
-                def openStream(timeoutMs):
+                def openStream(_timeoutMs):
+                    # Délai complet à chaque tentative (et non le temps restant) : pour httpx il s'applique à chaque lecture,
+                    # donc aussi entre les chunks pendant toute la diffusion du flux (geminiTTSStream)
                     streamIterator = client.models.generate_content_stream(
                         model=modelId,
                         contents=prompt,
-                        config=TTSCast.geminiConfigWithTimeout(genConfig, timeoutMs),
+                        config=TTSCast.geminiConfigWithTimeout(genConfig, myConfig.geminiTTSTimeout * 1000),
                     )
                     for chunk in streamIterator:
                         if (chunk.candidates
@@ -3908,9 +3911,13 @@ class myCast:
                     chromecast.register_handler(mz)
                     mz.register_listener(myCast.MyMultizoneStatusListener(chromecast.name, chromecast))
                     myConfig.NETCAST_GROUPS[uuid] = mz
-                    # On force une update pour peupler la liste initialement
-                    mz.update_members()
                     logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: MultizoneController added', str(chromecast.name))
+                    # On force une update pour peupler la liste initialement
+                    try:
+                        mz.update_members()
+                    except NotConnected:
+                        # Groupe encore en cours de connexion : les membres seront lus à la connexion (MyConnectionStatusListener)
+                        logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Group not connected yet, members will be read on connection', str(chromecast.name))
                 except Exception as e:
                     logging.error('[DAEMON][NETCAST][CastListeners][Multizone] Exception (%s) :: %s', str(chromecast.name), e)
                     logging.debug(traceback.format_exc())
