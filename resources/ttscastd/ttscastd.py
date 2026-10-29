@@ -1662,10 +1662,12 @@ class TTSCast:
                     return False
                 cast = chromecasts[0]
                 logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
-                
-                # Si DashCast alors sortir de l'appli avant sinon cela plante 
+                # Test possible sur un appareil non actif dans Jeedom (donc non connecté) : connexion à la demande
+                myCast.castConnect(cast, timeout=10)
+
+                # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
-            
+
                 volumeBeforePlay = cast.status.volume_level
 
                 groupSnapshot = Functions.getGroupSnapshot(cast)
@@ -2792,11 +2794,14 @@ class Functions:
                         logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID string: {member_uuid_str}")
                         continue
 
-                    if member_uuid in myConfig.NETCAST_DEVICES:
-                        dev = myConfig.NETCAST_DEVICES[member_uuid]
+                    dev = myConfig.NETCAST_DEVICES.get(member_uuid)
+                    if dev is None:
+                        logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
+                    elif dev.socket_client.is_connected and dev.status is not None:
                         snapshot[member_uuid] = dev.status.volume_level
                     else:
-                        logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
+                        # Membres connectés en amont (cf. connectGroupMember) : jamais d'attente ici, pour ne pas retarder la diffusion
+                        logging.warning(f"[DAEMON][GroupSnapshot] Member {dev.name} ({member_uuid}) not connected, volume not managed")
             else:
                 logging.debug(f"[DAEMON][GroupSnapshot] Cast {cast.name} ({cast.uuid}) not in NETCAST_GROUPS")
         except Exception as e:
@@ -3825,6 +3830,7 @@ class myCast:
     # Sérialise l'inscription et la désactivation des listeners : castListeners est appelé depuis le thread des messages Jeedom (addcast)
     # et depuis celui de la découverte (castCallBack) — sans verrou, les deux pourraient inscrire chacun leurs listeners pour le même appareil
     _listenersLock = threading.RLock()
+    _connectLock = threading.Lock()
 
     @staticmethod
     def castListeners(chromecast=None, uuid=None):
@@ -3839,6 +3845,44 @@ class myCast:
             return myCast._castRemove(chromecast, uuid)
 
     @staticmethod
+    def isStaleCast(chromecast):
+        """ True si l'objet a été remplacé dans NETCAST_DEVICES (équipement désactivé / supprimé, cf. castRemove) : ses listeners, toujours inscrits, doivent se taire """
+        return myConfig.NETCAST_DEVICES.get(chromecast.uuid) is not chromecast
+
+    @staticmethod
+    def castConnect(chromecast, timeout=None):
+        """ Démarre la connexion du Chromecast si elle ne l'est pas déjà ; si timeout est fourni, attend qu'il soit prêt (lève RequestTimeout sinon) """
+        # Verrou : deux diffusions simultanées peuvent viser le même membre de groupe non connecté (un thread ne démarre qu'une fois)
+        with myCast._connectLock:
+            if not chromecast.socket_client.is_alive():
+                chromecast.start()
+        if timeout is not None:
+            chromecast.wait(timeout=timeout)
+
+    @staticmethod
+    def isActiveGroupMember(uuid):
+        """ True si l'appareil est membre d'au moins un groupe actif dans Jeedom """
+        uuidStr = str(uuid)
+        return any(uuidStr in mz.members for mz in list(myConfig.NETCAST_GROUPS.values()))  # copie : modifié par la découverte / castRemove
+
+    @staticmethod
+    def connectGroupMember(uuid):
+        """ Connexion en amont (sans listeners) d'un membre de groupe actif non actif dans Jeedom, pour régler son volume lors des diffusions sur le groupe.
+        Déclenchée par les événements (membre annoncé par le groupe, appareil découvert), jamais lors d'une diffusion : aucune latence ajoutée.
+        Pas de déconnexion si l'appareil quitte le groupe (bascules internes de Google en rafale) : seule la désactivation dans Jeedom déconnecte. """
+        if uuid in myConfig.GCAST_UUID or not myCast.isActiveGroupMember(uuid):
+            return  # actif dans Jeedom (connecté avec ses listeners, cf. castListeners) ou membre d'aucun groupe actif
+        chromecast = myConfig.NETCAST_DEVICES.get(uuid)
+        if chromecast is None or chromecast.socket_client.is_alive():
+            return  # pas encore découvert (castCallBack s'en chargera) ou déjà connecté
+        try:
+            myCast.castConnect(chromecast)
+            logging.debug('[DAEMON][NETCAST][GroupMember] Chromecast with name :: %s :: Connection started (group member, not enabled in Jeedom)', str(chromecast.name))
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][GroupMember] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
+
+    @staticmethod
     def _castListeners(chromecast=None, uuid=None):
         if not chromecast:
             if uuid in myConfig.NETCAST_DEVICES:
@@ -3847,47 +3891,33 @@ class myCast:
             else:
                 logging.debug('[DAEMON][NETCAST][CastListeners] Aucun Chromecast avec cet UUID :: %s', uuid)
                 return False
-    
-        # PyChromecast ne permet pas de désinscrire un listener receiver / média / connexion : chaque listener est inscrit
-        # une seule fois par appareil pour toute la durée de vie du démon, puis activé / désactivé (cf. castRemove).
-        if uuid not in myConfig.LISTENER_CAST:
-            try:
-                myConfig.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
-                chromecast.register_status_listener(myConfig.LISTENER_CAST[uuid])
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastListeners][CastStatus] Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
-        elif not myConfig.LISTENER_CAST[uuid].active:
-            myConfig.LISTENER_CAST[uuid].active = True
-            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Status Listener reactivated', str(chromecast.name))
-        else:
-            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Status Listener already active', str(chromecast.name))
 
-        if uuid not in myConfig.LISTENER_MEDIA:
-            try:
-                myConfig.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
-                chromecast.media_controller.register_status_listener(myConfig.LISTENER_MEDIA[uuid])
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastListeners][MediaStatus] Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
-        elif not myConfig.LISTENER_MEDIA[uuid].active:
-            myConfig.LISTENER_MEDIA[uuid].active = True
-            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Media Listener reactivated', str(chromecast.name))
-        else:
-            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Media Listener already active', str(chromecast.name))
+        # PyChromecast ne permet pas de désinscrire un listener receiver / média / connexion : ils sont liés à l'objet Chromecast,
+        # remplacé par une copie neuve lorsque l'équipement est désactivé / supprimé (cf. castRemove), ce qui les retire avec lui.
+        if uuid in myConfig.LISTENER_CAST:
+            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Listeners already active', str(chromecast.name))
+            return True
 
-        if uuid not in myConfig.LISTENER_CONNECT:
-            try:
-                myConfig.LISTENER_CONNECT[uuid] = myCast.MyConnectionStatusListener(chromecast.name, chromecast)
-                chromecast.register_connection_listener(myConfig.LISTENER_CONNECT[uuid])
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastListeners][ConnectStatus] Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
-        elif not myConfig.LISTENER_CONNECT[uuid].active:
-            myConfig.LISTENER_CONNECT[uuid].active = True
-            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Connect Listener reactivated', str(chromecast.name))
-        else:
-            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Connect Listener already active', str(chromecast.name))
+        try:
+            myConfig.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
+            chromecast.register_status_listener(myConfig.LISTENER_CAST[uuid])
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][CastListeners][CastStatus] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
+
+        try:
+            myConfig.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
+            chromecast.media_controller.register_status_listener(myConfig.LISTENER_MEDIA[uuid])
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][CastListeners][MediaStatus] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
+
+        try:
+            myConfig.LISTENER_CONNECT[uuid] = myCast.MyConnectionStatusListener(chromecast.name, chromecast)
+            chromecast.register_connection_listener(myConfig.LISTENER_CONNECT[uuid])
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][CastListeners][ConnectStatus] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
 
         # Gestion Multizone, uniquement pour les groupes configurés dans Jeedom (désinscrit réellement dans castRemove)
         if chromecast.cast_info.cast_type == 'group':
@@ -3910,6 +3940,25 @@ class myCast:
             else:
                 logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: MultizoneController already active', str(chromecast.name))
 
+        # Déjà connecté en tant que membre d'un groupe actif (cf. connectGroupMember) : le statut CONNECTED a été émis avant l'inscription
+        # des listeners, l'état courant est donc poussé ici (sinon Jeedom resterait hors ligne jusqu'au prochain scan programmé)
+        if chromecast.socket_client.is_connected:
+            Comm.sendToJeedom.add_changes('castsRT::' + str(uuid), {'uuid': str(uuid), 'realtime': 1, 'status_type': 'connect', 'online': '1'})  # type: ignore
+            if chromecast.status is not None and uuid in myConfig.LISTENER_CAST:
+                myConfig.LISTENER_CAST[uuid].new_cast_status(chromecast.status)
+            logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Already connected (group member)', str(chromecast.name))
+            return True
+
+        # Connexion lancée après l'inscription des listeners (le premier statut CONNECTED est ainsi reçu), sans attente :
+        # un équipement injoignable (TV en veille) ne bloque rien, son état en ligne / hors ligne remonte via MyConnectionStatusListener
+        try:
+            myCast.castConnect(chromecast)
+            logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Connection started', str(chromecast.name))
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][CastListeners][Connect] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
+        return True
+
     @staticmethod
     def _castRemove(chromecast=None, uuid=None):
         if not chromecast:
@@ -3918,62 +3967,61 @@ class myCast:
             else:
                 logging.debug('[DAEMON][NETCAST][CastRemove] Aucun Chromecast avec cet UUID :: %s', uuid)
                 return False
-    
-        # Listeners receiver / média / connexion : pas de désinscription possible dans PyChromecast -> désactivation
-        # (ils restent inscrits et dans LISTENER_*, castListeners les réactive si l'équipement est recréé)
-        if (uuid in myConfig.LISTENER_CAST):
-            myConfig.LISTENER_CAST[uuid].active = False
-        else:
-            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: No Status Listener', str(chromecast.name))
 
-        if (uuid in myConfig.LISTENER_MEDIA):
-            myConfig.LISTENER_MEDIA[uuid].active = False
-        else:
-            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: No Media Listener', str(chromecast.name))
+        hadListeners = myConfig.LISTENER_CAST.pop(uuid, None) is not None
+        myConfig.LISTENER_MEDIA.pop(uuid, None)
+        myConfig.LISTENER_CONNECT.pop(uuid, None)
+        myConfig.NETCAST_GROUPS.pop(uuid, None)
 
-        if (uuid in myConfig.LISTENER_CONNECT):
-            myConfig.LISTENER_CONNECT[uuid].active = False
-        else:
-            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: No Connect Listener', str(chromecast.name))
+        # Déconnexion réelle (sans attendre la fin du thread), puis remplacement par une copie neuve non connectée :
+        # PyChromecast ne permet ni de redémarrer une connexion arrêtée ni de désinscrire ses listeners, la copie repart de zéro.
+        # Elle reste dans NETCAST_DEVICES pour le scan, et peut être connectée à la demande si l'appareil est membre d'un groupe actif.
+        isAlive = chromecast.socket_client.is_alive()
+        if not (isAlive or hadListeners):
+            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Not connected, nothing to do', str(chromecast.name))
+            return True
+        try:
+            if isAlive:
+                chromecast.socket_client.disconnect()
+            myConfig.NETCAST_DEVICES[uuid] = pychromecast.get_chromecast_from_cast_info(
+                chromecast.cast_info, myConfig.NETCAST_ZCONF, tries=None, retry_wait=5, timeout=30
+            )
+            logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Disconnected', str(chromecast.name))
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][CastRemove] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
 
-        # MultizoneController : désinscription réelle (handler de namespace)
-        if (uuid in myConfig.NETCAST_GROUPS):
-            try:
-                mz = myConfig.NETCAST_GROUPS.pop(uuid)
-                chromecast.unregister_handler(mz)
-                logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: MultizoneController removed', str(chromecast.name))
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastRemove][Multizone] Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
+        # État hors ligne envoyé ici (déterministe) : le DISCONNECTED tardif de l'ancien objet est ignoré (cf. isStaleCast)
+        Comm.sendToJeedom.add_changes('castsRT::' + str(uuid), {'uuid': str(uuid), 'realtime': 1, 'status_type': 'connect', 'online': '0'})  # type: ignore
 
-        logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Listeners Deactivated', str(chromecast.name))
-
-        """ chromecast.disconnect()
-        logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Disconnected', str(chromecast.name)) """
+        # Toujours membre d'un groupe actif : la copie neuve est reconnectée sans listeners, pour le volume des diffusions sur le groupe
+        myCast.connectGroupMember(uuid)
+        return True
 
     @staticmethod
     def castCallBack(chromecast=None):
         """ Service CallBack de découverte des Google Cast """
 
-        if chromecast is not None:
-            if chromecast.uuid not in myConfig.NETCAST_DEVICES:
-                myConfig.NETCAST_DEVICES[chromecast.uuid] = chromecast
-                logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Added to NETCAST_DEVICES', str(chromecast.name))
-                logging.debug('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: %s', len(myConfig.NETCAST_DEVICES))
-            else:
-                logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
-            
-            try:
-                chromecast.wait(timeout=30)
-                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastCallBack] Chromecast Exception (%s) :: %s', str(chromecast.name), e)
-                # logging.debug(traceback.format_exc())
-             
-            if chromecast.uuid in myConfig.GCAST_UUID:
-                uuid = chromecast.uuid
-                myCast.castListeners(chromecast=chromecast, uuid=uuid)
-                
+        if chromecast is None:
+            return
+
+        if chromecast.uuid not in myConfig.NETCAST_DEVICES:
+            myConfig.NETCAST_DEVICES[chromecast.uuid] = chromecast
+            logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Added to NETCAST_DEVICES (Nb :: %s)', str(chromecast.name), len(myConfig.NETCAST_DEVICES))
+        else:
+            logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
+            return
+
+        # Connexion uniquement pour les équipements actifs dans Jeedom. Les autres restent connus (scan) sans connexion,
+        # sauf s'ils sont membres d'un groupe actif : connexion à la demande lors d'une diffusion (cf. getGroupSnapshot)
+        if chromecast.uuid in myConfig.GCAST_UUID:
+            myCast.castListeners(chromecast=chromecast, uuid=chromecast.uuid)
+        elif myCast.isActiveGroupMember(chromecast.uuid):
+            # Découvert après son groupe : multizone_member_added a déjà été reçu sans pouvoir le connecter
+            myCast.connectGroupMember(chromecast.uuid)
+        else:
+            logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Not enabled in Jeedom (nor active group member), no connection', str(chromecast.name))
+
     class MyCastListener(pychromecast.discovery.AbstractCastListener):
         """Listener for discovering chromecasts."""
 
@@ -4013,10 +4061,9 @@ class myCast:
         def __init__(self, name, cast):
             self.name = name
             self.cast = cast
-            self.active = True  # False lorsque l'équipement est supprimé de Jeedom (cf. castRemove)
 
         def new_cast_status(self, status):
-            if not self.active:
+            if myCast.isStaleCast(self.cast):
                 return
             logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast change :: ' + str(status))
             try:
@@ -4059,10 +4106,9 @@ class myCast:
         def __init__(self, name, cast):
             self.name = name
             self.cast = cast
-            self.active = True  # False lorsque l'équipement est supprimé de Jeedom (cf. castRemove)
 
         def new_media_status(self, status):
-            if not self.active:
+            if myCast.isStaleCast(self.cast):
                 return
             logging.debug('[DAEMON][NETCAST][New_Media_Status] ' + self.name + ' :: STATUS Media change :: ' + str(status))
             try:
@@ -4131,7 +4177,7 @@ class myCast:
                 logging.debug(traceback.format_exc())
 
         def load_media_failed(self, queue_item_id, error_code):
-            if not self.active:
+            if myCast.isStaleCast(self.cast):
                 return
             logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(queue_item_id) + ' with code :: ' + str(error_code))
 
@@ -4141,13 +4187,11 @@ class myCast:
         def __init__(self, name, cast):
             self.name = name
             self.cast = cast
-            self.active = True  # False lorsque l'équipement est supprimé de Jeedom (cf. castRemove)
 
         def new_connection_status(self, status) -> None:
             """Updated connection status."""
-            if not self.active:
+            if myCast.isStaleCast(self.cast):
                 return
-
             logging.debug('[DAEMON][NETCAST][New_Connect_Status] ' + self.name + ' :: STATUS Connect change :: ' + str(status))
             try:
                 # The socket connection is being setup
@@ -4199,7 +4243,13 @@ class myCast:
 
         def multizone_member_added(self, uuid):
             """Called when a member is added to the group."""
+            if myCast.isStaleCast(self.cast):
+                return
             logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Added :: %s', self.name, uuid)
+            try:
+                myCast.connectGroupMember(UUID(uuid))
+            except ValueError:
+                logging.warning('[DAEMON][NETCAST][Multizone] %s :: Invalid member UUID :: %s', self.name, uuid)
 
         def multizone_member_removed(self, uuid):
             """Called when a member is removed from the group."""
@@ -4221,7 +4271,8 @@ def shutdown():
     logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
     try:
         for chromecast in list(myConfig.NETCAST_DEVICES.values()):
-            chromecast.disconnect(timeout=5)
+            if chromecast.socket_client.is_alive():  # ni actifs dans Jeedom ni membres d'un groupe actif : jamais connectés
+                chromecast.disconnect(timeout=5)
         logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
         if myConfig.NETCAST_BROWSER is not None: 
             myConfig.NETCAST_BROWSER.stop_discovery()
@@ -4289,6 +4340,9 @@ class PatternRemapFilter(logging.Filter):
                 if target is not None:
                     record.levelno = target
                     record.levelname = level
+                    # Le seuil du logger a été contrôlé avant ce filtre, sur le niveau d'origine : on le réapplique au nouveau niveau,
+                    # sinon un message abaissé sous ce seuil resterait affiché (simplement réétiqueté) au lieu d'être masqué
+                    return target >= logging.getLogger(record.name).getEffectiveLevel()
                 return True
         return True
 
