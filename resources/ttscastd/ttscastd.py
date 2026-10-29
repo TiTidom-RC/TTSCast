@@ -3977,16 +3977,21 @@ class myCast:
 
     @staticmethod
     def _replaceHostService(uuid, oldHost, newHost):
-        """ Adresse modifiée sur la page de l'équipement : met à jour le chemin d'accès par IP de l'appareil.
-        L'ensemble des chemins (cast_info.services) est partagé avec sa connexion, qui le relit à chaque tentative de reconnexion """
+        """ Adresse modifiée (page de l'équipement, Scan, synchronisation) : met à jour le chemin d'accès par IP de l'appareil.
+        L'ensemble des chemins (cast_info.services) est partagé avec sa connexion, qui le relit à chaque tentative de reconnexion.
+        Si un chemin existe déjà pour la nouvelle adresse (ajouté par PyChromecast, avec le bon port : groupe déplacé sur une autre
+        enceinte), l'ancien est seulement retiré : le recréer avec l'ancien port ajouterait un chemin qui ne répond pas """
         chromecast = myConfig.NETCAST_DEVICES.get(uuid)
         if chromecast is None:
             return
         services = chromecast.cast_info.services
+        hasNewHost = any(isinstance(s, HostServiceInfo) and myCast.normalizeHost(s.host) == newHost for s in list(services))
         for service in list(services):
             if isinstance(service, HostServiceInfo) and myCast.normalizeHost(service.host) == oldHost:
                 services.discard(service)
-                services.add(HostServiceInfo(newHost, service.port))
+                if not hasNewHost:
+                    services.add(HostServiceInfo(newHost, service.port))
+                    hasNewHost = True
                 logging.info('[DAEMON][IPDISCOVERY] Chromecast with name :: %s :: Adresse modifiée %s -> %s', str(chromecast.name), oldHost, newHost)
 
     @staticmethod
@@ -4061,10 +4066,11 @@ class myCast:
         if (myCast.discoveryOf(chromecast) or 'Aucun') == 'Aucun':
             return {}
         info = myCast.castInfoOf(chromecast)
-        sync = {'friendly_name': info.friendly_name or chromecast.cast_info.friendly_name, 'port': info.port}
+        sync = {'friendly_name': info.friendly_name or chromecast.cast_info.friendly_name}
         host = myCast.normalizeHost(info.host)
-        if host is not None:
+        if host is not None:  # le port n'est envoyé qu'avec l'adresse : seul, il pourrait ne pas correspondre à l'adresse de la fiche
             sync['host'] = host
+            sync['port'] = info.port
         return sync
 
     @staticmethod

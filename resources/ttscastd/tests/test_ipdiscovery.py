@@ -91,6 +91,24 @@ class IpHostsTest(unittest.TestCase):
         myCast.removeIpHost(group)
         self.assertEqual(sorted(self.hostBrowser._known_hosts), ['192.168.2.66', '192.168.2.71'])
 
+    def testGroupMovedKeepsOnlyTheRightPort(self):
+        # Groupe déplacé sur une autre enceinte : PyChromecast a déjà ajouté le chemin (nouvelle enceinte, nouveau port) ;
+        # le changement d'adresse retire l'ancien chemin sans en recréer un avec l'ancien port
+        uuid, chromecast = newCast(host='192.168.2.73', port=32187)
+        myCast.setIpHost(uuid, '192.168.2.73')
+        chromecast.cast_info.services.add(HostServiceInfo('192.168.2.71', 32190))
+        myCast.setIpHost(uuid, '192.168.2.71')
+        self.assertEqual(chromecast.cast_info.services, {HostServiceInfo('192.168.2.71', 32190)})
+        stopAllConnections()
+
+    def testAddressChangeOnPage(self):
+        # Adresse modifiée sur la page : le chemin est recréé à la nouvelle adresse, même port
+        uuid, chromecast = newCast(host='192.168.2.73', port=8009)
+        myCast.setIpHost(uuid, '192.168.2.73')
+        myCast.setIpHost(uuid, '192.168.2.80')
+        self.assertEqual(chromecast.cast_info.services, {HostServiceInfo('192.168.2.80', 8009)})
+        stopAllConnections()
+
     def testAddressChange(self):
         uuid = UUID(int=4)
         self.assertTrue(myCast.setIpHost(uuid, '192.168.2.71'))
@@ -210,9 +228,7 @@ class SyncDataTest(unittest.TestCase):
 
     def testLinkLocalAddressIsOmitted(self):
         self.browse([MDNSServiceInfo('x')], host='fe80::1%eth0')
-        sync = myCast.syncDataOf(self.chromecast)
-        self.assertNotIn('host', sync)
-        self.assertEqual(sync['friendly_name'], 'Salon renommé')
+        self.assertEqual(myCast.syncDataOf(self.chromecast), {'friendly_name': 'Salon renommé'}, 'ni adresse, ni port seul')
 
     def testMissingNameFallsBackToTheObject(self):
         self.browse([MDNSServiceInfo('x')], name=None)

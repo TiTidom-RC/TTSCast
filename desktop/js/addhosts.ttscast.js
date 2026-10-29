@@ -159,6 +159,23 @@ function startHostSearch() {
     })
 }
 
+// Ajoute à la saisie l'adresse des équipements mis à jour via leur adresse IP (sans doublon avec ce qui est déjà saisi)
+function addIpHosts(event) {
+    const button = event.currentTarget
+    const input = document.getElementById('ta_ttscastHosts')
+    if (!input || button.classList.contains('disabled')) return
+    let hosts = []
+    try {
+        hosts = JSON.parse(button.dataset.hosts || '[]')
+    } catch (e) {
+        hosts = []
+    }
+    const typed = input.value.split(/[\s,;]+/).filter(function(value) { return value !== '' })
+    const missing = hosts.filter(function(host) { return typed.indexOf(host) === -1 })
+    if (missing.length === 0) return
+    input.value = typed.concat(missing).join('\n')
+}
+
 window.initAddHosts = function() {
     currentSearchId = ''
     changed = false
@@ -166,6 +183,10 @@ window.initAddHosts = function() {
     if (button) {
         button.dataset.label = button.innerHTML
         button.addEventListener('click', startHostSearch)
+    }
+    const ipHostsButton = document.getElementById('bt_ttscastAddIpHosts')
+    if (ipHostsButton) {
+        ipHostsButton.addEventListener('click', addIpHosts)
     }
     // Inscription unique : une réouverture de la fenêtre remplace l'écouteur précédent
     if (window.ttscastHostSearchHandler) {
