@@ -182,6 +182,9 @@ class ttscast extends eqLogic
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
         $cmd .= ' --castloglevel ' . config::byKey('castLogLevel', __CLASS__, 'daemon');
         $cmd .= ' --logfiltersenabled ' . (config::byKey('logFiltersEnabled', __CLASS__, '0') ? '1' : '0');
+        $ipDiscovery = config::byKey('ipDiscoveryEnabled', __CLASS__, '1');
+        $cmd .= ' --ipdiscovery ' . $ipDiscovery;
+        $cmd .= ' --iphosts ' . escapeshellarg(($ipDiscovery == '1') ? self::getIpHostsArg() : '{}');
         $cmd .= ' --pluginversion ' . config::byKey('pluginVersion', __CLASS__, '0.0.0');
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55111');
         $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1');
@@ -278,6 +281,113 @@ class ttscast extends eqLogic
             )); */
             return false;
         }
+    }
+
+    // Découverte par IP : adresses des équipements actifs, en JSON {"uuid": "adresse", ...}, interrogées par le démon dès son lancement
+    public static function getIpHostsArg() {
+        $hosts = array();
+        foreach (self::byType(__CLASS__, true) as $eqLogic) {
+            if (in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
+                continue;
+            }
+            $host = trim($eqLogic->getConfiguration('host', ''));
+            if ($eqLogic->getLogicalId() != '' && $host != '') {
+                $hosts[$eqLogic->getLogicalId()] = $host;
+            }
+        }
+        return json_encode((object) $hosts);  // objet même vide : {} (un tableau PHP vide donnerait [])
+    }
+
+    // Adresse normalisée, sinon false (même règles que normalizeHost du démon) :
+    // - adresse IPv4 / IPv6 (crochets IPv6 acceptés) en forme canonique (minuscules, zéros compressés), IPv6 mappée ramenée en IPv4 ;
+    //   link-local (169.254.x.x, fe80::/10), adresse non spécifiée (0.0.0.0, ::) et multicast refusées
+    // - nom d'hôte (RFC 1123) en minuscules, point final retiré ; une chaîne de chiffres et de points qui n'est pas une IP valide est refusée
+    public static function normalizeHostAddress($_host) {
+        $host = trim(trim((string) $_host), '[]');
+        if ($host === '') {
+            return false;
+        }
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            // Forme canonique, identique à celle du démon : une même adresse ne doit pas être vue comme un changement
+            $host = inet_ntop(inet_pton($host));
+            if (stripos($host, '::ffff:') === 0 && filter_var(substr($host, 7), FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false) {
+                $host = substr($host, 7);
+            }
+            if (strpos($host, '169.254.') === 0 || preg_match('/^fe[89ab][0-9a-f]:/i', $host)
+                || $host === '0.0.0.0' || $host === '::'
+                || preg_match('/^(22[4-9]|23[0-9])\./', $host) || preg_match('/^ff[0-9a-f]{2}:/i', $host)) {
+                return false;
+            }
+            return $host;
+        }
+        $name = rtrim(strtolower($host), '.');
+        if ($name === '' || strlen($name) > 253 || preg_match('/^[0-9.]+$/', $name)) {
+            return false;
+        }
+        foreach (explode('.', $name) as $label) {
+            if (!preg_match('/^(?!-)[a-z0-9-]{1,63}(?<!-)$/', $label)) {
+                return false;
+            }
+        }
+        return $name;
+    }
+
+    // Fenêtre « Scan (IP) », étape 1 : envoie les adresses saisies au démon et rend la main aussitôt (la recherche peut prendre
+    // plusieurs secondes). Les adresses sont contrôlées par le démon ; le compte rendu revient par hostSearchResult()
+    public static function startHostSearch($_input) {
+        if (config::byKey('ipDiscoveryEnabled', __CLASS__, '1') != '1') {
+            throw new Exception(__('La découverte par IP est désactivée dans la configuration du plugin', __FILE__));
+        }
+        $inputs = array_values(array_unique(array_filter(preg_split('/[\s,;]+/', (string) $_input))));
+        if (count($inputs) == 0) {
+            throw new Exception(__('Aucune adresse ou nom d\'hôte saisi', __FILE__));
+        }
+        if (count($inputs) > 50) {
+            throw new Exception(__('Trop d\'adresses (50 maximum par recherche)', __FILE__));
+        }
+        $searchId = uniqid();
+        log::add(__CLASS__, 'info', '[IPDISCOVERY] Scan (IP) [' . $searchId . '] :: ' . implode(', ', $inputs));
+        if (!self::sendToDaemon(array('cmd' => 'searchhosts', 'hosts' => $inputs, 'searchId' => $searchId))) {
+            throw new Exception(__('Le démon n\'est pas démarré', __FILE__));
+        }
+        return $searchId;
+    }
+
+    // Fenêtre « Scan (IP) », étape 2 (rappel du démon) : crée ou met à jour les équipements trouvés, comme le Scan, puis pousse le
+    // compte rendu à la fenêtre (événement ttscast::hostSearch, filtré par searchId)
+    public static function hostSearchResult($_result) {
+        $report = array(
+            'searchId' => isset($_result['searchId']) ? $_result['searchId'] : '',
+            'error' => isset($_result['error']) ? $_result['error'] : '',
+            'devices' => array(),
+            'errors' => isset($_result['errors']) && is_array($_result['errors']) ? $_result['errors'] : array(),
+            'groupsNotAdded' => isset($_result['groupsNotAdded']) && is_array($_result['groupsNotAdded']) ? $_result['groupsNotAdded'] : array()
+        );
+        $devices = isset($_result['devices']) && is_array($_result['devices']) ? $_result['devices'] : array();
+        foreach ($devices as $data) {
+            if (!isset($data['uuid'])) {
+                continue;
+            }
+            $exists = is_object(self::byLogicalId($data['uuid'], __CLASS__));
+            try {
+                $eqLogic = self::createAndUpdCastFromScan(array_merge($data, array('lastscan' => date('d/m/Y - H:i:s'))));
+            } catch (Exception $e) {  // un équipement en échec ne doit pas priver la fenêtre du compte rendu des autres
+                log::add(__CLASS__, 'error', '[IPDISCOVERY] Scan (IP) :: ' . $data['uuid'] . ' :: ' . $e->getMessage());
+                $eqLogic = false;
+            }
+            $report['devices'][] = array(
+                'status' => !is_object($eqLogic) ? 'failed' : ($exists ? 'updated' : 'created'),
+                'type' => isset($data['type']) ? $data['type'] : 'device',
+                'friendly_name' => isset($data['friendly_name']) ? $data['friendly_name'] : $data['uuid'],
+                'host' => isset($data['host']) ? $data['host'] : '',
+                'port' => isset($data['port']) ? $data['port'] : '',
+                'eqName' => is_object($eqLogic) ? $eqLogic->getHumanName() : ''
+            );
+        }
+        log::add(__CLASS__, 'info', '[IPDISCOVERY] Scan (IP) [' . $report['searchId'] . '] terminé :: ' . count($report['devices']) . ' équipement(s) ajouté(s) / mis à jour'
+            . ' | ' . count($report['errors']) . ' adresse(s) en erreur | ' . count($report['groupsNotAdded']) . ' groupe(s) non ajouté(s)'
+            . ($report['error'] != '' ? ' | erreur : ' . $report['error'] : ''));
+        event::add('ttscast::hostSearch', $report);
     }
 
     /**
@@ -637,6 +747,14 @@ class ttscast extends eqLogic
             return false;
         }
         
+        // Adresse fournie par le démon, si elle est utilisable : une IPv6 link-local (que peut annoncer le mDNS, passagèrement) est
+        // refusée par preSave, ce qui ferait échouer la sauvegarde. Non utilisable : équipement créé sans adresse, ou adresse actuelle conservée
+        $host = isset($_data['host']) ? self::normalizeHostAddress($_data['host']) : false;
+
+        // « Mis à jour via » (updatedBy) : type de Scan, fourni par le démon ('mdns' : Scan, 'ip' : Scan (IP))
+        $updatedBy = (isset($_data['updatedBy']) && in_array($_data['updatedBy'], array('mdns', 'ip'))) ? $_data['updatedBy'] : null;
+        $alertPrefix = ($updatedBy == 'ip') ? '[SCAN IP]' : '[SCAN]';
+
         $newttscast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
         if (!is_object($newttscast)) {
             $eqLogic = new ttscast();
@@ -650,15 +768,20 @@ class ttscast extends eqLogic
             $eqLogic->setConfiguration('model_name', $_data['model_name']);
             $eqLogic->setConfiguration('manufacturer', $_data['manufacturer']);
             $eqLogic->setConfiguration('cast_type', $_data['cast_type']);
-            $eqLogic->setConfiguration('host', $_data['host']);
+            if ($host !== false) {
+                $eqLogic->setConfiguration('host', $host);
+            }
             $eqLogic->setConfiguration('port', $_data['port']);
             $eqLogic->setConfiguration('lastscan', $_data['lastscan']);
+            if ($updatedBy !== null) {
+                $eqLogic->setConfiguration('updatedBy', $updatedBy);
+            }
             $eqLogic->save();
 
             event::add('jeedom::alert', array(
                 'level' => 'success',
                 'page' => 'ttscast',
-                'message' => __('[SCAN] TTSCast AJOUTE :: ', __FILE__) . $_data['friendly_name'],
+                'message' => $alertPrefix . ' ' . __('TTSCast AJOUTE :: ', __FILE__) . $_data['friendly_name'],
             ));
             return $eqLogic;
         }
@@ -667,15 +790,22 @@ class ttscast extends eqLogic
             $newttscast->setConfiguration('model_name', $_data['model_name']);
             $newttscast->setConfiguration('manufacturer', $_data['manufacturer']);
             $newttscast->setConfiguration('cast_type', $_data['cast_type']);
-            $newttscast->setConfiguration('host', $_data['host']);
+            // Le Scan met à jour l'adresse IP, mais conserve un nom d'hôte saisi par l'utilisateur (choix explicite, résolu à chaque connexion)
+            $currentHost = $newttscast->getConfiguration('host', '');
+            if ($host !== false && ($currentHost == '' || filter_var(trim($currentHost, '[]'), FILTER_VALIDATE_IP) !== false)) {
+                $newttscast->setConfiguration('host', $host);
+            }
             $newttscast->setConfiguration('port', $_data['port']);
             $newttscast->setConfiguration('lastscan', $_data['lastscan']);
+            if ($updatedBy !== null) {
+                $newttscast->setConfiguration('updatedBy', $updatedBy);
+            }
             $newttscast->save();
 
             event::add('jeedom::alert', array(
                 'level' => 'success',
                 'page' => 'ttscast',
-                'message' => __('[SCAN] TTSCast MAJ :: ', __FILE__) . $_data['friendly_name'],
+                'message' => $alertPrefix . ' ' . __('TTSCast MAJ :: ', __FILE__) . $_data['friendly_name'],
             ));
             return $newttscast;
         }
@@ -687,6 +817,7 @@ class ttscast extends eqLogic
             log::add('ttscast', 'warning', '[SCHEDULE][CAST] Information manquante (UUID) pour mettre à jour l\'équipement');
             return false;
         }
+        /** @var ttscast $updttscast */
         $updttscast = ttscast::byLogicalId($_data['uuid'], 'ttscast');
         if (!is_object($updttscast)) {
             log::add('ttscast', 'warning', '[SCHEDULE][CAST] Équipement introuvable dans Jeedom (UUID : ' . $_data['uuid'] . ') — il a peut-être été supprimé. Relancez un scan pour mettre à jour la liste des équipements.');
@@ -704,7 +835,56 @@ class ttscast extends eqLogic
                 }
             }
             log::add('ttscast', 'debug', '[SCHEDULE][CAST] ' . $_data['uuid'] . ' :: ' . implode(', ', $updatedFields));
+            if (isset($_data['sync']) && is_array($_data['sync'])) {
+                try {
+                    $updttscast->applySync($_data['sync']);
+                } catch (Exception $e) {  // une fiche en erreur ne doit pas interrompre la mise à jour des autres équipements
+                    log::add('ttscast', 'error', '[SYNC] ' . $updttscast->getHumanName() . ' :: ' . $e->getMessage());
+                }
+            }
         }
+    }
+
+    // Synchronisation de la fiche par le démon (cycle ScheduleMode) : met à jour le nom, l'adresse et le port s'ils ont changé, sans
+    // toucher à « Mis à jour via », au dernier Scan ni au nom de l'équipement. Sauvegarde uniquement en cas de changement, tracé
+    // dans « Dernière synchronisation » (lastSync) et dans le centre de messages
+    public function applySync($_sync) {
+        $labels = array(
+            'friendly_name' => __('nom', __FILE__),
+            'host' => __('adresse', __FILE__),
+            'port' => __('port', __FILE__)
+        );
+        // L'adresse et le port sont mis à jour ensemble ou pas du tout : quand un groupe est déplacé sur une autre enceinte, les deux
+        // changent, et un port seul ne correspondrait pas à l'adresse de la fiche. L'adresse suit la même règle que le Scan : une
+        // adresse IP est remplacée, un nom d'hôte saisi par l'utilisateur est conservé (et le port avec lui)
+        $currentHost = (string) $this->getConfiguration('host', '');
+        $newHost = isset($_sync['host']) ? self::normalizeHostAddress($_sync['host']) : false;
+        $applyAddress = $newHost !== false && ($currentHost == '' || filter_var(trim($currentHost, '[]'), FILTER_VALIDATE_IP) !== false);
+        $changes = array();
+        foreach ($labels as $key => $label) {
+            if (!isset($_sync[$key]) || $_sync[$key] === '') {
+                continue;
+            }
+            if (($key == 'host' || $key == 'port') && !$applyAddress) {
+                continue;
+            }
+            $current = (string) $this->getConfiguration($key, '');
+            $new = ($key == 'host') ? $newHost : (string) $_sync[$key];
+            if ($current === $new) {
+                continue;
+            }
+            $this->setConfiguration($key, $new);
+            $changes[] = $label . ' ' . ($current === '' ? __('(vide)', __FILE__) : $current) . ' → ' . $new;
+        }
+        if (count($changes) == 0) {
+            return false;
+        }
+        $this->setConfiguration('lastSync', date('d/m/Y - H:i:s'));
+        $this->save();
+        $text = '[Synchro] ' . $this->getHumanName() . ' : ' . implode(', ', $changes);
+        log::add(__CLASS__, 'info', '[SYNC] ' . $text);
+        message::add(__CLASS__, $text);
+        return true;
     }
 
     public static function realtimeUpdateCast($_data)
@@ -787,7 +967,7 @@ class ttscast extends eqLogic
 
     }
 
-    public function disableCastToDaemon()
+    public function disableCastToDaemon($_setOffline = true)
     {
         if (in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
             return;
@@ -800,6 +980,14 @@ class ttscast extends eqLogic
                 'friendly_name' => $this->getConfiguration('friendly_name')
             );
             self::sendToDaemon($value);
+        }
+        // Équipement désactivé : le démon le déconnecte, et cron5 ne traite que les équipements actifs -> passage hors ligne ici.
+        // Inutile à la suppression ($_setOffline = false depuis preRemove).
+        if ($_setOffline) {
+            $cmd = $this->getCmd('info', 'online');
+            if (is_object($cmd)) {
+                $cmd->event('0');
+            }
         }
     }
 
@@ -1580,6 +1768,19 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement avant la sauvegarde (création ou mise à jour) de l'équipement
     public function preSave() {
+        if (in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
+            return;
+        }
+        // Adresse modifiable sur la page de l'équipement : contrôlée uniquement si elle a changé (les adresses issues du scan sont toujours valides)
+        $host = trim($this->getConfiguration('host', ''));
+        $previous = ($this->getId() != '') ? eqLogic::byId($this->getId()) : null;
+        if ($host != '' && (!is_object($previous) || $previous->getConfiguration('host', '') != $host)) {
+            $normalized = self::normalizeHostAddress($host);
+            if ($normalized === false) {
+                throw new Exception(__('Adresse invalide (adresse IP ou nom d\'hôte attendu ; les adresses link-local ne sont pas acceptées)', __FILE__) . ' : ' . $host);
+            }
+            $this->setConfiguration('host', $normalized);
+        }
     }
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
@@ -2403,6 +2604,22 @@ class ttscast extends eqLogic
             $orderCmd++;
         }
 
+        // Chemins par lesquels l'équipement est actuellement vu : mDNS, IP, mDNS + IP ou Aucun (mis à jour par le scan programmé du démon)
+        $cmd = $this->getCmd(null, 'discovery');
+        if (!is_object($cmd)) {
+            $cmd = new ttscastCmd();
+            $cmd->setName(__('Découverte', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->setLogicalId('discovery');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setIsVisible(0);
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
         if ($this->getIsEnable()) {
             $this->enableCastToDaemon();
         } else {
@@ -2414,7 +2631,7 @@ class ttscast extends eqLogic
     public function preRemove() {
         // Ne pas notifier le démon pour les équipements virtuels IA
         if (!in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
-            $this->disableCastToDaemon();
+            $this->disableCastToDaemon(false);
         }
     }
 

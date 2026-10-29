@@ -14,7 +14,10 @@
 # along with Jeedom. If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import resource
+try:
+    import resource  # Linux uniquement : mesure de la consommation du démon (getResourcesUsage)
+except ImportError:  # poste de développement Windows (tests) : le démon lui-même ne tourne que sous Linux
+    resource = None
 import sys
 import os
 import time
@@ -31,7 +34,11 @@ import re
 import errno
 import wave
 import io
+import ipaddress
+import itertools
+import socket
 
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urlencode, urlparse, quote
 from uuid import UUID, uuid4
 
@@ -61,6 +68,9 @@ try:
     from pychromecast.socket_client import ConnectionStatusListener
     from pychromecast.controllers import dashcast
     from pychromecast.controllers.multizone import MultizoneController, MultiZoneControllerListener
+    from pychromecast.error import NotConnected
+    from pychromecast.dial import get_device_info, get_multizone_status, get_ssl_context
+    from pychromecast.models import CastInfo, HostServiceInfo, MDNSServiceInfo
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module PyChromecast ::", e)
     sys.exit(1)
@@ -74,7 +84,9 @@ except ImportError as e:
 
 # Import GenAI (Gemini)
 try:
+    import httpx  # dépendance de google-genai : erreurs de connexion relancées par callGeminiWithRetry
     from google import genai
+    from google.genai import errors as genaiErrors
     from google.genai import types
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing modules for GenAI ::", e)
@@ -107,32 +119,6 @@ except ImportError as e:
     sys.exit(1)
 
 
-class MyMultizoneController(MultizoneController):
-    def __init__(self, uuid):
-        super().__init__(uuid)
-        self.multizone_status = {}
-
-    def receive_message(self, message, data):
-        # Capture the status message if it is a MULTIZONE_STATUS
-        if data.get("type") == "MULTIZONE_STATUS":
-            self.multizone_status = data.get("status", {})
-            
-        return super().receive_message(message, data)
-        
-class MyMultizoneStatusListener(MultiZoneControllerListener):
-    def __init__(self, name, cast):
-        self.name = name
-        self.cast = cast
-
-    def multizone_member_added(self, uuid):
-        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Added :: %s', self.name, uuid)
-
-    def multizone_member_removed(self, uuid):
-        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Removed :: %s', self.name, uuid)
-
-    def multizone_status_received(self):
-        logging.debug('[DAEMON][NETCAST][Multizone] %s :: Status Received', self.name)
-        
 class Loops:
     # *** Boucle events from Jeedom ***
     @staticmethod
@@ -233,15 +219,10 @@ class Loops:
                     if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
                         _uuid = UUID(message['uuid'])
                         _changes = []
-                        
-                        if message['host'] not in myConfig.KNOWN_HOSTS:
-                            myConfig.KNOWN_HOSTS.append(message['host'])
+
+                        if myCast.setIpHost(_uuid, message['host']):
                             _changes.append('host')
-                        
-                        if message['friendly_name'] not in myConfig.GCAST_NAMES: 
-                            myConfig.GCAST_NAMES.append(message['friendly_name'])
-                            _changes.append('friendly_name')
-                        
+
                         if _uuid not in myConfig.GCAST_UUID:
                             myConfig.GCAST_UUID.append(_uuid)
                             _changes.append('uuid')
@@ -250,23 +231,18 @@ class Loops:
                         
                         # Une seule ligne pour l'événement (au lieu d'une ligne par liste modifiée)
                         logging.debug(
-                            '[DAEMON][SOCKET] Add Cast :: %s (%s) | fields = %s | KNOWN_HOSTS (%d) | GCAST_NAMES (%d) | GCAST_UUID (%d)',
+                            '[DAEMON][SOCKET] Add Cast :: %s (%s) | fields = %s | IP_HOSTS (%d) | GCAST_UUID (%d)',
                             message['friendly_name'], message['host'], ', '.join(_changes) or 'none',
-                            len(myConfig.KNOWN_HOSTS), len(myConfig.GCAST_NAMES), len(myConfig.GCAST_UUID)
+                            len(myConfig.IP_HOSTS), len(myConfig.GCAST_UUID)
                         )
                             
                 elif message['cmd'] == "removecast":
                     if all(keys in message for keys in ('uuid', 'host', 'friendly_name')):
                         _uuid = UUID(message['uuid'])
                         _changes = []
-                        
-                        if message['host'] in myConfig.KNOWN_HOSTS:
-                            myConfig.KNOWN_HOSTS.remove(message['host'])
+
+                        if myCast.removeIpHost(_uuid):
                             _changes.append('host')
-                        
-                        if message['friendly_name'] in myConfig.GCAST_NAMES: 
-                            myConfig.GCAST_NAMES.remove(message['friendly_name'])
-                            _changes.append('friendly_name')
                         
                         if _uuid in myConfig.GCAST_UUID:
                             myConfig.GCAST_UUID.remove(_uuid)
@@ -283,11 +259,17 @@ class Loops:
                         
                         # Une seule ligne pour l'événement (au lieu d'une ligne par liste modifiée)
                         logging.debug(
-                            '[DAEMON][SOCKET] Remove Cast :: %s (%s) | fields = %s | KNOWN_HOSTS (%d) | GCAST_NAMES (%d) | GCAST_UUID (%d)',
+                            '[DAEMON][SOCKET] Remove Cast :: %s (%s) | fields = %s | IP_HOSTS (%d) | GCAST_UUID (%d)',
                             message['friendly_name'], message['host'], ', '.join(_changes) or 'none',
-                            len(myConfig.KNOWN_HOSTS), len(myConfig.GCAST_NAMES), len(myConfig.GCAST_UUID)
+                            len(myConfig.IP_HOSTS), len(myConfig.GCAST_UUID)
                         )
                         
+                elif message['cmd'] == 'searchhosts':
+                    # Scan (IP) : recherche dans un thread (une adresse qui ne répond pas peut prendre plusieurs secondes), résultat envoyé à Jeedom
+                    _inputs = message.get('hosts', [])
+                    threading.Thread(target=myCast.runHostSearch, args=(message.get('searchId', ''), _inputs if isinstance(_inputs, list) else []),
+                                     name='HostSearch', daemon=True).start()
+
                 elif message['cmd'] == "scanOn":
                     logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
                     
@@ -325,6 +307,7 @@ class Loops:
     # *** Boucle principale infinie (daemon) ***
     @staticmethod
     def mainLoop(cycle=2):
+        assert my_jeedom_socket is not None  # créé par main() juste avant l'appel de la boucle
         my_jeedom_socket.open()
         logging.info('[DAEMON][MAINLOOP] Starting MainLoop')
         
@@ -334,7 +317,9 @@ class Loops:
         try:
             # Thread pour le browser (pychromecast)
             myConfig.NETCAST_ZCONF = zeroconf.Zeroconf()  # type: ignore
-            myConfig.NETCAST_BROWSER = pychromecast.get_chromecasts(tries=None, retry_wait=5, timeout=30, blocking=False, callback=myCast.castCallBack, zeroconf_instance=myConfig.NETCAST_ZCONF, known_hosts=myConfig.KNOWN_HOSTS)  # type: ignore
+            # Adresses des équipements actifs (découverte par IP) transmises dès la création : la première interrogation les inclut
+            myConfig.NETCAST_BROWSER = pychromecast.get_chromecasts(tries=None, retry_wait=5, timeout=30, blocking=False, callback=myCast.castCallBack, zeroconf_instance=myConfig.NETCAST_ZCONF, known_hosts=myCast.ipHostsList())  # type: ignore
+            myCast.ipHostsApplied = set(myCast.ipHostsList())
 
             logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...')
 
@@ -679,7 +664,7 @@ class TTSCast:
         
         if ttsEngine == "gcloudtts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = gcloudtts')
-            logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
+            logging.debug('[DAEMON][TestTTS] Import de la clé API :: %s', myConfig.secretMask)
             if myConfig.gCloudApiKey != 'noKey':
                 credentials = service_account.Credentials.from_service_account_file(os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey))
 
@@ -835,7 +820,7 @@ class TTSCast:
             logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
         elif ttsEngine == "voicersstts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = voicersstts')
-            logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
+            logging.debug('[DAEMON][TestTTS] Import de la clé API :: %s', myConfig.secretMask)
             if myConfig.apiRSSKey != 'noKey':
                 raw_filename = ttsText + "|VoiceRSSTTS|" + ttsRSSVoiceName + "|" + ttsRSSSpeed + "|" + ttsSSML
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
@@ -1063,7 +1048,7 @@ class TTSCast:
             
             if ttsEngine == "gcloudtts":
                 logging.debug('[DAEMON][GenerateTTS] TTSEngine = gcloudtts')
-                logging.debug('[DAEMON][GenerateTTS] Import de la clé API :: *** ')
+                logging.debug('[DAEMON][GenerateTTS] Import de la clé API :: %s', myConfig.secretMask)
                 if myConfig.gCloudApiKey != 'noKey':
                     gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
                     if os.path.exists(gKey):
@@ -1161,7 +1146,7 @@ class TTSCast:
             
             elif ttsEngine == "voicersstts":
                 logging.debug('[DAEMON][GenerateTTS] TTSEngine = voicersstts')
-                logging.debug('[DAEMON][GenerateTTS] Import de la clé API :: *** ')
+                logging.debug('[DAEMON][GenerateTTS] Import de la clé API :: %s', myConfig.secretMask)
                 if myConfig.apiRSSKey != 'noKey':
                     filepath = ttsFile
                     logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
@@ -1400,7 +1385,7 @@ class TTSCast:
 
             if ttsEngine == "gcloudtts":
                 logging.info('[DAEMON][TTS] TTSEngine = gcloudtts')
-                logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
+                logging.debug('[DAEMON][TTS] Import de la clé API :: %s', myConfig.secretMask)
                 if myConfig.gCloudApiKey != 'noKey':
                     gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
                     if os.path.exists(gKey):
@@ -1530,7 +1515,7 @@ class TTSCast:
             
             elif ttsEngine == "voicersstts":
                 logging.info('[DAEMON][TTS] TTSEngine = voicersstts')
-                logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
+                logging.debug('[DAEMON][TTS] Import de la clé API :: %s', myConfig.secretMask)
                 if myConfig.apiRSSKey != 'noKey':
                     raw_filename = ttsText + "|VoiceRSSTTS|" + ttsRSSVoiceName + "|" + ttsRSSSpeed + "|" + str(_useSSML)
                     filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
@@ -1677,18 +1662,23 @@ class TTSCast:
             volumeBeforePlay = None
             groupSnapshot = None
             isGroup = False
-            
+            testConnectedUUID = None
+
             try:
-                chromecasts = [mycast for mycast in myConfig.NETCAST_DEVICES.values() if mycast.name == googleName]
+                chromecasts = [mycast for mycast in list(myConfig.NETCAST_DEVICES.values()) if mycast.name == googleName]
                 if not chromecasts:
                     logging.warning('[DAEMON][Cast] Aucun Chromecast avec ce nom :: %s', googleName)
                     return False
                 cast = chromecasts[0]
                 logging.debug('[DAEMON][Cast] Chromecast trouvé, tentative de lecture TTS')
-                
-                # Si DashCast alors sortir de l'appli avant sinon cela plante 
+                # Test possible sur un appareil non actif dans Jeedom (donc non connecté) : connexion à la demande, refermée en fin de test
+                if not cast.socket_client.is_alive():
+                    testConnectedUUID = cast.uuid
+                myCast.castConnect(cast, timeout=10)
+
+                # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
-            
+
                 volumeBeforePlay = cast.status.volume_level
 
                 groupSnapshot = Functions.getGroupSnapshot(cast)
@@ -1784,7 +1774,10 @@ class TTSCast:
                 cast = None
                 chromecasts = None
                 return False
-        
+            finally:
+                if testConnectedUUID is not None:
+                    myCast.releaseTestCast(testConnectedUUID)
+
         elif googleUUID != '':
             logging.debug('[DAEMON][Cast] Diffusion sur le Google Home :: %s', googleUUID)
             
@@ -1951,6 +1944,61 @@ class TTSCast:
         return myConfig.geminiTTSModel
 
     @staticmethod
+    def geminiRetryDelay(error):
+        """
+        Retourne le délai d'attente (en secondes) demandé par Gemini dans une erreur (RetryInfo.retryDelay, ex : "37s"), ou None.
+        """
+        details = getattr(error, 'details', None)
+        if not isinstance(details, dict):
+            return None
+        body = details.get('error', details)
+        for item in body.get('details') or []:
+            if isinstance(item, dict) and str(item.get('@type', '')).endswith('google.rpc.RetryInfo'):
+                match = re.fullmatch(r'(\d+(?:\.\d+)?)s', str(item.get('retryDelay', '')))
+                if match:
+                    return float(match.group(1))
+        return None
+
+    @staticmethod
+    def geminiConfigWithTimeout(config, timeoutMs):
+        """Copie de la configuration d'un appel Gemini avec le délai HTTP de la tentative en cours (en ms)."""
+        return config.model_copy(update={'http_options': types.HttpOptions(timeout=timeoutMs)})
+
+    @staticmethod
+    def callGeminiWithRetry(logTag, budgetSeconds, call):
+        """
+        Exécute call(timeoutMs) — un appel Gemini — en relançant les erreurs transitoires rapides, sans jamais dépasser
+        budgetSeconds au total : le délai de l'appel reste celui attendu par les appelants (PHP, file d'attente).
+        - Relancées : erreurs Gemini de code myConfig.geminiRetryHttpCodes et erreurs de connexion. Jamais un timeout (budget épuisé).
+        - call reçoit le temps restant (en ms), à utiliser comme délai HTTP de la tentative. Attente : retryDelay indiqué par Gemini, sinon myConfig.geminiRetryDelays.
+        - Toute autre erreur, ou la dernière, est relevée telle quelle.
+        """
+        deadline = time.monotonic() + budgetSeconds
+        attempt = 1
+        while True:
+            timeoutMs = max(1000, int((deadline - time.monotonic()) * 1000))
+            try:
+                return call(timeoutMs)
+            except (genaiErrors.APIError, httpx.ConnectError) as e:
+                code = getattr(e, 'code', None)
+                if isinstance(e, genaiErrors.APIError) and code not in myConfig.geminiRetryHttpCodes:
+                    raise
+                retryDelay = TTSCast.geminiRetryDelay(e)
+                if retryDelay is not None:
+                    logging.warning('%s Gemini demande d\'attendre %gs avant de réessayer (code %s, tentative %d/%d)', logTag, retryDelay, code, attempt, myConfig.geminiRetryAttempts)
+                if attempt >= myConfig.geminiRetryAttempts:
+                    raise
+                wait = retryDelay if retryDelay is not None else myConfig.geminiRetryDelays[min(attempt, len(myConfig.geminiRetryDelays)) - 1]
+                remaining = deadline - time.monotonic() - wait
+                if remaining < myConfig.geminiRetryMinRemaining:
+                    if retryDelay is not None:
+                        logging.warning('%s Pas de nouvelle tentative : l\'attente demandée par Gemini (%gs) dépasse le délai disponible — quota Gemini probablement atteint (par minute ou journalier)', logTag, retryDelay)
+                    raise
+                logging.warning('%s Erreur transitoire (%s) — nouvelle tentative %d/%d dans %gs (temps restant : %ds)', logTag, code if code is not None else type(e).__name__, attempt + 1, myConfig.geminiRetryAttempts, wait, int(remaining))
+                time.sleep(wait)
+                attempt += 1
+
+    @staticmethod
     def genAI(_aiPrompt, _aiCustomSysPrompt=None, _aiCustomTone=None, _aiCustomTemp=None, _aiCustomModel=None, _aiCustomThinking=None):
         """
         Reformule une phrase en utilisant l'API Gemini avec un ton spécifique.
@@ -1958,8 +2006,8 @@ class TTSCast:
         _aiModelId = myConfig.aiModel
         try:
             _aiModelId, _aiThinkingLevel = TTSCast.resolveAiModelAndThinking(_aiCustomModel, _aiCustomThinking)
-            _aiHttpTimeout = (myConfig.aiMaxTimeout if _aiThinkingLevel else myConfig.aiBaseTimeout) * 1000  # la réflexion (et la recherche Google) allonge la durée de l'appel
-            if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProject') or myConfig.aiApiKey != 'noKey':
+            _aiTimeout = myConfig.aiMaxTimeout if _aiThinkingLevel else myConfig.aiBaseTimeout  # secondes, relances comprises — la réflexion (et la recherche Google) allonge la durée de l'appel
+            if (myConfig.gCloudApiKey != 'noKey' and myConfig.aiProjectID != 'noProjectID') or myConfig.aiApiKey != 'noKey':
                 # Initialisation du client Gemini
                 credentials = None
                 client = None
@@ -1974,14 +2022,13 @@ class TTSCast:
                             project=myConfig.aiProjectID,
                             location="global",
                             credentials=credentials,
-                            http_options=types.HttpOptions(timeout=_aiHttpTimeout),
-                        )   
+                        )
                     else:
                         logging.warning('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return None
                 elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
-                    logging.debug('[DAEMON][genAI] Chargement du moteur IA en utilisant la clé API :: %s', "***" if myConfig.aiApiKey else "N/A")
-                    client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=_aiHttpTimeout))
+                    logging.debug('[DAEMON][genAI] Chargement du moteur IA en utilisant la clé API :: %s', myConfig.secretMask if myConfig.aiApiKey else "N/A")
+                    client = genai.Client(api_key=myConfig.aiApiKey)
                 else:
                     logging.warning('[DAEMON][genAI] Mode d\'authentification invalide ou clé API manquante (mode configuré : %s).', myConfig.aiAuthMode)
                     return None
@@ -2009,17 +2056,18 @@ class TTSCast:
                     SYSTEM_INSTRUCTION = myConfig.aiSysPrompt()
                 logging.debug('[DAEMON][GenAI] Instructions Système (repr) :: %s', repr(SYSTEM_INSTRUCTION))
                 
-                response = client.models.generate_content(
+                genConfig = types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    temperature=TEMPERATURE,
+                    thinking_config=THINKING_CONFIG,
+                    tools=[GOOGLE_SEARCH_TOOL],
+                    automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)  # aucun outil de fonction Python : l'AFC du SDK n'a pas lieu d'être activé
+                )
+                response = TTSCast.callGeminiWithRetry('[DAEMON][GenAI]', _aiTimeout, lambda timeoutMs: client.models.generate_content(
                     model=MODEL_ID,
                     contents=_aiPrompt,
-                    config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_INSTRUCTION,
-                        temperature=TEMPERATURE,
-                        thinking_config=THINKING_CONFIG,
-                        tools=[GOOGLE_SEARCH_TOOL],
-                        automatic_function_calling=types.AutomaticFunctionCallingConfig(disable=True)  # aucun outil de fonction Python : l'AFC du SDK n'a pas lieu d'être activé
-                    )
-                )
+                    config=TTSCast.geminiConfigWithTimeout(genConfig, timeoutMs),
+                ))
                 
                 # Logger l'utilisation des tokens et les envoyer à Jeedom
                 # Initialisation des variables par défaut
@@ -2098,7 +2146,7 @@ class TTSCast:
                     logging.debug('[DAEMON][GenAI] Réponse générée par Gemini (repr) :: %s', repr(raw_text))
                     return raw_text
             else:
-                logging.warning('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, "***" if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
+                logging.warning('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, myConfig.secretMask if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
                 return None
         except Exception as e:
             logging.error('[DAEMON][GenAI] Erreur :: %s | modèle : %s | extrait : %s', e, _aiModelId, repr(_aiPrompt[:80]))
@@ -2128,10 +2176,10 @@ class TTSCast:
                     return None
                 logging.debug('[DAEMON][GeminiTTS] Chargement des credentials OAuth2 :: %s', myConfig.gCloudApiKey)
                 credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
-                client = genai.Client(enterprise=True, project=myConfig.aiProjectID, location='global', credentials=credentials, http_options=types.HttpOptions(timeout=30000))
+                client = genai.Client(enterprise=True, project=myConfig.aiProjectID, location='global', credentials=credentials)
             elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
-                logging.debug('[DAEMON][GeminiTTS] Client API key :: ***')
-                client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=30000))
+                logging.debug('[DAEMON][GeminiTTS] Client API key :: %s', myConfig.secretMask)
+                client = genai.Client(api_key=myConfig.aiApiKey)
             else:
                 logging.error('[DAEMON][GeminiTTS] Mode auth invalide ou clé manquante (mode configuré : %s).', myConfig.aiAuthMode)
                 return None
@@ -2163,34 +2211,44 @@ class TTSCast:
 
             if streaming:
                 # ── Mode streaming : pré-lecture du premier chunk ─────────────
-                streamIterator = client.models.generate_content_stream(
-                    model=modelId,
-                    contents=prompt,
-                    config=genConfig,
-                )
-                for chunk in streamIterator:
-                    if (chunk.candidates
-                            and (content := chunk.candidates[0].content)
-                            and content.parts
-                            and (blob := content.parts[0].inline_data)
-                            and blob.data):
-                        mime_type = blob.mime_type or ''
-                        rate_match = re.search(r'rate=(\d+)', mime_type)
-                        channels_match = re.search(r'channels=(\d+)', mime_type)
-                        sampleRate = int(rate_match.group(1)) if rate_match else 24000
-                        channels = int(channels_match.group(1)) if channels_match else 1
-                        logging.debug('[DAEMON][GeminiTTS] Premier chunk stream :: mime=%s | rate=%d | channels=%d | riff=%s', mime_type, sampleRate, channels, blob.data[:4] == b'RIFF')
-                        return streamIterator, blob.data, sampleRate, channels, client
+                # La relance ne couvre que l'ouverture du flux, jusqu'au premier chunk audio : une coupure en cours de lecture n'est pas relancée
+                def openStream(_timeoutMs):
+                    # Délai complet à chaque tentative (et non le temps restant) : pour httpx il s'applique à chaque lecture,
+                    # donc aussi entre les chunks pendant toute la diffusion du flux (geminiTTSStream)
+                    streamIterator = client.models.generate_content_stream(
+                        model=modelId,
+                        contents=prompt,
+                        config=TTSCast.geminiConfigWithTimeout(genConfig, myConfig.geminiTTSTimeout * 1000),
+                    )
+                    for chunk in streamIterator:
+                        if (chunk.candidates
+                                and (content := chunk.candidates[0].content)
+                                and content.parts
+                                and (blob := content.parts[0].inline_data)
+                                and blob.data):
+                            return streamIterator, blob
+                    return None
+
+                opened = TTSCast.callGeminiWithRetry('[DAEMON][GeminiTTS]', myConfig.geminiTTSTimeout, openStream)
+                if opened is not None:
+                    streamIterator, blob = opened
+                    mime_type = blob.mime_type or ''
+                    rate_match = re.search(r'rate=(\d+)', mime_type)
+                    channels_match = re.search(r'channels=(\d+)', mime_type)
+                    sampleRate = int(rate_match.group(1)) if rate_match else 24000
+                    channels = int(channels_match.group(1)) if channels_match else 1
+                    logging.debug('[DAEMON][GeminiTTS] Premier chunk stream :: mime=%s | rate=%d | channels=%d | riff=%s', mime_type, sampleRate, channels, blob.data[:4] == b'RIFF')
+                    return streamIterator, blob.data, sampleRate, channels, client
                 logging.error('[DAEMON][GeminiTTS] Streaming :: aucun chunk audio reçu | voix : %s | extrait : %s', voiceName, repr(ttsText[:80]))
                 return None
 
             else:
                 # ── Mode buffered : réponse complète, encapsulation WAV ───────
-                response = client.models.generate_content(
+                response = TTSCast.callGeminiWithRetry('[DAEMON][GeminiTTS]', myConfig.geminiTTSTimeout, lambda timeoutMs: client.models.generate_content(
                     model=modelId,
                     contents=prompt,
-                    config=genConfig,
-                )
+                    config=TTSCast.geminiConfigWithTimeout(genConfig, timeoutMs),
+                ))
                 if hasattr(response, 'usage_metadata') and response.usage_metadata:
                     usage = response.usage_metadata
                     input_tokens = getattr(usage, 'prompt_token_count', 0) or 0
@@ -2448,7 +2506,7 @@ class Functions:
             return current_uuid_str
 
         # 2. Si c'est un membre, est-il dans un groupe actif ?
-        for group_uuid, mz in myConfig.NETCAST_GROUPS.items():
+        for group_uuid, mz in list(myConfig.NETCAST_GROUPS.items()):  # copie : le dictionnaire peut être modifié par la découverte / castRemove
             # mz.members contient des chaines UUID (parfois sans tirets)
             member_found = False
             try:
@@ -2466,8 +2524,8 @@ class Functions:
                     return str(group_uuid)
 
         # 3. Si c'est un groupe, est-ce qu'un membre est actif ?
-        if current_uuid in myConfig.NETCAST_GROUPS:
-            mz = myConfig.NETCAST_GROUPS[current_uuid]
+        mz = myConfig.NETCAST_GROUPS.get(current_uuid)  # lecture unique : le groupe peut être retiré entre un test et un accès
+        if mz is not None:
             try:
                 for m_str in mz.members:
                     m_uuid = UUID(m_str)
@@ -2738,46 +2796,35 @@ class Functions:
             dict: { uuid: volume_float } ou vide si ce n'est pas un groupe.
         """
         snapshot = {}
-        isStereoPair = False
         try:
-            if cast.uuid in myConfig.NETCAST_GROUPS:
-                mz = myConfig.NETCAST_GROUPS[cast.uuid]
-                
-                # Detection Paire Stéréo (multichannelDevices)
-                # Si présent, on traite le groupe comme un appareil unique (la Paire) et non comme une liste de membres.
-                if hasattr(mz, 'multizone_status') and 'multichannelDevices' in mz.multizone_status and mz.multizone_status['multichannelDevices']:
-                    isStereoPair = True
-                    # On ajoute uniquement l'UUID de la paire elle-même au snapshot
-                    if cast.uuid in myConfig.NETCAST_DEVICES:
-                        snapshot[cast.uuid] = cast.status.volume_level
+            mz = myConfig.NETCAST_GROUPS.get(cast.uuid)  # lecture unique : le groupe peut être retiré entre un test et un accès
+            if mz is not None:
+                # Une paire stéréo apparaît comme un seul membre (l'enceinte leader), dont le volume pilote les deux enceintes : aucun cas particulier
+                for member_uuid_str in mz.members:
+                    # Convert string UUID to UUID object used in NETCAST_DEVICES
+                    try:
+                        member_uuid = UUID(member_uuid_str)
+                    except ValueError:
+                        logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID string: {member_uuid_str}")
+                        continue
 
-                if not isStereoPair:
-                    for member_uuid_str in mz.members:
-                        # Convert string UUID (no dashes) to UUID object used in NETCAST_DEVICES
-                        try:
-                            member_uuid = UUID(member_uuid_str)
-                        except ValueError:
-                            logging.warning(f"[DAEMON][GroupSnapshot] Invalid UUID string: {member_uuid_str}")
-                            continue
-                        
-                        # Avoid duplicates if already added via multichannel
-                        if member_uuid in snapshot:
-                            continue
-
-                        if member_uuid in myConfig.NETCAST_DEVICES:
-                            dev = myConfig.NETCAST_DEVICES[member_uuid]
-                            snapshot[member_uuid] = dev.status.volume_level
-                        else:
-                            logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
+                    dev = myConfig.NETCAST_DEVICES.get(member_uuid)
+                    if dev is None:
+                        logging.warning(f"[DAEMON][GroupSnapshot] Member {member_uuid} not found in NETCAST_DEVICES")
+                    elif dev.socket_client.is_connected and dev.status is not None:
+                        snapshot[member_uuid] = dev.status.volume_level
+                    else:
+                        # Membres connectés en amont (cf. connectGroupMember) : jamais d'attente ici, pour ne pas retarder la diffusion
+                        logging.warning(f"[DAEMON][GroupSnapshot] Member {dev.name} ({member_uuid}) not connected, volume not managed")
             else:
                 logging.debug(f"[DAEMON][GroupSnapshot] Cast {cast.name} ({cast.uuid}) not in NETCAST_GROUPS")
         except Exception as e:
             logging.error(f"[DAEMON][GroupSnapshot] Error: {e}")
         
-        # Une seule ligne consolidée : membres attendus, mode paire stéréo, et snapshot final (uuid=volume déjà présent, pas besoin d'une ligne par membre)
+        # Une seule ligne consolidée : snapshot final (uuid=volume déjà présent, pas besoin d'une ligne par membre)
         logging.debug(
-            "[DAEMON][GroupSnapshot] %s (%s) :: stereoPair=%s | snapshot=%s",
-            cast.name, cast.uuid, isStereoPair, snapshot
+            "[DAEMON][GroupSnapshot] %s (%s) :: snapshot=%s",
+            cast.name, cast.uuid, snapshot
         )
         return snapshot
 
@@ -3596,26 +3643,19 @@ class Functions:
                 browser.start_discovery()
                 logging.info('[DAEMON][MAINLOOP][NETCAST] Listening for Chromecast events...') """
                 
+                # Le Scan (mDNS) n'exporte que les appareils vus en mDNS : les appareils connus uniquement par leur adresse IP
+                # (équipements interrogés par IP, hôtes de groupes ajoutés par PyChromecast) relèvent du Scan (IP)
+                scanned = [d for d in list(myConfig.NETCAST_DEVICES.values()) if 'mDNS' in (myCast.discoveryOf(d) or '')]
+                exported = [myCast.scanDataOf(d, currentTimeStr) for d in scanned]
                 logging.debug(
-                    '[DAEMON][SCANNER] Devices découverts (%d) :: %s',
-                    len(myConfig.NETCAST_DEVICES),
+                    '[DAEMON][SCANNER] Devices vus en mDNS (%d sur %d connus) :: %s',
+                    len(scanned), len(myConfig.NETCAST_DEVICES),
                     '; '.join(
-                        '%s (%s) @ %s:%s uuid:%s' % (d.cast_info.friendly_name, d.cast_info.model_name, d.cast_info.host, d.cast_info.port, d.uuid)
-                        for d in myConfig.NETCAST_DEVICES.values()
+                        '%s (%s) @ %s:%s uuid:%s' % (d['friendly_name'], d['model_name'], d['host'], d['port'], d['uuid'])
+                        for d in exported
                     ) or '(aucun)'
                 )
-                for device in myConfig.NETCAST_DEVICES.values():
-                    data = {
-                        'friendly_name': device.cast_info.friendly_name,
-                        'uuid': str(device.uuid),
-                        'lastscan': currentTimeStr,
-                        'model_name': device.cast_info.model_name,
-                        'cast_type': device.cast_info.cast_type,
-                        'manufacturer': device.cast_info.manufacturer,
-                        'host': device.cast_info.host,
-                        'port': device.cast_info.port,
-                        'scanmode': 1
-                    }
+                for data in exported:
                     # Envoi vers Jeedom
                     Comm.sendToJeedom.add_changes('devices::' + data['uuid'], data)  # type: ignore
             elif (_mode == "ScheduleMode"):
@@ -3623,15 +3663,16 @@ class Functions:
                 currentTime = int(time.time())
                 currentTimeStr = datetime.datetime.fromtimestamp(currentTime).strftime("%d/%m/%Y - %H:%M:%S")
                 
-                _gcast_names = myConfig.GCAST_NAMES.copy()
-                
-                chromecasts = [mycast for mycast in myConfig.NETCAST_DEVICES.values() if mycast.name in _gcast_names]
-                
+                # Équipements actifs, par UUID : le nom de l'appareil (Google Home) peut différer de celui de la fiche Jeedom
+                _gcast_uuids = list(myConfig.GCAST_UUID)
+
+                chromecasts = [myConfig.NETCAST_DEVICES[u] for u in _gcast_uuids if u in myConfig.NETCAST_DEVICES]
+
                 # Un seul log consolidé pour tout le cycle (au lieu d'une ligne par cast) — même détail, moins de bruit
                 # " | " comme séparateur de champs : reste sur une seule ligne, lisible dans un fichier de log brut
                 logging.debug(
-                    '[DAEMON][SCANNER][SCHEDULE] Cycle de scan :: GCAST Names (%d) = %s | NetCast vs JeeCast = %s vs %s | Chromecasts scannés = %s',
-                    len(_gcast_names), ', '.join(_gcast_names),
+                    '[DAEMON][SCANNER][SCHEDULE] Cycle de scan :: GCAST UUID (%d) | NetCast vs JeeCast = %s vs %s | Chromecasts scannés = %s',
+                    len(_gcast_uuids),
                     len(myConfig.NETCAST_DEVICES), len(chromecasts),
                     ', '.join(cast.name for cast in chromecasts) or '(aucun)'
                 )
@@ -3711,6 +3752,11 @@ class Functions:
                                 'schedule': 1,
                                 'online': castIsOnline
                             }
+                            castDiscovery = myCast.discoveryOf(cast)
+                            if castDiscovery is not None:
+                                data['discovery'] = castDiscovery
+                            # Synchronisation de la fiche (adresse, nom, port…), appliquée par PHP seulement en cas de changement
+                            data['sync'] = myCast.syncDataOf(cast)
 
                             # Envoi vers Jeedom
                             Comm.sendToJeedom.add_changes('casts::' + data['uuid'], data)  # type: ignore
@@ -3730,7 +3776,7 @@ class Functions:
 
     @staticmethod
     def getResourcesUsage():
-        if logging.getLogger().isEnabledFor(logging.INFO):
+        if resource is not None and logging.getLogger().isEnabledFor(logging.INFO):
             resourcesUse = resource.getrusage(resource.RUSAGE_SELF)  # type: ignore
             try:
                 uTime = getattr(resourcesUse, 'ru_utime')
@@ -3794,9 +3840,378 @@ class Functions:
         
 class myCast:
 
+    # Sérialise l'inscription et la désactivation des listeners : castListeners est appelé depuis le thread des messages Jeedom (addcast)
+    # et depuis celui de la découverte (castCallBack) — sans verrou, les deux pourraient inscrire chacun leurs listeners pour le même appareil
+    _listenersLock = threading.RLock()
+    _connectLock = threading.Lock()
+
     @staticmethod
     def castListeners(chromecast=None, uuid=None):
         """ Connect and Add Listener for Chromecast """
+        with myCast._listenersLock:
+            return myCast._castListeners(chromecast, uuid)
+
+    @staticmethod
+    def castRemove(chromecast=None, uuid=None):
+        """ Remove Listener and Connection for Chromecast """
+        with myCast._listenersLock:
+            return myCast._castRemove(chromecast, uuid)
+
+    @staticmethod
+    def isStaleCast(chromecast):
+        """ True si l'objet a été remplacé dans NETCAST_DEVICES (équipement désactivé / supprimé, cf. castRemove) : ses listeners, toujours inscrits, doivent se taire """
+        return myConfig.NETCAST_DEVICES.get(chromecast.uuid) is not chromecast
+
+    @staticmethod
+    def castConnect(chromecast, timeout=None):
+        """ Démarre la connexion du Chromecast si elle ne l'est pas déjà ; si timeout est fourni, attend qu'il soit prêt (lève RequestTimeout sinon) """
+        # Verrou : deux diffusions simultanées peuvent viser le même membre de groupe non connecté (un thread ne démarre qu'une fois)
+        with myCast._connectLock:
+            if not chromecast.socket_client.is_alive():
+                chromecast.start()
+        if timeout is not None:
+            chromecast.wait(timeout=timeout)
+
+    @staticmethod
+    def isActiveGroupMember(uuid):
+        """ True si l'appareil (UUID) est membre d'au moins un groupe actif dans Jeedom """
+        # Comparaison sur des UUID et non des chaînes : les appareils annoncent leurs membres avec ou sans tirets
+        for mz in list(myConfig.NETCAST_GROUPS.values()):  # copie : modifié par la découverte / castRemove
+            for member in mz.members:
+                try:
+                    if UUID(member) == uuid:
+                        return True
+                except ValueError:
+                    continue
+        return False
+
+    @staticmethod
+    def connectGroupMember(uuid):
+        """ Connexion en amont (sans listeners) d'un membre de groupe actif non actif dans Jeedom, pour régler son volume lors des diffusions sur le groupe.
+        Déclenchée par les événements (membre annoncé par le groupe, appareil découvert), jamais lors d'une diffusion : aucune latence ajoutée.
+        Pas de déconnexion si l'appareil quitte le groupe (bascules internes de Google en rafale) : seule la désactivation dans Jeedom déconnecte. """
+        if myConfig.IS_ENDING or uuid in myConfig.GCAST_UUID or not myCast.isActiveGroupMember(uuid):
+            return  # arrêt du démon en cours, actif dans Jeedom (connecté avec ses listeners, cf. castListeners) ou membre d'aucun groupe actif
+        chromecast = myConfig.NETCAST_DEVICES.get(uuid)
+        if chromecast is None or chromecast.socket_client.is_alive():
+            return  # pas encore découvert (castCallBack s'en chargera) ou déjà connecté
+        try:
+            myCast.castConnect(chromecast)
+            logging.debug('[DAEMON][NETCAST][GroupMember] Chromecast with name :: %s :: Connection started (group member, not enabled in Jeedom)', str(chromecast.name))
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][GroupMember] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
+
+    @staticmethod
+    def releaseTestCast(uuid):
+        """ Referme la connexion ouverte pour un TTS de test, si l'appareil n'est ni actif dans Jeedom ni membre d'un groupe actif
+        (sinon elle resterait ouverte jusqu'au redémarrage du démon) """
+        if uuid in myConfig.GCAST_UUID or myCast.isActiveGroupMember(uuid):
+            return
+        logging.debug('[DAEMON][Cast] Test terminé :: fermeture de la connexion ouverte pour le test (%s)', uuid)
+        myCast.castRemove(uuid=uuid)
+
+    # ── Découverte par IP ───────────────────────────────────────────────────────
+    # Les adresses des équipements actifs (IP_HOSTS) sont interrogées par PyChromecast (HostBrowser) en complément du mDNS.
+    # ipHostsApplied mémorise celles que nous lui avons transmises, pour ne retirer que les nôtres (il ajoute aussi lui-même les hôtes des groupes)
+    ipHostsApplied = set()
+    _ipHostsLock = threading.Lock()
+
+    _hostnameLabel = re.compile(r'^(?!-)[a-z0-9-]{1,63}(?<!-)$')
+
+    @staticmethod
+    def normalizeHost(host):
+        """ Adresse normalisée, ou None si invalide :
+        - adresse IPv4 / IPv6 : crochets retirés, IPv6 mappée ramenée en IPv4 ; link-local (fe80::…, 169.254.x.x) refusées,
+          car elles nécessitent l'interface réseau et ne sont pas stables
+        - nom d'hôte (RFC 1123) : minuscules, point final retiré ; non résolu ici, le système le résout à chaque connexion.
+          Une chaîne de chiffres et de points qui n'est pas une IP valide (faute de frappe probable) est refusée """
+        if not host:
+            return None
+        value = str(host).strip().strip('[]')
+        try:
+            ip = ipaddress.ip_address(value)
+        except ValueError:
+            name = value.lower().rstrip('.')
+            if not name or len(name) > 253 or re.fullmatch(r'[0-9.]+', name):
+                return None
+            return name if all(myCast._hostnameLabel.match(label) for label in name.split('.')) else None
+        if ip.version == 6 and ip.ipv4_mapped is not None:
+            ip = ip.ipv4_mapped
+        if ip.is_link_local or ip.is_unspecified or ip.is_multicast:
+            return None
+        return str(ip)
+
+    @staticmethod
+    def isIpAddress(host):
+        """ True si l'adresse (normalisée) est une adresse IP, False si c'est un nom d'hôte """
+        try:
+            ipaddress.ip_address(host)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def ipHostsList():
+        """ Adresses distinctes des équipements actifs (une adresse peut être partagée : appareil + groupes qu'il héberge) """
+        return sorted(set(myConfig.IP_HOSTS.values()))
+
+    @staticmethod
+    def setIpHost(uuid, host):
+        """ Enregistre (ou met à jour) l'adresse d'un équipement actif ; True si la table a changé """
+        if not myConfig.ipDiscoveryEnabled:
+            return False
+        normalized = myCast.normalizeHost(host)
+        previous = myConfig.IP_HOSTS.get(uuid)
+        if normalized is None:
+            logging.debug('[DAEMON][IPDISCOVERY] Adresse ignorée (invalide) pour %s :: %s', uuid, host)
+            changed = myConfig.IP_HOSTS.pop(uuid, None) is not None
+        else:
+            changed = previous != normalized
+            myConfig.IP_HOSTS[uuid] = normalized
+            if previous is not None and changed:
+                myCast._replaceHostService(uuid, previous, normalized)
+        if changed:
+            myCast.applyIpHosts()
+        return changed
+
+    @staticmethod
+    def _replaceHostService(uuid, oldHost, newHost):
+        """ Adresse modifiée (page de l'équipement, Scan, synchronisation) : met à jour le chemin d'accès par IP de l'appareil.
+        L'ensemble des chemins (cast_info.services) est partagé avec sa connexion, qui le relit à chaque tentative de reconnexion.
+        Si un chemin existe déjà pour la nouvelle adresse (ajouté par PyChromecast, avec le bon port : groupe déplacé sur une autre
+        enceinte), l'ancien est seulement retiré : le recréer avec l'ancien port ajouterait un chemin qui ne répond pas """
+        chromecast = myConfig.NETCAST_DEVICES.get(uuid)
+        if chromecast is None:
+            return
+        services = chromecast.cast_info.services
+        hasNewHost = any(isinstance(s, HostServiceInfo) and myCast.normalizeHost(s.host) == newHost for s in list(services))
+        for service in list(services):
+            if isinstance(service, HostServiceInfo) and myCast.normalizeHost(service.host) == oldHost:
+                services.discard(service)
+                if not hasNewHost:
+                    services.add(HostServiceInfo(newHost, service.port))
+                    hasNewHost = True
+                logging.info('[DAEMON][IPDISCOVERY] Chromecast with name :: %s :: Adresse modifiée %s -> %s', str(chromecast.name), oldHost, newHost)
+
+    @staticmethod
+    def removeIpHost(uuid):
+        """ Retire l'adresse d'un équipement désactivé / supprimé ; True si la table a changé """
+        if myConfig.IP_HOSTS.pop(uuid, None) is None:
+            return False
+        myCast.applyIpHosts()
+        return True
+
+    @staticmethod
+    def applyIpHosts():
+        """ Transmet les adresses à l'interrogation de PyChromecast : ajout des nouvelles, retrait de celles qui ne servent plus """
+        browser = myConfig.NETCAST_BROWSER
+        if browser is None:
+            return  # navigateur pas encore créé : la liste lui sera transmise à sa création (mainLoop)
+        with myCast._ipHostsLock:
+            wanted = set(myCast.ipHostsList())
+            hostBrowser = browser.host_browser
+            added = sorted(wanted - myCast.ipHostsApplied)
+            removed = myCast.ipHostsApplied - wanted
+            if added:
+                hostBrowser.add_hosts(added)
+            if removed:
+                # update_hosts retire tout hôte absent de la liste reçue : on lui passe les hôtes actuels (dont ceux ajoutés
+                # par PyChromecast pour les groupes) moins les nôtres devenus inutiles
+                current = set(getattr(hostBrowser, '_known_hosts', {}).keys())
+                hostBrowser.update_hosts(sorted(current - removed))
+            myCast.ipHostsApplied = wanted
+            if added or removed:
+                logging.debug('[DAEMON][IPDISCOVERY] Adresses interrogées :: %s | ajout = %s | retrait = %s',
+                              ', '.join(sorted(wanted)) or '(aucune)', ', '.join(added) or '-', ', '.join(sorted(removed)) or '-')
+
+    @staticmethod
+    def castInfoOf(chromecast):
+        """ Informations à jour de l'appareil (nom, adresse, port…) : chromecast.cast_info est figé à la création de l'objet, alors que
+        le navigateur remplace son CastInfo à chaque annonce mDNS ou interrogation par IP. Repli sur cast_info si l'appareil n'est pas
+        (encore) vu par le navigateur, ex. ajouté par la recherche par IP """
+        browser = myConfig.NETCAST_BROWSER
+        info = browser.devices.get(chromecast.uuid) if browser is not None else None
+        return info if info is not None else chromecast.cast_info
+
+    @staticmethod
+    def scanDataOf(chromecast, lastscan):
+        """ Données envoyées à Jeedom par le Scan, depuis les informations à jour (castInfoOf). Le type et le fabricant d'un modèle
+        inconnu de PyChromecast ne sont connus que de l'objet (interrogation de l'appareil à sa création) : repli sur cast_info,
+        comme pour un nom absent de l'annonce mDNS """
+        info = myCast.castInfoOf(chromecast)
+        initial = chromecast.cast_info
+        return {
+            'friendly_name': info.friendly_name or initial.friendly_name,
+            'uuid': str(chromecast.uuid),
+            'lastscan': lastscan,
+            'model_name': info.model_name,
+            'cast_type': info.cast_type or initial.cast_type,
+            'manufacturer': info.manufacturer or initial.manufacturer,
+            # Adresse utilisable uniquement ('' sinon, ex. IPv6 link-local annoncée passagèrement par le mDNS) : PHP conserve alors l'actuelle
+            'host': myCast.normalizeHost(info.host) or '',
+            'port': info.port,
+            'scanmode': 1,
+            'updatedBy': 'mdns'
+        }
+
+    @staticmethod
+    def syncDataOf(chromecast):
+        """ Synchronisation des fiches Jeedom (cycle ScheduleMode), appliquée par PHP champ par champ s'il a changé : le Scan en continu.
+        Seuls le nom, l'adresse et le port sont synchronisés (ce qui change réellement) : modèle, fabricant et type n'ont pas la même
+        source en mDNS et par IP, et basculeraient à chaque réécriture du navigateur.
+        Adresse et port : là où l'appareil est actuellement vu (mDNS ou IP), donc toujours cohérents entre eux (groupe déplacé sur une
+        autre enceinte, TV interrogée une seule fois…). Rien si l'appareil n'est plus vu ; adresse omise si elle n'est pas utilisable
+        (IPv6 link-local fournie par le mDNS) """
+        if (myCast.discoveryOf(chromecast) or 'Aucun') == 'Aucun':
+            return {}
+        info = myCast.castInfoOf(chromecast)
+        sync = {'friendly_name': info.friendly_name or chromecast.cast_info.friendly_name}
+        host = myCast.normalizeHost(info.host)
+        if host is not None:  # le port n'est envoyé qu'avec l'adresse : seul, il pourrait ne pas correspondre à l'adresse de la fiche
+            sync['host'] = host
+            sync['port'] = info.port
+        return sync
+
+    @staticmethod
+    def discoveryOf(chromecast):
+        """ Chemins par lesquels l'appareil est actuellement vu : 'mDNS', 'IP', 'mDNS + IP' ou 'Aucun' (commande info « Découverte ») """
+        try:
+            services = None
+            browser = myConfig.NETCAST_BROWSER
+            if browser is not None:
+                info = browser.devices.get(chromecast.uuid)
+                if info is not None:
+                    services = list(info.services)
+            if services is None:  # appareil ajouté par la recherche par IP, pas encore vu par le navigateur
+                services = list(chromecast.cast_info.services)
+            paths = []
+            if any(isinstance(s, MDNSServiceInfo) for s in services):
+                paths.append('mDNS')
+            if any(isinstance(s, HostServiceInfo) for s in services):
+                paths.append('IP')
+            return ' + '.join(paths) or 'Aucun'
+        except Exception as e:  # services modifiés par un autre thread pendant la lecture : valeur rafraîchie au cycle suivant
+            logging.debug('[DAEMON][IPDISCOVERY] discoveryOf (%s) :: %s', chromecast.name, e)
+            return None
+
+    @staticmethod
+    def runHostSearch(searchId, inputs):
+        """ Scan (IP), commande asynchrone : recherche dans un thread, puis envoi du résultat à Jeedom (rappel jeettscast.php), qui crée
+        ou met à jour les équipements trouvés (même chemin que le Scan) et pousse le compte rendu à la fenêtre (événement ttscast::hostSearch) """
+        try:
+            result = myCast.searchHosts(inputs)
+        except Exception as e:
+            logging.error('[DAEMON][IPDISCOVERY] Exception :: %s', e)
+            logging.debug(traceback.format_exc())
+            result = {'error': 'exception', 'devices': [], 'errors': [], 'groupsNotAdded': []}
+        result['searchId'] = searchId
+        Comm.sendToJeedom.send_change_immediate({'hostSearch': result})  # type: ignore
+
+    @staticmethod
+    def searchHosts(inputs):
+        """ Scan (IP) : interroge les adresses saisies et retourne les appareils trouvés, ainsi que les groupes qu'ils hébergent
+        (un groupe hébergé ailleurs n'est pas retenu : il est signalé, l'utilisateur peut saisir l'adresse de son hôte).
+        Les appareils retenus sont ajoutés aussitôt aux appareils connus, pour être utilisables dès leur création dans Jeedom.
+        Retourne {'devices': [...], 'errors': [...], 'groupsNotAdded': [...]} ('error': 'disabled' si l'option est désactivée) """
+        if not myConfig.ipDiscoveryEnabled:
+            return {'error': 'disabled', 'devices': [], 'errors': [], 'groupsNotAdded': []}
+
+        errors = []
+        hosts = []
+        for raw in inputs:
+            host = myCast.normalizeHost(raw)
+            if host is None:
+                errors.append({'input': str(raw), 'reason': 'invalid'})
+            elif host not in hosts:
+                hosts.append(host)
+        logging.info('[DAEMON][IPDISCOVERY] Scan (IP) :: %s', ', '.join(hosts) or '(aucune adresse valide)')
+        if not hosts:
+            return {'devices': [], 'errors': errors, 'groupsNotAdded': []}
+
+        context = get_ssl_context()
+        found = {}         # { UUID: entrée } — dédoublonne un appareil saisi sous plusieurs adresses (IPv4 et IPv6)
+        elsewhere = {}     # { UUID groupe: (nom, hôte) } — groupes hébergés par un appareil non saisi
+
+        def probe(host):
+            # Tout le réseau d'une adresse dans son thread (identification, puis groupes si multizone) : les résultats sont
+            # triés ensuite dans ce thread-ci, sans accès concurrent à found / elsewhere
+            # Nom d'hôte : résolution préalable, pour distinguer un nom introuvable d'un appareil qui ne répond pas
+            if not myCast.isIpAddress(host):
+                try:
+                    socket.getaddrinfo(host, 8009, proto=socket.IPPROTO_TCP)
+                except OSError:
+                    return host, 'unresolved', None
+            info = get_device_info(host, timeout=8, context=context)
+            multizone = None
+            if info is not None and info.uuid is not None and info.multizone_supported:
+                multizone = get_multizone_status(host, timeout=8, context=context)
+            return host, info, multizone
+
+        with ThreadPoolExecutor(max_workers=min(16, len(hosts))) as executor:
+            probes = list(executor.map(probe, hosts))
+
+        for host, info, multizone in probes:
+            if info == 'unresolved':
+                errors.append({'input': host, 'reason': 'unresolved'})
+                continue
+            if info is None or info.uuid is None:
+                errors.append({'input': host, 'reason': 'noDevice'})
+                continue
+            found.setdefault(info.uuid, {
+                'type': 'device', 'uuid': info.uuid, 'friendly_name': info.friendly_name, 'model_name': info.model_name,
+                'manufacturer': info.manufacturer, 'cast_type': info.cast_type, 'host': host, 'port': 8009
+            })
+            if multizone is None:
+                continue
+            for group in itertools.chain(multizone.dynamic_groups, multizone.groups):
+                if group.uuid is None:
+                    continue
+                # PyChromecast ne donne le port que si l'appareil interrogé héberge lui-même le groupe (elected_leader = self) :
+                # le groupe est alors joignable à l'adresse saisie (même nom d'hôte si un nom a été saisi), sur son propre port
+                if group.port is not None:
+                    found.setdefault(group.uuid, myCast._groupEntry(group, host))
+                else:
+                    groupHost = myCast.normalizeHost(group.host)
+                    if groupHost is not None:  # sans hôte : paire stéréo, pilotée via son enceinte leader
+                        elsewhere.setdefault(group.uuid, (group.friendly_name, groupHost))
+
+        for entry in found.values():
+            myCast._registerHostDevice(entry)
+
+        devices = [dict(entry, uuid=str(entry['uuid']), updatedBy='ip') for entry in found.values()]
+        groupsNotAdded = [{'uuid': str(u), 'friendly_name': name, 'host': host} for u, (name, host) in elsewhere.items() if u not in found]
+        logging.info('[DAEMON][IPDISCOVERY] Scan (IP) terminé :: trouvés = %s | erreurs = %s | groupes hébergés ailleurs = %s',
+                     '; '.join(f"{d['friendly_name']} ({d['host']}:{d['port']})" for d in devices) or '(aucun)',
+                     '; '.join(f"{e['input']} ({e['reason']})" for e in errors) or '(aucune)',
+                     '; '.join(f"{g['friendly_name']} ({g['host']})" for g in groupsNotAdded) or '(aucun)')
+        return {'devices': devices, 'errors': errors, 'groupsNotAdded': groupsNotAdded}
+
+    @staticmethod
+    def _groupEntry(group, host):
+        return {
+            'type': 'group', 'uuid': group.uuid, 'friendly_name': group.friendly_name, 'model_name': 'Google Cast Group',
+            'manufacturer': 'Google Inc.', 'cast_type': 'group', 'host': host, 'port': group.port
+        }
+
+    @staticmethod
+    def _registerHostDevice(entry):
+        """ Ajoute aux appareils connus un appareil trouvé par IP (s'il ne l'est pas déjà, par mDNS ou par une recherche précédente) """
+        if entry['uuid'] in myConfig.NETCAST_DEVICES:
+            return
+        try:
+            castInfo = CastInfo(
+                {HostServiceInfo(entry['host'], entry['port'])}, entry['uuid'], entry['model_name'], entry['friendly_name'],
+                entry['host'], entry['port'], entry['cast_type'], entry['manufacturer']
+            )
+            chromecast = pychromecast.get_chromecast_from_cast_info(castInfo, myConfig.NETCAST_ZCONF, tries=None, retry_wait=5, timeout=30)
+            myCast.castCallBack(chromecast)
+        except Exception as e:
+            logging.error('[DAEMON][IPDISCOVERY] Exception (%s) :: %s', entry['friendly_name'], e)
+            logging.debug(traceback.format_exc())
+
+    @staticmethod
+    def _castListeners(chromecast=None, uuid=None):
         if not chromecast:
             if uuid in myConfig.NETCAST_DEVICES:
                 chromecast = myConfig.NETCAST_DEVICES[uuid]
@@ -3804,126 +4219,151 @@ class myCast:
             else:
                 logging.debug('[DAEMON][NETCAST][CastListeners] Aucun Chromecast avec cet UUID :: %s', uuid)
                 return False
-    
-        if uuid not in myConfig.LISTENER_CAST:
-            try:
-                myConfig.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
-                chromecast.register_status_listener(myConfig.LISTENER_CAST[uuid])
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastListeners][CastStatus] Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
-        else:
-            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Status Listener already active', str(chromecast.name))
-            
-        if uuid not in myConfig.LISTENER_MEDIA:
-            try:
-                myConfig.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
-                chromecast.media_controller.register_status_listener(myConfig.LISTENER_MEDIA[uuid])
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastListeners][MediaStatus] Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
-        else:
-            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Media Listener already active', str(chromecast.name))
-            
-        if uuid not in myConfig.LISTENER_CONNECT:
-            try:
-                myConfig.LISTENER_CONNECT[uuid] = myCast.MyConnectionStatusListener(chromecast.name, chromecast)
-                chromecast.register_connection_listener(myConfig.LISTENER_CONNECT[uuid])
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastListeners][ConnectStatus] Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
-        else:
-            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Connect Listener already active', str(chromecast.name))
+
+        # PyChromecast ne permet pas de désinscrire un listener receiver / média / connexion : ils sont liés à l'objet Chromecast,
+        # remplacé par une copie neuve lorsque l'équipement est désactivé / supprimé (cf. castRemove), ce qui les retire avec lui.
+        if uuid in myConfig.LISTENER_CAST:
+            logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Listeners already active', str(chromecast.name))
+            return True
+
+        try:
+            myConfig.LISTENER_CAST[uuid] = myCast.MyCastStatusListener(chromecast.name, chromecast)
+            chromecast.register_status_listener(myConfig.LISTENER_CAST[uuid])
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][CastListeners][CastStatus] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
+
+        try:
+            myConfig.LISTENER_MEDIA[uuid] = myCast.MyMediaStatusListener(chromecast.name, chromecast)
+            chromecast.media_controller.register_status_listener(myConfig.LISTENER_MEDIA[uuid])
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][CastListeners][MediaStatus] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
+
+        try:
+            myConfig.LISTENER_CONNECT[uuid] = myCast.MyConnectionStatusListener(chromecast.name, chromecast)
+            chromecast.register_connection_listener(myConfig.LISTENER_CONNECT[uuid])
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][CastListeners][ConnectStatus] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
+
+        # Gestion Multizone, uniquement pour les groupes configurés dans Jeedom (retiré avec l'objet Chromecast dans castRemove)
+        if chromecast.cast_info.cast_type == 'group':
+            if uuid not in myConfig.NETCAST_GROUPS:
+                try:
+                    mz = MultizoneController(chromecast.uuid)
+                    chromecast.register_handler(mz)
+                    mz.register_listener(myCast.MyMultizoneStatusListener(chromecast.name, chromecast))
+                    myConfig.NETCAST_GROUPS[uuid] = mz
+                    logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: MultizoneController added', str(chromecast.name))
+                    # On force une update pour peupler la liste initialement
+                    try:
+                        mz.update_members()
+                    except NotConnected:
+                        # Groupe encore en cours de connexion : les membres seront lus à la connexion (MyConnectionStatusListener)
+                        logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Group not connected yet, members will be read on connection', str(chromecast.name))
+                except Exception as e:
+                    logging.error('[DAEMON][NETCAST][CastListeners][Multizone] Exception (%s) :: %s', str(chromecast.name), e)
+                    logging.debug(traceback.format_exc())
+            else:
+                logging.debug('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: MultizoneController already active', str(chromecast.name))
+
+        # Déjà connecté en tant que membre d'un groupe actif (cf. connectGroupMember) : le statut CONNECTED a été émis avant l'inscription
+        # des listeners, l'état courant est donc poussé ici (sinon Jeedom resterait hors ligne jusqu'au prochain scan programmé)
+        if chromecast.socket_client.is_connected:
+            Comm.sendToJeedom.add_changes('castsRT::' + str(uuid), {'uuid': str(uuid), 'realtime': 1, 'status_type': 'connect', 'online': '1'})  # type: ignore
+            if chromecast.status is not None and uuid in myConfig.LISTENER_CAST:
+                myConfig.LISTENER_CAST[uuid].new_cast_status(chromecast.status)
+            logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Already connected (group member)', str(chromecast.name))
+            return True
+
+        # Connexion lancée après l'inscription des listeners (le premier statut CONNECTED est ainsi reçu), sans attente :
+        # un équipement injoignable (TV en veille) ne bloque rien, son état en ligne / hors ligne remonte via MyConnectionStatusListener
+        try:
+            myCast.castConnect(chromecast)
+            logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Connection started', str(chromecast.name))
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][CastListeners][Connect] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
+        return True
 
     @staticmethod
-    def castRemove(chromecast=None, uuid=None):
-        """ Remove Listener and Connection for Chromecast """
-        
+    def _castRemove(chromecast=None, uuid=None):
         if not chromecast:
             if uuid in myConfig.NETCAST_DEVICES:
                 chromecast = myConfig.NETCAST_DEVICES[uuid]
             else:
                 logging.debug('[DAEMON][NETCAST][CastRemove] Aucun Chromecast avec cet UUID :: %s', uuid)
                 return False
-    
-        if (uuid in myConfig.LISTENER_CAST):
-            try:
-                # chromecast.register_status_listener(None)
-                del myConfig.LISTENER_CAST[uuid]
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastRemove][Cast] Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
-        else:
-            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Status Listener already deleted', str(chromecast.name))
-            
-        if (uuid in myConfig.LISTENER_MEDIA):
-            try:
-                # chromecast.media_controller.register_status_listener(None)
-                del myConfig.LISTENER_MEDIA[uuid]
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastRemove][Media] Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
-        else:
-            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Media Listener already deleted', str(chromecast.name))
-        
-        if (uuid in myConfig.LISTENER_CONNECT):
-            try:
-                # chromecast.register_connection_listener(None)
-                del myConfig.LISTENER_CONNECT[uuid]
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastRemove][Connect] Exception (%s) :: %s', str(chromecast.name), e)
-                logging.debug(traceback.format_exc())
-        else:
-            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Connect Listener already deleted', str(chromecast.name))
 
-        if (uuid in myConfig.NETCAST_GROUPS):
-            try:
-                del myConfig.NETCAST_GROUPS[uuid]
-                logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: MultizoneController deleted', str(chromecast.name))
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastRemove][Multizone] Exception (%s) :: %s', str(chromecast.name), e)
-        
-        logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Listeners Removed', str(chromecast.name))
+        hadListeners = myConfig.LISTENER_CAST.pop(uuid, None) is not None
+        myConfig.LISTENER_MEDIA.pop(uuid, None)
+        myConfig.LISTENER_CONNECT.pop(uuid, None)
+        groupMz = myConfig.NETCAST_GROUPS.pop(uuid, None)
 
-        """ chromecast.disconnect()
-        logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Disconnected', str(chromecast.name)) """
+        # Groupe désactivé / supprimé : ses membres connectés uniquement pour lui (ni actifs dans Jeedom, ni membres d'un autre
+        # groupe actif) sont déconnectés. Le groupe est retiré de NETCAST_GROUPS avant ce test, il n'est donc plus compté
+        if groupMz is not None:
+            for member in list(groupMz.members):
+                try:
+                    memberUUID = UUID(member)
+                except ValueError:
+                    continue
+                if memberUUID not in myConfig.GCAST_UUID and not myCast.isActiveGroupMember(memberUUID):
+                    memberCast = myConfig.NETCAST_DEVICES.get(memberUUID)
+                    if memberCast is not None and memberCast.socket_client.is_alive():
+                        logging.debug('[DAEMON][NETCAST][CastRemove] Group %s removed :: disconnecting member %s (connected only for this group)', str(chromecast.name), str(memberCast.name))
+                        myCast._castRemove(uuid=memberUUID)
+
+        # Déconnexion réelle (sans attendre la fin du thread), puis remplacement par une copie neuve non connectée :
+        # PyChromecast ne permet ni de redémarrer une connexion arrêtée ni de désinscrire ses listeners, la copie repart de zéro.
+        # Elle reste dans NETCAST_DEVICES pour le scan, et peut être connectée à la demande si l'appareil est membre d'un groupe actif.
+        isAlive = chromecast.socket_client.is_alive()
+        if not (isAlive or hadListeners):
+            logging.debug('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Not connected, nothing to do', str(chromecast.name))
+            return True
+        try:
+            if isAlive:
+                chromecast.socket_client.disconnect()
+            myConfig.NETCAST_DEVICES[uuid] = pychromecast.get_chromecast_from_cast_info(
+                chromecast.cast_info, myConfig.NETCAST_ZCONF, tries=None, retry_wait=5, timeout=30
+            )
+            logging.info('[DAEMON][NETCAST][CastRemove] Chromecast with name :: %s :: Disconnected', str(chromecast.name))
+        except Exception as e:
+            logging.error('[DAEMON][NETCAST][CastRemove] Exception (%s) :: %s', str(chromecast.name), e)
+            logging.debug(traceback.format_exc())
+
+        # Rien n'est envoyé à Jeedom (le DISCONNECTED tardif de l'ancien objet est ignoré, cf. isStaleCast) : l'équipement peut déjà
+        # être supprimé. Le passage hors ligne d'un équipement désactivé est fait côté PHP (disableCastToDaemon)
+
+        # Toujours membre d'un groupe actif : la copie neuve est reconnectée sans listeners, pour le volume des diffusions sur le groupe
+        myCast.connectGroupMember(uuid)
+        return True
 
     @staticmethod
     def castCallBack(chromecast=None):
         """ Service CallBack de découverte des Google Cast """
 
-        if chromecast is not None:
-            if chromecast.uuid not in myConfig.NETCAST_DEVICES:
-                myConfig.NETCAST_DEVICES[chromecast.uuid] = chromecast
-                logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Added to NETCAST_DEVICES', str(chromecast.name))
-                logging.debug('[DAEMON][NETCAST][CastCallBack] NETCAST_DEVICES Nb :: %s', len(myConfig.NETCAST_DEVICES))
-            else:
-                logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
-            
-            try:
-                chromecast.wait(timeout=30)
-                logging.info('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Connected', str(chromecast.name))
+        if chromecast is None:
+            return
 
-                # Ajout Gestion Multizone pour les groupes
-                if chromecast.cast_info.cast_type == 'group':
-                    if chromecast.uuid not in myConfig.NETCAST_GROUPS:
-                        logging.debug('[DAEMON][NETCAST][CastCallBack] Group detected, adding MultizoneController :: %s', str(chromecast.name))
-                        mz = MyMultizoneController(chromecast.uuid)
-                        chromecast.register_handler(mz)
-                        mz.register_listener(MyMultizoneStatusListener(chromecast.name, chromecast))
-                        # On force une update pour peupler la liste initialement
-                        mz.update_members()
-                        myConfig.NETCAST_GROUPS[chromecast.uuid] = mz
-                        logging.debug('[DAEMON][NETCAST][CastCallBack] MultizoneController added for %s', str(chromecast.name))
+        if chromecast.uuid not in myConfig.NETCAST_DEVICES:
+            myConfig.NETCAST_DEVICES[chromecast.uuid] = chromecast
+            logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Added to NETCAST_DEVICES (Nb :: %s)', str(chromecast.name), len(myConfig.NETCAST_DEVICES))
+        else:
+            logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Already in NETCAST_DEVICES', str(chromecast.name))
+            return
 
-            except Exception as e:
-                logging.error('[DAEMON][NETCAST][CastCallBack] Chromecast Exception (%s) :: %s', str(chromecast.name), e)
-                # logging.debug(traceback.format_exc())
-             
-            if chromecast.uuid in myConfig.GCAST_UUID:
-                uuid = chromecast.uuid
-                myCast.castListeners(chromecast=chromecast, uuid=uuid)
-                
+        # Connexion uniquement pour les équipements actifs dans Jeedom. Les autres restent connus (scan) sans connexion,
+        # sauf s'ils sont membres d'un groupe actif : connexion en amont, sans listeners (cf. connectGroupMember)
+        if chromecast.uuid in myConfig.GCAST_UUID:
+            myCast.castListeners(chromecast=chromecast, uuid=chromecast.uuid)
+        elif myCast.isActiveGroupMember(chromecast.uuid):
+            # Découvert après son groupe : multizone_member_added a déjà été reçu sans pouvoir le connecter
+            myCast.connectGroupMember(chromecast.uuid)
+        else:
+            logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Not enabled in Jeedom (nor active group member), no connection', str(chromecast.name))
+
     class MyCastListener(pychromecast.discovery.AbstractCastListener):
         """Listener for discovering chromecasts."""
 
@@ -3965,6 +4405,8 @@ class myCast:
             self.cast = cast
 
         def new_cast_status(self, status):
+            if myCast.isStaleCast(self.cast):
+                return
             logging.debug('[DAEMON][NETCAST][New_Cast_Status] ' + self.name + ' :: STATUS Chromecast change :: ' + str(status))
             try:
                 castVolumeLevel = int(status.volume_level * 100)
@@ -4008,6 +4450,8 @@ class myCast:
             self.cast = cast
 
         def new_media_status(self, status):
+            if myCast.isStaleCast(self.cast):
+                return
             logging.debug('[DAEMON][NETCAST][New_Media_Status] ' + self.name + ' :: STATUS Media change :: ' + str(status))
             try:
                 mediaLastUpdated = None
@@ -4075,6 +4519,8 @@ class myCast:
                 logging.debug(traceback.format_exc())
 
         def load_media_failed(self, queue_item_id, error_code):
+            if myCast.isStaleCast(self.cast):
+                return
             logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(queue_item_id) + ' with code :: ' + str(error_code))
 
     class MyConnectionStatusListener(ConnectionStatusListener):
@@ -4086,7 +4532,8 @@ class myCast:
 
         def new_connection_status(self, status) -> None:
             """Updated connection status."""
-            
+            if myCast.isStaleCast(self.cast):
+                return
             logging.debug('[DAEMON][NETCAST][New_Connect_Status] ' + self.name + ' :: STATUS Connect change :: ' + str(status))
             try:
                 # The socket connection is being setup
@@ -4104,6 +4551,13 @@ class myCast:
                 
                 if status.status in [CONNECTION_STATUS_CONNECTED]:
                     castIsOnline = '1'
+                    # Groupe : (re)lecture des membres à chaque (re)connexion — PyChromecast ne le fait que via MultizoneManager, non utilisé ici
+                    mz = myConfig.NETCAST_GROUPS.get(self.cast.uuid)
+                    if mz is not None:
+                        try:
+                            mz.update_members()
+                        except Exception as e:  # l'état "en ligne" doit être remonté à Jeedom même si la lecture des membres échoue
+                            logging.warning('[DAEMON][NETCAST][New_Connect_Status] %s :: Lecture des membres du groupe impossible :: %s', self.name, e)
                 else:
                     castIsOnline = '0'
                     # Device déconnecté : purge la session enregistrée (évite une entrée pluginSessions orpheline).
@@ -4131,7 +4585,13 @@ class myCast:
 
         def multizone_member_added(self, uuid):
             """Called when a member is added to the group."""
+            if myCast.isStaleCast(self.cast):
+                return
             logging.debug('[DAEMON][NETCAST][Multizone] %s :: Member Added :: %s', self.name, uuid)
+            try:
+                myCast.connectGroupMember(UUID(uuid))
+            except ValueError:
+                logging.warning('[DAEMON][NETCAST][Multizone] %s :: Invalid member UUID :: %s', self.name, uuid)
 
         def multizone_member_removed(self, uuid):
             """Called when a member is removed from the group."""
@@ -4150,20 +4610,45 @@ def handler(signum=None, frame=None):
 def shutdown():
     logging.info("[DAEMON] Shutdown :: Begin...")
     myConfig.IS_ENDING = True  # type: ignore
-    logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
+    # Chaque étape a son propre try : l'échec de l'une n'empêche pas les suivantes
+    # 1. Arrêt de la découverte en premier : aucune nouvelle connexion ne doit être lancée pendant l'arrêt
     try:
-        for chromecast in myConfig.NETCAST_DEVICES.values():
-            chromecast.disconnect(timeout=5)
-        logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK")
-        if myConfig.NETCAST_BROWSER is not None: 
+        if myConfig.NETCAST_BROWSER is not None:
             myConfig.NETCAST_BROWSER.stop_discovery()
         logging.info("[DAEMON] Shutdown :: Browser Stop :: OK")
-        if myConfig.NETCAST_ZCONF is not None: 
+    except Exception as e:
+        logging.error('[DAEMON] Shutdown :: Browser Stop :: Exception :: %s', e)
+        logging.debug(traceback.format_exc())
+
+    # 2. Déconnexion demandée à tous les appareils, puis attente avec un délai global : un appareil en cours de reconnexion
+    # (thread en attente entre deux tentatives) ne bloque pas les autres et ne fait plus échouer la suite de l'arrêt
+    logging.info("[DAEMON] Shutdown :: Devices Disconnect :: Begin...")
+    try:
+        connected = [c for c in list(myConfig.NETCAST_DEVICES.values()) if c.socket_client.is_alive()]  # les autres n'ont jamais été connectés
+        for chromecast in connected:
+            try:
+                chromecast.socket_client.disconnect()
+            except Exception as e:
+                logging.error('[DAEMON] Shutdown :: Disconnect (%s) :: Exception :: %s', chromecast.name, e)
+        deadline = time.monotonic() + 6  # > délai entre deux tentatives de reconnexion (retry_wait = 5 s)
+        for chromecast in connected:
+            chromecast.socket_client.join(timeout=max(0.0, deadline - time.monotonic()))
+        notStopped = [c.name for c in connected if c.socket_client.is_alive()]
+        if notStopped:
+            logging.warning('[DAEMON] Shutdown :: Devices Disconnect :: Connexions non terminées dans le délai :: %s', ', '.join(notStopped))
+        else:
+            logging.info("[DAEMON] Shutdown :: Devices Disconnect :: OK (%d)", len(connected))
+    except Exception as e:
+        logging.error('[DAEMON] Shutdown :: Devices Disconnect :: Exception :: %s', e)
+        logging.debug(traceback.format_exc())
+
+    # 3. Zeroconf fermé en dernier : il sert encore aux appareils pendant leur déconnexion
+    try:
+        if myConfig.NETCAST_ZCONF is not None:
             myConfig.NETCAST_ZCONF.close()
         logging.info("[DAEMON] Shutdown :: ZeroConf Close :: OK")
     except Exception as e:
-        # pass
-        logging.error('[DAEMON] Exception on Shutdown :: %s', e)
+        logging.error('[DAEMON] Shutdown :: ZeroConf Close :: Exception :: %s', e)
         logging.debug(traceback.format_exc())
     logging.debug("[DAEMON] Removing PID file %s", myConfig.pidFile)
     try:
@@ -4174,7 +4659,8 @@ def shutdown():
     except Exception as e:
         logging.error("[DAEMON] Error removing PID file: %s", e)
     try:
-        my_jeedom_socket.close()
+        if my_jeedom_socket is not None:  # arrêt possible avant sa création (échec de communication avec Jeedom au démarrage)
+            my_jeedom_socket.close()
     except Exception:
         pass
     logging.info("[DAEMON] Shutdown :: Exit 0")
@@ -4221,262 +4707,363 @@ class PatternRemapFilter(logging.Filter):
                 if target is not None:
                     record.levelno = target
                     record.levelname = level
+                    # Le seuil du logger a été contrôlé avant ce filtre, sur le niveau d'origine : on le réapplique au nouveau niveau,
+                    # sinon un message abaissé sous ce seuil resterait affiché (simplement réétiqueté) au lieu d'être masqué
+                    return target >= logging.getLogger(record.name).getEffectiveLevel()
                 return True
         return True
+
+
+class SecretMaskFilter(logging.Filter):
+    """Masque les valeurs des secrets du démon (clés API) dans tous les logs, ceux du démon comme ceux des bibliothèques
+    tierces (ex : urllib3 loguant l'URL complète d'une requête). Filet de sécurité : le démon ne loggue jamais un secret volontairement.
+    Masquage par valeur (et non par nom de champ) : le secret est masqué quel que soit le libellé ou le format qui l'entoure."""
+
+    # Écarte les valeurs vides ou par défaut (ex : 'noKey'), qui masqueraient des mots ordinaires — une vraie clé est bien plus longue
+    _MIN_SECRET_LENGTH = 8
+
+    def __init__(self, secrets: list, mask: str) -> None:
+        super().__init__()
+        # Les plus longs d'abord : un secret qui en contient un autre est masqué en entier
+        self._secrets = sorted({s for s in secrets if s and len(s) >= self._MIN_SECRET_LENGTH}, key=len, reverse=True)
+        self._mask = mask
+
+    def _redact(self, text: str) -> str:
+        for secret in self._secrets:
+            text = text.replace(secret, self._mask)
+        return text
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not self._secrets:
+            return True
+        try:
+            message = record.getMessage()
+        except Exception:
+            return True  # Message mal formé : laissé au handler, qui signale l'erreur de formatage
+        redacted = self._redact(message)
+        if redacted != message:
+            record.msg = redacted
+            record.args = ()
+        if record.exc_info:
+            # Le texte de l'exception (ex : l'URL complète d'une erreur requests) n'est produit qu'au formatage, après les filtres :
+            # il est généré ici pour être masqué (le Formatter réutilise exc_text s'il est déjà renseigné)
+            if not record.exc_text:
+                record.exc_text = logging.Formatter().formatException(record.exc_info)
+            record.exc_text = self._redact(record.exc_text)
+        if record.stack_info:
+            record.stack_info = self._redact(record.stack_info)
+        return True
+
+
+def logUncaughtException(excType, excValue, excTraceback):
+    """Journalise une exception non interceptée via logging (format habituel, secrets masqués) au lieu de l'écrire brute sur la sortie d'erreur."""
+    if issubclass(excType, KeyboardInterrupt):
+        sys.__excepthook__(excType, excValue, excTraceback)
+        return
+    logging.critical('[DAEMON] Exception non interceptée', exc_info=(excType, excValue, excTraceback))
+
+
+def logUncaughtThreadException(args):
+    """Équivalent de logUncaughtException pour les exceptions non interceptées d'un thread."""
+    if args.exc_type is SystemExit:
+        return
+    logging.error('[DAEMON] Exception non interceptée dans le thread %s', args.thread.name if args.thread else '?',
+                  exc_info=(args.exc_type, args.exc_value, args.exc_traceback))
 
 # Instanciation de la configuration
 myConfig = Config()
 
-parser = argparse.ArgumentParser(description='TTSCast Daemon for Jeedom plugin')
-parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
-parser.add_argument("--castloglevel", help="Log Level for Chromecast libraries (pychromecast, zeroconf)", type=str, default='daemon')
-parser.add_argument("--logfiltersenabled", help="Enable log filters", type=str, default='0')
-parser.add_argument("--pluginversion", help="Plugin Version", type=str)
-parser.add_argument("--callback", help="Callback", type=str)
-parser.add_argument("--apikey", help="ApiKey", type=str)
-parser.add_argument("--apittskey", help="ApiTTS Key", type=str)
-parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
-parser.add_argument("--gcloudaudioencoding", help="Google Cloud Audio Encoding", type=str, default='MP3')
-parser.add_argument("--voicerssapikey", help="Voice RSS ApiKey", type=str)
-parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
-parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
-parser.add_argument("--ttsdisablecache", help="TTS Disable Cache", type=str)
-parser.add_argument("--appdisableding", help="App Disable Ding Parameter", type=str)
-parser.add_argument("--appconvertsinglequote", help="App Convert Single Quote Parameter", type=str)
-parser.add_argument("--cmdwaittimeout", help="Cmd Wait Timeout Parameter", type=str)
-parser.add_argument("--aimaxtimeout", help="AI Max Timeout Parameter (seconds)", type=str)
-parser.add_argument("--pid", help="Pid file", type=str)
-parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
-parser.add_argument("--aienabled", help="Enable AI", type=str, default='0')
-parser.add_argument("--aidefault", help="AI Use By Default", type=str, default='0')
-parser.add_argument("--aiauthmode", help="AI Auth Mode", type=str, default='noMode')
-parser.add_argument("--aiprojectid", help="AI Project ID", type=str, default='noProjectId')
-parser.add_argument("--aiapikey", help="AI ApiKey", type=str, default='noKey')
-parser.add_argument("--aimodel", help="AI Model", type=str, default='noModel')
-parser.add_argument("--aiusecustomsysprompt", help="Use Custom System Prompt for AI", type=str, default='0')
-parser.add_argument("--aicustomsysprompt", help="Custom System Prompt for AI", type=str, default='NoCustomSysPrompt')
-parser.add_argument("--aidefaulttone", help="Default AI Tone", type=str, default='NoDefaultTone')
-parser.add_argument("--geminittsenabled", help="Enable Gemini TTS engine", type=str, default='0')
-parser.add_argument("--geminittsmodel", help="Gemini TTS Model", type=str, default='noModel')
-parser.add_argument("--geminittsdefault", help="Use Gemini TTS as default engine", type=str, default='0')
-parser.add_argument("--geminittsstyle", help="Default style for Gemini TTS", type=str, default='')
-parser.add_argument("--streamingdefault", help="Enable streaming TTS by default", type=str, default='0')
-parser.add_argument("--pipervoicename", help="Default Piper TTS voice key", type=str, default='')
-parser.add_argument("--piperspeakerid", help="Default Piper TTS speaker ID", type=str, default='0')
+# Socket d'écoute des commandes de Jeedom (créé par main, utilisé par Loops.mainLoop et shutdown)
+my_jeedom_socket = None
 
-args = parser.parse_args()
-if args.loglevel:
-    myConfig.logLevel = args.loglevel
-if args.castloglevel:
-    myConfig.castLogLevel = args.castloglevel
-if args.pluginversion:
-    myConfig.pluginVersion = args.pluginversion
-if args.callback:
-    myConfig.callBack = args.callback
-if args.apikey:
-    myConfig.apiKey = args.apikey
-if args.apittskey:
-    myConfig.apiTTSKey = args.apittskey
-if args.gcloudapikey:
-    myConfig.gCloudApiKey = args.gcloudapikey
-if args.gcloudaudioencoding:
-    if args.gcloudaudioencoding == "LINEAR16_48K":
-        myConfig.gCloudAudioEncoding = "LINEAR16"
-        myConfig.gCloudSampleRate = 48000
-    elif args.gcloudaudioencoding == "LINEAR16_24K":
-        myConfig.gCloudAudioEncoding = "LINEAR16"
-        myConfig.gCloudSampleRate = 24000
-    else:
-        myConfig.gCloudAudioEncoding = args.gcloudaudioencoding
-if args.voicerssapikey:
-    myConfig.apiRSSKey = args.voicerssapikey
-if args.ttsdisablecache:
-    if (args.ttsdisablecache == '0'):
-        myConfig.ttsDisableCache = False
-    else:
-        myConfig.ttsDisableCache = True
-if args.appdisableding:
-    if (args.appdisableding == '0'):
-        myConfig.appDisableDing = False
-    else:
-        myConfig.appDisableDing = True
-if args.appconvertsinglequote:
-    if (args.appconvertsinglequote == '0'):
-        myConfig.appConvertSingleQuote = False
-    else:
-        myConfig.appConvertSingleQuote = True
-if args.aienabled:
-    if (args.aienabled == '0'):
-        myConfig.aiEnabled = False
-    else:
-        myConfig.aiEnabled = True
-if args.aidefault:
-    if (args.aidefault == '0'):
-        myConfig.aiDefault = False
-    else:
-        myConfig.aiDefault = True
-if args.aiauthmode:
-    myConfig.aiAuthMode = args.aiauthmode
-if args.aiprojectid and args.aiprojectid != 'noProjectId':
-    myConfig.aiProjectID = args.aiprojectid
-if args.aiapikey and args.aiapikey != 'noKey':
-    myConfig.aiApiKey = args.aiapikey
-if args.aimodel and args.aimodel != 'noModel':
-    myConfig.aiModel = args.aimodel
-if args.aidefaulttone and args.aidefaulttone != 'NoDefaultTone':
-    myConfig.aiDefaultTone = args.aidefaulttone
-if args.aiusecustomsysprompt:
-    if (args.aiusecustomsysprompt == '0'):
-        myConfig.aiUseCustomSysPrompt = False
-    else:
-        myConfig.aiUseCustomSysPrompt = True
-if args.aicustomsysprompt and args.aicustomsysprompt != 'NoCustomSysPrompt':
-    myConfig.aiCustomSysPrompt = args.aicustomsysprompt
-if args.geminittsenabled:
-    myConfig.geminiTTSEnabled = args.geminittsenabled != '0'
-if args.geminittsmodel and args.geminittsmodel != 'noModel':
-    myConfig.geminiTTSModel = args.geminittsmodel
-if args.geminittsdefault:
-    myConfig.geminiTTSDefault = args.geminittsdefault != '0'
-if args.geminittsstyle is not None:
-    myConfig.geminiTTSStyle = args.geminittsstyle
-if args.streamingdefault:
-    myConfig.streamingDefault = args.streamingdefault != '0'
-if args.pipervoicename and args.pipervoicename != '':
-    myConfig.piperVoiceName = args.pipervoicename
-if args.piperspeakerid:
-    myConfig.piperSpeakerId = int(args.piperspeakerid)
-if args.cmdwaittimeout:
-    myConfig.cmdWaitTimeout = int(args.cmdwaittimeout)
-if args.aimaxtimeout:
-    myConfig.aiMaxTimeout = int(args.aimaxtimeout)
-if args.pid:
-    myConfig.pidFile = args.pid
-if args.cyclefactor:
-    myConfig.cycleFactor = float(args.cyclefactor)
-if args.socketport:
-    myConfig.socketPort = int(args.socketport)
-if args.ttsweb:
-    # Normalize base URL once for all paths (supports Jeedom in subdirectories)
-    ttsweb_base_url = args.ttsweb.rstrip('/')
-    myConfig.ttsWebSrvCache = f'{ttsweb_base_url}/plugins/ttscast/core/php/ttscast.audio.proxy.php?type=tts&file='
-    myConfig.ttsWebSrvMediaProxy = f'{ttsweb_base_url}/plugins/ttscast/core/php/ttscast.audio.proxy.php'
-    myConfig.ttsWebSrvImages = f'{ttsweb_base_url}/plugins/ttscast/data/images/'
-    myConfig.ttsWebSrvJeeTTS = f'{ttsweb_base_url}/core/api/'
 
-jeedom_utils.set_log_level(myConfig.logLevel)
+def main():
+    """ Démarrage du démon : lecture des arguments, configuration des logs, puis boucle principale.
+    Appelé uniquement quand le fichier est lancé par Jeedom (python3 ttscastd.py ...) : un import (tests) ne démarre pas le démon """
+    global my_jeedom_socket
 
-if myConfig.castLogLevel != 'daemon':
-    _cast_level = jeedom_utils.convert_log_level(myConfig.castLogLevel)
-    logging.getLogger('pychromecast').setLevel(_cast_level)
-    logging.getLogger('zeroconf').setLevel(_cast_level)
+    parser = argparse.ArgumentParser(description='TTSCast Daemon for Jeedom plugin')
+    parser.add_argument("--loglevel", help="Log Level for the daemon", type=str)
+    parser.add_argument("--castloglevel", help="Log Level for Chromecast libraries (pychromecast, zeroconf)", type=str, default='daemon')
+    parser.add_argument("--logfiltersenabled", help="Enable log filters", type=str, default='0')
+    parser.add_argument("--ipdiscovery", help="Enable IP discovery (in addition to mDNS)", type=str, default='0')
+    parser.add_argument("--iphosts", help="Active devices addresses for IP discovery, as JSON {\"uuid\": \"host\", ...}", type=str, default='{}')
+    parser.add_argument("--pluginversion", help="Plugin Version", type=str)
+    parser.add_argument("--callback", help="Callback", type=str)
+    parser.add_argument("--apikey", help="ApiKey", type=str)
+    parser.add_argument("--apittskey", help="ApiTTS Key", type=str)
+    parser.add_argument("--gcloudapikey", help="Google Cloud TTS ApiKey", type=str)
+    parser.add_argument("--gcloudaudioencoding", help="Google Cloud Audio Encoding", type=str, default='MP3')
+    parser.add_argument("--voicerssapikey", help="Voice RSS ApiKey", type=str)
+    parser.add_argument("--cyclefactor", help="Cycle Factor", type=str)
+    parser.add_argument("--ttsweb", help="Jeedom Web Server", type=str)
+    parser.add_argument("--ttsdisablecache", help="TTS Disable Cache", type=str)
+    parser.add_argument("--appdisableding", help="App Disable Ding Parameter", type=str)
+    parser.add_argument("--appconvertsinglequote", help="App Convert Single Quote Parameter", type=str)
+    parser.add_argument("--cmdwaittimeout", help="Cmd Wait Timeout Parameter", type=str)
+    parser.add_argument("--aimaxtimeout", help="AI Max Timeout Parameter (seconds)", type=str)
+    parser.add_argument("--pid", help="Pid file", type=str)
+    parser.add_argument("--socketport", help="Port for TTSCast server", type=str)
+    parser.add_argument("--aienabled", help="Enable AI", type=str, default='0')
+    parser.add_argument("--aidefault", help="AI Use By Default", type=str, default='0')
+    parser.add_argument("--aiauthmode", help="AI Auth Mode", type=str, default='noMode')
+    parser.add_argument("--aiprojectid", help="AI Project ID", type=str, default='noProjectId')
+    parser.add_argument("--aiapikey", help="AI ApiKey", type=str, default='noKey')
+    parser.add_argument("--aimodel", help="AI Model", type=str, default='noModel')
+    parser.add_argument("--aiusecustomsysprompt", help="Use Custom System Prompt for AI", type=str, default='0')
+    parser.add_argument("--aicustomsysprompt", help="Custom System Prompt for AI", type=str, default='NoCustomSysPrompt')
+    parser.add_argument("--aidefaulttone", help="Default AI Tone", type=str, default='NoDefaultTone')
+    parser.add_argument("--geminittsenabled", help="Enable Gemini TTS engine", type=str, default='0')
+    parser.add_argument("--geminittsmodel", help="Gemini TTS Model", type=str, default='noModel')
+    parser.add_argument("--geminittsdefault", help="Use Gemini TTS as default engine", type=str, default='0')
+    parser.add_argument("--geminittsstyle", help="Default style for Gemini TTS", type=str, default='')
+    parser.add_argument("--streamingdefault", help="Enable streaming TTS by default", type=str, default='0')
+    parser.add_argument("--pipervoicename", help="Default Piper TTS voice key", type=str, default='')
+    parser.add_argument("--piperspeakerid", help="Default Piper TTS speaker ID", type=str, default='0')
 
-_piper_filter = PiperLogFilter()
-for _h in logging.root.handlers:
-    _h.addFilter(_piper_filter)
+    args = parser.parse_args()
+    if args.loglevel:
+        myConfig.logLevel = args.loglevel
+    if args.castloglevel:
+        myConfig.castLogLevel = args.castloglevel
+    if args.pluginversion:
+        myConfig.pluginVersion = args.pluginversion
+    if args.callback:
+        myConfig.callBack = args.callback
+    if args.apikey:
+        myConfig.apiKey = args.apikey
+    if args.apittskey:
+        myConfig.apiTTSKey = args.apittskey
+    if args.gcloudapikey:
+        myConfig.gCloudApiKey = args.gcloudapikey
+    if args.gcloudaudioencoding:
+        if args.gcloudaudioencoding == "LINEAR16_48K":
+            myConfig.gCloudAudioEncoding = "LINEAR16"
+            myConfig.gCloudSampleRate = 48000
+        elif args.gcloudaudioencoding == "LINEAR16_24K":
+            myConfig.gCloudAudioEncoding = "LINEAR16"
+            myConfig.gCloudSampleRate = 24000
+        else:
+            myConfig.gCloudAudioEncoding = args.gcloudaudioencoding
+    if args.voicerssapikey:
+        myConfig.apiRSSKey = args.voicerssapikey
+    if args.ttsdisablecache:
+        if (args.ttsdisablecache == '0'):
+            myConfig.ttsDisableCache = False
+        else:
+            myConfig.ttsDisableCache = True
+    if args.appdisableding:
+        if (args.appdisableding == '0'):
+            myConfig.appDisableDing = False
+        else:
+            myConfig.appDisableDing = True
+    if args.appconvertsinglequote:
+        if (args.appconvertsinglequote == '0'):
+            myConfig.appConvertSingleQuote = False
+        else:
+            myConfig.appConvertSingleQuote = True
+    if args.aienabled:
+        if (args.aienabled == '0'):
+            myConfig.aiEnabled = False
+        else:
+            myConfig.aiEnabled = True
+    if args.aidefault:
+        if (args.aidefault == '0'):
+            myConfig.aiDefault = False
+        else:
+            myConfig.aiDefault = True
+    if args.aiauthmode:
+        myConfig.aiAuthMode = args.aiauthmode
+    if args.aiprojectid and args.aiprojectid != 'noProjectId':
+        myConfig.aiProjectID = args.aiprojectid
+    if args.aiapikey and args.aiapikey != 'noKey':
+        myConfig.aiApiKey = args.aiapikey
+    if args.aimodel and args.aimodel != 'noModel':
+        myConfig.aiModel = args.aimodel
+    if args.aidefaulttone and args.aidefaulttone != 'NoDefaultTone':
+        myConfig.aiDefaultTone = args.aidefaulttone
+    if args.aiusecustomsysprompt:
+        if (args.aiusecustomsysprompt == '0'):
+            myConfig.aiUseCustomSysPrompt = False
+        else:
+            myConfig.aiUseCustomSysPrompt = True
+    if args.aicustomsysprompt and args.aicustomsysprompt != 'NoCustomSysPrompt':
+        myConfig.aiCustomSysPrompt = args.aicustomsysprompt
+    if args.geminittsenabled:
+        myConfig.geminiTTSEnabled = args.geminittsenabled != '0'
+    if args.geminittsmodel and args.geminittsmodel != 'noModel':
+        myConfig.geminiTTSModel = args.geminittsmodel
+    if args.geminittsdefault:
+        myConfig.geminiTTSDefault = args.geminittsdefault != '0'
+    if args.geminittsstyle is not None:
+        myConfig.geminiTTSStyle = args.geminittsstyle
+    if args.streamingdefault:
+        myConfig.streamingDefault = args.streamingdefault != '0'
+    if args.pipervoicename and args.pipervoicename != '':
+        myConfig.piperVoiceName = args.pipervoicename
+    if args.piperspeakerid:
+        myConfig.piperSpeakerId = int(args.piperspeakerid)
+    if args.cmdwaittimeout:
+        myConfig.cmdWaitTimeout = int(args.cmdwaittimeout)
+    if args.aimaxtimeout:
+        myConfig.aiMaxTimeout = int(args.aimaxtimeout)
+    if args.pid:
+        myConfig.pidFile = args.pid
+    if args.cyclefactor:
+        myConfig.cycleFactor = float(args.cyclefactor)
+    if args.socketport:
+        myConfig.socketPort = int(args.socketport)
+    if args.ipdiscovery:
+        myConfig.ipDiscoveryEnabled = args.ipdiscovery != '0'
+    if args.ttsweb:
+        # Normalize base URL once for all paths (supports Jeedom in subdirectories)
+        ttsweb_base_url = args.ttsweb.rstrip('/')
+        myConfig.ttsWebSrvCache = f'{ttsweb_base_url}/plugins/ttscast/core/php/ttscast.audio.proxy.php?type=tts&file='
+        myConfig.ttsWebSrvMediaProxy = f'{ttsweb_base_url}/plugins/ttscast/core/php/ttscast.audio.proxy.php'
+        myConfig.ttsWebSrvImages = f'{ttsweb_base_url}/plugins/ttscast/data/images/'
+        myConfig.ttsWebSrvJeeTTS = f'{ttsweb_base_url}/core/api/'
 
-if args.logfiltersenabled:
-    myConfig.logFiltersEnabled = args.logfiltersenabled != '0'
+    jeedom_utils.set_log_level(myConfig.logLevel)
 
-if myConfig.logFiltersEnabled:
+    # Installé avant toute ligne de log, toujours actif (indépendant des filtres de logs configurables)
+    _secret_filter = SecretMaskFilter([myConfig.apiKey, myConfig.apiTTSKey, myConfig.apiRSSKey, myConfig.aiApiKey], myConfig.secretMask)
+    for _h in logging.root.handlers:
+        _h.addFilter(_secret_filter)
+    # Exceptions non interceptées (thread principal et threads) : via logging, pour passer par le filtre des secrets
+    sys.excepthook = logUncaughtException
+    threading.excepthook = logUncaughtThreadException
+
+    if myConfig.castLogLevel != 'daemon':
+        _cast_level = jeedom_utils.convert_log_level(myConfig.castLogLevel)
+        logging.getLogger('pychromecast').setLevel(_cast_level)
+        logging.getLogger('zeroconf').setLevel(_cast_level)
+
+    _piper_filter = PiperLogFilter()
+    for _h in logging.root.handlers:
+        _h.addFilter(_piper_filter)
+
+    if args.logfiltersenabled:
+        myConfig.logFiltersEnabled = args.logfiltersenabled != '0'
+
+    if myConfig.logFiltersEnabled:
+        try:
+            with open(myConfig.logFiltersFilePath, 'r', encoding='utf-8') as _f:
+                myConfig.logFilters = json.load(_f)
+        except FileNotFoundError:
+            logging.warning('[DAEMON][LOGFILTERS] Fichier introuvable : %s', myConfig.logFiltersFilePath)
+        except Exception as _e:
+            logging.warning('[DAEMON][LOGFILTERS] Erreur lecture filtres : %s', _e)
+
+    if myConfig.logFiltersEnabled and myConfig.logFilters:
+        _remap_filter = PatternRemapFilter(myConfig.logFilters)
+        for _handler in logging.root.handlers:
+            _handler.addFilter(_remap_filter)
+        _active_count = sum(1 for r in myConfig.logFilters if r.get('enabled', True))
+        logging.info('[DAEMON][LOGFILTERS] %d filtre(s) actif(s) sur %d', _active_count, len(myConfig.logFilters))
+
+    # Découverte par IP : adresses des équipements actifs transmises au lancement, pour être interrogées dès la création du navigateur
+    if myConfig.ipDiscoveryEnabled and args.iphosts:
+        try:
+            _ipHosts = json.loads(args.iphosts)
+            if not isinstance(_ipHosts, dict):
+                raise ValueError('objet JSON attendu')
+        except ValueError as _e:  # json.JSONDecodeError hérite de ValueError
+            logging.error('[DAEMON][IPDISCOVERY] Liste des adresses illisible (ignorée) :: %s :: %s', _e, args.iphosts)
+            _ipHosts = {}
+        for _entryUUID, _entryHost in _ipHosts.items():
+            try:
+                myCast.setIpHost(UUID(str(_entryUUID)), str(_entryHost))
+            except ValueError:
+                logging.warning('[DAEMON][IPDISCOVERY] Entrée ignorée (UUID invalide) :: %s : %s', _entryUUID, _entryHost)
+
+    if myConfig.cycleFactor == 0:
+        myConfig.cycleMain = 2.0
+        myConfig.cycleComm = 0.5
+        myConfig.cycleEvent = 0.5
+    elif myConfig.cycleFactor < 0.5:
+        myConfig.cycleMain = 1.0
+        myConfig.cycleComm = 0.25
+        myConfig.cycleEvent = float(myConfig.cycleEvent * myConfig.cycleFactor)
+    else:
+        myConfig.cycleMain = float(myConfig.cycleMain * myConfig.cycleFactor)
+        myConfig.cycleComm = float(myConfig.cycleComm * myConfig.cycleFactor)
+        myConfig.cycleEvent = float(myConfig.cycleEvent * myConfig.cycleFactor)
+
+    logging.info('[DAEMON][MAIN] Start Daemon')
+    logging.info('[DAEMON][MAIN] Plugin Version: %s', myConfig.pluginVersion)
+    logging.info('[DAEMON][MAIN] Python Version: %s', sys.version)
+    logging.info('[DAEMON][MAIN] Log level: %s', myConfig.logLevel)
+    logging.info('[DAEMON][MAIN] Cast log level: %s', myConfig.castLogLevel)
+    logging.info('[DAEMON][MAIN] Log filters enabled: %s | rules: %d', myConfig.logFiltersEnabled, len(myConfig.logFilters))
+    logging.info('[DAEMON][MAIN] IP discovery enabled: %s | hosts: %s', myConfig.ipDiscoveryEnabled, ', '.join(myCast.ipHostsList()) or '(aucun)')
+    logging.info('[DAEMON][MAIN] Socket port: %s', myConfig.socketPort)
+    logging.info('[DAEMON][MAIN] Socket host: %s', myConfig.socketHost)
+    logging.info('[DAEMON][MAIN] CycleFactor: %s', myConfig.cycleFactor)
+
+    if myConfig.cycleFactor == 0:
+        logging.warning('[DAEMON][MAIN][CYCLE] CycleFactor à 0 => Main à 2.0 / Comm à 0.5 / Event à 0.5')
+    elif myConfig.cycleFactor < 0.5:
+        logging.warning('[DAEMON][MAIN][CYCLE] CycleFactor < 0.5 => Main à 1.0 / Comm à 0.25')
+
+    logging.info('[DAEMON][MAIN] CycleMain: %s', myConfig.cycleMain)
+    logging.info('[DAEMON][MAIN] CycleComm: %s', myConfig.cycleComm)
+    logging.info('[DAEMON][MAIN] CycleEvent: %s', myConfig.cycleEvent)
+    logging.info('[DAEMON][MAIN] PID file: %s', myConfig.pidFile)
+    logging.info('[DAEMON][MAIN] ApiKey: %s', myConfig.secretMask if myConfig.apiKey else "N/A")
+    logging.info('[DAEMON][MAIN] ApiTTSKey: %s', myConfig.secretMask if myConfig.apiTTSKey else "N/A")
+    logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', myConfig.gCloudApiKey)
+    logging.info('[DAEMON][MAIN] Google Cloud Audio Encoding: %s', myConfig.gCloudAudioEncoding)
+    logging.info('[DAEMON][MAIN] Google Cloud Sample Rate (Linear16 only): %s', myConfig.gCloudSampleRate)
+    logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', myConfig.secretMask if myConfig.apiRSSKey else "N/A")
+    logging.info('[DAEMON][MAIN] TTS Disable Cache: %s', str(myConfig.ttsDisableCache))
+    logging.info('[DAEMON][MAIN] App Disable Ding: %s', str(myConfig.appDisableDing))
+    logging.info('[DAEMON][MAIN] App Convert Single Quote: %s', str(myConfig.appConvertSingleQuote))
+    logging.info('[DAEMON][MAIN] AI Enabled: %s', str(myConfig.aiEnabled))
+    logging.info('[DAEMON][MAIN] AI Default: %s', str(myConfig.aiDefault))
+    logging.info('[DAEMON][MAIN] AI Auth Mode: %s', myConfig.aiAuthMode)
+    logging.info('[DAEMON][MAIN] AI Project ID: %s', myConfig.aiProjectID)
+    logging.info('[DAEMON][MAIN] AI ApiKey: %s', myConfig.secretMask if myConfig.aiApiKey else "N/A")
+    logging.info('[DAEMON][MAIN] AI Model: %s', myConfig.aiModel)
+    logging.info('[DAEMON][MAIN] AI Use Custom System Prompt: %s', str(myConfig.aiUseCustomSysPrompt))
+    logging.info('[DAEMON][MAIN] AI Custom System Prompt: %s', myConfig.aiCustomSysPrompt)
+    logging.info('[DAEMON][MAIN] AI Default Tone: %s', myConfig.aiDefaultTone)
+    logging.info('[DAEMON][MAIN] Gemini TTS Enabled: %s', str(myConfig.geminiTTSEnabled))
+    logging.info('[DAEMON][MAIN] Gemini TTS Model: %s', myConfig.geminiTTSModel)
+    logging.info('[DAEMON][MAIN] Gemini TTS Default: %s', str(myConfig.geminiTTSDefault))
+    logging.info('[DAEMON][MAIN] Gemini TTS Style: %s', myConfig.geminiTTSStyle if myConfig.geminiTTSStyle else 'N/A')
+    logging.info('[DAEMON][MAIN] Gemini TTS Streaming Default: %s', str(myConfig.streamingDefault))
+    logging.info('[DAEMON][MAIN] Cmd Wait Timeout: %s', str(myConfig.cmdWaitTimeout))
+    logging.info('[DAEMON][MAIN] AI Timeout: %s s (max: %s s)', str(myConfig.aiBaseTimeout), str(myConfig.aiMaxTimeout))
+    logging.info('[DAEMON][MAIN] Piper TTS Voice: %s', myConfig.piperVoiceName if myConfig.piperVoiceName else 'N/A')
+    logging.info('[DAEMON][MAIN] Piper TTS Speaker ID: %s', str(myConfig.piperSpeakerId))
+    logging.info('[DAEMON][MAIN] Piper TTS Available: %s', str(_PIPER_AVAILABLE))
+    logging.info('[DAEMON][MAIN] CallBack: %s', myConfig.callBack)
+    logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', myConfig.ttsWebSrvCache)
+    logging.info('[DAEMON][MAIN] Jeedom WebSrvMediaProxy: %s', myConfig.ttsWebSrvMediaProxy)
+    logging.info('[DAEMON][MAIN] Jeedom WebSrvImages: %s', myConfig.ttsWebSrvImages)
+    logging.info('[DAEMON][MAIN] Jeedom WebSrvJeeTTS: %s', myConfig.ttsWebSrvJeeTTS)
+
+    signal.signal(signal.SIGINT, handler)
+    signal.signal(signal.SIGTERM, handler)
+
     try:
-        with open(myConfig.logFiltersFilePath, 'r', encoding='utf-8') as _f:
-            myConfig.logFilters = json.load(_f)
-    except FileNotFoundError:
-        logging.warning('[DAEMON][LOGFILTERS] Fichier introuvable : %s', myConfig.logFiltersFilePath)
-    except Exception as _e:
-        logging.warning('[DAEMON][LOGFILTERS] Erreur lecture filtres : %s', _e)
-
-if myConfig.logFiltersEnabled and myConfig.logFilters:
-    _remap_filter = PatternRemapFilter(myConfig.logFilters)
-    for _handler in logging.root.handlers:
-        _handler.addFilter(_remap_filter)
-    _active_count = sum(1 for r in myConfig.logFilters if r.get('enabled', True))
-    logging.info('[DAEMON][LOGFILTERS] %d filtre(s) actif(s) sur %d', _active_count, len(myConfig.logFilters))
-
-if myConfig.cycleFactor == 0:
-    myConfig.cycleMain = 2.0
-    myConfig.cycleComm = 0.5
-    myConfig.cycleEvent = 0.5
-elif myConfig.cycleFactor < 0.5:
-    myConfig.cycleMain = 1.0
-    myConfig.cycleComm = 0.25
-    myConfig.cycleEvent = float(myConfig.cycleEvent * myConfig.cycleFactor)
-else:
-    myConfig.cycleMain = float(myConfig.cycleMain * myConfig.cycleFactor)
-    myConfig.cycleComm = float(myConfig.cycleComm * myConfig.cycleFactor)
-    myConfig.cycleEvent = float(myConfig.cycleEvent * myConfig.cycleFactor)
-
-logging.info('[DAEMON][MAIN] Start Daemon')
-logging.info('[DAEMON][MAIN] Plugin Version: %s', myConfig.pluginVersion)
-logging.info('[DAEMON][MAIN] Python Version: %s', sys.version)
-logging.info('[DAEMON][MAIN] Log level: %s', myConfig.logLevel)
-logging.info('[DAEMON][MAIN] Cast log level: %s', myConfig.castLogLevel)
-logging.info('[DAEMON][MAIN] Log filters enabled: %s | rules: %d', myConfig.logFiltersEnabled, len(myConfig.logFilters))
-logging.info('[DAEMON][MAIN] Socket port: %s', myConfig.socketPort)
-logging.info('[DAEMON][MAIN] Socket host: %s', myConfig.socketHost)
-logging.info('[DAEMON][MAIN] CycleFactor: %s', myConfig.cycleFactor)
-
-if myConfig.cycleFactor == 0:
-    logging.warning('[DAEMON][MAIN][CYCLE] CycleFactor à 0 => Main à 2.0 / Comm à 0.5 / Event à 0.5')
-elif myConfig.cycleFactor < 0.5:
-    logging.warning('[DAEMON][MAIN][CYCLE] CycleFactor < 0.5 => Main à 1.0 / Comm à 0.25')
-
-logging.info('[DAEMON][MAIN] CycleMain: %s', myConfig.cycleMain)
-logging.info('[DAEMON][MAIN] CycleComm: %s', myConfig.cycleComm)
-logging.info('[DAEMON][MAIN] CycleEvent: %s', myConfig.cycleEvent)
-logging.info('[DAEMON][MAIN] PID file: %s', myConfig.pidFile)
-logging.info('[DAEMON][MAIN] ApiKey: %s', "***" if myConfig.apiKey else "N/A")
-logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***" if myConfig.apiTTSKey else "N/A")
-logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', myConfig.gCloudApiKey)
-logging.info('[DAEMON][MAIN] Google Cloud Audio Encoding: %s', myConfig.gCloudAudioEncoding)
-logging.info('[DAEMON][MAIN] Google Cloud Sample Rate (Linear16 only): %s', myConfig.gCloudSampleRate)
-logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', "***" if myConfig.apiRSSKey else "N/A")
-logging.info('[DAEMON][MAIN] TTS Disable Cache: %s', str(myConfig.ttsDisableCache))
-logging.info('[DAEMON][MAIN] App Disable Ding: %s', str(myConfig.appDisableDing))
-logging.info('[DAEMON][MAIN] App Convert Single Quote: %s', str(myConfig.appConvertSingleQuote))
-logging.info('[DAEMON][MAIN] AI Enabled: %s', str(myConfig.aiEnabled))
-logging.info('[DAEMON][MAIN] AI Default: %s', str(myConfig.aiDefault))
-logging.info('[DAEMON][MAIN] AI Auth Mode: %s', myConfig.aiAuthMode)
-logging.info('[DAEMON][MAIN] AI Project ID: %s', myConfig.aiProjectID)
-logging.info('[DAEMON][MAIN] AI ApiKey: %s', "***" if myConfig.aiApiKey else "N/A")
-logging.info('[DAEMON][MAIN] AI Model: %s', myConfig.aiModel)
-logging.info('[DAEMON][MAIN] AI Use Custom System Prompt: %s', str(myConfig.aiUseCustomSysPrompt))
-logging.info('[DAEMON][MAIN] AI Custom System Prompt: %s', myConfig.aiCustomSysPrompt)
-logging.info('[DAEMON][MAIN] AI Default Tone: %s', myConfig.aiDefaultTone)
-logging.info('[DAEMON][MAIN] Gemini TTS Enabled: %s', str(myConfig.geminiTTSEnabled))
-logging.info('[DAEMON][MAIN] Gemini TTS Model: %s', myConfig.geminiTTSModel)
-logging.info('[DAEMON][MAIN] Gemini TTS Default: %s', str(myConfig.geminiTTSDefault))
-logging.info('[DAEMON][MAIN] Gemini TTS Style: %s', myConfig.geminiTTSStyle if myConfig.geminiTTSStyle else 'N/A')
-logging.info('[DAEMON][MAIN] Gemini TTS Streaming Default: %s', str(myConfig.streamingDefault))
-logging.info('[DAEMON][MAIN] Cmd Wait Timeout: %s', str(myConfig.cmdWaitTimeout))
-logging.info('[DAEMON][MAIN] AI Timeout: %s s (max: %s s)', str(myConfig.aiBaseTimeout), str(myConfig.aiMaxTimeout))
-logging.info('[DAEMON][MAIN] Piper TTS Voice: %s', myConfig.piperVoiceName if myConfig.piperVoiceName else 'N/A')
-logging.info('[DAEMON][MAIN] Piper TTS Speaker ID: %s', str(myConfig.piperSpeakerId))
-logging.info('[DAEMON][MAIN] Piper TTS Available: %s', str(_PIPER_AVAILABLE))
-logging.info('[DAEMON][MAIN] CallBack: %s', myConfig.callBack)
-logging.info('[DAEMON][MAIN] Jeedom WebSrvCache: %s', myConfig.ttsWebSrvCache)
-logging.info('[DAEMON][MAIN] Jeedom WebSrvMediaProxy: %s', myConfig.ttsWebSrvMediaProxy)
-logging.info('[DAEMON][MAIN] Jeedom WebSrvImages: %s', myConfig.ttsWebSrvImages)
-logging.info('[DAEMON][MAIN] Jeedom WebSrvJeeTTS: %s', myConfig.ttsWebSrvJeeTTS)
-
-signal.signal(signal.SIGINT, handler)
-signal.signal(signal.SIGTERM, handler)
-
-try:
-    jeedom_utils.write_pid(str(myConfig.pidFile))
-    Comm.sendToJeedom = jeedom_com(apikey=myConfig.apiKey, url=myConfig.callBack, cycle=myConfig.cycleComm)  # type: ignore
-    if not Comm.sendToJeedom.test():  # type: ignore
-        logging.error('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication ERROR (Daemon to Jeedom)')
+        jeedom_utils.write_pid(str(myConfig.pidFile))
+        Comm.sendToJeedom = jeedom_com(apikey=myConfig.apiKey, url=myConfig.callBack, cycle=myConfig.cycleComm)  # type: ignore
+        if not Comm.sendToJeedom.test():  # type: ignore
+            logging.error('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication ERROR (Daemon to Jeedom)')
+            shutdown()
+        else:
+            logging.info('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication OK (Daemon to Jeedom)')
+        my_jeedom_socket = jeedom_socket(port=myConfig.socketPort, address=myConfig.socketHost)
+        jeedom_socket_handler.expected_apikey = myConfig.apiKey
+        jeedom_socket_handler.sync_command_handlers['aiReformat'] = TTSCast.handleAiReformat
+        jeedom_socket_handler.sync_command_handlers['getDefaultPrompt'] = TTSCast.handleGetDefaultPrompt
+        Loops.mainLoop(myConfig.cycleMain)  # type: ignore
+    except Exception as e:
+        logging.error('[DAEMON][MAIN] Fatal error: %s', e)
+        logging.info(traceback.format_exc())
         shutdown()
-    else:
-        logging.info('[DAEMON][JEEDOMCOM] sendToJeedom :: Network communication OK (Daemon to Jeedom)')
-    my_jeedom_socket = jeedom_socket(port=myConfig.socketPort, address=myConfig.socketHost)
-    jeedom_socket_handler.expected_apikey = myConfig.apiKey
-    jeedom_socket_handler.sync_command_handlers['aiReformat'] = TTSCast.handleAiReformat
-    jeedom_socket_handler.sync_command_handlers['getDefaultPrompt'] = TTSCast.handleGetDefaultPrompt
-    Loops.mainLoop(myConfig.cycleMain)  # type: ignore
-except Exception as e:
-    logging.error('[DAEMON][MAIN] Fatal error: %s', e)
-    logging.info(traceback.format_exc())
-    shutdown()
+
+
+if __name__ == '__main__':
+    main()

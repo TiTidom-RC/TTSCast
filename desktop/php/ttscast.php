@@ -34,7 +34,13 @@ $eqLogics = eqLogic::byType($plugin->getId());
                         </div>
                     <?php
                     }
+                    $ipDiscoveryEnabled = (config::byKey('ipDiscoveryEnabled', 'ttscast', '1') == '1');
                     ?>
+                    <div class="cursor eqLogicAction logoPrimary customclass-addByIp" data-action="addByIp" data-enabled="<?= $ipDiscoveryEnabled ? '1' : '0' ?>"<?= $ipDiscoveryEnabled ? '' : ' style="opacity:0.4;"' ?> title="<?= $ipDiscoveryEnabled ? '{{Ajouter ou mettre à jour des équipements à partir de leur adresse IP}}' : '{{Activez la découverte par IP dans la configuration du plugin}}' ?>">
+                        <i class="fas fa-network-wired"></i>
+                        <br>
+                        <span style="color:var(--txt-color)">{{Scan (IP)}}</span>
+                    </div>
                     <div class="cursor eqLogicAction logoSecondary" data-action="gotoPluginConf">
                         <i class="fas fa-wrench"></i>
                         <br>
@@ -70,8 +76,13 @@ $eqLogics = eqLogic::byType($plugin->getId());
             echo '<div class="eqLogicThumbnailContainer">';
             foreach ($eqLogics as $eqLogic) {
                 $opacity = ($eqLogic->getIsEnable()) ? '' : 'disableCard';
-                echo '<div class="eqLogicDisplayCard cursor ' . $opacity . '" data-eqLogic_id="' . $eqLogic->getId() . '">';
+                $isIp = ($eqLogic->getConfiguration('updatedBy', 'mdns') == 'ip');
+                echo '<div class="eqLogicDisplayCard cursor ' . $opacity . '" data-eqLogic_id="' . $eqLogic->getId() . '"' . ($isIp ? ' style="position:relative;"' : '') . '>';
                 echo '<img src="' . $eqLogic->getImage() . '"/>';
+                // Icône « mis à jour via IP », masquée en vue tableau ; dans un <span> pour échapper au style Core des icônes de tuile (div.cursor > i)
+                if ($isIp) {
+                    echo '<span class="hiddenAsTable" style="position:absolute; top:15px; left:calc(50% - 50px); font-size:12px; line-height:1; color:var(--txt-color); opacity:0.6;" title="{{Mis à jour via son adresse IP}}"><i class="fas fa-network-wired"></i></span>';
+                }
                 echo '<br>';
                 echo '<span class="name">' . $eqLogic->getHumanName(true, true) . '</span>';
                 echo '<span class="hiddenAsCard displayTableRight hidden">';
@@ -186,9 +197,11 @@ $eqLogics = eqLogic::byType($plugin->getId());
                                 </div>
                             </div>
                             <div class="form-group">
-                                <label class="col-sm-4 control-label">{{Host}}</label>
+                                <label class="col-sm-4 control-label">{{Host}}
+                                    <sup><i class="fas fa-question-circle tooltips" title="{{Adresse IP (IPv4 ou IPv6) ou nom d'hôte de l'équipement. Une adresse IP est mise à jour par les Scans et par la mise à jour automatique ; un nom d'hôte saisi est conservé, et résolu à chaque connexion.}}"></i></sup>
+                                </label>
                                 <div class="col-sm-6">
-                                    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="host" readonly>
+                                    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="host">
                                 </div>
                             </div>
                             <div class="form-group">
@@ -198,9 +211,29 @@ $eqLogics = eqLogic::byType($plugin->getId());
                                 </div>
                             </div>
                             <div class="form-group">
+                                <label class="col-sm-4 control-label">{{Mis à jour via}}
+                                    <sup><i class="fas fa-question-circle tooltips" title="{{Moyen par lequel l'équipement a été ajouté ou mis à jour pour la dernière fois : bouton Scan (mDNS) ou bouton Scan (IP). N/A pour un équipement existant tant qu'aucun Scan n'a été lancé.}}"></i></sup>
+                                </label>
+                                <div class="col-sm-6">
+                                    <select class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="updatedBy" disabled>
+                                        <option value="">{{N/A}}</option>
+                                        <option value="mdns">{{Scan (mDNS)}}</option>
+                                        <option value="ip">{{Adresse IP}}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-group">
                                 <label class="col-sm-4 control-label">{{Dernier Scan}}</label>
                                 <div class="col-sm-6">
                                     <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="lastscan" readonly>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="col-sm-4 control-label">{{Dernière synchronisation}}
+                                    <sup><i class="fas fa-question-circle tooltips" title="{{Date de la dernière mise à jour automatique de la fiche par le démon (adresse, nom, port…), sans Scan. Le détail est dans le centre de messages.}}"></i></sup>
+                                </label>
+                                <div class="col-sm-6">
+                                    <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="lastSync" readonly>
                                 </div>
                             </div>
                         </div>
