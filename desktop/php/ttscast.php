@@ -36,7 +36,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
                     }
                     $ipDiscoveryEnabled = (config::byKey('ipDiscoveryEnabled', 'ttscast', '1') == '1');
                     ?>
-                    <div class="cursor eqLogicAction logoSecondary customclass-addByIp" data-action="addByIp" data-enabled="<?= $ipDiscoveryEnabled ? '1' : '0' ?>"<?= $ipDiscoveryEnabled ? '' : ' style="opacity:0.4;"' ?> title="<?= $ipDiscoveryEnabled ? '{{Ajouter ou mettre à jour des équipements à partir de leur adresse IP}}' : '{{Activez la découverte par IP dans la configuration du plugin}}' ?>">
+                    <div class="cursor eqLogicAction logoPrimary customclass-addByIp" data-action="addByIp" data-enabled="<?= $ipDiscoveryEnabled ? '1' : '0' ?>"<?= $ipDiscoveryEnabled ? '' : ' style="opacity:0.4;"' ?> title="<?= $ipDiscoveryEnabled ? '{{Ajouter ou mettre à jour des équipements à partir de leur adresse IP}}' : '{{Activez la découverte par IP dans la configuration du plugin}}' ?>">
                         <i class="fas fa-network-wired"></i>
                         <br>
                         <span style="color:var(--txt-color)">{{Scan (IP)}}</span>
@@ -195,7 +195,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
                             </div>
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">{{Host}}
-                                    <sup><i class="fas fa-question-circle tooltips" title="{{Adresse IP (IPv4 ou IPv6) ou nom d'hôte de l'équipement. Une adresse IP est mise à jour automatiquement par le Scan (mDNS) ; un nom d'hôte saisi est conservé, et résolu à chaque connexion.}}"></i></sup>
+                                    <sup><i class="fas fa-question-circle tooltips" title="{{Adresse IP (IPv4 ou IPv6) ou nom d'hôte de l'équipement. Une adresse IP est mise à jour par les Scans et par la mise à jour automatique ; un nom d'hôte saisi est conservé, et résolu à chaque connexion.}}"></i></sup>
                                 </label>
                                 <div class="col-sm-6">
                                     <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="host">
