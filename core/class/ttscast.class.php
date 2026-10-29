@@ -182,6 +182,9 @@ class ttscast extends eqLogic
         $cmd .= ' --loglevel ' . log::convertLogLevel(log::getLogLevel(__CLASS__));
         $cmd .= ' --castloglevel ' . config::byKey('castLogLevel', __CLASS__, 'daemon');
         $cmd .= ' --logfiltersenabled ' . (config::byKey('logFiltersEnabled', __CLASS__, '0') ? '1' : '0');
+        $ipDiscovery = config::byKey('ipDiscoveryEnabled', __CLASS__, '1');
+        $cmd .= ' --ipdiscovery ' . $ipDiscovery;
+        $cmd .= ' --iphosts ' . escapeshellarg(($ipDiscovery == '1') ? self::getIpHostsArg() : '{}');
         $cmd .= ' --pluginversion ' . config::byKey('pluginVersion', __CLASS__, '0.0.0');
         $cmd .= ' --socketport ' . config::byKey('socketport', __CLASS__, '55111');
         $cmd .= ' --cyclefactor ' . config::byKey('cyclefactor', __CLASS__, '1');
@@ -278,6 +281,130 @@ class ttscast extends eqLogic
             )); */
             return false;
         }
+    }
+
+    // Découverte par IP : adresses des équipements actifs, en JSON {"uuid": "adresse", ...}, interrogées par le démon dès son lancement
+    public static function getIpHostsArg() {
+        $hosts = array();
+        foreach (self::byType(__CLASS__, true) as $eqLogic) {
+            if (in_array($eqLogic->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
+                continue;
+            }
+            $host = trim($eqLogic->getConfiguration('host', ''));
+            if ($eqLogic->getLogicalId() != '' && $host != '') {
+                $hosts[$eqLogic->getLogicalId()] = $host;
+            }
+        }
+        return json_encode((object) $hosts);  // objet même vide : {} (un tableau PHP vide donnerait [])
+    }
+
+    // Adresse normalisée, sinon false (même règles que normalizeHost du démon) :
+    // - adresse IPv4 / IPv6 (crochets IPv6 acceptés), hors link-local (169.254.x.x, fe80::/10)
+    // - nom d'hôte (RFC 1123) en minuscules, point final retiré ; une chaîne de chiffres et de points qui n'est pas une IP valide est refusée
+    public static function normalizeHostAddress($_host) {
+        $host = trim(trim((string) $_host), '[]');
+        if ($host === '') {
+            return false;
+        }
+        if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+            if (strpos($host, '169.254.') === 0 || preg_match('/^fe[89ab][0-9a-f]:/i', $host)) {
+                return false;
+            }
+            return $host;
+        }
+        $name = rtrim(strtolower($host), '.');
+        if ($name === '' || strlen($name) > 253 || preg_match('/^[0-9.]+$/', $name)) {
+            return false;
+        }
+        foreach (explode('.', $name) as $label) {
+            if (!preg_match('/^(?!-)[a-z0-9-]{1,63}(?<!-)$/', $label)) {
+                return false;
+            }
+        }
+        return $name;
+    }
+
+    // Fenêtre « Ajouter par IP » : recherche des appareils Cast (et de leurs groupes) aux adresses saisies, via le démon
+    public static function searchHosts($_input) {
+        if (config::byKey('ipDiscoveryEnabled', __CLASS__, '1') != '1') {
+            throw new Exception(__('La découverte par IP est désactivée dans la configuration du plugin', __FILE__));
+        }
+        $inputs = array_values(array_unique(array_filter(preg_split('/[\s,;]+/', (string) $_input))));
+        if (count($inputs) == 0) {
+            throw new Exception(__('Aucune adresse ou nom d\'hôte saisi', __FILE__));
+        }
+        if (count($inputs) > 50) {
+            throw new Exception(__('Trop d\'adresses (50 maximum par recherche)', __FILE__));
+        }
+        $hosts = array();
+        $results = array();
+        foreach ($inputs as $input) {
+            $host = self::normalizeHostAddress($input);
+            if ($host === false) {
+                $results[] = array('type' => 'error', 'input' => $input, 'reason' => 'invalid');
+            } else {
+                $hosts[] = $host;
+            }
+        }
+        if (count($hosts) > 0) {
+            log::add(__CLASS__, 'info', '[IPDISCOVERY] Recherche par IP :: ' . implode(', ', $hosts));
+            $response = self::sendToDaemonSync(array('cmd' => 'searchHosts', 'hosts' => $hosts), 60);
+            if (!is_array($response) || !isset($response['results'])) {
+                throw new Exception(__('Le démon ne répond pas : vérifiez qu\'il est démarré', __FILE__));
+            }
+            if (isset($response['error']) && $response['error'] == 'disabled') {
+                // Case cochée (contrôlée plus haut), mais démon lancé avant son activation
+                throw new Exception(__('La découverte par IP est activée dans la configuration, mais le démon n\'a pas encore été redémarré : redémarrez-le pour l\'appliquer', __FILE__));
+            }
+            // Résultats du démon en premier (appareils et groupes trouvés), puis les adresses refusées ici
+            $results = array_merge($response['results'], $results);
+        }
+        foreach ($results as &$result) {
+            if ($result['type'] == 'error') {
+                continue;
+            }
+            $eqLogic = self::byLogicalId($result['uuid'], __CLASS__);
+            $result['exists'] = is_object($eqLogic);
+            $result['eqName'] = is_object($eqLogic) ? $eqLogic->getHumanName() : '';
+        }
+        unset($result);
+        return $results;
+    }
+
+    // Fenêtre « Ajouter par IP » : création des équipements sélectionnés parmi les résultats de la recherche
+    public static function addHosts($_items) {
+        if (config::byKey('ipDiscoveryEnabled', __CLASS__, '1') != '1') {
+            throw new Exception(__('La découverte par IP est désactivée dans la configuration du plugin', __FILE__));
+        }
+        $created = array();
+        foreach ($_items as $item) {
+            $uuid = isset($item['uuid']) ? strtolower(trim($item['uuid'])) : '';
+            $host = isset($item['host']) ? self::normalizeHostAddress($item['host']) : false;
+            $port = isset($item['port']) ? intval($item['port']) : 0;
+            if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/', $uuid) || $host === false || $port < 1 || $port > 65535) {
+                log::add(__CLASS__, 'warning', '[IPDISCOVERY] Élément ignoré (données invalides) :: ' . json_encode($item));
+                continue;
+            }
+            if (is_object(self::byLogicalId($uuid, __CLASS__))) {
+                continue;
+            }
+            $eqLogic = self::createAndUpdCastFromScan(array(
+                'uuid' => $uuid,
+                'friendly_name' => isset($item['friendly_name']) ? $item['friendly_name'] : $uuid,
+                'model_name' => isset($item['model_name']) ? $item['model_name'] : '',
+                'manufacturer' => isset($item['manufacturer']) ? $item['manufacturer'] : '',
+                'cast_type' => isset($item['cast_type']) ? $item['cast_type'] : '',
+                'host' => $host,
+                'port' => $port,
+                'lastscan' => date('d/m/Y - H:i:s'),
+                'addedBy' => 'ip'
+            ));
+            if (is_object($eqLogic)) {
+                $created[] = $eqLogic->getName();
+            }
+        }
+        log::add(__CLASS__, 'info', '[IPDISCOVERY] Équipements ajoutés par IP :: ' . (count($created) > 0 ? implode(', ', $created) : '(aucun)'));
+        return $created;
     }
 
     /**
@@ -653,12 +780,15 @@ class ttscast extends eqLogic
             $eqLogic->setConfiguration('host', $_data['host']);
             $eqLogic->setConfiguration('port', $_data['port']);
             $eqLogic->setConfiguration('lastscan', $_data['lastscan']);
+            // Origine de l'équipement (écrite uniquement à la création) : 'mdns' (scan) ou 'ip' (fenêtre « Ajouter par IP »)
+            $addedBy = (isset($_data['addedBy']) && $_data['addedBy'] == 'ip') ? 'ip' : 'mdns';
+            $eqLogic->setConfiguration('addedBy', $addedBy);
             $eqLogic->save();
 
             event::add('jeedom::alert', array(
                 'level' => 'success',
                 'page' => 'ttscast',
-                'message' => __('[SCAN] TTSCast AJOUTE :: ', __FILE__) . $_data['friendly_name'],
+                'message' => (($addedBy == 'ip') ? __('[IP] TTSCast AJOUTE :: ', __FILE__) : __('[SCAN] TTSCast AJOUTE :: ', __FILE__)) . $_data['friendly_name'],
             ));
             return $eqLogic;
         }
@@ -667,7 +797,11 @@ class ttscast extends eqLogic
             $newttscast->setConfiguration('model_name', $_data['model_name']);
             $newttscast->setConfiguration('manufacturer', $_data['manufacturer']);
             $newttscast->setConfiguration('cast_type', $_data['cast_type']);
-            $newttscast->setConfiguration('host', $_data['host']);
+            // Le Scan met à jour l'adresse IP, mais conserve un nom d'hôte saisi par l'utilisateur (choix explicite, résolu à chaque connexion)
+            $currentHost = $newttscast->getConfiguration('host', '');
+            if ($currentHost == '' || filter_var(trim($currentHost, '[]'), FILTER_VALIDATE_IP) !== false) {
+                $newttscast->setConfiguration('host', $_data['host']);
+            }
             $newttscast->setConfiguration('port', $_data['port']);
             $newttscast->setConfiguration('lastscan', $_data['lastscan']);
             $newttscast->save();
@@ -1588,6 +1722,19 @@ class ttscast extends eqLogic
 
     // Fonction exécutée automatiquement avant la sauvegarde (création ou mise à jour) de l'équipement
     public function preSave() {
+        if (in_array($this->getLogicalId(), ['TTSCast_AI_Stats', 'TTSCast_AI'])) {
+            return;
+        }
+        // Adresse modifiable sur la page de l'équipement : contrôlée uniquement si elle a changé (les adresses issues du scan sont toujours valides)
+        $host = trim($this->getConfiguration('host', ''));
+        $previous = ($this->getId() != '') ? eqLogic::byId($this->getId()) : null;
+        if ($host != '' && (!is_object($previous) || $previous->getConfiguration('host', '') != $host)) {
+            $normalized = self::normalizeHostAddress($host);
+            if ($normalized === false) {
+                throw new Exception(__('Adresse invalide (adresse IP ou nom d\'hôte attendu ; les adresses link-local ne sont pas acceptées)', __FILE__) . ' : ' . $host);
+            }
+            $this->setConfiguration('host', $normalized);
+        }
     }
 
     // Fonction exécutée automatiquement après la sauvegarde (création ou mise à jour) de l'équipement
@@ -2405,6 +2552,22 @@ class ttscast extends eqLogic
             $cmd->setDisplay('forceReturnLineAfter', '1');
             $cmd->setIsVisible(0);
             $cmd->setDisplay('parameters', array("title_disable" => "1", "title_placeholder" => "Options", "message_placeholder" => "Custom Cmd"));
+            $cmd->setOrder($orderCmd++);
+            $cmd->save();
+        } else {
+            $orderCmd++;
+        }
+
+        // Chemins par lesquels l'équipement est actuellement vu : mDNS, IP, mDNS + IP ou Aucun (mis à jour par le scan programmé du démon)
+        $cmd = $this->getCmd(null, 'discovery');
+        if (!is_object($cmd)) {
+            $cmd = new ttscastCmd();
+            $cmd->setName(__('Découverte', __FILE__));
+            $cmd->setEqLogic_id($this->getId());
+            $cmd->setLogicalId('discovery');
+            $cmd->setType('info');
+            $cmd->setSubType('string');
+            $cmd->setIsVisible(0);
             $cmd->setOrder($orderCmd++);
             $cmd->save();
         } else {
