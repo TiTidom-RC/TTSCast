@@ -21,7 +21,7 @@ foreach (eqLogic::byType('ttscast') as $eqLogic) {
     <a class="btn btn-default btn-sm<?php echo (count($ipHosts) == 0) ? ' disabled' : ''; ?>" id="bt_ttscastAddIpHosts"
         data-hosts="<?php echo htmlspecialchars(json_encode($ipHosts), ENT_QUOTES, 'UTF-8'); ?>"
         title="<?php echo (count($ipHosts) == 0) ? '{{Aucun équipement mis à jour via son adresse IP}}' : '{{Ajoute à la saisie l\'adresse des équipements mis à jour via leur adresse IP (badge IP), actifs ou non : pour les mettre à jour, ou vérifier qu\'ils répondent}}'; ?>">
-        <i class="fas fa-list"></i> {{Ajouter les adresses des équipements IP}}
+        <i class="fas fa-list"></i> {{Ajouter les adresses des équipements IP existants}}
     </a>
     <a class="btn btn-success btn-sm" id="bt_ttscastSearchHosts">
         <i class="fas fa-network-wired"></i> {{Lancer le Scan (IP)}}
