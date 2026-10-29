@@ -164,6 +164,13 @@ class ScanDataTest(unittest.TestCase):
         data = myCast.scanDataOf(chromecast, '')
         self.assertEqual((data['friendly_name'], data['cast_type'], data['manufacturer'], data['host']), ('Nom connu', 'cast', 'Test', '192.168.2.80'))
 
+    def testLinkLocalAddressIsNotExported(self):
+        # IPv6 link-local annoncée passagèrement par le mDNS : adresse vide, PHP conserve l'adresse actuelle de la fiche
+        uuid, chromecast = newCast(host='192.168.2.71', port=8009)
+        linkLocal = CastInfo({MDNSServiceInfo('x')}, uuid, 'Google Nest Mini', 'Salon', 'fe80::1%eth0', 8009, 'audio', 'Google Inc.')
+        myConfig.NETCAST_BROWSER = pytypes.SimpleNamespace(devices={uuid: linkLocal})
+        self.assertEqual(myCast.scanDataOf(chromecast, '')['host'], '')
+
     def testDeviceNotSeenByTheBrowser(self):
         _, chromecast = newCast(name='Par IP', host='192.168.2.71', port=8009)
         myConfig.NETCAST_BROWSER = pytypes.SimpleNamespace(devices={})
