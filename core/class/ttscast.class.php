@@ -739,6 +739,10 @@ class ttscast extends eqLogic
             return false;
         }
         
+        // Adresse fournie par le démon, si elle est utilisable : une IPv6 link-local (que peut annoncer le mDNS, passagèrement) est
+        // refusée par preSave, ce qui ferait échouer la sauvegarde. Non utilisable : équipement créé sans adresse, ou adresse actuelle conservée
+        $host = isset($_data['host']) ? self::normalizeHostAddress($_data['host']) : false;
+
         // « Mis à jour via » (updatedBy) : type de Scan, fourni par le démon ('mdns' : Scan, 'ip' : Scan (IP))
         $updatedBy = (isset($_data['updatedBy']) && in_array($_data['updatedBy'], array('mdns', 'ip'))) ? $_data['updatedBy'] : null;
         $alertPrefix = ($updatedBy == 'ip') ? '[SCAN IP]' : '[SCAN]';
@@ -756,7 +760,9 @@ class ttscast extends eqLogic
             $eqLogic->setConfiguration('model_name', $_data['model_name']);
             $eqLogic->setConfiguration('manufacturer', $_data['manufacturer']);
             $eqLogic->setConfiguration('cast_type', $_data['cast_type']);
-            $eqLogic->setConfiguration('host', $_data['host']);
+            if ($host !== false) {
+                $eqLogic->setConfiguration('host', $host);
+            }
             $eqLogic->setConfiguration('port', $_data['port']);
             $eqLogic->setConfiguration('lastscan', $_data['lastscan']);
             if ($updatedBy !== null) {
@@ -778,8 +784,8 @@ class ttscast extends eqLogic
             $newttscast->setConfiguration('cast_type', $_data['cast_type']);
             // Le Scan met à jour l'adresse IP, mais conserve un nom d'hôte saisi par l'utilisateur (choix explicite, résolu à chaque connexion)
             $currentHost = $newttscast->getConfiguration('host', '');
-            if ($currentHost == '' || filter_var(trim($currentHost, '[]'), FILTER_VALIDATE_IP) !== false) {
-                $newttscast->setConfiguration('host', $_data['host']);
+            if ($host !== false && ($currentHost == '' || filter_var(trim($currentHost, '[]'), FILTER_VALIDATE_IP) !== false)) {
+                $newttscast->setConfiguration('host', $host);
             }
             $newttscast->setConfiguration('port', $_data['port']);
             $newttscast->setConfiguration('lastscan', $_data['lastscan']);
@@ -821,22 +827,23 @@ class ttscast extends eqLogic
             }
             log::add('ttscast', 'debug', '[SCHEDULE][CAST] ' . $_data['uuid'] . ' :: ' . implode(', ', $updatedFields));
             if (isset($_data['sync']) && is_array($_data['sync'])) {
-                $updttscast->applySync($_data['sync']);
+                try {
+                    $updttscast->applySync($_data['sync']);
+                } catch (Exception $e) {  // une fiche en erreur ne doit pas interrompre la mise à jour des autres équipements
+                    log::add('ttscast', 'error', '[SYNC] ' . $updttscast->getHumanName() . ' :: ' . $e->getMessage());
+                }
             }
         }
     }
 
-    // Synchronisation de la fiche par le démon (cycle ScheduleMode) : met à jour les champs du Scan qui ont changé (adresse, nom,
-    // port…), sans toucher à « Mis à jour via », au dernier Scan ni au nom de l'équipement. Sauvegarde uniquement en cas de
-    // changement, tracé dans « Dernière synchronisation » (lastSync) et dans le centre de messages
+    // Synchronisation de la fiche par le démon (cycle ScheduleMode) : met à jour le nom, l'adresse et le port s'ils ont changé, sans
+    // toucher à « Mis à jour via », au dernier Scan ni au nom de l'équipement. Sauvegarde uniquement en cas de changement, tracé
+    // dans « Dernière synchronisation » (lastSync) et dans le centre de messages
     public function applySync($_sync) {
         $labels = array(
-            'host' => __('adresse', __FILE__),
-            'port' => __('port', __FILE__),
             'friendly_name' => __('nom', __FILE__),
-            'model_name' => __('modèle', __FILE__),
-            'manufacturer' => __('fabricant', __FILE__),
-            'cast_type' => __('type', __FILE__)
+            'host' => __('adresse', __FILE__),
+            'port' => __('port', __FILE__)
         );
         $changes = array();
         foreach ($labels as $key => $label) {
@@ -845,11 +852,14 @@ class ttscast extends eqLogic
             }
             $current = (string) $this->getConfiguration($key, '');
             $new = (string) $_sync[$key];
-            if ($current === $new) {
-                continue;
+            if ($key == 'host') {
+                // Même règle que le Scan : une adresse IP est remplacée, un nom d'hôte saisi par l'utilisateur est conservé
+                $new = self::normalizeHostAddress($new);
+                if ($new === false || ($current != '' && filter_var(trim($current, '[]'), FILTER_VALIDATE_IP) === false)) {
+                    continue;
+                }
             }
-            // Même règle que le Scan : une adresse IP est remplacée, un nom d'hôte saisi par l'utilisateur est conservé
-            if ($key == 'host' && $current != '' && filter_var(trim($current, '[]'), FILTER_VALIDATE_IP) === false) {
+            if ($current === $new) {
                 continue;
             }
             $this->setConfiguration($key, $new);
