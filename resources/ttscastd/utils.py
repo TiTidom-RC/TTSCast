@@ -186,6 +186,9 @@ class Config:
     apiKey = ''
     apiTTSKey = ''
     apiRSSKey = ''
+    # Texte affiché à la place d'un secret dans les logs (identique aux autres plugins). Sans astérisques :
+    # ils sont interprétés comme du Markdown quand les logs sont collés sur un forum ou dans une issue.
+    secretMask = 'sEcReT'
     pluginVersion = ''
     callBack = ''
     

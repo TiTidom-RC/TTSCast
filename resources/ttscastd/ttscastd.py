@@ -653,7 +653,7 @@ class TTSCast:
         
         if ttsEngine == "gcloudtts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = gcloudtts')
-            logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
+            logging.debug('[DAEMON][TestTTS] Import de la clé API :: %s', myConfig.secretMask)
             if myConfig.gCloudApiKey != 'noKey':
                 credentials = service_account.Credentials.from_service_account_file(os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey))
 
@@ -809,7 +809,7 @@ class TTSCast:
             logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
         elif ttsEngine == "voicersstts":
             logging.debug('[DAEMON][TestTTS] TTSEngine = voicersstts')
-            logging.debug('[DAEMON][TestTTS] Import de la clé API :: *** ')
+            logging.debug('[DAEMON][TestTTS] Import de la clé API :: %s', myConfig.secretMask)
             if myConfig.apiRSSKey != 'noKey':
                 raw_filename = ttsText + "|VoiceRSSTTS|" + ttsRSSVoiceName + "|" + ttsRSSSpeed + "|" + ttsSSML
                 filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
@@ -1037,7 +1037,7 @@ class TTSCast:
             
             if ttsEngine == "gcloudtts":
                 logging.debug('[DAEMON][GenerateTTS] TTSEngine = gcloudtts')
-                logging.debug('[DAEMON][GenerateTTS] Import de la clé API :: *** ')
+                logging.debug('[DAEMON][GenerateTTS] Import de la clé API :: %s', myConfig.secretMask)
                 if myConfig.gCloudApiKey != 'noKey':
                     gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
                     if os.path.exists(gKey):
@@ -1135,7 +1135,7 @@ class TTSCast:
             
             elif ttsEngine == "voicersstts":
                 logging.debug('[DAEMON][GenerateTTS] TTSEngine = voicersstts')
-                logging.debug('[DAEMON][GenerateTTS] Import de la clé API :: *** ')
+                logging.debug('[DAEMON][GenerateTTS] Import de la clé API :: %s', myConfig.secretMask)
                 if myConfig.apiRSSKey != 'noKey':
                     filepath = ttsFile
                     logging.debug('[DAEMON][GenerateTTS] Nom du fichier à générer :: %s', filepath)
@@ -1374,7 +1374,7 @@ class TTSCast:
 
             if ttsEngine == "gcloudtts":
                 logging.info('[DAEMON][TTS] TTSEngine = gcloudtts')
-                logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
+                logging.debug('[DAEMON][TTS] Import de la clé API :: %s', myConfig.secretMask)
                 if myConfig.gCloudApiKey != 'noKey':
                     gKey = os.path.join(myConfig.configFullPath, myConfig.gCloudApiKey)
                     if os.path.exists(gKey):
@@ -1504,7 +1504,7 @@ class TTSCast:
             
             elif ttsEngine == "voicersstts":
                 logging.info('[DAEMON][TTS] TTSEngine = voicersstts')
-                logging.debug('[DAEMON][TTS] Import de la clé API :: *** ')
+                logging.debug('[DAEMON][TTS] Import de la clé API :: %s', myConfig.secretMask)
                 if myConfig.apiRSSKey != 'noKey':
                     raw_filename = ttsText + "|VoiceRSSTTS|" + ttsRSSVoiceName + "|" + ttsRSSSpeed + "|" + str(_useSSML)
                     filename = hashlib.md5(raw_filename.encode('utf-8')).hexdigest() + ".mp3"
@@ -1954,7 +1954,7 @@ class TTSCast:
                         logging.warning('[DAEMON][genAI] Impossible de charger le fichier JSON (clé API : KO) :: %s', gKey)
                         return None
                 elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
-                    logging.debug('[DAEMON][genAI] Chargement du moteur IA en utilisant la clé API :: %s', "***" if myConfig.aiApiKey else "N/A")
+                    logging.debug('[DAEMON][genAI] Chargement du moteur IA en utilisant la clé API :: %s', myConfig.secretMask if myConfig.aiApiKey else "N/A")
                     client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=_aiHttpTimeout))
                 else:
                     logging.warning('[DAEMON][genAI] Mode d\'authentification invalide ou clé API manquante (mode configuré : %s).', myConfig.aiAuthMode)
@@ -2072,7 +2072,7 @@ class TTSCast:
                     logging.debug('[DAEMON][GenAI] Réponse générée par Gemini (repr) :: %s', repr(raw_text))
                     return raw_text
             else:
-                logging.warning('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, "***" if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
+                logging.warning('[DAEMON][GenAI] Clé (JSON ou Api) et/ou ID de projet Google invalide :: %s, %s, %s', myConfig.gCloudApiKey, myConfig.secretMask if myConfig.aiApiKey else "N/A", myConfig.aiProjectID)
                 return None
         except Exception as e:
             logging.error('[DAEMON][GenAI] Erreur :: %s | modèle : %s | extrait : %s', e, _aiModelId, repr(_aiPrompt[:80]))
@@ -2104,7 +2104,7 @@ class TTSCast:
                 credentials = service_account.Credentials.from_service_account_file(gKey, scopes=myConfig.aiScopes)
                 client = genai.Client(enterprise=True, project=myConfig.aiProjectID, location='global', credentials=credentials, http_options=types.HttpOptions(timeout=30000))
             elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
-                logging.debug('[DAEMON][GeminiTTS] Client API key :: ***')
+                logging.debug('[DAEMON][GeminiTTS] Client API key :: %s', myConfig.secretMask)
                 client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(timeout=30000))
             else:
                 logging.error('[DAEMON][GeminiTTS] Mode auth invalide ou clé manquante (mode configuré : %s).', myConfig.aiAuthMode)
@@ -4228,6 +4228,47 @@ class PatternRemapFilter(logging.Filter):
                 return True
         return True
 
+
+class SecretMaskFilter(logging.Filter):
+    """Masque les valeurs des secrets du démon (clés API) dans tous les logs, ceux du démon comme ceux des bibliothèques
+    tierces (ex : urllib3 loguant l'URL complète d'une requête). Filet de sécurité : le démon ne loggue jamais un secret volontairement.
+    Masquage par valeur (et non par nom de champ) : le secret est masqué quel que soit le libellé ou le format qui l'entoure."""
+
+    # Écarte les valeurs vides ou par défaut (ex : 'noKey'), qui masqueraient des mots ordinaires — une vraie clé est bien plus longue
+    _MIN_SECRET_LENGTH = 8
+
+    def __init__(self, secrets: list, mask: str) -> None:
+        super().__init__()
+        # Les plus longs d'abord : un secret qui en contient un autre est masqué en entier
+        self._secrets = sorted({s for s in secrets if s and len(s) >= self._MIN_SECRET_LENGTH}, key=len, reverse=True)
+        self._mask = mask
+
+    def _redact(self, text: str) -> str:
+        for secret in self._secrets:
+            text = text.replace(secret, self._mask)
+        return text
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not self._secrets:
+            return True
+        try:
+            message = record.getMessage()
+        except Exception:
+            return True  # Message mal formé : laissé au handler, qui signale l'erreur de formatage
+        redacted = self._redact(message)
+        if redacted != message:
+            record.msg = redacted
+            record.args = ()
+        if record.exc_info:
+            # Le texte de l'exception (ex : l'URL complète d'une erreur requests) n'est produit qu'au formatage, après les filtres :
+            # il est généré ici pour être masqué (le Formatter réutilise exc_text s'il est déjà renseigné)
+            if not record.exc_text:
+                record.exc_text = logging.Formatter().formatException(record.exc_info)
+            record.exc_text = self._redact(record.exc_text)
+        if record.stack_info:
+            record.stack_info = self._redact(record.stack_info)
+        return True
+
 # Instanciation de la configuration
 myConfig = Config()
 
@@ -4370,6 +4411,11 @@ if args.ttsweb:
 
 jeedom_utils.set_log_level(myConfig.logLevel)
 
+# Installé avant toute ligne de log, toujours actif (indépendant des filtres de logs configurables)
+_secret_filter = SecretMaskFilter([myConfig.apiKey, myConfig.apiTTSKey, myConfig.apiRSSKey, myConfig.aiApiKey], myConfig.secretMask)
+for _h in logging.root.handlers:
+    _h.addFilter(_secret_filter)
+
 if myConfig.castLogLevel != 'daemon':
     _cast_level = jeedom_utils.convert_log_level(myConfig.castLogLevel)
     logging.getLogger('pychromecast').setLevel(_cast_level)
@@ -4430,12 +4476,12 @@ logging.info('[DAEMON][MAIN] CycleMain: %s', myConfig.cycleMain)
 logging.info('[DAEMON][MAIN] CycleComm: %s', myConfig.cycleComm)
 logging.info('[DAEMON][MAIN] CycleEvent: %s', myConfig.cycleEvent)
 logging.info('[DAEMON][MAIN] PID file: %s', myConfig.pidFile)
-logging.info('[DAEMON][MAIN] ApiKey: %s', "***" if myConfig.apiKey else "N/A")
-logging.info('[DAEMON][MAIN] ApiTTSKey: %s', "***" if myConfig.apiTTSKey else "N/A")
+logging.info('[DAEMON][MAIN] ApiKey: %s', myConfig.secretMask if myConfig.apiKey else "N/A")
+logging.info('[DAEMON][MAIN] ApiTTSKey: %s', myConfig.secretMask if myConfig.apiTTSKey else "N/A")
 logging.info('[DAEMON][MAIN] Google Cloud ApiKey: %s', myConfig.gCloudApiKey)
 logging.info('[DAEMON][MAIN] Google Cloud Audio Encoding: %s', myConfig.gCloudAudioEncoding)
 logging.info('[DAEMON][MAIN] Google Cloud Sample Rate (Linear16 only): %s', myConfig.gCloudSampleRate)
-logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', "***" if myConfig.apiRSSKey else "N/A")
+logging.info('[DAEMON][MAIN] VoiceRSS ApiKey: %s', myConfig.secretMask if myConfig.apiRSSKey else "N/A")
 logging.info('[DAEMON][MAIN] TTS Disable Cache: %s', str(myConfig.ttsDisableCache))
 logging.info('[DAEMON][MAIN] App Disable Ding: %s', str(myConfig.appDisableDing))
 logging.info('[DAEMON][MAIN] App Convert Single Quote: %s', str(myConfig.appConvertSingleQuote))
@@ -4443,7 +4489,7 @@ logging.info('[DAEMON][MAIN] AI Enabled: %s', str(myConfig.aiEnabled))
 logging.info('[DAEMON][MAIN] AI Default: %s', str(myConfig.aiDefault))
 logging.info('[DAEMON][MAIN] AI Auth Mode: %s', myConfig.aiAuthMode)
 logging.info('[DAEMON][MAIN] AI Project ID: %s', myConfig.aiProjectID)
-logging.info('[DAEMON][MAIN] AI ApiKey: %s', "***" if myConfig.aiApiKey else "N/A")
+logging.info('[DAEMON][MAIN] AI ApiKey: %s', myConfig.secretMask if myConfig.aiApiKey else "N/A")
 logging.info('[DAEMON][MAIN] AI Model: %s', myConfig.aiModel)
 logging.info('[DAEMON][MAIN] AI Use Custom System Prompt: %s', str(myConfig.aiUseCustomSysPrompt))
 logging.info('[DAEMON][MAIN] AI Custom System Prompt: %s', myConfig.aiCustomSysPrompt)
