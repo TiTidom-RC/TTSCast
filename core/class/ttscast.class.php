@@ -820,7 +820,50 @@ class ttscast extends eqLogic
                 }
             }
             log::add('ttscast', 'debug', '[SCHEDULE][CAST] ' . $_data['uuid'] . ' :: ' . implode(', ', $updatedFields));
+            if (isset($_data['sync']) && is_array($_data['sync'])) {
+                $updttscast->applySync($_data['sync']);
+            }
         }
+    }
+
+    // Synchronisation de la fiche par le démon (cycle ScheduleMode) : met à jour les champs du Scan qui ont changé (adresse, nom,
+    // port…), sans toucher à « Mis à jour via », au dernier Scan ni au nom de l'équipement. Sauvegarde uniquement en cas de
+    // changement, tracé dans « Dernière synchronisation » (lastSync) et dans le centre de messages
+    public function applySync($_sync) {
+        $labels = array(
+            'host' => __('adresse', __FILE__),
+            'port' => __('port', __FILE__),
+            'friendly_name' => __('nom', __FILE__),
+            'model_name' => __('modèle', __FILE__),
+            'manufacturer' => __('fabricant', __FILE__),
+            'cast_type' => __('type', __FILE__)
+        );
+        $changes = array();
+        foreach ($labels as $key => $label) {
+            if (!isset($_sync[$key]) || $_sync[$key] === '') {
+                continue;
+            }
+            $current = (string) $this->getConfiguration($key, '');
+            $new = (string) $_sync[$key];
+            if ($current === $new) {
+                continue;
+            }
+            // Même règle que le Scan : une adresse IP est remplacée, un nom d'hôte saisi par l'utilisateur est conservé
+            if ($key == 'host' && $current != '' && filter_var(trim($current, '[]'), FILTER_VALIDATE_IP) === false) {
+                continue;
+            }
+            $this->setConfiguration($key, $new);
+            $changes[] = $label . ' ' . ($current === '' ? __('(vide)', __FILE__) : $current) . ' → ' . $new;
+        }
+        if (count($changes) == 0) {
+            return false;
+        }
+        $this->setConfiguration('lastSync', date('d/m/Y - H:i:s'));
+        $this->save();
+        $text = '[Synchro] ' . $this->getHumanName() . ' : ' . implode(', ', $changes);
+        log::add(__CLASS__, 'info', '[SYNC] ' . $text);
+        message::add(__CLASS__, $text);
+        return true;
     }
 
     public static function realtimeUpdateCast($_data)
