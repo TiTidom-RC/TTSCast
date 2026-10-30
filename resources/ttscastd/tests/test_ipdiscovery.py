@@ -109,6 +109,15 @@ class IpHostsTest(unittest.TestCase):
         self.assertEqual(chromecast.cast_info.services, {HostServiceInfo('192.168.2.71', 32190)})
         stopAllConnections()
 
+    def testGroupMovedBeforeThePollUsesTheKnownPort(self):
+        # Nouvelle adresse et nouveau port annoncés en mDNS, pas encore interrogés par PyChromecast : le chemin prend le nouveau port
+        uuid, chromecast = newCast(host='192.168.2.73', port=32187)
+        myCast.setIpHost(uuid, '192.168.2.73')
+        myConfig.NETCAST_BROWSER.devices[uuid] = CastInfo({MDNSServiceInfo('x')}, uuid, 'Google Cast Group', 'Maison', '192.168.2.71', 32190, 'group', 'Google Inc.')
+        myCast.setIpHost(uuid, '192.168.2.71')
+        self.assertEqual(chromecast.cast_info.services, {HostServiceInfo('192.168.2.71', 32190)})
+        stopAllConnections()
+
     def testAddressChangeOnPage(self):
         # Adresse modifiée sur la page : le chemin est recréé à la nouvelle adresse, même port
         uuid, chromecast = newCast(host='192.168.2.73', port=8009)
@@ -305,16 +314,15 @@ class SearchHostsTest(unittest.TestCase):
         sent = []
         with mock.patch.object(myCast, 'searchHosts', staticmethod(lambda inputs: {'devices': [], 'errors': [], 'groupsNotAdded': []})), \
                 mock.patch.object(ttscastd.Comm, 'sendToJeedom', pytypes.SimpleNamespace(send_change_immediate=sent.append), create=True):
-            myCast.runHostSearch('abc', ['192.168.2.71'])
-        self.assertEqual(sent, [{'hostSearch': {'devices': [], 'errors': [], 'groupsNotAdded': [], 'searchId': 'abc'}}])
+            myCast.runHostSearch(['192.168.2.71'])
+        self.assertEqual(sent, [{'hostSearch': {'devices': [], 'errors': [], 'groupsNotAdded': []}}])
 
     def testRunHostSearchReportsAnException(self):
         sent = []
         with mock.patch.object(myCast, 'searchHosts', staticmethod(mock.Mock(side_effect=RuntimeError('boom')))), \
                 mock.patch.object(ttscastd.Comm, 'sendToJeedom', pytypes.SimpleNamespace(send_change_immediate=sent.append), create=True):
-            myCast.runHostSearch('abc', [])
+            myCast.runHostSearch([])
         self.assertEqual(sent[0]['hostSearch']['error'], 'exception')
-        self.assertEqual(sent[0]['hostSearch']['searchId'], 'abc')
 
     @unittest.skipUnless(os.environ.get('TTSCAST_TEST_HOSTS'), 'TTSCAST_TEST_HOSTS non défini (adresses d\'appareils Cast réels)')
     def testRealDevices(self):

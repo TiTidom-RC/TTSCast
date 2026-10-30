@@ -178,6 +178,22 @@ if (file_exists($_piperCatalogPath)) {
                     <input type="checkbox" class="configKey" data-l1key="ipDiscoveryEnabled" />
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Message de mise à jour automatique (équipements)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Ajoute un message dans le centre de messages lorsque le démon met à jour le nom ou l'adresse d'un équipement (renommage dans Google Home, nouvelle adresse IP…).}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input type="checkbox" class="configKey" data-l1key="syncMessageDevices" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Message de mise à jour automatique (groupes)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Ajoute un message dans le centre de messages lorsque le démon met à jour le nom ou l'adresse d'un groupe d'enceintes. Google change régulièrement l'enceinte qui héberge un groupe : ces messages peuvent être fréquents.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input type="checkbox" class="configKey" data-l1key="syncMessageGroups" />
+                </div>
+            </div>
             <legend><i class="fab fa-chromecast"></i> {{TTS (Text To Speech)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Moteur TTS}}

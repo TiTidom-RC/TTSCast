@@ -345,19 +345,16 @@ class ttscast extends eqLogic
         if (count($inputs) > 50) {
             throw new Exception(__('Trop d\'adresses (50 maximum par recherche)', __FILE__));
         }
-        $searchId = uniqid();
-        log::add(__CLASS__, 'info', '[IPDISCOVERY] Scan (IP) [' . $searchId . '] :: ' . implode(', ', $inputs));
-        if (!self::sendToDaemon(array('cmd' => 'searchhosts', 'hosts' => $inputs, 'searchId' => $searchId))) {
+        log::add(__CLASS__, 'info', '[IPDISCOVERY] Scan (IP) :: ' . implode(', ', $inputs));
+        if (!self::sendToDaemon(array('cmd' => 'searchhosts', 'hosts' => $inputs))) {
             throw new Exception(__('Le démon n\'est pas démarré', __FILE__));
         }
-        return $searchId;
     }
 
     // Fenêtre « Scan (IP) », étape 2 (rappel du démon) : crée ou met à jour les équipements trouvés, comme le Scan, puis pousse le
-    // compte rendu à la fenêtre (événement ttscast::hostSearch, filtré par searchId)
+    // compte rendu à la fenêtre (événement ttscast::hostSearch)
     public static function hostSearchResult($_result) {
         $report = array(
-            'searchId' => isset($_result['searchId']) ? $_result['searchId'] : '',
             'error' => isset($_result['error']) ? $_result['error'] : '',
             'devices' => array(),
             'errors' => isset($_result['errors']) && is_array($_result['errors']) ? $_result['errors'] : array(),
@@ -384,7 +381,7 @@ class ttscast extends eqLogic
                 'eqName' => is_object($eqLogic) ? $eqLogic->getHumanName() : ''
             );
         }
-        log::add(__CLASS__, 'info', '[IPDISCOVERY] Scan (IP) [' . $report['searchId'] . '] terminé :: ' . count($report['devices']) . ' équipement(s) ajouté(s) / mis à jour'
+        log::add(__CLASS__, 'info', '[IPDISCOVERY] Scan (IP) terminé :: ' . count($report['devices']) . ' équipement(s) ajouté(s) / mis à jour'
             . ' | ' . count($report['errors']) . ' adresse(s) en erreur | ' . count($report['groupsNotAdded']) . ' groupe(s) non ajouté(s)'
             . ($report['error'] != '' ? ' | erreur : ' . $report['error'] : ''));
         event::add('ttscast::hostSearch', $report);
@@ -847,7 +844,7 @@ class ttscast extends eqLogic
 
     // Synchronisation de la fiche par le démon (cycle ScheduleMode) : met à jour le nom, l'adresse et le port s'ils ont changé, sans
     // toucher à « Mis à jour via », au dernier Scan ni au nom de l'équipement. Sauvegarde uniquement en cas de changement, tracé
-    // dans « Dernière synchronisation » (lastSync) et dans le centre de messages
+    // dans « Dernière synchronisation » (lastSync), et dans le centre de messages selon les options du plugin
     public function applySync($_sync) {
         $labels = array(
             'friendly_name' => __('nom', __FILE__),
@@ -881,9 +878,13 @@ class ttscast extends eqLogic
         }
         $this->setConfiguration('lastSync', date('d/m/Y - H:i:s'));
         $this->save();
-        $text = '[Synchro] ' . $this->getHumanName() . ' : ' . implode(', ', $changes);
+        $text = $this->getHumanName() . ' : ' . implode(', ', $changes);
         log::add(__CLASS__, 'info', '[SYNC] ' . $text);
-        message::add(__CLASS__, $text);
+        // Par défaut sans message pour un groupe : Google change régulièrement l'enceinte qui l'héberge
+        $isGroup = ($this->getConfiguration('cast_type', '') == 'group');
+        if (config::byKey($isGroup ? 'syncMessageGroups' : 'syncMessageDevices', __CLASS__, $isGroup ? '0' : '1') == '1') {
+            message::add(__CLASS__, '[Synchro] ' . $text);
+        }
         return true;
     }
 

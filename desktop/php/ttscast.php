@@ -230,7 +230,7 @@ $eqLogics = eqLogic::byType($plugin->getId());
                             </div>
                             <div class="form-group">
                                 <label class="col-sm-4 control-label">{{Dernière synchronisation}}
-                                    <sup><i class="fas fa-question-circle tooltips" title="{{Date de la dernière mise à jour automatique de la fiche par le démon (adresse, nom, port…), sans Scan. Le détail est dans le centre de messages.}}"></i></sup>
+                                    <sup><i class="fas fa-question-circle tooltips" title="{{Date de la dernière mise à jour automatique de la fiche par le démon (adresse, nom, port…), sans Scan. Le détail est dans les logs, et dans le centre de messages selon la configuration du plugin.}}"></i></sup>
                                 </label>
                                 <div class="col-sm-6">
                                     <input type="text" class="eqLogicAttr form-control" data-l1key="configuration" data-l2key="lastSync" readonly>
