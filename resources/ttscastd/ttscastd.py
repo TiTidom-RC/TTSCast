@@ -267,8 +267,7 @@ class Loops:
                 elif message['cmd'] == 'searchhosts':
                     # Scan (IP) : recherche dans un thread (une adresse qui ne répond pas peut prendre plusieurs secondes), résultat envoyé à Jeedom
                     _inputs = message.get('hosts', [])
-                    threading.Thread(target=myCast.runHostSearch, args=(message.get('searchId', ''), _inputs if isinstance(_inputs, list) else []),
-                                     name='HostSearch', daemon=True).start()
+                    threading.Thread(target=myCast.runHostSearch, args=(_inputs if isinstance(_inputs, list) else [],), name='HostSearch', daemon=True).start()
 
                 elif message['cmd'] == "scanOn":
                     logging.debug('[DAEMON][SOCKET] ScanState = scanOn')
@@ -3980,17 +3979,20 @@ class myCast:
         """ Adresse modifiée (page de l'équipement, Scan, synchronisation) : met à jour le chemin d'accès par IP de l'appareil.
         L'ensemble des chemins (cast_info.services) est partagé avec sa connexion, qui le relit à chaque tentative de reconnexion.
         Si un chemin existe déjà pour la nouvelle adresse (ajouté par PyChromecast, avec le bon port : groupe déplacé sur une autre
-        enceinte), l'ancien est seulement retiré : le recréer avec l'ancien port ajouterait un chemin qui ne répond pas """
+        enceinte), l'ancien est seulement retiré. Sinon, il est recréé avec le port connu à cette adresse s'il y en a un (le navigateur
+        peut déjà la connaître avant de l'avoir interrogée) : un ancien port ajouterait un chemin qui ne répond pas """
         chromecast = myConfig.NETCAST_DEVICES.get(uuid)
         if chromecast is None:
             return
         services = chromecast.cast_info.services
         hasNewHost = any(isinstance(s, HostServiceInfo) and myCast.normalizeHost(s.host) == newHost for s in list(services))
+        info = myCast.castInfoOf(chromecast)
+        knownPort = info.port if myCast.normalizeHost(info.host) == newHost else None
         for service in list(services):
             if isinstance(service, HostServiceInfo) and myCast.normalizeHost(service.host) == oldHost:
                 services.discard(service)
                 if not hasNewHost:
-                    services.add(HostServiceInfo(newHost, service.port))
+                    services.add(HostServiceInfo(newHost, knownPort or service.port))
                     hasNewHost = True
                 logging.info('[DAEMON][IPDISCOVERY] Chromecast with name :: %s :: Adresse modifiée %s -> %s', str(chromecast.name), oldHost, newHost)
 
@@ -4096,7 +4098,7 @@ class myCast:
             return None
 
     @staticmethod
-    def runHostSearch(searchId, inputs):
+    def runHostSearch(inputs):
         """ Scan (IP), commande asynchrone : recherche dans un thread, puis envoi du résultat à Jeedom (rappel jeettscast.php), qui crée
         ou met à jour les équipements trouvés (même chemin que le Scan) et pousse le compte rendu à la fenêtre (événement ttscast::hostSearch) """
         try:
@@ -4105,7 +4107,6 @@ class myCast:
             logging.error('[DAEMON][IPDISCOVERY] Exception :: %s', e)
             logging.debug(traceback.format_exc())
             result = {'error': 'exception', 'devices': [], 'errors': [], 'groupsNotAdded': []}
-        result['searchId'] = searchId
         Comm.sendToJeedom.send_change_immediate({'hostSearch': result})  # type: ignore
 
     @staticmethod

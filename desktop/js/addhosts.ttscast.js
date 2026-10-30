@@ -24,7 +24,7 @@ const RESPONSE_TIMEOUT = 90000
 
 // État de la fenêtre tenu sur window et non dans ce script : s'il est exécuté plusieurs fois (fenêtre rechargée), le compte rendu
 // et la fermeture pourraient sinon lire deux copies différentes :
-// - ttscastAddHostsSearchId : Scan (IP) en cours (identifiant renvoyé par startHostSearch)
+// - ttscastAddHostsSearching : Scan (IP) en cours
 // - ttscastAddHostsChanged : équipements ajoutés / mis à jour (rechargement de la page à la fermeture)
 // Délai d'attente du compte rendu
 let responseTimeout = null
@@ -116,14 +116,13 @@ function renderReport(report) {
     container.style.display = ''
 }
 
-// Compte rendu poussé par Jeedom (rappel du démon) : seul celui du Scan (IP) lancé depuis cette fenêtre est pris en compte
+// Compte rendu poussé par Jeedom (rappel du démon), affiché tant que la fenêtre est ouverte : y compris celui d'un Scan (IP) lancé
+// avant de la fermer puis rouvrir, ou arrivé avant la réponse AJAX d'un démon rapide
 function onHostSearch(event) {
-    const report = event.detail || {}
-    if (!window.ttscastAddHostsSearchId || report.searchId !== window.ttscastAddHostsSearchId) return
     clearTimeout(responseTimeout)
-    window.ttscastAddHostsSearchId = ''
+    window.ttscastAddHostsSearching = false
     setBusy(false)
-    renderReport(report)
+    renderReport(event.detail || {})
 }
 
 function startHostSearch() {
@@ -135,28 +134,31 @@ function startHostSearch() {
         return
     }
     setBusy(true)
+    window.ttscastAddHostsSearching = true
+    clearTimeout(responseTimeout)
+    responseTimeout = setTimeout(function() {
+        window.ttscastAddHostsSearching = false
+        setBusy(false)
+        jeedomUtils.showAlert({ message: '{{Pas de réponse du démon : consultez les logs}}', level: 'warning' })
+    }, RESPONSE_TIMEOUT)
+    const startFailed = function(message) {
+        clearTimeout(responseTimeout)
+        window.ttscastAddHostsSearching = false
+        setBusy(false)
+        jeedomUtils.showAlert({ message: message, level: 'danger' })
+    }
     domUtils.ajax({
         type: 'POST',
         url: AJAX_URL,
         data: { action: 'startHostSearch', hosts: input.value },
         dataType: 'json',
         error: function(request) {
-            setBusy(false)
-            jeedomUtils.showAlert({ message: (request.responseJSON && request.responseJSON.result) || '{{Erreur lors du lancement du Scan (IP)}}', level: 'danger' })
+            startFailed((request.responseJSON && request.responseJSON.result) || '{{Erreur lors du lancement du Scan (IP)}}')
         },
         success: function(data) {
             if (data.state !== 'ok') {
-                setBusy(false)
-                jeedomUtils.showAlert({ message: data.result, level: 'danger' })
-                return
+                startFailed(data.result)
             }
-            window.ttscastAddHostsSearchId = data.result
-            clearTimeout(responseTimeout)
-            responseTimeout = setTimeout(function() {
-                window.ttscastAddHostsSearchId = ''
-                setBusy(false)
-                jeedomUtils.showAlert({ message: '{{Pas de réponse du démon : consultez les logs}}', level: 'warning' })
-            }, RESPONSE_TIMEOUT)
         }
     })
 }
@@ -179,7 +181,7 @@ function addIpHosts(event) {
 }
 
 window.initAddHosts = function() {
-    window.ttscastAddHostsSearchId = ''
+    window.ttscastAddHostsSearching = false
     window.ttscastAddHostsChanged = false
     const button = document.getElementById('bt_ttscastSearchHosts')
     if (button) {
@@ -201,11 +203,11 @@ window.initAddHosts = function() {
 // Fermeture de la fenêtre : retire l'écouteur et indique si des équipements ont été ajoutés / mis à jour (rechargement de la page)
 window.closeAddHosts = function() {
     clearTimeout(responseTimeout)
-    if (window.ttscastAddHostsSearchId) {
+    if (window.ttscastAddHostsSearching) {
         // Le démon termine la recherche et les équipements sont bien ajoutés, mais le compte rendu ne sera plus affiché
         jeedomUtils.showAlert({ message: '{{Scan (IP) en cours : rafraîchissez la page dans quelques secondes pour voir les équipements ajoutés}}', level: 'info' })
     }
-    window.ttscastAddHostsSearchId = ''
+    window.ttscastAddHostsSearching = false
     if (window.ttscastHostSearchHandler) {
         document.body.removeEventListener(EVENT_NAME, window.ttscastHostSearchHandler)
         window.ttscastHostSearchHandler = null

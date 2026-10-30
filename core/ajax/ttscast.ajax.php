@@ -96,7 +96,8 @@ try {
     }
 
     if (init('action') == 'startHostSearch') {
-        ajax::success(ttscast::startHostSearch(init('hosts')));
+        ttscast::startHostSearch(init('hosts'));
+        ajax::success();
     }
 
     if (init('action') == 'getDefaultPrompt') {
