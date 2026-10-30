@@ -19,7 +19,7 @@
 
 const AJAX_URL = 'plugins/ttscast/core/ajax/ttscast.ajax.php'
 const EVENT_NAME = 'ttscast::hostSearch'
-// Le démon interroge les adresses en parallèle (8 s max par requête), puis les groupes des appareils multizone
+// Le démon interroge les adresses en parallèle (identification puis groupes, 8 s max par requête)
 const RESPONSE_TIMEOUT = 90000
 
 // État de la fenêtre tenu sur window et non dans ce script : s'il est exécuté plusieurs fois (fenêtre rechargée), le compte rendu

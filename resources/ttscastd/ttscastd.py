@@ -3988,13 +3988,16 @@ class myCast:
         hasNewHost = any(isinstance(s, HostServiceInfo) and myCast.normalizeHost(s.host) == newHost for s in list(services))
         info = myCast.castInfoOf(chromecast)
         knownPort = info.port if myCast.normalizeHost(info.host) == newHost else None
+        replaced = False
         for service in list(services):
             if isinstance(service, HostServiceInfo) and myCast.normalizeHost(service.host) == oldHost:
                 services.discard(service)
+                replaced = True
                 if not hasNewHost:
                     services.add(HostServiceInfo(newHost, knownPort or service.port))
                     hasNewHost = True
-                logging.info('[DAEMON][IPDISCOVERY] Chromecast with name :: %s :: Adresse modifiée %s -> %s', str(chromecast.name), oldHost, newHost)
+        if replaced:
+            logging.info('[DAEMON][IPDISCOVERY] Chromecast with name :: %s :: Adresse modifiée %s -> %s', str(chromecast.name), oldHost, newHost)
 
     @staticmethod
     def removeIpHost(uuid):

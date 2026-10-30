@@ -878,12 +878,12 @@ class ttscast extends eqLogic
         }
         $this->setConfiguration('lastSync', date('d/m/Y - H:i:s'));
         $this->save();
-        $text = '[Synchro] ' . $this->getHumanName() . ' : ' . implode(', ', $changes);
+        $text = $this->getHumanName() . ' : ' . implode(', ', $changes);
         log::add(__CLASS__, 'info', '[SYNC] ' . $text);
         // Par défaut sans message pour un groupe : Google change régulièrement l'enceinte qui l'héberge
         $isGroup = ($this->getConfiguration('cast_type', '') == 'group');
         if (config::byKey($isGroup ? 'syncMessageGroups' : 'syncMessageDevices', __CLASS__, $isGroup ? '0' : '1') == '1') {
-            message::add(__CLASS__, $text);
+            message::add(__CLASS__, '[Synchro] ' . $text);
         }
         return true;
     }
