@@ -3896,7 +3896,7 @@ class myCast:
             return  # pas encore découvert (castCallBack s'en chargera) ou déjà connecté
         try:
             myCast.castConnect(chromecast)
-            logging.debug('[DAEMON][NETCAST][GroupMember] Chromecast with name :: %s :: Connection started (group member, not enabled in Jeedom)', str(chromecast.name))
+            logging.debug('[DAEMON][NETCAST][GroupMember] Chromecast with name :: %s :: Connection started (group member)', str(chromecast.name))
         except Exception as e:
             logging.error('[DAEMON][NETCAST][GroupMember] Exception (%s) :: %s', str(chromecast.name), e)
             logging.debug(traceback.format_exc())
@@ -4221,7 +4221,7 @@ class myCast:
                 chromecast = myConfig.NETCAST_DEVICES[uuid]
                 logging.info('[DAEMON][NETCAST][CastListeners] Chromecast with name :: %s :: Add Listeners', str(chromecast.name))
             else:
-                logging.debug('[DAEMON][NETCAST][CastListeners] Aucun Chromecast avec cet UUID :: %s', uuid)
+                logging.debug('[DAEMON][NETCAST][CastListeners] Pas encore découvert, connexion à sa découverte :: %s', uuid)
                 return False
 
         # PyChromecast ne permet pas de désinscrire un listener receiver / média / connexion : ils sont liés à l'objet Chromecast,
@@ -4366,7 +4366,7 @@ class myCast:
             # Découvert après son groupe : multizone_member_added a déjà été reçu sans pouvoir le connecter
             myCast.connectGroupMember(chromecast.uuid)
         else:
-            logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Not enabled in Jeedom (nor active group member), no connection', str(chromecast.name))
+            logging.debug('[DAEMON][NETCAST][CastCallBack] Chromecast with name :: %s :: Not enabled in Jeedom (yet?), no connection for now', str(chromecast.name))
 
     class MyCastListener(pychromecast.discovery.AbstractCastListener):
         """Listener for discovering chromecasts."""
