@@ -197,8 +197,7 @@ class jeedom_socket_handler(StreamRequestHandler):
 		
 		try:
 			lgdecode = json.loads(lg.strip())
-			if lgdecode and lgdecode.get('apikey'):
-				lgdecode['apikey'] = '***'
+			# The apikey is masked by SecretMaskFilter (ttscastd.py)
 			logging.debug("[DAEMON][HANDLER] Message read from socket :: %s", str(json.dumps(lgdecode).encode('utf-8')))
 		except Exception as error:
 			logging.error("[DAEMON][HANDLER] JSON Exception :: %s", error)

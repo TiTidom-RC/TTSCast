@@ -169,6 +169,31 @@ if (file_exists($_piperCatalogPath)) {
                     </a>
                 </div>
             </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Activer la découverte par IP}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Permet d'ajouter ou de mettre à jour des équipements par leur adresse IP via le bouton Scan (IP), et interroge l'adresse de tous les équipements actifs en complément du mDNS. Si désactivée, les équipements sont découverts uniquement par mDNS (bouton Scan).}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input type="checkbox" class="configKey" data-l1key="ipDiscoveryEnabled" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Message de mise à jour automatique (équipements)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Ajoute un message dans le centre de messages lorsque le démon met à jour le nom ou l'adresse d'un équipement (renommage dans Google Home, nouvelle adresse IP…).}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input type="checkbox" class="configKey" data-l1key="syncMessageDevices" />
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-lg-3 control-label">{{Message de mise à jour automatique (groupes)}}
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Ajoute un message dans le centre de messages lorsque le démon met à jour le nom ou l'adresse d'un groupe d'enceintes. Google change régulièrement l'enceinte qui héberge un groupe : ces messages peuvent être fréquents.}}"></i></sup>
+                </label>
+                <div class="col-lg-3">
+                    <input type="checkbox" class="configKey" data-l1key="syncMessageGroups" />
+                </div>
+            </div>
             <legend><i class="fab fa-chromecast"></i> {{TTS (Text To Speech)}}</legend>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Moteur TTS}}

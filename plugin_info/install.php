@@ -97,6 +97,15 @@ function ttscast_install() {
     if (config::byKey('logFiltersEnabled', 'ttscast') == '') {
         config::save('logFiltersEnabled', '0', 'ttscast');
     }
+    if (config::byKey('ipDiscoveryEnabled', 'ttscast') == '') {
+        config::save('ipDiscoveryEnabled', '1', 'ttscast');
+    }
+    if (config::byKey('syncMessageDevices', 'ttscast') == '') {
+        config::save('syncMessageDevices', '1', 'ttscast');
+    }
+    if (config::byKey('syncMessageGroups', 'ttscast') == '') {
+        config::save('syncMessageGroups', '0', 'ttscast');
+    }
     if (config::byKey('disableUpdateMsg', 'ttscast') == '') {
         config::save('disableUpdateMsg', '0', 'ttscast');
     }
@@ -196,6 +205,15 @@ function ttscast_update() {
     }
     if (config::byKey('logFiltersEnabled', 'ttscast') == '') {
         config::save('logFiltersEnabled', '0', 'ttscast');
+    }
+    if (config::byKey('ipDiscoveryEnabled', 'ttscast') == '') {
+        config::save('ipDiscoveryEnabled', '1', 'ttscast');
+    }
+    if (config::byKey('syncMessageDevices', 'ttscast') == '') {
+        config::save('syncMessageDevices', '1', 'ttscast');
+    }
+    if (config::byKey('syncMessageGroups', 'ttscast') == '') {
+        config::save('syncMessageGroups', '0', 'ttscast');
     }
     if (config::byKey('disableUpdateMsg', 'ttscast') == '') {
         config::save('disableUpdateMsg', '0', 'ttscast');

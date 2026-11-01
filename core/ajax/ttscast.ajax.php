@@ -95,6 +95,11 @@ try {
         ajax::success();
     }
 
+    if (init('action') == 'startHostSearch') {
+        ttscast::startHostSearch(init('hosts'));
+        ajax::success();
+    }
+
     if (init('action') == 'getDefaultPrompt') {
         $result = ttscast::sendToDaemonSync(['cmd' => 'getDefaultPrompt']);
         if ($result === null) {

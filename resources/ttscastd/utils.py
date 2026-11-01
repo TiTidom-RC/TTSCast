@@ -18,9 +18,9 @@ import os
 import time
 
 class Config:
-    KNOWN_HOSTS = []
+    # Découverte par IP : adresse de chaque équipement actif, interrogée en complément du mDNS { UUID: 'adresse' }
+    IP_HOSTS = {}
     GCAST_UUID = []
-    GCAST_NAMES = []
     
     NETCAST_BROWSER = None
     NETCAST_DEVICES = {}
@@ -89,6 +89,11 @@ class Config:
     aiDefaultTone = 'enthousiaste et humoristique'  # Default tone for AI TTS
     aiBaseTimeout = 30  # secondes — délai de l'appel IA sans réflexion
     aiMaxTimeout = 60  # secondes — délai maximal de l'appel IA (avec réflexion), réglage de la page de configuration (ttsAIMaxTimeout), transmis au démarrage
+    # Relance des appels Gemini (reformulation, Gemini TTS) sur erreur transitoire, à l'intérieur du délai total de l'appel
+    geminiRetryAttempts = 3  # tentatives au total, première comprise
+    geminiRetryDelays = (1, 2)  # secondes — attente avant la 2e puis la 3e tentative (sauf retryDelay indiqué par Gemini)
+    geminiRetryMinRemaining = 5  # secondes — pas de nouvelle tentative s'il reste moins que cela dans le délai de l'appel
+    geminiRetryHttpCodes = (429, 500, 502, 503, 504)  # trop de requêtes, erreurs serveur et surcharge : erreurs rapides et transitoires
     # Modèles de reformulation autorisés via l'option aimodel (à garder alignés sur la liste de plugin_info/configuration.php)
     aiAllowedModels = (
         'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite',
@@ -131,6 +136,7 @@ class Config:
     # (à compléter pour les futurs modèles, ex. 3.9). Les autres modèles utilisent le prompt "style + ### TRANSCRIPT".
     geminiTTSSpeechMetadataModels = ('gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts')
     geminiTTSDefault = False
+    geminiTTSTimeout = 30  # secondes — délai total d'un appel Gemini TTS (relances comprises)
     geminiTTSStyle   = ''  # Style par défaut, peut être surchargé par style: dans les options de scénario
     streamingDefault = False  # Gemini TTS uniquement — ignoré pour les autres moteurs
 
@@ -180,12 +186,16 @@ class Config:
     castLogLevel = "daemon"
     logFiltersEnabled: bool = False
     logFilters: list = []  # [{ "pattern": str, "level": str, "enabled": bool }]
+    ipDiscoveryEnabled: bool = False
     socketPort = 55111
     socketHost = 'localhost'
     pidFile = '/tmp/ttscastd.pid'
     apiKey = ''
     apiTTSKey = ''
     apiRSSKey = ''
+    # Texte affiché à la place d'un secret dans les logs (identique aux autres plugins). Sans astérisques :
+    # ils sont interprétés comme du Markdown quand les logs sont collés sur un forum ou dans une issue.
+    secretMask = 'sEcReT'
     pluginVersion = ''
     callBack = ''
     
