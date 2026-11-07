@@ -1,4 +1,4 @@
-PyChromecast==14.1.0
+PyChromecast==14.1.1
 google-cloud-texttospeech==2.38.0
 gTTS==2.5.4
 google-genai==2.34.0
