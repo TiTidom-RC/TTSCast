@@ -20,4 +20,4 @@ jobs:
           node-version: '22'
 
       - name: Check JavaScript syntax
-        run: find . -name "*.js" ! -path "./node_modules/*" -exec node --check {} \;
+        run: find . -name "*.js" ! -path "./node_modules/*" -print0 | xargs -0 -n1 node --check
