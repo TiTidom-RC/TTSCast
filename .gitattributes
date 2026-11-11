@@ -1,2 +1,3 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Fichiers texte détectés automatiquement, toujours en LF, dans le dépôt comme dans la copie de travail,
+# quel que soit le réglage core.autocrlf de la machine (Windows compris) : la cible est Debian
+* text=auto eol=lf
