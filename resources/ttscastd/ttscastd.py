@@ -1713,6 +1713,7 @@ class TTSCast:
                     }
                 }
                 sessionBefore = cast.media_controller.status.media_session_id
+                contentBefore = cast.media_controller.status.content_id
                 playRequestedAt = time.monotonic()
                 quick_play.quick_play(cast, app_name, app_data)
 
@@ -1735,7 +1736,7 @@ class TTSCast:
 
                 Functions.trackPluginSession(str(cast.uuid), 'tts', cast)
 
-                endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, '[DAEMON][Cast]', mediaUrl=urltoplay)
+                endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, '[DAEMON][Cast]', mediaUrl=urltoplay, contentBefore=contentBefore)
 
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing — restaurer AVANT quit_app
                     if isGroup and bool(groupSnapshot):
@@ -1832,6 +1833,8 @@ class TTSCast:
                 }
 
                 sessionBefore = cast.media_controller.status.media_session_id
+
+                contentBefore = cast.media_controller.status.content_id
                 playRequestedAt = time.monotonic()
                 quick_play.quick_play(cast, app_name, app_data)
 
@@ -1854,7 +1857,7 @@ class TTSCast:
 
                 Functions.trackPluginSession(googleUUID, 'tts', cast)
 
-                endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, '[DAEMON][Cast]', mediaUrl=urltoplay)
+                endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, '[DAEMON][Cast]', mediaUrl=urltoplay, contentBefore=contentBefore)
 
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing — restaurer AVANT quit_app
                     if isGroup and bool(groupSnapshot):
@@ -2541,7 +2544,7 @@ class Functions:
         return bool(mediaStatus and (mediaStatus.player_is_playing or mediaStatus.player_is_paused))
 
     @staticmethod
-    def waitPlaybackEnd(cast, sessionBefore, requestedAt, logTag, mediaUrl=None, clock=time.monotonic, sleep=time.sleep):
+    def waitPlaybackEnd(cast, sessionBefore, requestedAt, logTag, mediaUrl=None, contentBefore=None, clock=time.monotonic, sleep=time.sleep):
         """Attend la fin de la lecture lancée sur cast (TTS, son) et retourne la raison de la fin :
         - 'finished' : fin normale ;
         - 'interrupted' : session arrêtée (force, arrêt de l'application, coupure de la connexion Cast) ;
@@ -2549,7 +2552,10 @@ class Functions:
         - 'error' : échec de chargement ou erreur de lecture ;
         - 'notStarted' : lecture pas démarrée dans le délai cmdWaitTimeout ;
         - 'stalled' : lecture sans progression (pause, mise en mémoire tampon, position figée) pendant cmdWaitTimeout.
-        Notre session est la première dont l'identifiant diffère de sessionBefore (relevé avant quick_play), ou celle qui lit mediaUrl.
+        Notre session est la première dont l'identifiant diffère de sessionBefore (relevé avant quick_play), ou celle qui affiche mediaUrl :
+        l'enceinte renumérote ses sessions à partir de 1 à chaque lancement d'application, un même identifiant ne prouve donc rien.
+        Si l'enceinte affichait déjà mediaUrl avant le lancement (contentBefore, même TTS rejoué depuis le cache), il faut en plus
+        une lecture en cours (PLAYING ou BUFFERING) pour écarter l'état restant de la diffusion précédente.
         Une lecture qui progresse n'a aucune limite de durée : l'état est redemandé à l'enceinte toutes les playbackStatusRefresh
         secondes, et seule une nouvelle position plus avancée (ou un flux LIVE qui répond en lecture) compte comme progression.
         requestedAt : time.monotonic() relevé avant quick_play, pour ne retenir que les échecs de chargement postérieurs."""
@@ -2571,7 +2577,7 @@ class Functions:
             state = status.player_state
             if ourSession is None and sessionId is not None and (
                 sessionId != sessionBefore
-                or (mediaUrl and status.content_id == mediaUrl and state in ('PLAYING', 'BUFFERING'))
+                or (mediaUrl and status.content_id == mediaUrl and (contentBefore != mediaUrl or state in ('PLAYING', 'BUFFERING')))
             ):
                 ourSession = sessionId
 
@@ -3424,6 +3430,7 @@ class Functions:
                     }
                 }
                 sessionBefore = cast.media_controller.status.media_session_id
+                contentBefore = cast.media_controller.status.content_id
                 playRequestedAt = time.monotonic()
                 quick_play.quick_play(cast, app_name, app_data)
 
@@ -3445,7 +3452,7 @@ class Functions:
                 
                 Functions.trackPluginSession(_googleUUID, _controller, cast)
 
-                endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, f'[DAEMON][controllerActions] {soundType} ::', mediaUrl=soundURL)
+                endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, f'[DAEMON][controllerActions] {soundType} ::', mediaUrl=soundURL, contentBefore=contentBefore)
 
                 if (_volume is not None):  # restaurer AVANT quit_app
                     if isGroup:

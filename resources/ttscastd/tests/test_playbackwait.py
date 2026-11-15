@@ -73,8 +73,9 @@ class Scenario:
             _, action = self.events.pop(0)
             action(self)
 
-    def run(self, sessionBefore=None, mediaUrl=URL):
-        return Functions.waitPlaybackEnd(self.cast, sessionBefore, self.start, '[TEST]', mediaUrl=mediaUrl, clock=self.clock, sleep=self.sleep)
+    def run(self, sessionBefore=None, mediaUrl=URL, contentBefore=None):
+        return Functions.waitPlaybackEnd(self.cast, sessionBefore, self.start, '[TEST]', mediaUrl=mediaUrl, contentBefore=contentBefore,
+                                         clock=self.clock, sleep=self.sleep)
 
 
 def state(**changes):
@@ -233,14 +234,38 @@ class WaitPlaybackEndTest(unittest.TestCase):
         self.assertAlmostEqual(sc.elapsed(), 6, delta=0.2)
 
     def test_sameSessionIdOurUrl(self):
-        """ Identifiant de session inchangé : la lecture de notre URL est quand même reconnue """
+        """ Même TTS rejoué depuis le cache, même identifiant de session : l'état restant n'est pas pris pour une fin,
+        la nouvelle lecture est reconnue dès qu'elle joue """
         sc = Scenario([
             (0, state(media_session_id=7, player_state='IDLE', idle_reason='FINISHED', content_id=URL)),
             (1, state(player_state='PLAYING', idle_reason=None)),
             (5, state(player_state='IDLE', idle_reason='FINISHED')),
         ], playingResponder)
-        self.assertEqual(sc.run(sessionBefore=7), 'finished')
+        self.assertEqual(sc.run(sessionBefore=7, contentBefore=URL), 'finished')
         self.assertAlmostEqual(sc.elapsed(), 5, delta=0.2)
+
+    def test_sameSessionIdAfterOtherApp(self):
+        """ Radio dans une autre application en session 1, TTS très court relancé lui aussi en session 1 (renumérotation au
+        lancement de l'application) : reconnu par son URL, fin vue sans état PLAYING observé """
+        radio = 'http://radio/flux'
+        sc = Scenario([
+            (0, state(media_session_id=1, player_state='PLAYING', content_id=radio)),
+            (1, state(media_session_id=1, player_state='BUFFERING', content_id=URL)),
+            (1.5, state(player_state='IDLE', idle_reason='FINISHED')),
+        ])
+        self.assertEqual(sc.run(sessionBefore=1, contentBefore=radio), 'finished')
+        self.assertLess(sc.elapsed(), 2)
+
+    def test_sameSessionIdAfterOtherAppIdleFirst(self):
+        """ Même cas, premier état reçu IDLE sans raison (chargement) : notre lecture est reconnue dès cet état """
+        radio = 'http://radio/flux'
+        sc = Scenario([
+            (0, state(media_session_id=1, player_state='PLAYING', content_id=radio)),
+            (1, state(media_session_id=1, player_state='IDLE', content_id=URL)),
+            (2, state(player_state='IDLE', idle_reason='FINISHED')),
+        ])
+        self.assertEqual(sc.run(sessionBefore=1, contentBefore=radio), 'finished')
+        self.assertLess(sc.elapsed(), 3)
 
     def test_statusRefreshedDuringPlayback(self):
         requests = []
