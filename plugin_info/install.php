@@ -265,7 +265,7 @@ function ttscast_update() {
         log::add('ttscast', 'warning', '[CLEANUP_KO] Erreur lors du nettoyage : ' . $e->getMessage());
     }
 
-    // Modèle de la configuration non proposé → modèle proposé équivalent
+    // Modèle de la configuration non proposé → modèle proposé équivalent, sinon modèle par défaut
     ttscast_replaceRetiredModel('ttsAIModel', array(
         'gemini-3.1-flash-lite' => 'gemini-3.5-flash-lite',
         'gemini-flash-lite-latest' => 'gemini-3.5-flash-lite',
@@ -273,30 +273,34 @@ function ttscast_update() {
         'gemini-3.5-flash' => 'gemini-4-hydrogen',
         'gemini-3.1-pro-preview' => 'gemini-4-hydrogen',
         'gemini-flash-latest' => 'gemini-4-hydrogen',
-    ), __('Modèle IA (Reformulation)', __FILE__));
+    ), array('gemini-3.5-flash-lite', 'gemini-4-hydrogen'), 'gemini-3.5-flash-lite', __('Modèle IA (Reformulation)', __FILE__));
     ttscast_replaceRetiredModel('geminiTTSModel', array(
         'gemini-3.1-flash-tts-preview' => 'gemini-3.8-flash-lite-tts',
-    ), __('Modèle Gemini TTS', __FILE__));
+    ), array('gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts'), 'gemini-3.8-flash-lite-tts', __('Modèle Gemini TTS', __FILE__));
 
     // Créer/configurer les équipements IA si l'IA est déjà activée
     ttscast::manageAIEquipments();
 }
 
 /**
- * Remplace la valeur de configuration $configKey si elle figure dans $replacements (valeur => modèle proposé),
- * et l'indique dans le centre de messages, même si les messages de mise à jour sont désactivés.
+ * Remplace la valeur de configuration $configKey si elle n'est pas un modèle proposé : par son équivalent dans $replacements,
+ * sinon par $default. Une valeur vide (réglage jamais enregistré) est laissée telle quelle. Le remplacement est indiqué dans
+ * le centre de messages, même si les messages de mise à jour sont désactivés.
  * @param string $configKey
- * @param array $replacements
+ * @param array $replacements valeur => modèle proposé équivalent
+ * @param array $proposed modèles proposés dans la page de configuration
+ * @param string $default modèle par défaut
  * @param string $label libellé du réglage dans la page de configuration
  */
-function ttscast_replaceRetiredModel($configKey, $replacements, $label) {
+function ttscast_replaceRetiredModel($configKey, $replacements, $proposed, $default, $label) {
     $current = config::byKey($configKey, 'ttscast', '');
-    if (!isset($replacements[$current])) {
+    if ($current === '' || in_array($current, $proposed, true)) {
         return;
     }
-    config::save($configKey, $replacements[$current], 'ttscast');
-    log::add('ttscast', 'info', '[UPDATE] ' . $configKey . ' :: ' . $current . ' -> ' . $replacements[$current]);
-    message::add('ttscast', sprintf(__('%s : le modèle %s n\'est plus proposé, il a été remplacé par %s.', __FILE__), $label, $current, $replacements[$current]));
+    $replacement = isset($replacements[$current]) ? $replacements[$current] : $default;
+    config::save($configKey, $replacement, 'ttscast');
+    log::add('ttscast', 'info', '[UPDATE] ' . $configKey . ' :: ' . $current . ' -> ' . $replacement);
+    message::add('ttscast', sprintf(__('%s : le modèle %s n\'est plus proposé, il a été remplacé par %s.', __FILE__), $label, $current, $replacement));
 }
 
 // Fonction exécutée automatiquement après la suppression du plugin

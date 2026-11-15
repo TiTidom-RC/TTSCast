@@ -39,7 +39,7 @@ import itertools
 import socket
 
 from concurrent.futures import ThreadPoolExecutor
-from urllib.parse import urlencode, urlparse, quote
+from urllib.parse import urlencode, urlparse, parse_qs, quote
 from uuid import UUID, uuid4
 
 # Import pour Jeedom
@@ -132,13 +132,15 @@ class Loops:
 
             logging.debug("[DAEMON][SOCKET] Message received in socket JEEDOM_SOCKET_MESSAGE")
 
-            message = json.loads(raw.decode('utf-8'))
-
-            if message['apikey'] != myConfig.apiKey:
-                logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message['apikey'])
-                continue
-
             try:
+                message = json.loads(raw.decode('utf-8'))
+                if not isinstance(message, dict) or 'cmd' not in message:
+                    logging.error('[DAEMON][SOCKET] Message ignoré : objet JSON avec "cmd" attendu')
+                    continue
+                if message.get('apikey') != myConfig.apiKey:
+                    logging.error("[DAEMON][SOCKET] Invalid apikey from socket :: %s", message.get('apikey'))
+                    continue
+
                 # TODO ***** Gestion des messages reçus de Jeedom *****
                 if message['cmd'] == 'action':
                     # TODO ***** Gestion des actions
@@ -165,9 +167,9 @@ class Loops:
                             if all(keys in message for keys in ('ttsText', 'ttsGoogleUUID', 'ttsVoiceName', 'ttsLang', 'ttsEngine', 'ttsSpeed', 'ttsOptions', 'ttsRSSSpeed', 'ttsRSSVoiceName', 'ttsGeminiVoiceName', 'ttsPiperVoiceName')):
                                 logging.debug('[DAEMON][SOCKET] TTS :: %s', str(message))
                                 # Enregistrement queue AVANT démarrage du thread — préserve l'ordre d'arrivée
-                                _qr, _tu, _ticket, _cw, _cf = Functions.socketRegisterQueue(message['ttsGoogleUUID'], message.get('ttsOptions', ''), message.get('callerPid', None), 'TTS')
+                                _qr, _ticket = Functions.socketRegisterQueue(message['ttsGoogleUUID'], message.get('ttsOptions', ''), message.get('callerPid', None), 'TTS')
                                 try:
-                                    threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsPiperVoiceName'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'], message.get('cmdNotificationId', 0), _qr, _tu, _ticket, _cw, _cf]).start()
+                                    threading.Thread(target=TTSCast.getTTS, args=[message['ttsText'], message['ttsGoogleUUID'], message['ttsVoiceName'], message['ttsRSSVoiceName'], message['ttsGeminiVoiceName'], message['ttsLang'], message['ttsEngine'], message['ttsPiperVoiceName'], message['ttsSpeed'], message['ttsRSSSpeed'], message['ttsOptions'], message.get('cmdNotificationId', 0), _qr, _ticket]).start()
                                 except Exception as _e:
                                     logging.error('[DAEMON][SOCKET] TTS :: Échec du démarrage du thread, libération du ticket de queue :: %s', _e)
                                     if _qr:
@@ -198,9 +200,9 @@ class Loops:
                             # ══════════════════════════════════════════════════════════════════════
                             logging.info('[DAEMON][SOCKET] ════ Media :: %s @ %s ════', message['cmd_action'], message['googleUUID'])
                             # Enregistrement queue AVANT démarrage du thread — préserve l'ordre d'arrivée
-                            _qr, _tu, _ticket, _cw, _cf = Functions.socketRegisterQueue(message['googleUUID'], message.get('options', ''), message.get('callerPid', None), message['cmd_action'])
+                            _qr, _ticket = Functions.socketRegisterQueue(message['googleUUID'], message.get('options', ''), message.get('callerPid', None), message['cmd_action'])
                             try:
-                                threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options'], _qr, _tu, _ticket, _cw, _cf]).start()
+                                threading.Thread(target=Functions.controllerActions, args=[message['googleUUID'], message['cmd_action'], message['value'], message['options'], _qr, _ticket]).start()
                             except Exception as _e:
                                 logging.error('[DAEMON][SOCKET] Media :: Échec du démarrage du thread, libération du ticket de queue :: %s', _e)
                                 if _qr:
@@ -986,13 +988,13 @@ class TTSCast:
                     
                     # AI
                     if myConfig.aiEnabled:
-                        _useAI = options_json.get('genai', myConfig.aiDefault)
+                        _useAI = Functions.parseBoolOption(options_json.get('genai', myConfig.aiDefault))
                         _aiCustomTone = options_json.get('aitone', None)
                         _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
                         _aiCustomModel = options_json.get('aimodel', None)
                         _aiCustomThinking = options_json.get('aithinking', None)
                     # SSML
-                    _useSSML = options_json.get('ssml', False)
+                    _useSSML = Functions.parseBoolOption(options_json.get('ssml', False))
                     # Before
                     _silenceBefore = options_json.get('before', None)
                     # Gemini TTS Style
@@ -1227,11 +1229,9 @@ class TTSCast:
             logging.debug(traceback.format_exc())
 
     @staticmethod
-    def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsLang, ttsEngine, ttsPiperVoiceName, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None, cmdNotificationId=0, _queueRegistered=False, _targetWaitUUID=None, _ticket=None, _cmdWait=None, _cmdForce=False):
-        # _queueRegistered / _targetWaitUUID / _ticket / _cmdWait / _cmdForce proviennent du socket handler (enregistrement précoce) ;
+    def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsLang, ttsEngine, ttsPiperVoiceName, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None, cmdNotificationId=0, _queueRegistered=False, _ticket=None):
+        # _queueRegistered / _ticket proviennent de la boucle des commandes (enregistrement dans la file avant le démarrage du thread) ;
         # _ticket (waitqueue.Ticket) porte toute la gestion de la file
-        if _targetWaitUUID is None:
-            _targetWaitUUID = ttsGoogleUUID
         try:
             if _queueRegistered and _ticket.kind == 'force':
                 Functions.forceCut(ttsGoogleUUID)
@@ -1280,17 +1280,17 @@ class TTSCast:
                     
                     # General Options
                     _ttsVolume = options_json.get('volume', None)
-                    _appDing = options_json.get('ding', True)
+                    _appDing = Functions.parseBoolOption(options_json.get('ding', True))
 
                     # AI
                     if myConfig.aiEnabled:
-                        _useAI = options_json.get('genai', myConfig.aiDefault)
+                        _useAI = Functions.parseBoolOption(options_json.get('genai', myConfig.aiDefault))
                         _aiCustomTone = options_json.get('aitone', None)
                         _aiCustomSysPrompt = options_json.get('aisysprompt', myConfig.aiCustomSysPrompt if myConfig.aiUseCustomSysPrompt else None)
                         _aiCustomModel = options_json.get('aimodel', None)
                         _aiCustomThinking = options_json.get('aithinking', None)
                     # SSML
-                    _useSSML = options_json.get('ssml', False)
+                    _useSSML = Functions.parseBoolOption(options_json.get('ssml', False))
                     # Silent Before
                     _silenceBefore = options_json.get('before', None)
                     # Gemini TTS Style
@@ -1298,7 +1298,7 @@ class TTSCast:
                     # Gemini TTS Model override (par notification)
                     _ttsModel = options_json.get('ttsmodel', None)
                     # Streaming mode
-                    _useStreaming = options_json.get('streaming', myConfig.streamingDefault)
+                    _useStreaming = Functions.parseBoolOption(options_json.get('streaming', myConfig.streamingDefault))
                     # Engine override (par notification)
                     _requestedEngine = options_json.get('engine', None)
                     if _requestedEngine is not None:
@@ -2390,6 +2390,8 @@ class TTSCast:
             return None
         finally:
             if queueTicket is not None:
+                # PCM 16 bits : 2 octets par échantillon et par canal
+                queueTicket.streamAudioSeconds = sum(len(chunk) for chunk in pcmBuffer) / max(sampleRate * channels * 2, 1)
                 queueTicket.streamEndedAt = time.monotonic()
             if fd is not None:
                 try:
@@ -2577,7 +2579,7 @@ class Functions:
         - 'error' : échec de chargement ou erreur de lecture ;
         - 'notStarted' : lecture pas démarrée dans le délai cmdWaitTimeout ;
         - 'stalled' : lecture sans progression (pause, mise en mémoire tampon, position figée) pendant cmdWaitTimeout, ou flux LIVE
-          encore en lecture cmdWaitTimeout après la fin de son envoi ;
+          entièrement envoyé encore en lecture alors que le temps passé en lecture dépasse la durée de son audio de cmdWaitTimeout ;
         - 'orphaned' : notification déclarée bloquée par la file d'attente, la suivante occupe l'enceinte (ne plus rien y faire).
         L'échéance de la notification dans la file d'attente suit la progression (waitqueue.progress).
         Notre session est la première dont l'identifiant diffère de sessionBefore (relevé avant quick_play), ou celle qui affiche mediaUrl :
@@ -2596,12 +2598,19 @@ class Functions:
         hasPlayed = False
         maxPosition = None
         previousState = None
+        errorCode = None  # code d'échec de chargement remonté par l'enceinte (reason 'error')
+        playedSeconds = 0.0  # temps passé en lecture (PLAYING), comparé à la durée de l'audio d'un flux LIVE
+        lastTick = startedAt
+        liveOverrun = False
         lastUpdated = cast.media_controller.status.last_updated
         queueTicket = waitqueue.current()
         waitqueue.phase('lecture', timeout, startedAt)
         reason = None
         while reason is None:
             now = clock()
+            if previousState == 'PLAYING':
+                playedSeconds += now - lastTick
+            lastTick = now
             if waitqueue.isOrphaned():
                 reason = 'orphaned'
                 break
@@ -2614,8 +2623,10 @@ class Functions:
             ):
                 ourSession = sessionId
 
-            if myConfig.loadFailures.get(uuidStr, float('-inf')) >= requestedAt:
+            loadFailure = myConfig.loadFailures.get(uuidStr)
+            if loadFailure is not None and loadFailure[0] >= requestedAt:
                 reason = 'error'
+                errorCode = loadFailure[1]
             elif ourSession is not None and sessionId is None:
                 reason = 'interrupted'
             elif ourSession is not None and sessionId != ourSession:
@@ -2649,13 +2660,14 @@ class Functions:
             lastUpdated = status.last_updated
 
             if reason is None:
-                streamEndedAt = queueTicket.streamEndedAt if queueTicket is not None else None
+                streamEnded = queueTicket is not None and queueTicket.streamEndedAt is not None
                 if not hasPlayed and now - startedAt >= timeout:
                     reason = 'notStarted'
                 elif hasPlayed and now - lastProgress >= timeout:
                     reason = 'stalled'
-                elif streamEndedAt is not None and now - streamEndedAt >= timeout:
-                    reason = 'stalled'  # flux live entièrement envoyé, mais l'enceinte reste en lecture
+                elif streamEnded and playedSeconds >= (queueTicket.streamAudioSeconds or 0) + timeout:
+                    reason = 'stalled'  # flux live entièrement lu, mais l'enceinte reste en lecture
+                    liveOverrun = True
 
             if reason is None:
                 if now - lastRefresh >= myConfig.playbackStatusRefresh:
@@ -2668,9 +2680,11 @@ class Functions:
 
         castName = getattr(cast, 'name', uuidStr)
         if reason == 'error':
-            logging.warning('%s Lecture en échec sur %s (chargement refusé par l\'enceinte ou erreur de lecture) :: %s', logTag, castName, str(status))
+            Functions.reportPlaybackError(logTag, uuidStr, castName, errorCode, mediaUrl, status)
         elif reason == 'notStarted':
             logging.warning('%s Lecture non démarrée sur %s après %ds : arrêt de la diffusion (état : %s)', logTag, castName, timeout, state)
+        elif reason == 'stalled' and liveOverrun:
+            logging.warning('%s Lecture toujours en cours sur %s %ds après la fin de l\'audio (%ds) : arrêt de la diffusion', logTag, castName, timeout, int(queueTicket.streamAudioSeconds or 0))
         elif reason == 'stalled':
             logging.warning('%s Lecture sans progression sur %s depuis %ds (état : %s) : arrêt de la diffusion', logTag, castName, timeout, state)
         elif reason == 'interrupted':
@@ -2700,10 +2714,10 @@ class Functions:
         return 'EXTERNAL'
 
     @staticmethod
-    def waitQueueRegister(googleUUID, cmdWait, cmdForce, callerPid, callerName="Unknown"):
+    def waitQueueRegister(googleUUID, cmdWait, cmdForce, callerName, callerPid):
         """Prend la place dans la file IMMÉDIATEMENT, sans attendre le tour (voir waitqueue.py).
-        Appelée depuis socketRegisterQueue (socket handler), avant le démarrage du thread : l'ordre d'arrivée est conservé.
-        cmdWait : entier déjà validé (parseWaitOption) ou None. Retourne (registered, targetUUID, ticket)."""
+        Appelée depuis socketRegisterQueue (boucle des commandes), avant le démarrage du thread : l'ordre d'arrivée est conservé.
+        cmdWait : entier déjà validé (parseWaitOption) ou None. Retourne le ticket."""
 
         targetUUID = Functions.resolveCanonicalUUID(googleUUID)
         if targetUUID != googleUUID:
@@ -2718,7 +2732,7 @@ class Functions:
         if cmdForce:
             ticket = queue.register('force', callerName)
             logging.debug(f'[DAEMON][WaitQueue][{callerName}] Register Force {targetUUID}')
-            return True, targetUUID, ticket
+            return ticket
 
         if cmdWait is None:
             ticket = queue.register('auto', callerName)
@@ -2726,7 +2740,7 @@ class Functions:
         else:
             ticket = queue.register('wait', callerName, waitValue=int(cmdWait), pid=callerPid)
             logging.debug(f'[DAEMON][WaitQueue][{callerName}] Registered wait={ticket.waitValue} #{ticket.order} pid={callerPid} ticket={ticket.number} for {targetUUID}')
-        return True, targetUUID, ticket
+        return ticket
 
     @staticmethod
     def parseWaitOption(value):
@@ -2740,8 +2754,9 @@ class Functions:
         return wait if wait >= 0 else None
 
     @staticmethod
-    def parseForceOption(value):
-        """Option force : un texte vaut faux s'il s'agit de "false", "0", "no", "non", "off" ou d'un texte vide ; toute autre valeur suit sa vérité Python."""
+    def parseBoolOption(value):
+        """Option booléenne (force, ding, genai…) : un texte vaut faux s'il s'agit de "false", "0", "no", "non", "off" ou d'un texte vide ;
+        toute autre valeur suit sa vérité Python."""
         if isinstance(value, str):
             return value.strip().lower() not in ('', 'false', '0', 'no', 'non', 'off')
         return bool(value)
@@ -2751,7 +2766,7 @@ class Functions:
         """Parse les options wait/force et enregistre SYSTÉMATIQUEMENT un ticket en queue AVANT de démarrer le thread
         (même sans wait/force — mise en file automatique). Garantit que l'ordre d'arrivée des commandes est
         préservé, indépendamment des durées de traitement.
-        Retourne (queueRegistered, targetWaitUUID, ticket, cmdWait, cmdForce)."""
+        Retourne (queueRegistered, ticket)."""
         cmdWait = None
         cmdForce = False
         try:
@@ -2761,17 +2776,15 @@ class Functions:
                 cmdWait = Functions.parseWaitOption(rawWait)
                 if rawWait is not None and cmdWait is None:
                     logging.warning('[DAEMON][SOCKET] Option "wait" ignorée : valeur %s invalide (nombre entier positif ou nul attendu). Notification mise en file sans ordre "wait".', json.dumps(rawWait, ensure_ascii=False))
-                cmdForce = Functions.parseForceOption(options_json.get('force', False))
+                cmdForce = Functions.parseBoolOption(options_json.get('force', False))
 
             _uuid_obj = UUID(uuid_str)
             if _uuid_obj in myConfig.NETCAST_DEVICES:
-                registered, targetUUID, ticket = Functions.waitQueueRegister(uuid_str, cmdWait, cmdForce, callerPid, callerName)
-                return registered, targetUUID, ticket, cmdWait, cmdForce
-            else:
-                logging.warning('[DAEMON][SOCKET] WaitQueue: Chromecast introuvable pour UUID :: %s', uuid_str)
+                return True, Functions.waitQueueRegister(uuid_str, cmdWait, cmdForce, callerName, callerPid)
+            logging.warning('[DAEMON][SOCKET] WaitQueue: Chromecast introuvable pour UUID :: %s', uuid_str)
         except Exception as _e:
             logging.warning('[DAEMON][SOCKET] WaitQueue register error :: %s', _e)
-        return False, uuid_str, None, None, False
+        return False, None
 
     @staticmethod
     def waitQueueHold(ticket):
@@ -2964,6 +2977,48 @@ class Functions:
             return False
 
     @staticmethod
+    def describeLoadError(code):
+        """ Code d'échec de chargement de l'enceinte, lisible : « MEDIA_DECODE (fichier audio illisible ou corrompu), code 102 » """
+        if code is None:
+            return 'code non communiqué'
+        known = myConfig.castLoadErrors.get(code)
+        return f'{known[0]} ({known[1]}), code {code}' if known else f'code {code}'
+
+    @staticmethod
+    def mediaSource(mediaUrl):
+        """ (type, fichier) d'un média lu via le proxy audio du plugin (type : tts, sounds, customsounds, stream), sinon (None, None) """
+        if not mediaUrl:
+            return None, None
+        query = parse_qs(urlparse(mediaUrl).query)
+        return query.get('type', [None])[0], query.get('file', [None])[0]
+
+    @staticmethod
+    def reportPlaybackError(logTag, uuidStr, castName, errorCode, mediaUrl, status):
+        """ Échec de lecture (chargement refusé ou erreur de lecture) : avertissement dans le log, avec le fichier en cause, et
+        signalement à Jeedom pour le centre de messages """
+        sourceType, fileName = Functions.mediaSource(mediaUrl)
+        if sourceType == 'stream':
+            fileName = None  # tube de diffusion temporaire, sans fichier à désigner
+        cause = Functions.describeLoadError(errorCode) if errorCode is not None else 'erreur de lecture'
+        logging.warning('%s Lecture en échec sur %s : %s%s :: %s', logTag, castName, cause,
+                        f' (fichier : {fileName})' if fileName else '', str(status))
+        known = myConfig.castLoadErrors.get(errorCode)
+        try:
+            Comm.sendToJeedom.send_change_immediate({'playbackError': {  # type: ignore
+                'uuid': uuidStr, 'device': castName, 'code': errorCode, 'codeName': known[0] if known else '',
+                'source': sourceType or '', 'file': fileName or ''}})
+        except Exception as e:
+            logging.debug('%s Signalement de l\'échec à Jeedom impossible :: %s', logTag, e)
+
+    @staticmethod
+    def orphanedBeforeLaunch(logTag):
+        """ True si la commande a été déclarée bloquée par la file : la suivante occupe l'enceinte, rien n'est lancé """
+        if waitqueue.isOrphaned():
+            logging.debug('%s Commande déclarée bloquée par la file : pas de lancement', logTag)
+            return True
+        return False
+
+    @staticmethod
     def forceCut(googleUUID):
         """ Notification « force » : coupe la diffusion en cours sur l'enceinte, depuis le thread de la notification. En cas d'échec,
         la notification est diffusée quand même : la file reste gelée jusqu'à sa sortie """
@@ -2997,7 +3052,7 @@ class Functions:
             if (_options is not None):
                 options_json = json.loads("{" + _options + "}")
                 _volume = options_json.get('volume', None)
-                _appDing = options_json.get('ding', True)
+                _appDing = Functions.parseBoolOption(options_json.get('ding', True))
                 logging.debug(f'[DAEMON][controllerActions] StartApp :: Options :: {str(options_json)}')
         except ValueError as e:
             logging.warning(f'[DAEMON][controllerActions] StartApp :: Options mal formatées (Json KO) :: {e}')
@@ -3028,7 +3083,9 @@ class Functions:
                     Functions.setGroupMembersVolume(list(groupSnapshot.keys()), _volume / 100)
                 else:
                     cast.set_volume(volume=_volume / 100)
-            
+
+            if Functions.orphanedBeforeLaunch('[DAEMON][controllerActions] StartApp ::'):
+                return False
             cast.start_app(_value)
             
             if (not _appDing and _volume is not None):
@@ -3075,9 +3132,9 @@ class Functions:
             if (_options is not None):
                 options_json = json.loads("{" + _options + "}")
                 _playlist = options_json.get('playlist', None)
-                _enqueue = options_json.get('enqueue', False)
+                _enqueue = Functions.parseBoolOption(options_json.get('enqueue', False))
                 _volume = options_json.get('volume', None)
-                _appDing = options_json.get('ding', True)
+                _appDing = Functions.parseBoolOption(options_json.get('ding', True))
                 logging.debug(f'[DAEMON][controllerActions] YouTube :: Options :: {str(options_json)}')
         except ValueError as e:
             logging.warning(f'[DAEMON][controllerActions] YouTube :: Options mal formatées (Json KO) :: {e}')
@@ -3114,6 +3171,8 @@ class Functions:
                 "playlist_id": _playlist,
                 "enqueue": _enqueue
             }
+            if Functions.orphanedBeforeLaunch('[DAEMON][controllerActions] YouTube ::'):
+                return False
             quick_play.quick_play(cast, app_name, app_data)
             
             if (not _appDing and _volume is not None):
@@ -3160,14 +3219,14 @@ class Functions:
         try:
             if (_options is not None):
                 options_json = json.loads("{" + _options + "}")
-                _forceDisplay = Functions.parseForceOption(options_json.get('force_display', False))
+                _forceDisplay = Functions.parseBoolOption(options_json.get('force_display', False))
                 _reload_seconds = options_json.get('reload_seconds', None)
         except ValueError as e:
             logging.warning(f'[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: {e}')
         
         try:
             try:
-                if options_json.get('quit_app', False):
+                if Functions.parseBoolOption(options_json.get('quit_app', False)):
                     logging.debug('[DAEMON][controllerActions] DashCast :: QuitOtherApp')
                     cast.quit_app()
                     t = 5
@@ -3177,6 +3236,9 @@ class Functions:
                 time.sleep(1)
                 
                 logging.debug(f'[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: {_value} | {str(options_json)}')
+                if Functions.orphanedBeforeLaunch('[DAEMON][controllerActions] DashCast ::'):
+                    cast.unregister_handler(player)
+                    return False
                 player.load_url(url=_value, force=_forceDisplay, reload_seconds=_reload_seconds)  # type: ignore
                 time.sleep(2)
                 
@@ -3222,7 +3284,7 @@ class Functions:
                     if (_options is not None):
                         options_json = json.loads("{" + _options + "}")
                         _volume = options_json.get('volume', None)
-                        _appDing = options_json.get('ding', True)
+                        _appDing = Functions.parseBoolOption(options_json.get('ding', True))
                         logging.debug(f'[DAEMON][controllerActions] {radioType} :: Options :: {str(options_json)}')
                 except ValueError as e:
                     logging.warning(f'[DAEMON][controllerActions] {radioType} :: Options mal formatées (Json KO) :: {e}')
@@ -3284,6 +3346,8 @@ class Functions:
                             },
                             "stream_type": "LIVE"
                         }
+                        if Functions.orphanedBeforeLaunch(f'[DAEMON][controllerActions] {radioType} ::'):
+                            return False
                         quick_play.quick_play(cast, app_name, app_data)
                         
                         if (not _appDing and _volume is not None):
@@ -3332,7 +3396,7 @@ class Functions:
                 if (_options is not None):
                     options_json = json.loads("{" + _options + "}")
                     _volume = options_json.get('volume', None)
-                    _appDing = options_json.get('ding', True)
+                    _appDing = Functions.parseBoolOption(options_json.get('ding', True))
                     logging.debug(f'[DAEMON][controllerActions] {soundType} :: Options :: {str(options_json)}')
             except ValueError as e:
                 logging.warning(f'[DAEMON][controllerActions] {soundType} :: Options mal formatées (Json KO) :: {e}')
@@ -3464,7 +3528,7 @@ class Functions:
                 if (_options is not None):
                     options_json = json.loads("{" + _options + "}")
                     _volume = options_json.get('volume', None)
-                    _appDing = options_json.get('ding', True)
+                    _appDing = Functions.parseBoolOption(options_json.get('ding', True))
                     _mediaType = options_json.get('type', None)
 
                     logging.debug(f'[DAEMON][controllerActions] Media :: Options :: {str(options_json)}')
@@ -3534,7 +3598,9 @@ class Functions:
                         "images": [{"url": mediaImage}]
                     }
                 }
-                
+
+                if Functions.orphanedBeforeLaunch('[DAEMON][controllerActions] Media ::'):
+                    return False
                 quick_play.quick_play(cast, app_name, app_data)
                     
                 if (not _appDing and _volume is not None):
@@ -3568,11 +3634,9 @@ class Functions:
                 return False
 
     @staticmethod
-    def controllerActions(_googleUUID='UNKNOWN', _controller='', _value='', _options='', _queueRegistered=False, _targetWaitUUID=None, _ticket=None, _cmdWait=None, _cmdForce=False):
+    def controllerActions(_googleUUID='UNKNOWN', _controller='', _value='', _options='', _queueRegistered=False, _ticket=None):
         if _googleUUID != 'UNKNOWN':
             cast = None
-            if _targetWaitUUID is None:
-                _targetWaitUUID = _googleUUID
             try:
                 _uuid = UUID(_googleUUID)
                 if (_uuid in myConfig.NETCAST_DEVICES):
@@ -4582,8 +4646,8 @@ class myCast:
         def load_media_failed(self, queue_item_id, error_code):
             if myCast.isStaleCast(self.cast):
                 return
-            myConfig.loadFailures[str(self.cast.uuid)] = time.monotonic()  # lu par waitPlaybackEnd : fin immédiate de l'attente
-            logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(queue_item_id) + ' with code :: ' + str(error_code))
+            myConfig.loadFailures[str(self.cast.uuid)] = (time.monotonic(), error_code)  # lu par waitPlaybackEnd : fin immédiate de l'attente
+            logging.error('[DAEMON][NETCAST][Load_Media_Failed] %s :: échec du chargement du média (item %s) :: %s', self.name, queue_item_id, Functions.describeLoadError(error_code))
 
     class MyConnectionStatusListener(ConnectionStatusListener):
         """ConnectionStatusListener"""

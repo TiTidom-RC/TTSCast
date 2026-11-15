@@ -88,6 +88,17 @@ class PhpAlignmentTest(unittest.TestCase):
                     self.assertNotIn(old, proposed)
                     self.assertIn(new, proposed)
 
+    def testInstallProposedListAndDefault(self):
+        """ Liste des modèles proposés de install.php (une autre valeur est remplacée) = celle du démon ; modèle par défaut = celui sélectionné par défaut dans la page de configuration """
+        install = self.read('plugin_info/install.php')
+        page = self.read('plugin_info/configuration.php')
+        for configKey, proposed in (('ttsAIModel', Config.aiModels), ('geminiTTSModel', Config.geminiTTSAllowedModels)):
+            match = re.search(r"ttscast_replaceRetiredModel\('%s', array\(.*?\), array\((.*?)\), '([^']+)'," % configKey, install, re.S)
+            with self.subTest(configKey=configKey):
+                self.assertEqual(set(re.findall(r"'([^']+)'", match.group(1))), set(proposed))
+                select = re.search(r'data-l1key="%s">(.*?)</select>' % configKey, page, re.S).group(1)
+                self.assertEqual(match.group(2), re.search(r'<option value="([^"]+)" selected>', select).group(1))
+
 
 class ResolveGeminiTTSModelTest(ConfigPatch):
     def setUp(self):

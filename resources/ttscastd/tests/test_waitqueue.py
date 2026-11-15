@@ -8,7 +8,7 @@ import unittest
 import waitqueue
 from waitqueue import ABANDONED, ACTIVE, DONE, ORPHANED
 
-CONFIG = pytypes.SimpleNamespace(queueMaxAge=600, queueStallMargin=15, queuePrepTimeout=30)
+CONFIG = pytypes.SimpleNamespace(queueMaxAge=600, queueStallMargin=15, queuePrepTimeout=30, queueForceCutWait=10)
 
 
 class QueueTestCase(unittest.TestCase):
@@ -287,12 +287,61 @@ class HoldAndHelpersTest(QueueTestCase):
         self.assertEqual(b.state, ACTIVE)
 
     def test_forceHoldIsImmediate(self):
-        a = self.auto()
-        self.ready(a)
+        """ Notification active qui n'a pas encore lancé sa diffusion (génération en cours) : abandonnée, le force passe sans attendre """
+        a, b = self.auto(), self.auto()
+        self.ready(a, b)
         self.step(a)
+        a.setPhase('génération', 30, self.now)
         force = self.q.register('force', 'TTS', self.now)
         self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=lambda s: self.fail('force ne doit pas attendre')))
         self.assertIs(waitqueue.current(), force)
+        self.assertEqual(a.state, ORPHANED)
+        self.assertEqual(self.step(b), 'wait', 'file gelée pendant le force')
+
+    def test_forceHoldWithoutActiveNotification(self):
+        a = self.auto()
+        self.ready(a)
+        force = self.q.register('force', 'TTS', self.now)
+        self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=lambda s: self.fail('force ne doit pas attendre')))
+        self.assertEqual(a.state, waitqueue.READY)
+
+    def test_forceWaitsForCutNotificationExit(self):
+        """ Notification en lecture coupée par le force : il attend sa sortie (volume rétabli, application arrêtée) """
+        a = self.auto()
+        self.ready(a)
+        self.step(a)
+        a.setPhase('lecture', 20, self.now)
+        force = self.q.register('force', 'TTS', self.now)
+
+        def sleep(_seconds):
+            self.now += 0.1
+            if self.now >= 0.5:
+                self.q.release(a)
+        self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep))
+        self.assertAlmostEqual(self.now, 0.5, delta=0.11)
+        self.assertEqual(a.state, DONE)
+
+    def test_forceWaitForCutNotificationIsBounded(self):
+        """ Notification coupée qui ne sort pas : abandonnée au bout de queueForceCutWait, le force passe """
+        a = self.auto()
+        self.ready(a)
+        self.step(a)
+        a.setPhase('lancement', 60, self.now)
+        force = self.q.register('force', 'TTS', self.now)
+
+        def sleep(_seconds):
+            self.now += 0.1
+        with self.assertLogs(level='WARNING') as logs:
+            self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep))
+        self.assertAlmostEqual(self.now, CONFIG.queueForceCutWait, delta=0.11)
+        self.assertEqual(a.state, ORPHANED)
+        self.assertIn('toujours en cours', logs.output[0])
+
+    def test_orphanedForceDoesNotPlay(self):
+        force = self.q.register('force', 'TTS', self.now)
+        force.state = ORPHANED
+        self.assertFalse(self.q.hold(force, clock=lambda: self.now, sleep=lambda s: self.fail('pas d\'attente')))
+        self.assertIsNone(waitqueue.current())
 
     def test_helpersWithoutQueue(self):
         waitqueue.phase('lecture', 20)

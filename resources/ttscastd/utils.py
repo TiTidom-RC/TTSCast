@@ -163,8 +163,23 @@ class Config:
     mediaActivationTimeout = 15  # secondes — borne l'attente d'activation de la session média (block_until_active)
     playbackStatusRefresh = 5  # secondes — intervalle des demandes d'état à l'enceinte pendant l'attente de fin de lecture
     ttsRequestTimeout = 30  # secondes — délai des requêtes aux moteurs TTS en ligne (gTTS, Google Cloud TTS)
-    # Dernier échec de chargement d'un média (LOAD_FAILED) par équipement : { uuid (str) : time.monotonic() }
+    # Dernier échec de chargement d'un média (LOAD_FAILED) par équipement : { uuid (str) : (time.monotonic(), code) }
     loadFailures = {}
+    # Codes d'échec de chargement remontés par l'enceinte (DetailedErrorCode du SDK Google Cast) : { code : (nom, libellé) }
+    castLoadErrors = {
+        100: ('MEDIA_UNKNOWN', 'erreur média inconnue'),
+        101: ('MEDIA_ABORTED', 'récupération du média interrompue'),
+        102: ('MEDIA_DECODE', 'fichier audio illisible ou corrompu'),
+        103: ('MEDIA_NETWORK', 'téléchargement du média interrompu'),
+        104: ('MEDIA_SRC_NOT_SUPPORTED', 'format non supporté'),
+        110: ('SOURCE_BUFFER_FAILURE', 'lecture du média impossible par l\'enceinte'),
+        300: ('NETWORK_UNKNOWN', 'erreur réseau inconnue'),
+        301: ('SEGMENT_NETWORK', 'téléchargement d\'un segment impossible'),
+        900: ('APP', 'erreur de l\'application de l\'enceinte'),
+        904: ('LOAD_INTERRUPTED', 'chargement interrompu par un autre'),
+        905: ('LOAD_FAILED', 'commande de chargement en échec'),
+        999: ('GENERIC', 'erreur inconnue'),
+    }
     dashCastAppId = '84912283'  # app_id du récepteur Chromecast DashCast
     # File d'attente des notifications, une par équipement (UUID canonique, resolveCanonicalUUID) : { targetUUID : waitqueue.DeviceQueue }
     deviceQueues = {}
@@ -173,6 +188,7 @@ class Config:
     queuePrepTimeout = 30  # secondes — échéance de la préparation d'une notification avant son tour (hors reformulation IA)
     queueLaunchTimeout = 60  # secondes — échéance du lancement sur l'enceinte (quick_play, activation, volume) et de la fin
     queuePiperTimeout = 300  # secondes — échéance de la génération Piper (locale, sans délai propre)
+    queueForceCutWait = 10  # secondes — attente maximale par un « force » de la sortie de la notification qu'il a coupée
 
     # Tracking de session Cast par équipement (targetUUID résolu) — utilisé pour calculer playback_owner :
     # { targetUUID: { 'mediaSessionId': int|None, 'controller': str } } — mis à jour à chaque lancement plugin réussi (quick_play/start_app)
