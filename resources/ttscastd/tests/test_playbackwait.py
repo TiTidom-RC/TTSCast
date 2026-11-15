@@ -422,6 +422,22 @@ class ForceCutTest(unittest.TestCase):
             forceCut.assert_called_once_with(str(uuid))
         self.assertFalse(myConfig.deviceQueues[str(uuid)].isActive(), 'ticket libéré')
 
+    def test_cutTargets(self):
+        """ Appareil de la file d'abord, puis l'enceinte demandée si elle est différente (UUID comparés sous toutes leurs écritures) """
+        group, member = uuid4(), uuid4()
+        self.assertEqual(Functions.forceCutTargets(str(group), group.hex), [str(group)])
+        self.assertEqual(Functions.forceCutTargets(str(group), str(member)), [str(group), str(member)])
+        self.assertEqual(Functions.forceCutTargets('file', 'file'), ['file'])
+
+    def test_forceToMemberCutsQueueDeviceAndMember(self):
+        """ Force envoyé à un membre dont le groupe occupe la file : le groupe et le membre sont coupés """
+        group, member = str(uuid4()), str(uuid4())
+        ticket = waitqueue.DeviceQueue(group, myConfig).register('force', 'TTS')
+        self.addCleanup(waitqueue._setCurrent, None)
+        with mock.patch.object(Functions, 'forceCut') as forceCut:
+            self.assertTrue(Functions.waitQueueHold(ticket, member))
+        self.assertEqual(forceCut.call_args_list, [mock.call(group), mock.call(member)])
+
 
 class GeminiStreamNoReaderTest(unittest.TestCase):
     """ Flux Gemini sans lecteur sur le tube : erreur, sauf si la notification a été abandonnée par la file (debug) """
@@ -501,6 +517,39 @@ class DashCastForceDisplayTest(unittest.TestCase):
             self.assertFalse(Functions.controllerDashCast(mock.Mock(status=pytypes.SimpleNamespace(app_id=None)), str(uuid4()),
                                                          'https://exemple.fr', '"force_display": true'))
         player.load_url.assert_not_called()
+
+
+class SoundEndTest(unittest.TestCase):
+    """ Fin d'un son : volume rétabli et application arrêtée, sauf si la notification a été abandonnée (la suivante occupe l'enceinte) """
+    def setUp(self):
+        helpers.resetDaemonState()
+        queue = waitqueue.DeviceQueue('enceinte-test', myConfig)
+        self.ticket = queue.register('auto', 'sounds')
+        self.assertTrue(queue.hold(self.ticket))
+        self.addCleanup(queue.release, self.ticket)
+
+    def play(self, orphanAtEnd):
+        cast = mock.Mock(status=pytypes.SimpleNamespace(volume_level=0.4))
+
+        def playbackEnd(*args, **kwargs):
+            if orphanAtEnd:
+                self.ticket.state = waitqueue.ORPHANED
+            return 'interrupted'
+        with mock.patch.object(Functions, 'checkIfDashCast'), mock.patch.object(Functions, 'getGroupSnapshot', return_value={}), \
+                mock.patch.object(ttscastd.quick_play, 'quick_play'), mock.patch.object(Functions, 'trackPluginSession'), \
+                mock.patch.object(Functions, 'waitPlaybackEnd', side_effect=playbackEnd), mock.patch.object(myConfig, 'appDisableDing', False):
+            self.assertTrue(Functions.controllerSounds(cast, str(uuid4()), 'ding.mp3', '"volume": 50', 'sounds'))
+        return cast
+
+    def test_volumeRestoredAndAppStopped(self):
+        cast = self.play(orphanAtEnd=False)
+        self.assertEqual(cast.set_volume.call_args_list, [mock.call(volume=0.5), mock.call(volume=0.4)])
+        cast.quit_app.assert_called_once()
+
+    def test_orphanedDuringEndTouchesNothing(self):
+        cast = self.play(orphanAtEnd=True)
+        self.assertEqual(cast.set_volume.call_args_list, [mock.call(volume=0.5)])
+        cast.quit_app.assert_not_called()
 
 
 class PlaybackWithQueueTest(unittest.TestCase):

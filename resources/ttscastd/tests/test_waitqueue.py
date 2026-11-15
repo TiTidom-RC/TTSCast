@@ -246,7 +246,8 @@ class AgeTest(QueueTestCase):
         self.assertEqual(self.q.serving, 2)
         self.assertEqual(self.step(c), 'turn')
 
-    def test_blockAgeFromFirstMember(self):
+    def test_blockMemberAgeFromItsArrival(self):
+        """ Âge d'un membre de bloc mesuré depuis sa propre arrivée : un membre arrivé tard n'est pas abandonné avec le premier """
         a = self.auto()
         self.ready(a)
         self.step(a)
@@ -255,6 +256,10 @@ class AgeTest(QueueTestCase):
         w2 = self.wait(2)
         self.ready(w1, w2)
         self.now = CONFIG.queueMaxAge
+        a.progress(20, self.now)
+        self.assertEqual(self.step(w2), 'wait')
+        self.assertEqual(self.step(w1), 'abandoned')
+        self.now = 300 + CONFIG.queueMaxAge
         a.progress(20, self.now)
         self.assertEqual(self.step(w2), 'abandoned')
 
@@ -360,6 +365,27 @@ class HoldAndHelpersTest(QueueTestCase):
             self.q.release(a)
         self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep, cut=lambda: events.append('coupure')))
         self.assertEqual(events, ['coupure', 'attente'])
+
+    def test_forceAbandonsBeforeCut(self):
+        """ Notification pas encore lancée : abandonnée avant la coupure ; si elle atteint « lancement » pendant la coupure,
+        l'étape est ignorée et le force ne l'attend pas """
+        a = self.auto()
+        self.ready(a)
+        self.step(a)
+        a.setPhase('génération', 30, self.now)
+        force = self.q.register('force', 'TTS', self.now)
+
+        def cut():
+            self.assertEqual(a.state, ORPHANED, 'abandon avant la coupure')
+            a.setPhase('lancement', 60, self.now)
+        self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=lambda s: self.fail('force ne doit pas attendre'), cut=cut))
+        self.assertEqual(a.phase, 'génération')
+
+    def test_progressKeepsPhase(self):
+        a = self.auto()
+        a.setPhase('lecture', 20, self.now)
+        a.progress(30, 5)
+        self.assertEqual((a.phase, a.deadline), ('lecture', 5 + 30 + CONFIG.queueStallMargin))
 
     def test_forceWaitsDuringCutNotificationEnd(self):
         """ Notification coupée en train de rétablir le volume (étape « fin ») : attendue, pas abandonnée """
