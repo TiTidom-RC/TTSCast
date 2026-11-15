@@ -377,6 +377,42 @@ class ForceCutTest(unittest.TestCase):
         self.assertFalse(myConfig.deviceQueues[str(uuid)].isActive(), 'ticket libéré')
 
 
+class DashCastForceDisplayTest(unittest.TestCase):
+    """ DashCast : « force_display » force l'affichage de la page ; « force » est la priorité de la file, comme pour les autres commandes """
+    def setUp(self):
+        helpers.resetDaemonState()
+        myConfig.deviceQueues = {}
+
+    def display(self, options):
+        player = mock.Mock()
+        cast = mock.Mock(status=pytypes.SimpleNamespace(app_id=None))
+        with mock.patch.object(ttscastd.dashcast, 'DashCastController', return_value=player), \
+                mock.patch.object(Functions, 'trackPluginSession'), mock.patch.object(ttscastd.time, 'sleep'):
+            self.assertTrue(Functions.controllerDashCast(cast, str(uuid4()), 'https://exemple.fr', options))
+        return player.load_url.call_args.kwargs['force']
+
+    def ticketKind(self, options):
+        uuid = uuid4()
+        myConfig.NETCAST_DEVICES[uuid] = pytypes.SimpleNamespace(uuid=uuid, name='Nest Hub de test')
+        return Functions.socketRegisterQueue(str(uuid), options, 1234, 'dashcast')[2].kind
+
+    def test_forceDisplayOnly(self):
+        self.assertTrue(self.display('"force_display": true'))
+        self.assertEqual(self.ticketKind('"force_display": true'), 'auto')
+
+    def test_forceIsQueuePriorityOnly(self):
+        self.assertFalse(self.display('"force": true'))
+        self.assertEqual(self.ticketKind('"force": true'), 'force')
+
+    def test_bothOptions(self):
+        self.assertTrue(self.display('"force": true, "force_display": true'))
+        self.assertEqual(self.ticketKind('"force": true, "force_display": true'), 'force')
+
+    def test_noOption(self):
+        self.assertFalse(self.display(None))
+        self.assertFalse(self.display('"force_display": "false"'))
+
+
 class PlaybackWithQueueTest(unittest.TestCase):
     """ waitPlaybackEnd avec la notification de la file d'attente du thread courant """
     def setUp(self):

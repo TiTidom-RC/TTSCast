@@ -3153,14 +3153,14 @@ class Functions:
         player = dashcast.DashCastController()
         cast.register_handler(player)
         
-        _force = False
+        _forceDisplay = False  # affichage forcé (hors iframe) ; l'option « force » est celle de la file (priorité)
         _reload_seconds = None
         options_json = {}
-        
+
         try:
             if (_options is not None):
-                options_json = json.loads("{" + _options + "}")    
-                _force = options_json.get('force', False)
+                options_json = json.loads("{" + _options + "}")
+                _forceDisplay = Functions.parseForceOption(options_json.get('force_display', False))
                 _reload_seconds = options_json.get('reload_seconds', None)
         except ValueError as e:
             logging.warning(f'[DAEMON][controllerActions] DashCast :: Options mal formatées (Json KO) :: {e}')
@@ -3177,7 +3177,7 @@ class Functions:
                 time.sleep(1)
                 
                 logging.debug(f'[DAEMON][controllerActions] DashCast :: LoadUrl | Options :: {_value} | {str(options_json)}')
-                player.load_url(url=_value, force=_force, reload_seconds=_reload_seconds)  # type: ignore
+                player.load_url(url=_value, force=_forceDisplay, reload_seconds=_reload_seconds)  # type: ignore
                 time.sleep(2)
                 
                 Functions.trackPluginSession(_googleUUID, 'dashcast', cast)

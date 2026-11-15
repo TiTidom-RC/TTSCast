@@ -558,7 +558,7 @@ class ttscast extends eqLogic
 
             # Options
             $optionKeys = [
-                'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
+                'force', 'force_display', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
                 'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aimodel', 'aithinking', 'ttsmodel',
                 'engine', 'streaming'
             ];
