@@ -338,10 +338,59 @@ class HoldAndHelpersTest(QueueTestCase):
         self.assertIn('toujours en cours', logs.output[0])
 
     def test_orphanedForceDoesNotPlay(self):
+        """ Force abandonné : ni diffusion ni coupure de ce qui joue """
         force = self.q.register('force', 'TTS', self.now)
         force.state = ORPHANED
-        self.assertFalse(self.q.hold(force, clock=lambda: self.now, sleep=lambda s: self.fail('pas d\'attente')))
+        self.assertFalse(self.q.hold(force, clock=lambda: self.now, sleep=lambda s: self.fail('pas d\'attente'),
+                                     cut=lambda: self.fail('pas de coupure')))
         self.assertIsNone(waitqueue.current())
+
+    def test_forceCutsAtItsTurnThenWaits(self):
+        """ La coupure est faite au tour du force, une seule fois, avant l'attente de la notification coupée """
+        a = self.auto()
+        self.ready(a)
+        self.step(a)
+        a.setPhase('lecture', 20, self.now)
+        force = self.q.register('force', 'TTS', self.now)
+        events = []
+
+        def sleep(_seconds):
+            events.append('attente')
+            self.now += 0.1
+            self.q.release(a)
+        self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep, cut=lambda: events.append('coupure')))
+        self.assertEqual(events, ['coupure', 'attente'])
+
+    def test_forceWaitsDuringCutNotificationEnd(self):
+        """ Notification coupée en train de rétablir le volume (étape « fin ») : attendue, pas abandonnée """
+        a = self.auto()
+        self.ready(a)
+        self.step(a)
+        a.setPhase('fin', 60, self.now)
+        force = self.q.register('force', 'TTS', self.now)
+
+        def sleep(_seconds):
+            self.now += 0.1
+            if self.now >= 0.3:
+                self.q.release(a)
+        self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep))
+        self.assertEqual(a.state, DONE)
+
+    def test_forceWaitsForLaunchedForce(self):
+        """ Force en diffusion coupé par un second force : le second attend sa sortie ; un force en préparation n'est pas attendu """
+        first = self.q.register('force', 'TTS', self.now)
+        first.setPhase('lecture', 20, self.now)
+        preparing = self.q.register('force', 'TTS', self.now)
+        second = self.q.register('force', 'TTS', self.now)
+
+        def sleep(_seconds):
+            self.now += 0.1
+            if self.now >= 0.5:
+                self.q.release(first)
+        self.assertTrue(self.q.hold(second, clock=lambda: self.now, sleep=sleep))
+        self.assertAlmostEqual(self.now, 0.5, delta=0.11)
+        self.assertEqual(first.state, DONE)
+        self.assertEqual(preparing.state, ACTIVE)
 
     def test_helpersWithoutQueue(self):
         waitqueue.phase('lecture', 20)

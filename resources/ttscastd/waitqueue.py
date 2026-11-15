@@ -3,8 +3,9 @@
 - Notification sans option : un ticket, servi dans l'ordre d'arrivée.
 - Option « wait » : les notifications d'un même processus PHP (PID) forment un bloc, qui prend une seule place dans la file ; à l'intérieur,
   l'ordre suit la valeur de « wait » (puis l'ordre d'arrivée à valeur égale), quel que soit l'ordre d'arrivée réel.
-- Option « force » : passe devant tout le monde, sans prendre de place ; la file est gelée tant qu'un « force » est en cours. La
-  notification qui occupait l'équipement est abandonnée si elle n'avait pas lancé sa diffusion ; sinon le « force » attend sa sortie.
+- Option « force » : passe devant tout le monde, sans prendre de place ; la file est gelée tant qu'un « force » est en cours. À son
+  tour, la diffusion en cours est coupée ; la notification qui occupait l'équipement est abandonnée si elle n'avait pas lancé sa
+  diffusion, sinon le « force » attend sa sortie.
 
 Une notification en attente n'est jamais abandonnée tant que la file avance : seule une attente plus longue que l'âge maximal (queueMaxAge)
 l'écarte. Chaque notification qui occupe l'équipement déclare son étape et une échéance (setPhase / phase / progress) ; une notification
@@ -25,7 +26,7 @@ ABANDONED = 'abandoned'  # attente plus longue que l'âge maximal
 ORPHANED = 'orphaned'  # déclarée bloquée par la file
 FINISHED = (DONE, ABANDONED, ORPHANED)
 
-LAUNCHED_PHASES = ('lancement', 'lecture')  # étapes à partir desquelles la notification agit sur l'enceinte
+LAUNCHED_PHASES = ('lancement', 'lecture', 'fin')  # étapes à partir desquelles la notification agit sur l'enceinte
 
 _local = threading.local()
 
@@ -158,11 +159,12 @@ class DeviceQueue:
 
     # ── Attente du tour (thread de la notification) ──────────────────────────
 
-    def hold(self, ticket, clock=time.monotonic, sleep=time.sleep):
-        """ Attend le tour de ticket. True : la notification occupe l'équipement ; False : abandonnée (âge) ou orpheline """
+    def hold(self, ticket, clock=time.monotonic, sleep=time.sleep, cut=None):
+        """ Attend le tour de ticket. True : la notification occupe l'équipement ; False : abandonnée (âge) ou orpheline.
+        cut : coupure de la diffusion en cours sur l'enceinte, appelée au tour d'un « force » """
         tag = f'[DAEMON][WaitQueue][{ticket.callerName}]'
         if ticket.kind == 'force':
-            return self._holdForce(ticket, tag, clock, sleep)
+            return self._holdForce(ticket, tag, clock, sleep, cut)
         with self.lock:
             if ticket.state == PREPARING:
                 ticket.state = READY
@@ -179,9 +181,16 @@ class DeviceQueue:
                 return False
             sleep(0.1)
 
-    def _holdForce(self, ticket, tag, clock, sleep):
-        """ Tour d'un « force », sans attendre la file. La notification qui occupe l'équipement est abandonnée si elle n'a pas lancé
-        sa diffusion ; sinon le force attend sa sortie (volume rétabli, application arrêtée), au plus queueForceCutWait secondes """
+    def _holdForce(self, ticket, tag, clock, sleep, cut):
+        """ Tour d'un « force », sans attendre la file : coupure de la diffusion en cours (cut), puis abandon de la notification de la
+        file qui n'a pas lancé sa diffusion, et attente de la sortie de celles qui l'avaient lancée (volume rétabli, application
+        arrêtée), au plus queueForceCutWait secondes. Un autre « force » qui n'a pas lancé sa diffusion n'est pas attendu """
+        with self.lock:
+            if ticket.state == ORPHANED:
+                logging.debug('%s Pas de diffusion pour %s (orphaned)', tag, ticket.label())
+                return False
+        if cut is not None:
+            cut()
         deadline = clock() + self.config.queueForceCutWait
         while True:
             now = clock()
@@ -190,17 +199,18 @@ class DeviceQueue:
                     logging.debug('%s Pas de diffusion pour %s (orphaned)', tag, ticket.label())
                     return False
                 holder = self._activeHolder()
-                if holder is None:
-                    break
-                if holder.phase not in LAUNCHED_PHASES:
+                if holder is not None and holder.phase not in LAUNCHED_PHASES:
                     holder.state = ORPHANED
-                    logging.info('%s %s non diffusée pour %s : une notification « force » passe devant.', tag, holder.label(), self.uuid)
+                    logging.info('%s Notification non diffusée : %s pour %s, une notification « force » passe devant.', tag, holder.label(), self.uuid)
                     self._advance()
+                launched = [t for t in self._launchedOccupants() if t is not ticket]
+                if not launched:
                     break
                 if now >= deadline:
-                    holder.state = ORPHANED
-                    logging.warning('%s %s toujours en cours pour %s %ds après sa coupure par une notification « force » : elle est abandonnée.',
-                                    tag, holder.label(), self.uuid, int(self.config.queueForceCutWait))
+                    for occupant in launched:
+                        occupant.state = ORPHANED
+                        logging.warning('%s Notification abandonnée : %s toujours en cours pour %s %ds après sa coupure par une notification « force ».',
+                                        tag, occupant.label(), self.uuid, int(self.config.queueForceCutWait))
                     self._advance()
                     break
             sleep(0.1)
@@ -264,6 +274,11 @@ class DeviceQueue:
         unit = self.units.get(self.serving)
         holder = unit.activeMember() if isinstance(unit, Block) else unit
         return holder if holder is not None and holder.state == ACTIVE else None
+
+    def _launchedOccupants(self):
+        """ Notifications (de la file ou « force ») qui ont lancé leur diffusion et n'en sont pas sorties """
+        candidates = [self._activeHolder()] + [f for f in self.forces if f.state == ACTIVE]
+        return [t for t in candidates if t is not None and t.phase in LAUNCHED_PHASES]
 
     def _blockers(self):
         """ Notifications qui occupent l'équipement ou dont la suite de la file attend la préparation """
