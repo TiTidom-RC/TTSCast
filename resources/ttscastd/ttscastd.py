@@ -1233,6 +1233,9 @@ class TTSCast:
         if _targetWaitUUID is None:
             _targetWaitUUID = ttsGoogleUUID
         try:
+            if _queueRegistered and _ticket.kind == 'force':
+                Functions.forceCut(ttsGoogleUUID)
+
             logging.debug('[DAEMON][TTS] Check des répertoires')
             cachePath = myConfig.ttsCacheFolderWeb
             symLinkPath = myConfig.ttsCacheFolderTmp
@@ -2697,7 +2700,7 @@ class Functions:
         return 'EXTERNAL'
 
     @staticmethod
-    def waitQueueRegister(cast, googleUUID, cmdWait, cmdForce, callerPid, callerName="Unknown"):
+    def waitQueueRegister(googleUUID, cmdWait, cmdForce, callerPid, callerName="Unknown"):
         """Prend la place dans la file IMMÉDIATEMENT, sans attendre le tour (voir waitqueue.py).
         Appelée depuis socketRegisterQueue (socket handler), avant le démarrage du thread : l'ordre d'arrivée est conservé.
         cmdWait : entier déjà validé (parseWaitOption) ou None. Retourne (registered, targetUUID, ticket)."""
@@ -2710,14 +2713,10 @@ class Functions:
         if queue is None:
             queue = myConfig.deviceQueues[targetUUID] = waitqueue.DeviceQueue(targetUUID, myConfig)
 
-        # force : passe devant tout le monde et coupe la diffusion en cours ; la file est gelée jusqu'à sa sortie
+        # force : passe devant tout le monde ; la file est gelée jusqu'à sa sortie. La diffusion en cours est coupée par le
+        # thread de la notification (forceCut) : la boucle des commandes n'attend pas l'enceinte
         if cmdForce:
             ticket = queue.register('force', callerName)
-            try:
-                Functions.forceQuitApp(cast)
-            except Exception:
-                queue.release(ticket)
-                raise
             logging.debug(f'[DAEMON][WaitQueue][{callerName}] Register Force {targetUUID}')
             return True, targetUUID, ticket
 
@@ -2766,9 +2765,7 @@ class Functions:
 
             _uuid_obj = UUID(uuid_str)
             if _uuid_obj in myConfig.NETCAST_DEVICES:
-                registered, targetUUID, ticket = Functions.waitQueueRegister(
-                    myConfig.NETCAST_DEVICES[_uuid_obj], uuid_str, cmdWait, cmdForce, callerPid, callerName
-                )
+                registered, targetUUID, ticket = Functions.waitQueueRegister(uuid_str, cmdWait, cmdForce, callerPid, callerName)
                 return registered, targetUUID, ticket, cmdWait, cmdForce
             else:
                 logging.warning('[DAEMON][SOCKET] WaitQueue: Chromecast introuvable pour UUID :: %s', uuid_str)
@@ -2965,6 +2962,15 @@ class Functions:
             return True
         else:
             return False
+
+    @staticmethod
+    def forceCut(googleUUID):
+        """ Notification « force » : coupe la diffusion en cours sur l'enceinte, depuis le thread de la notification. En cas d'échec,
+        la notification est diffusée quand même : la file reste gelée jusqu'à sa sortie """
+        try:
+            Functions.forceQuitApp(myConfig.NETCAST_DEVICES.get(UUID(googleUUID)))
+        except Exception as e:
+            logging.warning('[DAEMON][WaitQueue] Force :: diffusion en cours non coupée sur %s :: %s', googleUUID, e)
 
     @staticmethod
     def forceQuitApp(chromecast=None):
@@ -3575,6 +3581,9 @@ class Functions:
                 else:
                     logging.debug(f'[DAEMON][controllerActions] Aucun Chromecast avec cet UUID :: {_googleUUID}')
                     return False
+
+                if _queueRegistered and _ticket.kind == 'force':
+                    Functions.forceCut(_googleUUID)
 
                 # ══════════════════════════════════════════════════════════════════════
                 # ATTENTE DU TOUR (bloque jusqu'à ce que ce soit notre tour, voir waitqueue.py)

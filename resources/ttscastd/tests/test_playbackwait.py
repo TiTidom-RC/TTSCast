@@ -4,6 +4,7 @@ Lancement depuis resources/ttscastd :  python -m unittest discover -s tests -t .
 
 import types as pytypes
 import unittest
+from unittest import mock
 from uuid import uuid4
 
 import ttscastd
@@ -324,6 +325,56 @@ class QueueOptionsTest(unittest.TestCase):
         self.assertTrue(registered)
         self.assertEqual((ticket.kind, ticket.waitValue, ticket.number, cmdWait), ('wait', 2, 0, 2))
         self.assertEqual(myConfig.deviceQueues[str(uuid)].blocksByPid, {1234: 0})
+
+
+class ForceCutTest(unittest.TestCase):
+    """ force : la boucle des commandes ne fait que prendre le ticket ; la diffusion en cours est coupée par le thread de la notification """
+    def setUp(self):
+        helpers.resetDaemonState()
+        myConfig.deviceQueues = {}
+
+    def addPlayingCast(self, quitApp=None):
+        uuid = uuid4()
+        cast = pytypes.SimpleNamespace(uuid=uuid, name='Enceinte de test', status=pytypes.SimpleNamespace(app_id='CC1AD845'))
+        cast.quit_app = mock.Mock(side_effect=quitApp or (lambda: setattr(cast.status, 'app_id', None)))
+        myConfig.NETCAST_DEVICES[uuid] = cast
+        return uuid, cast
+
+    def test_registrationDoesNotWaitForDevice(self):
+        uuid, cast = self.addPlayingCast()
+        registered, _, ticket, _, cmdForce = Functions.socketRegisterQueue(str(uuid), '"force": true', 1234, 'TEST')
+        self.assertTrue(registered and cmdForce)
+        self.assertEqual(ticket.kind, 'force')
+        cast.quit_app.assert_not_called()
+        self.assertTrue(myConfig.deviceQueues[str(uuid)].isActive(), 'file gelée dès l\'enregistrement')
+
+    def test_forceCutQuitsCurrentApp(self):
+        uuid, cast = self.addPlayingCast()
+        Functions.forceCut(str(uuid))
+        cast.quit_app.assert_called_once()
+
+    def test_forceCutFailureLoggedAndNotRaised(self):
+        uuid, cast = self.addPlayingCast(quitApp=ConnectionError('enceinte injoignable'))
+        with self.assertLogs(level='WARNING') as logs:
+            Functions.forceCut(str(uuid))
+        self.assertIn('diffusion en cours non coupée', logs.output[0])
+
+    def test_notificationThreadCutsFirst(self):
+        """ getTTS et controllerActions coupent la diffusion au début de leur thread, puis libèrent le ticket à leur sortie """
+        uuid, _ = self.addPlayingCast()
+        with mock.patch.object(Functions, 'forceCut') as forceCut, mock.patch.object(myConfig, 'geminiTTSEnabled', False), \
+                mock.patch.object(myConfig, 'geminiTTSDefault', False), self.assertLogs(level='ERROR'):
+            args = Functions.socketRegisterQueue(str(uuid), '"force": true', 1234, 'TTS')
+            # Moteur refusé : sortie anticipée de getTTS, après la coupure
+            self.assertFalse(ttscastd.TTSCast.getTTS('Bonjour', str(uuid), 'voix', 'voix', 'Achird', 'fr-FR', 'gcloudtts', 'piper', '1.0', '0',
+                                                      '"engine": "geminitts", "force": true', 0, *args))
+            forceCut.assert_called_once_with(str(uuid))
+        self.assertFalse(myConfig.deviceQueues[str(uuid)].isActive(), 'ticket libéré')
+        with mock.patch.object(Functions, 'forceCut') as forceCut:
+            args = Functions.socketRegisterQueue(str(uuid), '"force": true', 1234, 'media')
+            self.assertTrue(Functions.controllerActions(str(uuid), 'aucune', '', '"force": true', *args))
+            forceCut.assert_called_once_with(str(uuid))
+        self.assertFalse(myConfig.deviceQueues[str(uuid)].isActive(), 'ticket libéré')
 
 
 class PlaybackWithQueueTest(unittest.TestCase):

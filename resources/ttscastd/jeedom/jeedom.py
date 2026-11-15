@@ -25,7 +25,8 @@ from collections.abc import Mapping
 import os
 from queue import Queue
 import socketserver
-from socketserver import (ThreadingTCPServer, StreamRequestHandler)
+from socketserver import (TCPServer, StreamRequestHandler)
+import traceback
 import unicodedata
 
 # ------------------------------------------------------------------------------
@@ -189,46 +190,75 @@ class jeedom_socket_handler(StreamRequestHandler):
 	sync_command_handlers = {}
 	# Apikey attendue — à initialiser depuis le démon : jeedom_socket_handler.expected_apikey = myConfig.apiKey
 	expected_apikey = ''
+	# Délai de lecture d'un message (secondes) : les connexions sont lues une à une, une connexion muette retarde les suivantes
+	timeout = 5
+
+	def setup(self):
+		super().setup()
+		self.answeredInThread = False  # True : la connexion est fermée par le thread de la commande synchrone
 
 	def handle(self):
-		global JEEDOM_SOCKET_MESSAGE
 		logging.debug("[DAEMON][HANDLER] Client connected to [%s:%d]", self.client_address[0], self.client_address[1])
-		lg = self.rfile.readline()
-		
 		try:
-			lgdecode = json.loads(lg.strip())
+			lg = self.rfile.readline()
+		except OSError as error:
+			logging.warning("[DAEMON][HANDLER] Message non reçu de [%s:%d], connexion fermée :: %s", self.client_address[0], self.client_address[1], error)
+			return
+
+		try:
+			msg = json.loads(lg.strip())
 			# The apikey is masked by SecretMaskFilter (ttscastd.py)
-			logging.debug("[DAEMON][HANDLER] Message read from socket :: %s", str(json.dumps(lgdecode).encode('utf-8')))
+			logging.debug("[DAEMON][HANDLER] Message read from socket :: %s", str(json.dumps(msg).encode('utf-8')))
 		except Exception as error:
 			logging.error("[DAEMON][HANDLER] JSON Exception :: %s", error)
 			logging.debug("[DAEMON][HANDLER] Message read from socket :: %s", str(lg.strip()))
-			self.netAdapterClientConnected = False
 			logging.debug("[DAEMON][HANDLER] Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
 			return
+		if not isinstance(msg, dict):
+			logging.error("[DAEMON][HANDLER] Message ignoré : objet JSON attendu")
+			return
 
-		# Commandes synchrones : traitement in-thread + réponse directe sur le socket
-		try:
-			msg = json.loads(lg.strip())
-			cmd = msg.get('cmd', '')
-			if cmd in jeedom_socket_handler.sync_command_handlers:
-				if msg.get('apikey') != jeedom_socket_handler.expected_apikey:
-					logging.error("[DAEMON][HANDLER] Invalid apikey in sync command — rejected")
-					self.netAdapterClientConnected = False
-					return
-				handler_fn = jeedom_socket_handler.sync_command_handlers[cmd]
-				response = handler_fn(msg)
-				response_bytes = json.dumps(response).encode('utf-8')
-				self.wfile.write(response_bytes)
-				self.wfile.flush()
-				self.netAdapterClientConnected = False
-				logging.debug("[DAEMON][HANDLER] Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
+		# Commande synchrone : réponse écrite sur la connexion par un thread, les connexions suivantes sont lues sans l'attendre
+		cmd = msg.get('cmd', '')
+		if cmd in jeedom_socket_handler.sync_command_handlers:
+			if msg.get('apikey') != jeedom_socket_handler.expected_apikey:
+				logging.error("[DAEMON][HANDLER] Invalid apikey in sync command — rejected")
 				return
-		except Exception as e:
-			logging.error("[DAEMON][HANDLER] Sync handler error :: %s", e)
+			try:
+				Thread(target=self.server.answerSync, args=(self.request, self.client_address, jeedom_socket_handler.sync_command_handlers[cmd], msg)).start()
+				self.answeredInThread = True
+			except Exception as error:
+				logging.error("[DAEMON][HANDLER] Commande synchrone \"%s\" non traitée (thread non démarré) :: %s", cmd, error)
+			return
 
 		JEEDOM_SOCKET_MESSAGE.put(lg)
-		self.netAdapterClientConnected = False
 		logging.debug("[DAEMON][HANDLER] Client disconnected from [%s:%d]", self.client_address[0], self.client_address[1])
+
+class jeedom_socket_server(TCPServer):
+	""" Connexions lues une à une, dans leur ordre d'arrivée : les commandes envoyées coup sur coup par Jeedom sont déposées
+	dans JEEDOM_SOCKET_MESSAGE dans l'ordre d'envoi. Seules les commandes synchrones sont traitées dans un thread """
+	allow_reuse_address = True
+	request_queue_size = 64  # connexions en attente de lecture (rafale de commandes de plusieurs scénarios)
+
+	def process_request(self, request, client_address):
+		handler = self.RequestHandlerClass(request, client_address, self)
+		if not handler.answeredInThread:
+			self.shutdown_request(request)
+
+	def answerSync(self, request, client_address, handlerFn, message):
+		""" Thread d'une commande synchrone : calcule la réponse, l'écrit sur la connexion puis la ferme """
+		try:
+			response = handlerFn(message)
+			request.sendall(json.dumps(response).encode('utf-8'))
+		except Exception as error:
+			logging.error("[DAEMON][HANDLER] Sync handler error :: %s", error)
+		finally:
+			self.shutdown_request(request)
+			logging.debug("[DAEMON][HANDLER] Client disconnected from [%s:%d]", client_address[0], client_address[1])
+
+	def handle_error(self, request, client_address):
+		""" Erreur imprévue sur une connexion (fermée ensuite par socketserver) : écrite dans le log du démon, le serveur continue """
+		logging.error("[DAEMON][SOCKET] Erreur sur la connexion de [%s:%d] :: %s", client_address[0], client_address[1], traceback.format_exc())
 
 class jeedom_socket():
 
@@ -238,7 +268,7 @@ class jeedom_socket():
 		socketserver.TCPServer.allow_reuse_address = True
 
 	def open(self):
-		self.netAdapter = ThreadingTCPServer((self.address, self.port), jeedom_socket_handler)
+		self.netAdapter = jeedom_socket_server((self.address, self.port), jeedom_socket_handler)
 		if self.netAdapter:
 			logging.info("[DAEMON][SOCKET] Socket interface started")
 			Thread(target=self.loopNetServer).start()
