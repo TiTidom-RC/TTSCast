@@ -246,7 +246,8 @@ class AgeTest(QueueTestCase):
         self.assertEqual(self.q.serving, 2)
         self.assertEqual(self.step(c), 'turn')
 
-    def test_blockAgeFromFirstMember(self):
+    def test_blockMemberAgeFromItsArrival(self):
+        """ Âge d'un membre de bloc mesuré depuis sa propre arrivée : un membre arrivé tard n'est pas abandonné avec le premier """
         a = self.auto()
         self.ready(a)
         self.step(a)
@@ -255,6 +256,10 @@ class AgeTest(QueueTestCase):
         w2 = self.wait(2)
         self.ready(w1, w2)
         self.now = CONFIG.queueMaxAge
+        a.progress(20, self.now)
+        self.assertEqual(self.step(w2), 'wait')
+        self.assertEqual(self.step(w1), 'abandoned')
+        self.now = 300 + CONFIG.queueMaxAge
         a.progress(20, self.now)
         self.assertEqual(self.step(w2), 'abandoned')
 
@@ -322,20 +327,43 @@ class HoldAndHelpersTest(QueueTestCase):
         self.assertEqual(a.state, DONE)
 
     def test_forceWaitForCutNotificationIsBounded(self):
-        """ Notification coupée qui ne sort pas : abandonnée au bout de queueForceCutWait, le force passe """
+        """ Notification bloquée dans son lancement : coupure au bout de queueForceCutWait, puis abandon queueForceCutWait plus tard,
+        le force passe """
         a = self.auto()
         self.ready(a)
         self.step(a)
         a.setPhase('lancement', 60, self.now)
         force = self.q.register('force', 'TTS', self.now)
+        cutAt = []
 
         def sleep(_seconds):
             self.now += 0.1
         with self.assertLogs(level='WARNING') as logs:
-            self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep))
-        self.assertAlmostEqual(self.now, CONFIG.queueForceCutWait, delta=0.11)
+            self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep, cut=lambda: cutAt.append(self.now)))
+        self.assertAlmostEqual(cutAt[0], CONFIG.queueForceCutWait, delta=0.11)
+        self.assertAlmostEqual(self.now, 2 * CONFIG.queueForceCutWait, delta=0.21)
         self.assertEqual(a.state, ORPHANED)
         self.assertIn('toujours en cours', logs.output[0])
+
+    def test_forceCutsAfterLaunch(self):
+        """ Notification en cours de lancement (volume réglé, diffusion pas encore lancée) : la coupure attend le début de sa
+        lecture, sinon elle ne couperait rien ; la notification coupée sort ensuite normalement """
+        a = self.auto()
+        self.ready(a)
+        self.step(a)
+        a.setPhase('lancement', 60, self.now)
+        force = self.q.register('force', 'TTS', self.now)
+        cutAt = []
+
+        def sleep(_seconds):
+            self.now += 0.1
+            if a.phase == 'lancement' and self.now >= 3:
+                a.setPhase('lecture', 20, self.now)
+            if cutAt and self.now >= cutAt[0] + 0.5:
+                self.q.release(a)
+        self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep, cut=lambda: cutAt.append(self.now)))
+        self.assertAlmostEqual(cutAt[0], 3, delta=0.11)
+        self.assertEqual(a.state, DONE)
 
     def test_orphanedForceDoesNotPlay(self):
         """ Force abandonné : ni diffusion ni coupure de ce qui joue """
@@ -360,6 +388,49 @@ class HoldAndHelpersTest(QueueTestCase):
             self.q.release(a)
         self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep, cut=lambda: events.append('coupure')))
         self.assertEqual(events, ['coupure', 'attente'])
+
+    def test_forceAbandonsBeforeCut(self):
+        """ Notification pas encore lancée : abandonnée avant la coupure ; si elle atteint « lancement » pendant la coupure,
+        l'étape est ignorée et le force ne l'attend pas """
+        a = self.auto()
+        self.ready(a)
+        self.step(a)
+        a.setPhase('génération', 30, self.now)
+        force = self.q.register('force', 'TTS', self.now)
+
+        def cut():
+            self.assertEqual(a.state, ORPHANED, 'abandon avant la coupure')
+            a.setPhase('lancement', 60, self.now)
+        self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=lambda s: self.fail('force ne doit pas attendre'), cut=cut))
+        self.assertEqual(a.phase, 'génération')
+
+    def test_forceDeadlineRenewedAtItsTurn(self):
+        """ Force qui prend son tour juste avant l'échéance de sa préparation (reformulation IA longue) : échéance renouvelée, une
+        notification en attente ne le déclare pas bloqué pendant qu'il attend le lancement puis la sortie de la notification coupée """
+        a, b = self.auto(), self.auto()
+        self.ready(a, b)
+        self.step(a)
+        a.setPhase('lancement', 60, self.now)
+        force = self.q.register('force', 'TTS', self.now)
+        force.setPhase('reformulation IA', 0, self.now)
+        self.now = CONFIG.queueStallMargin - 1
+        cutAt = []
+
+        def sleep(_seconds):
+            self.now += 0.1
+            self.assertEqual(self.step(b), 'wait')
+            if a.phase == 'lancement' and self.now >= CONFIG.queueStallMargin + 2:
+                a.setPhase('lecture', 20, self.now)
+            if cutAt and self.now >= cutAt[0] + 3:
+                self.q.release(a)
+        self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep, cut=lambda: cutAt.append(self.now)))
+        self.assertEqual(force.state, ACTIVE)
+
+    def test_progressKeepsPhase(self):
+        a = self.auto()
+        a.setPhase('lecture', 20, self.now)
+        a.progress(30, 5)
+        self.assertEqual((a.phase, a.deadline), ('lecture', 5 + 30 + CONFIG.queueStallMargin))
 
     def test_forceWaitsDuringCutNotificationEnd(self):
         """ Notification coupée en train de rétablir le volume (étape « fin ») : attendue, pas abandonnée """

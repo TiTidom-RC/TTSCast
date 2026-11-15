@@ -1797,8 +1797,7 @@ class TTSCast:
                     urltoplay = _postUrl
 
                 waitqueue.phase('lancement', myConfig.queueLaunchTimeout)
-                if waitqueue.isOrphaned():
-                    logging.debug('[DAEMON][Cast] Notification déclarée bloquée par la file : pas de diffusion')
+                if Functions.orphanedBeforeLaunch('[DAEMON][Cast]'):
                     return False
 
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
@@ -1868,13 +1867,14 @@ class TTSCast:
                     return False
                 waitqueue.phase('fin', myConfig.queueLaunchTimeout)
 
-                if (volumeForPlay is not None):  # que ce soit appDing ou not appDing — restaurer AVANT quit_app
+                # Notification abandonnée pendant la fin : la suivante occupe l'enceinte, ni volume ni arrêt
+                if volumeForPlay is not None and not waitqueue.isOrphaned():  # que ce soit appDing ou not appDing — restaurer AVANT quit_app
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
 
-                if endReason != 'replaced':  # un média lancé par ailleurs n'est pas arrêté
+                if endReason != 'replaced' and not waitqueue.isOrphaned():  # un média lancé par ailleurs n'est pas arrêté
                     cast.quit_app()
 
                 # Libération de la mémoire
@@ -2791,9 +2791,22 @@ class Functions:
     @staticmethod
     def waitQueueHold(ticket, googleUUID):
         """Attend le tour de la notification (à appeler après la reformulation IA, juste avant la génération et le cast).
-        Au tour d'un « force », la diffusion en cours sur googleUUID est coupée (forceCut).
+        Au tour d'un « force », la diffusion en cours est coupée (forceCut) sur l'appareil de la file et sur googleUUID s'il est
+        différent (membre et groupe liés par la file).
         False : notification non diffusée (attente au-delà de l'âge maximal, ou déclarée bloquée pendant sa préparation)."""
-        return ticket.queue.hold(ticket, cut=lambda: Functions.forceCut(googleUUID))
+        def cut():
+            for target in Functions.forceCutTargets(ticket.queue.uuid, googleUUID):
+                Functions.forceCut(target)
+        return ticket.queue.hold(ticket, cut=cut)
+
+    @staticmethod
+    def forceCutTargets(queueUUID, googleUUID):
+        """ Enceintes à couper au tour d'un « force » : l'appareil de la file, puis l'enceinte demandée si elle est différente """
+        try:
+            same = UUID(str(queueUUID)) == UUID(str(googleUUID))
+        except ValueError:
+            same = str(queueUUID) == str(googleUUID)
+        return [queueUUID] if same else [queueUUID, googleUUID]
 
     @staticmethod
     def waitQueueExit(ticket):
@@ -3465,8 +3478,7 @@ class Functions:
                         "images": [{"url": soundThumb}]
                     }
                 }
-                if waitqueue.isOrphaned():
-                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Notification déclarée bloquée par la file : pas de diffusion')
+                if Functions.orphanedBeforeLaunch(f'[DAEMON][controllerActions] {soundType} ::'):
                     return False
                 sessionBefore = cast.media_controller.status.media_session_id
                 contentBefore = cast.media_controller.status.content_id
@@ -3496,13 +3508,14 @@ class Functions:
                     return False
                 waitqueue.phase('fin', myConfig.queueLaunchTimeout)
 
-                if (_volume is not None):  # restaurer AVANT quit_app
+                # Notification abandonnée pendant la fin : la suivante occupe l'enceinte, ni volume ni arrêt
+                if _volume is not None and not waitqueue.isOrphaned():  # restaurer AVANT quit_app
                     if isGroup:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
 
-                if endReason != 'replaced':  # un média lancé par ailleurs n'est pas arrêté
+                if endReason != 'replaced' and not waitqueue.isOrphaned():  # un média lancé par ailleurs n'est pas arrêté
                     cast.quit_app()
 
                 return endReason in ('finished', 'interrupted', 'replaced')

@@ -4,8 +4,8 @@
 - Option « wait » : les notifications d'un même processus PHP (PID) forment un bloc, qui prend une seule place dans la file ; à l'intérieur,
   l'ordre suit la valeur de « wait » (puis l'ordre d'arrivée à valeur égale), quel que soit l'ordre d'arrivée réel.
 - Option « force » : passe devant tout le monde, sans prendre de place ; la file est gelée tant qu'un « force » est en cours. À son
-  tour, la diffusion en cours est coupée ; la notification qui occupait l'équipement est abandonnée si elle n'avait pas lancé sa
-  diffusion, sinon le « force » attend sa sortie.
+  tour, la notification qui occupait l'équipement est abandonnée si elle n'avait pas lancé sa diffusion ; sinon le « force » attend
+  la fin de son lancement, coupe la diffusion en cours et attend la sortie de la notification coupée.
 
 Une notification en attente n'est jamais abandonnée tant que la file avance : seule une attente plus longue que l'âge maximal (queueMaxAge)
 l'écarte. Chaque notification qui occupe l'équipement déclare son étape et une échéance (setPhase / phase / progress) ; une notification
@@ -86,22 +86,21 @@ class Ticket:
         return f'ticket {self.number}'
 
     def setPhase(self, name, seconds, now=None):
+        """ Étape name (None : étape inchangée) à terminer dans seconds secondes ; sans effet si la notification est sortie """
         with self.queue.lock:
             if self.state not in FINISHED:
-                self.queue._setPhase(self, name, seconds, time.monotonic() if now is None else now)
+                self.queue._setPhase(self, self.phase if name is None else name, seconds, time.monotonic() if now is None else now)
 
     def progress(self, seconds, now=None):
-        with self.queue.lock:
-            if self.state not in FINISHED:
-                self.queue._setPhase(self, self.phase, seconds, time.monotonic() if now is None else now)
+        """ La notification progresse : échéance repoussée de seconds secondes, étape inchangée """
+        self.setPhase(None, seconds, now)
 
 
 class Block:
     """ Notifications « wait » d'un même PID : une seule place dans la file, ordre interne par valeur de wait """
-    def __init__(self, number, pid, now):
+    def __init__(self, number, pid):
         self.number = number
         self.pid = pid
-        self.created = now
         self.members = []
 
     def finished(self):
@@ -143,7 +142,7 @@ class DeviceQueue:
             else:
                 block = self.units.get(self.blocksByPid.get(pid, -1))
                 if not isinstance(block, Block) or block.finished():
-                    block = Block(self.tail, pid, now)
+                    block = Block(self.tail, pid)
                     self.units[self.tail] = block
                     self.blocksByPid[pid] = self.tail
                     self.tail += 1
@@ -182,15 +181,34 @@ class DeviceQueue:
             sleep(0.1)
 
     def _holdForce(self, ticket, tag, clock, sleep, cut):
-        """ Tour d'un « force », sans attendre la file : coupure de la diffusion en cours (cut), puis abandon de la notification de la
-        file qui n'a pas lancé sa diffusion, et attente de la sortie de celles qui l'avaient lancée (volume rétabli, application
-        arrêtée), au plus queueForceCutWait secondes. Un autre « force » qui n'a pas lancé sa diffusion n'est pas attendu """
+        """ Tour d'un « force », sans attendre la file : abandon de la notification de la file qui n'a pas lancé sa diffusion, puis
+        attente de la fin du lancement des notifications en cours (pour que la coupure atteigne leur diffusion), puis coupure de la
+        diffusion en cours (cut), puis attente de la sortie des notifications qui l'avaient lancée (volume rétabli, application
+        arrêtée). Chaque attente dure au plus queueForceCutWait secondes. Un autre « force » qui n'a pas lancé sa diffusion n'est pas attendu """
         with self.lock:
             if ticket.state == ORPHANED:
                 logging.debug('%s Pas de diffusion pour %s (orphaned)', tag, ticket.label())
                 return False
+            holder = self._activeHolder()
+            if holder is not None and holder.phase not in LAUNCHED_PHASES:
+                holder.state = ORPHANED
+                logging.info('%s Notification non diffusée : %s pour %s, une notification « force » passe devant.', tag, holder.label(), self.uuid)
+                self._advance()
+            self._setPhase(ticket, 'tour', self.config.queueForceCutWait, clock())
+        deadline = clock() + self.config.queueForceCutWait
+        while True:
+            with self.lock:
+                if ticket.state == ORPHANED:
+                    logging.debug('%s Pas de diffusion pour %s (orphaned)', tag, ticket.label())
+                    return False
+                if not any(t.phase == 'lancement' for t in self._launchedOccupants() if t is not ticket):
+                    break
+            if clock() >= deadline:
+                break
+            sleep(0.1)
         if cut is not None:
             cut()
+        ticket.setPhase('tour', self.config.queueForceCutWait, clock())
         deadline = clock() + self.config.queueForceCutWait
         while True:
             now = clock()
@@ -198,11 +216,6 @@ class DeviceQueue:
                 if ticket.state == ORPHANED:
                     logging.debug('%s Pas de diffusion pour %s (orphaned)', tag, ticket.label())
                     return False
-                holder = self._activeHolder()
-                if holder is not None and holder.phase not in LAUNCHED_PHASES:
-                    holder.state = ORPHANED
-                    logging.info('%s Notification non diffusée : %s pour %s, une notification « force » passe devant.', tag, holder.label(), self.uuid)
-                    self._advance()
                 launched = [t for t in self._launchedOccupants() if t is not ticket]
                 if not launched:
                     break
@@ -228,7 +241,7 @@ class DeviceQueue:
                 ticket.state = ACTIVE
                 self._setPhase(ticket, 'tour', self.config.queuePrepTimeout, now)
                 return 'turn'
-            age = now - (ticket.block.created if ticket.block is not None else ticket.arrival)
+            age = now - ticket.arrival
             if age >= self.config.queueMaxAge:
                 ticket.state = ABANDONED
                 logging.warning("[DAEMON][WaitQueue][%s] Notification abandonnée : %s en attente depuis %ds pour %s, au-delà de l'âge maximal. Elle n'est pas diffusée.",
