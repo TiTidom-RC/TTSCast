@@ -201,7 +201,7 @@ class DeviceQueue:
                 holder = self._activeHolder()
                 if holder is not None and holder.phase not in LAUNCHED_PHASES:
                     holder.state = ORPHANED
-                    logging.info('%s %s non diffusée pour %s : une notification « force » passe devant.', tag, holder.label(), self.uuid)
+                    logging.info('%s Notification non diffusée : %s pour %s, une notification « force » passe devant.', tag, holder.label(), self.uuid)
                     self._advance()
                 launched = [t for t in self._launchedOccupants() if t is not ticket]
                 if not launched:
@@ -209,7 +209,7 @@ class DeviceQueue:
                 if now >= deadline:
                     for occupant in launched:
                         occupant.state = ORPHANED
-                        logging.warning('%s %s toujours en cours pour %s %ds après sa coupure par une notification « force » : elle est abandonnée.',
+                        logging.warning('%s Notification abandonnée : %s toujours en cours pour %s %ds après sa coupure par une notification « force ».',
                                         tag, occupant.label(), self.uuid, int(self.config.queueForceCutWait))
                     self._advance()
                     break
