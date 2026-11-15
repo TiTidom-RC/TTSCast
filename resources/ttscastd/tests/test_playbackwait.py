@@ -7,6 +7,7 @@ import unittest
 from uuid import uuid4
 
 import ttscastd
+import waitqueue
 from tests import helpers
 
 Functions = ttscastd.Functions
@@ -306,23 +307,69 @@ class QueueOptionsTest(unittest.TestCase):
     def test_invalidWaitQueuedAsAuto(self):
         uuid, (registered, targetUUID, ticket, cmdWait, cmdForce) = self._register('"wait": -1')
         self.assertTrue(registered)
-        self.assertEqual((ticket, cmdWait, cmdForce), (0, None, False))
-        entry = myConfig.deviceQueues[str(uuid)]
-        self.assertEqual(entry['blocksByTicket'], {})
-        Functions.waitQueueExit(targetUUID, ticket, cmdWait, cmdForce, 'TEST')
-        self.assertEqual(entry['serving'], 1)
+        self.assertEqual((ticket.kind, ticket.number, cmdWait, cmdForce), ('auto', 0, None, False))
+        queue = myConfig.deviceQueues[str(uuid)]
+        self.assertEqual(queue.blocksByPid, {})
+        Functions.waitQueueExit(ticket)
+        self.assertEqual(queue.serving, 1)
 
     def test_forceFalseText(self):
         _, (registered, _, ticket, _, cmdForce) = self._register('"force": "false"')
         self.assertTrue(registered)
         self.assertFalse(cmdForce)
-        self.assertEqual(ticket, 0)
+        self.assertEqual((ticket.kind, ticket.number), ('auto', 0))
 
     def test_validWaitOpensBlock(self):
         uuid, (registered, _, ticket, cmdWait, _) = self._register('"wait": 2')
         self.assertTrue(registered)
-        self.assertEqual((ticket, cmdWait), (0, 2))
-        self.assertEqual(myConfig.deviceQueues[str(uuid)]['blocksByTicket'][0]['bitmask'], 4)
+        self.assertEqual((ticket.kind, ticket.waitValue, ticket.number, cmdWait), ('wait', 2, 0, 2))
+        self.assertEqual(myConfig.deviceQueues[str(uuid)].blocksByPid, {1234: 0})
+
+
+class PlaybackWithQueueTest(unittest.TestCase):
+    """ waitPlaybackEnd avec la notification de la file d'attente du thread courant """
+    def setUp(self):
+        helpers.resetDaemonState()
+        self.saved = (myConfig.cmdWaitTimeout, myConfig.playbackStatusRefresh)
+        myConfig.cmdWaitTimeout = TIMEOUT
+        myConfig.playbackStatusRefresh = REFRESH
+        self.queue = waitqueue.DeviceQueue('enceinte-test', myConfig)
+        self.ticket = self.queue.register('auto', 'TTS')
+        self.assertTrue(self.queue.hold(self.ticket))
+        self.addCleanup(self.queue.release, self.ticket)
+
+    def tearDown(self):
+        myConfig.cmdWaitTimeout, myConfig.playbackStatusRefresh = self.saved
+
+    def test_orphanedStopsFollowing(self):
+        def orphan(sc):
+            self.ticket.state = waitqueue.ORPHANED
+        sc = Scenario([
+            (0.5, state(media_session_id=7, player_state='PLAYING')),
+            (3, orphan),
+        ], playingResponder)
+        self.assertEqual(sc.run(), 'orphaned')
+        self.assertLess(sc.elapsed(), 4)
+
+    def test_progressPushesQueueDeadline(self):
+        sc = Scenario([
+            (0.5, state(media_session_id=7, player_state='PLAYING')),
+            (300, state(player_state='IDLE', idle_reason='FINISHED')),
+        ], playingResponder)
+        self.assertEqual(sc.run(), 'finished')
+        self.assertEqual(self.ticket.phase, 'lecture')
+        self.assertGreater(self.ticket.deadline, sc.start + 290)
+
+    def test_liveStreamCapAfterStreamEnd(self):
+        """ Flux live entièrement envoyé, mais l'enceinte reste en lecture : arrêt au bout du délai """
+        def streamEnd(sc):
+            self.ticket.streamEndedAt = sc.now
+        sc = Scenario([
+            (0.5, state(media_session_id=7, player_state='PLAYING', stream_type='LIVE')),
+            (30, streamEnd),
+        ], lambda sc: sc.mc.apply(current_time=0.0))
+        self.assertEqual(sc.run(), 'stalled')
+        self.assertAlmostEqual(sc.elapsed(), 30 + TIMEOUT, delta=0.2)
 
 
 if __name__ == '__main__':

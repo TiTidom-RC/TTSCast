@@ -174,12 +174,13 @@ class Config:
     # Dernier échec de chargement d'un média (LOAD_FAILED) par équipement : { uuid (str) : time.monotonic() }
     loadFailures = {}
     dashCastAppId = '84912283'  # app_id du récepteur Chromecast DashCast
-    # File d'attente automatique des notifications — par équipement (targetUUID résolu via resolveWaitQueueUUID) :
-    # { targetUUID: { 'tail': int, 'serving': int, 'blocksByPid': {pid: ticket}, 'blocksByTicket': {ticket: {'bitmask': int, 'pendingCount': int, 'pid': pid}}, 'forceActive': int, 'lock': threading.Lock() } }
-    # 'tail' = prochain ticket à émettre (0-indexé, incrémenté APRÈS assignation) ; 'serving' = ticket dont c'est le tour
-    # (les deux démarrent à 0 — le tout premier ticket émis vaut 0 et correspond donc immédiatement à serving)
-    # 'pid' dans blocksByTicket permet de retrouver/nettoyer l'entrée blocksByPid en O(1) depuis waitQueueExit()
+    # File d'attente des notifications, une par équipement (UUID canonique, resolveCanonicalUUID) : { targetUUID : waitqueue.DeviceQueue }
     deviceQueues = {}
+    queueMaxAge = 600  # secondes — au-delà de cette attente, une notification en file n'est pas diffusée (information périmée)
+    queueStallMargin = 15  # secondes — marge ajoutée à l'échéance de chaque étape avant de déclarer une notification bloquée
+    queuePrepTimeout = 30  # secondes — échéance de la préparation d'une notification avant son tour (hors reformulation IA)
+    queueLaunchTimeout = 60  # secondes — échéance du lancement sur l'enceinte (quick_play, activation, volume) et de la fin
+    queuePiperTimeout = 300  # secondes — échéance de la génération Piper (locale, sans délai propre)
 
     # Tracking de session Cast par équipement (targetUUID résolu) — utilisé pour calculer playback_owner :
     # { targetUUID: { 'mediaSessionId': int|None, 'controller': str } } — mis à jour à chaque lancement plugin réussi (quick_play/start_app)

@@ -114,6 +114,7 @@ except ImportError:
 # Import Config
 try:
     from utils import Comm, Config
+    import waitqueue
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module config ::", e)
     sys.exit(1)
@@ -170,7 +171,7 @@ class Loops:
                                 except Exception as _e:
                                     logging.error('[DAEMON][SOCKET] TTS :: Échec du démarrage du thread, libération du ticket de queue :: %s', _e)
                                     if _qr:
-                                        Functions.waitQueueExit(_tu, _ticket, _cw, _cf, 'TTS')
+                                        Functions.waitQueueExit(_ticket)
                             else:
                                 logging.warning('[DAEMON][SOCKET] TTS :: Il manque des données pour traiter la commande.')
                                 
@@ -203,7 +204,7 @@ class Loops:
                             except Exception as _e:
                                 logging.error('[DAEMON][SOCKET] Media :: Échec du démarrage du thread, libération du ticket de queue :: %s', _e)
                                 if _qr:
-                                    Functions.waitQueueExit(_tu, _ticket, _cw, _cf, message['cmd_action'])
+                                    Functions.waitQueueExit(_ticket)
 
                 elif message['cmd'] == 'purgettscache':
                     logging.info('[DAEMON][SOCKET] Purge TTS Cache')
@@ -1229,7 +1230,8 @@ class TTSCast:
 
     @staticmethod
     def getTTS(ttsText, ttsGoogleUUID, ttsVoiceName, ttsRSSVoiceName, ttsGeminiVoiceName, ttsLang, ttsEngine, ttsPiperVoiceName, ttsSpeed='1.0', ttsRSSSpeed='0', ttsOptions=None, cmdNotificationId=0, _queueRegistered=False, _targetWaitUUID=None, _ticket=None, _cmdWait=None, _cmdForce=False):
-        # _queueRegistered / _targetWaitUUID / _ticket / _cmdWait / _cmdForce proviennent du socket handler (enregistrement précoce)
+        # _queueRegistered / _targetWaitUUID / _ticket / _cmdWait / _cmdForce proviennent du socket handler (enregistrement précoce) ;
+        # _ticket (waitqueue.Ticket) porte toute la gestion de la file
         if _targetWaitUUID is None:
             _targetWaitUUID = ttsGoogleUUID
         try:
@@ -1367,6 +1369,8 @@ class TTSCast:
             # ══════════════════════════════════════════════════════════════════════
             _aiPrecomputed = None
             if _useAI and not _useSSML:
+                if _queueRegistered:
+                    _ticket.setPhase('reformulation IA', myConfig.aiMaxTimeout)
                 _aiResult = TTSCast.genAI(ttsText, _aiCustomSysPrompt, _aiCustomTone, _aiCustomTemp, _aiCustomModel, _aiCustomThinking)
                 if _aiResult is not None:
                     _aiPrecomputed = Functions.markdownToPlainText(_aiResult)  # version clean pour le moteur TTS
@@ -1376,11 +1380,12 @@ class TTSCast:
                     TTSCast._sendTTSResult(_originalTtsText, False, ttsGoogleUUID, cmdNotificationId, _cmdOpts)
 
             # ══════════════════════════════════════════════════════════════════════
-            # ATTENTE DU TOUR (bitmask — bloque jusqu'à ce que ce soit notre tour)
+            # ATTENTE DU TOUR (bloque jusqu'à ce que ce soit notre tour, voir waitqueue.py)
             # ══════════════════════════════════════════════════════════════════════
             if _queueRegistered:
-                if not Functions.waitQueueHold(_targetWaitUUID, _ticket, _cmdWait, _cmdForce, 'TTS'):
+                if not Functions.waitQueueHold(_ticket):
                     return False
+                waitqueue.phase('génération', Functions.engineTimeout(ttsEngine))
 
             if ttsEngine == "gcloudtts":
                 logging.info('[DAEMON][TTS] TTSEngine = gcloudtts')
@@ -1587,7 +1592,7 @@ class TTSCast:
                         logging.debug('[DAEMON][TTS] Pipe créé :: %s | URL :: %s', _pipePath, _pipeUrl)
                         threading.Thread(
                             target=TTSCast.geminiTTSStream,
-                            args=[_streamIter, _firstChunk, _sampleRate, _channels, _pipePath, _filepath, _client]
+                            args=[_streamIter, _firstChunk, _sampleRate, _channels, _pipePath, _filepath, _client, waitqueue.current()]
                         ).start()
                         _t = time.time()
                         logging.info('[TIMING][GeminiStream] t1_castStart :: %.3f (%s)', _t, datetime.datetime.fromtimestamp(_t).strftime('%H:%M:%S.') + f'{int((_t % 1) * 1000):03d}')
@@ -1649,7 +1654,7 @@ class TTSCast:
         finally:
             # Libération garantie du ticket de queue (succès, erreur ou return False anticipé)
             if _queueRegistered:
-                Functions.waitQueueExit(_targetWaitUUID, _ticket, _cmdWait, _cmdForce, 'TTS')
+                Functions.waitQueueExit(_ticket)
 
     @staticmethod
     def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, mimeType='audio/mp3', streamType='BUFFERED', postQueuePipe=None):
@@ -1789,14 +1794,20 @@ class TTSCast:
 
                 # Streaming : création du pipe (après l'entrée en queue gérée par getTTS)
                 if postQueuePipe is not None:
+                    waitqueue.phase('génération (flux)', myConfig.geminiTTSTimeout)
                     _postUrl = postQueuePipe()
                     if _postUrl is None:
                         return False
                     urltoplay = _postUrl
 
+                waitqueue.phase('lancement', myConfig.queueLaunchTimeout)
+                if waitqueue.isOrphaned():
+                    logging.debug('[DAEMON][Cast] Notification déclarée bloquée par la file : pas de diffusion')
+                    return False
+
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
-                
+
                 volumeBeforePlay = cast.status.volume_level
 
                 groupSnapshot = Functions.getGroupSnapshot(cast)
@@ -1833,7 +1844,6 @@ class TTSCast:
                 }
 
                 sessionBefore = cast.media_controller.status.media_session_id
-
                 contentBefore = cast.media_controller.status.content_id
                 playRequestedAt = time.monotonic()
                 quick_play.quick_play(cast, app_name, app_data)
@@ -1858,6 +1868,9 @@ class TTSCast:
                 Functions.trackPluginSession(googleUUID, 'tts', cast)
 
                 endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, '[DAEMON][Cast]', mediaUrl=urltoplay, contentBefore=contentBefore)
+                if endReason == 'orphaned':  # la suivante occupe déjà l'enceinte : ni volume ni arrêt
+                    return False
+                waitqueue.phase('fin', myConfig.queueLaunchTimeout)
 
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing — restaurer AVANT quit_app
                     if isGroup and bool(groupSnapshot):
@@ -1874,8 +1887,8 @@ class TTSCast:
             except Exception as e:
                 logging.warning('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
                 logging.debug(traceback.format_exc())
-                
-                if volumeBeforePlay is not None:
+
+                if volumeBeforePlay is not None and not waitqueue.isOrphaned():
                     try:
                         if isGroup and groupSnapshot:
                             Functions.restoreGroupMembersVolume(groupSnapshot)
@@ -2277,11 +2290,12 @@ class TTSCast:
             return None
 
     @staticmethod
-    def geminiTTSStream(streamIterator, firstChunkBytes: bytes, sampleRate: int, channels: int, pipePath: str, cacheFilePath: str = '', _client=None):  # noqa: ARG004 — _client maintenu en vie pour éviter la fermeture des sockets httpx
+    def geminiTTSStream(streamIterator, firstChunkBytes: bytes, sampleRate: int, channels: int, pipePath: str, cacheFilePath: str = '', _client=None, queueTicket=None):  # noqa: ARG004 — _client maintenu en vie pour éviter la fermeture des sockets httpx
         """
         Écrit le stream TTS Gemini dans le named pipe (mkfifo).
         Reçoit l'itérateur de stream déjà initié et le premier chunk pré-lu.
         Construit le WAV pour la mise en cache si cacheFilePath fourni.
+        queueTicket : notification de la file d'attente, informée de la fin de l'envoi (plafond de lecture d'un flux live).
         """
         fd = None
         pcmBuffer = [firstChunkBytes]
@@ -2364,6 +2378,8 @@ class TTSCast:
             logging.debug(traceback.format_exc())
             return None
         finally:
+            if queueTicket is not None:
+                queueTicket.streamEndedAt = time.monotonic()
             if fd is not None:
                 try:
                     os.close(fd)
@@ -2484,8 +2500,8 @@ class Functions:
             return current_uuid_str
 
         def _queueActive(uuid_key):
-            entry = myConfig.deviceQueues.get(uuid_key)
-            return entry is not None and (entry['tail'] > entry['serving'] or entry['forceActive'] > 0)
+            queue = myConfig.deviceQueues.get(uuid_key)
+            return queue is not None and queue.isActive()
 
         # 1. Si la queue existe déjà pour cet UUID et est active, on l'utilise (Priorité locale)
         if _queueActive(current_uuid_str):
@@ -2551,7 +2567,10 @@ class Functions:
         - 'replaced' : un autre média a pris la place sur l'enceinte (ne pas l'arrêter) ;
         - 'error' : échec de chargement ou erreur de lecture ;
         - 'notStarted' : lecture pas démarrée dans le délai cmdWaitTimeout ;
-        - 'stalled' : lecture sans progression (pause, mise en mémoire tampon, position figée) pendant cmdWaitTimeout.
+        - 'stalled' : lecture sans progression (pause, mise en mémoire tampon, position figée) pendant cmdWaitTimeout, ou flux LIVE
+          encore en lecture cmdWaitTimeout après la fin de son envoi ;
+        - 'orphaned' : notification déclarée bloquée par la file d'attente, la suivante occupe l'enceinte (ne plus rien y faire).
+        L'échéance de la notification dans la file d'attente suit la progression (waitqueue.progress).
         Notre session est la première dont l'identifiant diffère de sessionBefore (relevé avant quick_play), ou celle qui affiche mediaUrl :
         l'enceinte renumérote ses sessions à partir de 1 à chaque lancement d'application, un même identifiant ne prouve donc rien.
         Si l'enceinte affichait déjà mediaUrl avant le lancement (contentBefore, même TTS rejoué depuis le cache), il faut en plus
@@ -2569,9 +2588,14 @@ class Functions:
         maxPosition = None
         previousState = None
         lastUpdated = cast.media_controller.status.last_updated
+        queueTicket = waitqueue.current()
+        waitqueue.phase('lecture', timeout, startedAt)
         reason = None
         while reason is None:
             now = clock()
+            if waitqueue.isOrphaned():
+                reason = 'orphaned'
+                break
             status = cast.media_controller.status
             sessionId = status.media_session_id
             state = status.player_state
@@ -2606,18 +2630,23 @@ class Functions:
                         status.stream_type == 'LIVE' or maxPosition is None or (position is not None and position > maxPosition)
                     )):
                         lastProgress = now
+                        waitqueue.progress(timeout, now)
                     if position is not None:
                         maxPosition = position if maxPosition is None else max(maxPosition, position)
                 elif previousState == 'PLAYING':
                     lastProgress = now  # la lecture avançait jusqu'à ce changement d'état (pause, mise en mémoire tampon)
+                    waitqueue.progress(timeout, now)
                 previousState = state
             lastUpdated = status.last_updated
 
             if reason is None:
+                streamEndedAt = queueTicket.streamEndedAt if queueTicket is not None else None
                 if not hasPlayed and now - startedAt >= timeout:
                     reason = 'notStarted'
                 elif hasPlayed and now - lastProgress >= timeout:
                     reason = 'stalled'
+                elif streamEndedAt is not None and now - streamEndedAt >= timeout:
+                    reason = 'stalled'  # flux live entièrement envoyé, mais l'enceinte reste en lecture
 
             if reason is None:
                 if now - lastRefresh >= myConfig.playbackStatusRefresh:
@@ -2639,6 +2668,8 @@ class Functions:
             logging.info('%s Lecture interrompue sur %s (arrêt de l\'application ou coupure de la connexion)', logTag, castName)
         elif reason == 'replaced':
             logging.info('%s Lecture remplacée sur %s par un autre média, qui n\'est pas arrêté', logTag, castName)
+        elif reason == 'orphaned':
+            logging.debug('%s Notification déclarée bloquée par la file : fin du suivi sur %s, sans action sur l\'enceinte', logTag, castName)
         else:
             logging.debug('%s Fin de lecture sur %s', logTag, castName)
         return reason
@@ -2661,59 +2692,35 @@ class Functions:
 
     @staticmethod
     def waitQueueRegister(cast, googleUUID, cmdWait, cmdForce, callerPid, callerName="Unknown"):
-        """Prend le ticket de queue IMMÉDIATEMENT, sans attendre le tour.
-        Appelée depuis socketRegisterQueue (socket handler), avant le démarrage du thread.
-        Retourne (registered, targetUUID, ticket) — ticket=None uniquement pour le cas force."""
+        """Prend la place dans la file IMMÉDIATEMENT, sans attendre le tour (voir waitqueue.py).
+        Appelée depuis socketRegisterQueue (socket handler), avant le démarrage du thread : l'ordre d'arrivée est conservé.
+        cmdWait : entier déjà validé (parseWaitOption) ou None. Retourne (registered, targetUUID, ticket)."""
 
         targetUUID = Functions.resolveCanonicalUUID(googleUUID)
         if targetUUID != googleUUID:
             logging.debug(f'[DAEMON][WaitQueue][{callerName}] Resolved Linked UUID {googleUUID} -> {targetUUID}')
 
-        if targetUUID not in myConfig.deviceQueues:
-            myConfig.deviceQueues[targetUUID] = {
-                'tail': 0, 'serving': 0, 'blocksByPid': {}, 'blocksByTicket': {},
-                'forceActive': 0, 'lock': threading.Lock()
-            }
-        entry = myConfig.deviceQueues[targetUUID]
+        queue = myConfig.deviceQueues.get(targetUUID)
+        if queue is None:
+            queue = myConfig.deviceQueues[targetUUID] = waitqueue.DeviceQueue(targetUUID, myConfig)
 
-        # 1. FORCE — priorité absolue, ne touche ni tail ni bitmask (voir Phase 5)
+        # force : passe devant tout le monde et coupe la diffusion en cours ; la file est gelée jusqu'à sa sortie
         if cmdForce:
-            with entry['lock']:
-                entry['forceActive'] += 1
+            ticket = queue.register('force', callerName)
             try:
                 Functions.forceQuitApp(cast)
             except Exception:
-                with entry['lock']:
-                    entry['forceActive'] -= 1
+                queue.release(ticket)
                 raise
-            logging.debug(f"[DAEMON][WaitQueue][{callerName}] Register Force {targetUUID} (forceActive={entry['forceActive']})")
-            return True, targetUUID, None
-
-        # 2. Pas de wait (notification auto) — ticket simple, pas de bloc PID
-        if cmdWait is None:
-            with entry['lock']:
-                ticket = entry['tail']
-                entry['tail'] += 1
-            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Registered auto ticket={ticket} for {targetUUID}')
+            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Register Force {targetUUID}')
             return True, targetUUID, ticket
 
-        # 3. Avec wait — valider/convertir AVANT toute mutation d'état (risque de validation, pas d'exécution)
-        cmdWaitInt = int(cmdWait)
-
-        with entry['lock']:
-            blockTicket = entry['blocksByPid'].get(callerPid)
-            if blockTicket is not None and blockTicket in entry['blocksByTicket']:
-                block = entry['blocksByTicket'][blockTicket]
-                block['bitmask'] |= 2 ** cmdWaitInt
-                block['pendingCount'] += 1
-                ticket = blockTicket
-            else:
-                ticket = entry['tail']
-                entry['tail'] += 1
-                entry['blocksByPid'][callerPid] = ticket
-                entry['blocksByTicket'][ticket] = {'bitmask': 2 ** cmdWaitInt, 'pendingCount': 1, 'pid': callerPid}
-
-        logging.debug(f"[DAEMON][WaitQueue][{callerName}] Registered wait={cmdWaitInt} pid={callerPid} ticket={ticket} for {targetUUID} (bitmask={entry['blocksByTicket'][ticket]['bitmask']})")
+        if cmdWait is None:
+            ticket = queue.register('auto', callerName)
+            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Registered auto ticket={ticket.number} for {targetUUID}')
+        else:
+            ticket = queue.register('wait', callerName, waitValue=int(cmdWait), pid=callerPid)
+            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Registered wait={ticket.waitValue} pid={callerPid} ticket={ticket.number} for {targetUUID}')
         return True, targetUUID, ticket
 
     @staticmethod
@@ -2764,74 +2771,24 @@ class Functions:
         return False, uuid_str, None, None, False
 
     @staticmethod
-    def waitQueueHold(targetUUID, ticket, cmdWait, cmdForce, callerName="Unknown"):
-        """Attend que ce soit le tour de cette notification (ticket global + bitmask du bloc PID).
-        À appeler après la pré-computation genAI, juste avant le cast."""
-
-        if cmdForce:
-            return True
-
-        if targetUUID not in myConfig.deviceQueues:
-            logging.warning(f'[DAEMON][WaitQueue][{callerName}] Device {targetUUID} absent de deviceQueues — passage direct')
-            return True
-
-        depth = ticket - myConfig.deviceQueues[targetUUID]['serving']
-        timeout = myConfig.cmdWaitTimeout * max(1, depth)
-        logging.debug(f'[DAEMON][WaitQueue][{callerName}] WaitForTurn ticket={ticket} wait={cmdWait} for {targetUUID} (depth={depth}, timeout={timeout}s)')
-
-        queue_start_time = int(time.time())
-        while True:
-            if targetUUID not in myConfig.deviceQueues:
-                logging.warning(f'[DAEMON][WaitQueue][{callerName}] Device {targetUUID} disparu pendant l\'attente — passage direct')
-                return True
-
-            entry = myConfig.deviceQueues[targetUUID]
-            blockBitmask = entry['blocksByTicket'].get(ticket, {}).get('bitmask', 0)
-            turnReady = (
-                entry['forceActive'] == 0
-                and entry['serving'] == ticket
-                and (cmdWait is None or blockBitmask % (2 ** int(cmdWait)) == 0)
-            )
-            if turnReady:
-                break
-
-            if (queue_start_time + timeout) <= int(time.time()):
-                logging.warning(f"[DAEMON][WaitQueue][{callerName}] Notification abandonnée : ticket {ticket} toujours en attente après {timeout}s pour {targetUUID} (ticket en cours : {entry['serving']}). Elle n'est pas diffusée.")
-                return False
-            time.sleep(0.1)
-
-        logging.debug(f'[DAEMON][WaitQueue][{callerName}] TurnReady ticket={ticket} for {targetUUID}')
-        return True
+    def waitQueueHold(ticket):
+        """Attend le tour de la notification (à appeler après la reformulation IA, juste avant la génération et le cast).
+        False : notification non diffusée (attente au-delà de l'âge maximal, ou déclarée bloquée pendant sa préparation)."""
+        return ticket.queue.hold(ticket)
 
     @staticmethod
-    def waitQueueExit(targetUUID, ticket, cmdWait, cmdForce, callerName="Unknown"):
-        """ Gère la sortie de la file d'attente (libération du ticket / décrément forceActive) """
-        if targetUUID not in myConfig.deviceQueues:
-            logging.warning(f'[DAEMON][WaitQueue][{callerName}] Device {targetUUID} absent de deviceQueues — sortie ignorée')
-            return
+    def waitQueueExit(ticket):
+        """Sortie de la file (diffusée, en erreur ou non diffusée) : sans effet si la notification a déjà été déclarée bloquée."""
+        ticket.queue.release(ticket)
 
-        entry = myConfig.deviceQueues[targetUUID]
-
-        with entry['lock']:
-            if cmdForce:
-                entry['forceActive'] -= 1
-                logging.debug(f"[DAEMON][WaitQueue][{callerName}] Force Exit for {targetUUID} (forceActive={entry['forceActive']})")
-                return
-
-            if cmdWait is None:
-                entry['serving'] += 1
-                logging.debug(f"[DAEMON][WaitQueue][{callerName}] Out (auto) ticket={ticket} for {targetUUID} (serving={entry['serving']})")
-                return
-
-            block = entry['blocksByTicket'].get(ticket)
-            if block is not None:
-                block['bitmask'] &= ~(2 ** int(cmdWait))
-                block['pendingCount'] -= 1
-                if block['pendingCount'] <= 0:
-                    entry['blocksByTicket'].pop(ticket, None)
-                    entry['blocksByPid'].pop(block.get('pid'), None)
-                    entry['serving'] += 1
-            logging.debug(f"[DAEMON][WaitQueue][{callerName}] Out (bloc) wait={cmdWait} ticket={ticket} for {targetUUID} (serving={entry['serving']})")
+    @staticmethod
+    def engineTimeout(ttsEngine):
+        """Durée maximale (secondes) de la génération d'un TTS par moteur, pour la détection des notifications bloquées."""
+        if ttsEngine == 'geminitts':
+            return myConfig.geminiTTSTimeout
+        if ttsEngine == 'pipertts':
+            return myConfig.queuePiperTimeout
+        return myConfig.ttsRequestTimeout
 
     @staticmethod
     def setGroupMembersVolume(membersUUIDs, targetVolume):
@@ -3429,6 +3386,9 @@ class Functions:
                         "images": [{"url": soundThumb}]
                     }
                 }
+                if waitqueue.isOrphaned():
+                    logging.debug(f'[DAEMON][controllerActions] {soundType} :: Notification déclarée bloquée par la file : pas de diffusion')
+                    return False
                 sessionBefore = cast.media_controller.status.media_session_id
                 contentBefore = cast.media_controller.status.content_id
                 playRequestedAt = time.monotonic()
@@ -3453,6 +3413,9 @@ class Functions:
                 Functions.trackPluginSession(_googleUUID, _controller, cast)
 
                 endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, f'[DAEMON][controllerActions] {soundType} ::', mediaUrl=soundURL, contentBefore=contentBefore)
+                if endReason == 'orphaned':  # la suivante occupe déjà l'enceinte : ni volume ni arrêt
+                    return False
+                waitqueue.phase('fin', myConfig.queueLaunchTimeout)
 
                 if (_volume is not None):  # restaurer AVANT quit_app
                     if isGroup:
@@ -3467,7 +3430,7 @@ class Functions:
 
             except Exception as e:
                 logging.error(f'[DAEMON][controllerSounds] Exception ({_googleUUID}) :: {e}')
-                if volumeBeforePlay is not None:
+                if volumeBeforePlay is not None and not waitqueue.isOrphaned():
                     if isGroup and groupSnapshot:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
                     else:
@@ -3608,12 +3571,13 @@ class Functions:
                     return False
 
                 # ══════════════════════════════════════════════════════════════════════
-                # ATTENTE DU TOUR (bitmask — bloque jusqu'à ce que ce soit notre tour)
+                # ATTENTE DU TOUR (bloque jusqu'à ce que ce soit notre tour, voir waitqueue.py)
                 # ══════════════════════════════════════════════════════════════════════
                 if _queueRegistered:
-                    if not Functions.waitQueueHold(_targetWaitUUID, _ticket, _cmdWait, _cmdForce, _controller):
+                    if not Functions.waitQueueHold(_ticket):
                         return False
-                
+                    waitqueue.phase('lancement', myConfig.queueLaunchTimeout)
+
                 if (_controller == 'start_app'):
                     return Functions.controllerStartApp(cast, _googleUUID, _value, _options)
 
@@ -3641,7 +3605,7 @@ class Functions:
             finally:
                 # Libération garantie du ticket de queue (succès, erreur ou return False anticipé)
                 if _queueRegistered:
-                    Functions.waitQueueExit(_targetWaitUUID, _ticket, _cmdWait, _cmdForce, _controller)
+                    Functions.waitQueueExit(_ticket)
 
     @staticmethod
     def mediaActions(_googleUUID='UNKNOWN', _value='0', _mode=''):

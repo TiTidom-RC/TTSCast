@@ -1176,7 +1176,7 @@ if (file_exists($_piperCatalogPath)) {
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Timeout sans progression (sec)}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Une notification dont la lecture n'avance plus pendant ce délai (pause, chargement ou mise en mémoire tampon bloqués) est arrêtée, et la suivante est diffusée. Une lecture qui progresse n'est jamais interrompue. Une notification qui attend son tour plus longtemps que ce délai, multiplié par le nombre de notifications devant elle, n'est pas diffusée. Entre 10 et 3600 sec (par défaut : 60sec).}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Une notification dont la lecture n'avance plus pendant ce délai (pause, chargement ou mise en mémoire tampon bloqués) est arrêtée, et la suivante est diffusée. Une lecture qui progresse n'est jamais interrompue. Entre 10 et 3600 sec (par défaut : 60sec).}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
                     <input class="configKey form-control" type="number" data-l1key="cmdWaitTimeout" min="10" max="3600" placeholder="{{Timeout}}" />
