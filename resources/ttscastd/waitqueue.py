@@ -194,6 +194,7 @@ class DeviceQueue:
                 holder.state = ORPHANED
                 logging.info('%s Notification non diffusée : %s pour %s, une notification « force » passe devant.', tag, holder.label(), self.uuid)
                 self._advance()
+            self._setPhase(ticket, 'tour', self.config.queueForceCutWait, clock())
         deadline = clock() + self.config.queueForceCutWait
         while True:
             with self.lock:
@@ -207,6 +208,7 @@ class DeviceQueue:
             sleep(0.1)
         if cut is not None:
             cut()
+        ticket.setPhase('tour', self.config.queueForceCutWait, clock())
         deadline = clock() + self.config.queueForceCutWait
         while True:
             now = clock()

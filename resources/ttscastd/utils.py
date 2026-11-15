@@ -188,7 +188,7 @@ class Config:
     queuePrepTimeout = 30  # secondes — échéance de la préparation d'une notification avant son tour (hors reformulation IA)
     queueLaunchTimeout = 60  # secondes — échéance du lancement sur l'enceinte (quick_play, activation, volume) et de la fin
     queuePiperTimeout = 300  # secondes — échéance de la génération Piper (locale, sans délai propre)
-    queueForceCutWait = 10  # secondes — attente maximale par un « force » de la sortie de la notification qu'il a coupée
+    queueForceCutWait = 10  # secondes — attente maximale par un « force » de la fin du lancement de la notification en cours, puis de sa sortie après la coupure
 
     # Tracking de session Cast par équipement (targetUUID résolu) — utilisé pour calculer playback_owner :
     # { targetUUID: { 'mediaSessionId': int|None, 'controller': str } } — mis à jour à chaque lancement plugin réussi (quick_play/start_app)

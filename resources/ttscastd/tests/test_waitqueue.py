@@ -404,6 +404,28 @@ class HoldAndHelpersTest(QueueTestCase):
         self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=lambda s: self.fail('force ne doit pas attendre'), cut=cut))
         self.assertEqual(a.phase, 'génération')
 
+    def test_forceDeadlineRenewedAtItsTurn(self):
+        """ Force qui prend son tour juste avant l'échéance de sa préparation (reformulation IA longue) : échéance renouvelée, une
+        notification en attente ne le déclare pas bloqué pendant qu'il attend le lancement puis la sortie de la notification coupée """
+        a, b = self.auto(), self.auto()
+        self.ready(a, b)
+        self.step(a)
+        a.setPhase('lancement', 60, self.now)
+        force = self.q.register('force', 'TTS', self.now)
+        force.setPhase('reformulation IA', 0, self.now)
+        self.now = CONFIG.queueStallMargin - 1
+        cutAt = []
+
+        def sleep(_seconds):
+            self.now += 0.1
+            self.assertEqual(self.step(b), 'wait')
+            if a.phase == 'lancement' and self.now >= CONFIG.queueStallMargin + 2:
+                a.setPhase('lecture', 20, self.now)
+            if cutAt and self.now >= cutAt[0] + 3:
+                self.q.release(a)
+        self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep, cut=lambda: cutAt.append(self.now)))
+        self.assertEqual(force.state, ACTIVE)
+
     def test_progressKeepsPhase(self):
         a = self.auto()
         a.setPhase('lecture', 20, self.now)
