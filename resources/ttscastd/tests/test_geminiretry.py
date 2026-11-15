@@ -5,7 +5,7 @@ Lancement depuis resources/ttscastd :  python -m unittest discover -s tests -t .
 import unittest
 from unittest import mock
 
-import httpx
+import httpx2
 from google.genai import errors as genaiErrors
 from google.genai import types
 
@@ -96,13 +96,13 @@ class GeminiRetryTest(unittest.TestCase):
         self.assertEqual(self.clock.sleeps, [2.0])
 
     def testConnectionErrorIsRetried(self):
-        result, _ = self.run_([httpx.ConnectError('dns'), 'ok'])
+        result, _ = self.run_([httpx2.ConnectError('dns'), 'ok'])
         self.assertEqual(result, 'ok')
         self.assertEqual(self.clock.sleeps, [1])
 
     def testTimeoutIsNotRetried(self):
-        result, _ = self.run_([httpx.ReadTimeout('lent')])
-        self.assertIsInstance(result, httpx.ReadTimeout)
+        result, _ = self.run_([httpx2.ReadTimeout('lent')])
+        self.assertIsInstance(result, httpx2.ReadTimeout)
         self.assertEqual(self.clock.sleeps, [])
 
     def testNoRetryWhenTooLittleTimeRemains(self):
@@ -118,6 +118,33 @@ class GeminiRetryTest(unittest.TestCase):
     def testRetryDelayAbsent(self):
         self.assertIsNone(TTSCast.geminiRetryDelay(apiError(503)))
         self.assertIsNone(TTSCast.geminiRetryDelay(ValueError()))
+
+
+class GeminiApiVersionTest(unittest.TestCase):
+    """ Mode clé API : clients créés en v1beta (google-genai utilise v1 par défaut, sans sortie audio pour Gemini TTS) """
+    def setUp(self):
+        settings = {'aiAuthMode': 'apikey', 'aiApiKey': 'cle-de-test', 'gCloudApiKey': 'noKey', 'aiProjectID': 'noProjectID'}
+        for name, value in settings.items():
+            patcher = mock.patch.object(ttscastd.myConfig, name, value)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+        clientPatcher = mock.patch.object(ttscastd.genai, 'Client', side_effect=RuntimeError('appel non effectué en test'))
+        self.client = clientPatcher.start()
+        self.addCleanup(clientPatcher.stop)
+
+    def assertClientVersion(self):
+        self.client.assert_called_once()
+        self.assertEqual(self.client.call_args.kwargs['http_options'].api_version, 'v1beta')
+
+    def testGenAI(self):
+        with self.assertLogs(level='ERROR'):
+            self.assertIsNone(TTSCast.genAI('Bonjour'))
+        self.assertClientVersion()
+
+    def testGeminiTTS(self):
+        with self.assertLogs(level='ERROR'):
+            self.assertIsNone(TTSCast.geminiTTS('Bonjour', 'Achird'))
+        self.assertClientVersion()
 
 
 if __name__ == '__main__':

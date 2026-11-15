@@ -84,7 +84,7 @@ except ImportError as e:
 
 # Import GenAI (Gemini)
 try:
-    import httpx  # dépendance de google-genai : erreurs de connexion relancées par callGeminiWithRetry
+    import httpx2  # client HTTP de google-genai : erreurs de connexion relancées par callGeminiWithRetry
     from google import genai
     from google.genai import errors as genaiErrors
     from google.genai import types
@@ -1978,7 +1978,7 @@ class TTSCast:
             timeoutMs = max(1000, int((deadline - time.monotonic()) * 1000))
             try:
                 return call(timeoutMs)
-            except (genaiErrors.APIError, httpx.ConnectError) as e:
+            except (genaiErrors.APIError, httpx2.ConnectError) as e:
                 code = getattr(e, 'code', None)
                 if isinstance(e, genaiErrors.APIError) and code not in myConfig.geminiRetryHttpCodes:
                     raise
@@ -2027,7 +2027,7 @@ class TTSCast:
                         return None
                 elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
                     logging.debug('[DAEMON][genAI] Chargement du moteur IA en utilisant la clé API :: %s', myConfig.secretMask if myConfig.aiApiKey else "N/A")
-                    client = genai.Client(api_key=myConfig.aiApiKey)
+                    client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(api_version=myConfig.geminiApiVersion))
                 else:
                     logging.warning('[DAEMON][genAI] Mode d\'authentification invalide ou clé API manquante (mode configuré : %s).', myConfig.aiAuthMode)
                     return None
@@ -2178,7 +2178,7 @@ class TTSCast:
                 client = genai.Client(enterprise=True, project=myConfig.aiProjectID, location='global', credentials=credentials)
             elif myConfig.aiAuthMode == 'apikey' and myConfig.aiApiKey != 'noKey':
                 logging.debug('[DAEMON][GeminiTTS] Client API key :: %s', myConfig.secretMask)
-                client = genai.Client(api_key=myConfig.aiApiKey)
+                client = genai.Client(api_key=myConfig.aiApiKey, http_options=types.HttpOptions(api_version=myConfig.geminiApiVersion))
             else:
                 logging.error('[DAEMON][GeminiTTS] Mode auth invalide ou clé manquante (mode configuré : %s).', myConfig.aiAuthMode)
                 return None
@@ -2212,7 +2212,7 @@ class TTSCast:
                 # ── Mode streaming : pré-lecture du premier chunk ─────────────
                 # La relance ne couvre que l'ouverture du flux, jusqu'au premier chunk audio : une coupure en cours de lecture n'est pas relancée
                 def openStream(_timeoutMs):
-                    # Délai complet à chaque tentative (et non le temps restant) : pour httpx il s'applique à chaque lecture,
+                    # Délai complet à chaque tentative (et non le temps restant) : pour httpx2 il s'applique à chaque lecture,
                     # donc aussi entre les chunks pendant toute la diffusion du flux (geminiTTSStream)
                     streamIterator = client.models.generate_content_stream(
                         model=modelId,
@@ -2290,7 +2290,7 @@ class TTSCast:
             return None
 
     @staticmethod
-    def geminiTTSStream(streamIterator, firstChunkBytes: bytes, sampleRate: int, channels: int, pipePath: str, cacheFilePath: str = '', _client=None, queueTicket=None):  # noqa: ARG004 — _client maintenu en vie pour éviter la fermeture des sockets httpx
+    def geminiTTSStream(streamIterator, firstChunkBytes: bytes, sampleRate: int, channels: int, pipePath: str, cacheFilePath: str = '', _client=None, queueTicket=None):  # noqa: ARG004 — _client maintenu en vie pour éviter la fermeture des sockets httpx2
         """
         Écrit le stream TTS Gemini dans le named pipe (mkfifo).
         Reçoit l'itérateur de stream déjà initié et le premier chunk pré-lu.

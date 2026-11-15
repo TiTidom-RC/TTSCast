@@ -137,6 +137,9 @@ class Config:
     geminiTTSSpeechMetadataModels = ('gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts')
     geminiTTSDefault = False
     geminiTTSTimeout = 30  # secondes — délai total d'un appel Gemini TTS (relances comprises)
+    # Version de l'API Gemini Developer (clé API) : google-genai utilise 'v1' par défaut depuis la 3.0, où la sortie audio (speech_config,
+    # Gemini TTS) n'existe pas. Le mode Enterprise (oauth2) n'est pas concerné (v1beta1 par défaut).
+    geminiApiVersion = 'v1beta'
     geminiTTSStyle   = ''  # Style par défaut, peut être surchargé par style: dans les options de scénario
     streamingDefault = False  # Gemini TTS uniquement — ignoré pour les autres moteurs
 
