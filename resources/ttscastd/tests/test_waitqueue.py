@@ -98,6 +98,7 @@ class BlockTest(QueueTestCase):
 
     def test_sameWaitValueOneAfterTheOther(self):
         first, second = self.wait(1), self.wait(1)
+        self.assertEqual((first.label(), second.label()), ('ticket 0 (wait=1 #1)', 'ticket 0 (wait=1 #2)'))
         self.ready(first, second)
         self.assertEqual(self.step(second), 'wait')
         self.assertEqual(self.step(first), 'turn')

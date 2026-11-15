@@ -2720,7 +2720,7 @@ class Functions:
             logging.debug(f'[DAEMON][WaitQueue][{callerName}] Registered auto ticket={ticket.number} for {targetUUID}')
         else:
             ticket = queue.register('wait', callerName, waitValue=int(cmdWait), pid=callerPid)
-            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Registered wait={ticket.waitValue} pid={callerPid} ticket={ticket.number} for {targetUUID}')
+            logging.debug(f'[DAEMON][WaitQueue][{callerName}] Registered wait={ticket.waitValue} #{ticket.order} pid={callerPid} ticket={ticket.number} for {targetUUID}')
         return True, targetUUID, ticket
 
     @staticmethod

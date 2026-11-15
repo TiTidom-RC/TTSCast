@@ -66,6 +66,7 @@ class Ticket:
         self.waitValue = waitValue
         self.block = block
         self.seq = seq
+        self.order = len(block.members) + 1 if block is not None else None  # rang d'arrivée dans le bloc (logs)
         self.state = ACTIVE if kind == 'force' else PREPARING
         self.phase = None
         self.lastActivity = now
@@ -80,7 +81,7 @@ class Ticket:
         if self.kind == 'force':
             return 'force'
         if self.kind == 'wait':
-            return f'ticket {self.number} (wait={self.waitValue})'
+            return f'ticket {self.number} (wait={self.waitValue} #{self.order})'
         return f'ticket {self.number}'
 
     def setPhase(self, name, seconds, now=None):
