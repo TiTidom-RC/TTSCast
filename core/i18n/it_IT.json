@@ -97,7 +97,12 @@
         "port": "porta"
     },
     "plugins\/ttscast\/core\/php\/jeettscast.php": {
-        "Vous n\\'etes pas autorisé à effectuer cette action": "Non siete autorizzati ad eseguire questa azione"
+        "Fichier du cache TTS illisible : supprimez-le ou videz le cache (page de configuration du plugin).": "File della cache TTS illeggibile: eliminarlo o svuotare la cache (pagina di configurazione del plugin).",
+        "Son personnalisé illisible ou format non supporté : remplacez-le.": "Suono personalizzato illeggibile o formato non supportato: sostituirlo.",
+        "Vous n\\'etes pas autorisé à effectuer cette action": "Non siete autorizzati ad eseguire questa azione",
+        "code %s": "codice %s",
+        "fichier : %s": "file: %s",
+        "Échec de lecture sur %s": "Lettura non riuscita su %s"
     },
     "plugins\/ttscast\/core\/php\/ttscast.img.proxy.php": {
         "401 - Accès non autorisé": "401 - Accesso non autorizzato"
