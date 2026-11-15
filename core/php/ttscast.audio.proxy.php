@@ -17,10 +17,44 @@
 
 require_once dirname(__FILE__) . '/../../../../core/php/core.inc.php';
 
+/**
+ * Plage demandée par l'en-tête HTTP Range pour un fichier de $size octets (RFC 9110, une seule plage en octets).
+ * Retourne [code HTTP, premier octet, dernier octet] :
+ * - 200 : en-tête absent, invalide, ou à plusieurs plages : fichier entier ;
+ * - 206 : plage servie ;
+ * - 416 : plage hors du fichier.
+ * @param string $rangeHeader valeur de l'en-tête Range ('' si absent)
+ * @param int $size taille du fichier
+ * @return array
+ */
+function ttscast_parseRange($rangeHeader, $size) {
+    $full = array(200, 0, $size - 1);
+    if (!preg_match('/^bytes=(\d*)-(\d*)$/', trim($rangeHeader), $range) || ($range[1] === '' && $range[2] === '')) {
+        return $full;
+    }
+    if ($range[1] === '') {
+        // bytes=-N : les N derniers octets
+        $length = (int) $range[2];
+        if ($length === 0 || $size === 0) {
+            return array(416, 0, -1);
+        }
+        return array(206, max($size - $length, 0), $size - 1);
+    }
+    $start = (int) $range[1];
+    if ($range[2] !== '' && (int) $range[2] < $start) {
+        return $full;
+    }
+    if ($start >= $size) {
+        return array(416, 0, -1);
+    }
+    $end = ($range[2] === '') ? $size - 1 : min((int) $range[2], $size - 1);
+    return array(206, $start, $end);
+}
+
 try {
     // Protection par validation stricte des noms de fichiers (regex + identifiants imprévisibles).
     $mimeTypes = [
-        'mp3'  => 'audio/mp3',
+        'mp3'  => 'audio/mpeg',
         'wav'  => 'audio/wav',
         'ogg'  => 'audio/ogg',
         'opus' => 'audio/ogg; codecs=opus',
@@ -121,14 +155,39 @@ try {
     }
 
     $size = filesize($filePath);
-    header('Content-Type: ' . $mime);
-    header('Content-Length: ' . $size);
+    list($status, $start, $end) = ttscast_parseRange(isset($_SERVER['HTTP_RANGE']) ? $_SERVER['HTTP_RANGE'] : '', $size);
     header('Accept-Ranges: bytes');
+    if ($status === 416) {
+        http_response_code(416);
+        header('Content-Range: bytes */' . $size);
+        die();
+    }
+    if ($status === 206) {
+        http_response_code(206);
+        header('Content-Range: bytes ' . $start . '-' . $end . '/' . $size);
+    }
+    $length = $end - $start + 1;
+    header('Content-Type: ' . $mime);
+    header('Content-Length: ' . $length);
     header('Cache-Control: no-cache, no-store');
-    readfile($filePath);
+    $fh = fopen($filePath, 'rb');
+    if ($fh === false) {
+        log::add('ttscast', 'error', '[PROXY] Ouverture impossible :: ' . basename($filePath));
+        die();
+    }
+    fseek($fh, $start);
+    while ($length > 0 && !feof($fh)) {
+        $chunk = fread($fh, min(8192, $length));
+        if ($chunk === false || $chunk === '') {
+            break;
+        }
+        echo $chunk;
+        $length -= strlen($chunk);
+    }
+    fclose($fh);
     die();
 
-} catch (Exception $e) {
+} catch (Throwable $e) {
     log::add('ttscast', 'error', '[PROXY] Exception :: ' . $e->getMessage());
     http_response_code(500);
     die();
