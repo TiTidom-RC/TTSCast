@@ -405,22 +405,44 @@ class ForceCutTest(unittest.TestCase):
             Functions.forceCut(str(uuid))
         self.assertIn('diffusion en cours non coupée', logs.output[0])
 
-    def test_notificationThreadCutsFirst(self):
-        """ getTTS et controllerActions coupent la diffusion au début de leur thread, puis libèrent le ticket à leur sortie """
+    def test_cutAtTurnOnly(self):
+        """ La coupure est faite au tour de la notification : un force qui échoue avant (moteur refusé) ne coupe rien ;
+        controllerActions coupe à son tour ; les tickets sont libérés à la sortie """
         uuid, _ = self.addPlayingCast()
         with mock.patch.object(Functions, 'forceCut') as forceCut, mock.patch.object(myConfig, 'geminiTTSEnabled', False), \
                 mock.patch.object(myConfig, 'geminiTTSDefault', False), self.assertLogs(level='ERROR'):
             args = Functions.socketRegisterQueue(str(uuid), '"force": true', 1234, 'TTS')
-            # Moteur refusé : sortie anticipée de getTTS, après la coupure
             self.assertFalse(ttscastd.TTSCast.getTTS('Bonjour', str(uuid), 'voix', 'voix', 'Achird', 'fr-FR', 'gcloudtts', 'piper', '1.0', '0',
                                                       '"engine": "geminitts", "force": true', 0, *args))
-            forceCut.assert_called_once_with(str(uuid))
+            forceCut.assert_not_called()
         self.assertFalse(myConfig.deviceQueues[str(uuid)].isActive(), 'ticket libéré')
         with mock.patch.object(Functions, 'forceCut') as forceCut:
             args = Functions.socketRegisterQueue(str(uuid), '"force": true', 1234, 'media')
             self.assertTrue(Functions.controllerActions(str(uuid), 'aucune', '', '"force": true', *args))
             forceCut.assert_called_once_with(str(uuid))
         self.assertFalse(myConfig.deviceQueues[str(uuid)].isActive(), 'ticket libéré')
+
+
+class GeminiStreamNoReaderTest(unittest.TestCase):
+    """ Flux Gemini sans lecteur sur le tube : erreur, sauf si la notification a été abandonnée par la file (debug) """
+    def runWithoutReader(self, ticket):
+        clock = iter(range(0, 100))
+        with mock.patch.object(ttscastd.os, 'O_NONBLOCK', 0, create=True), \
+                mock.patch.object(ttscastd.os, 'open', side_effect=OSError(ttscastd.errno.ENXIO, 'pas de lecteur')), \
+                mock.patch.object(ttscastd.time, 'time', side_effect=lambda: next(clock) * 5.0), \
+                mock.patch.object(ttscastd.time, 'sleep'):
+            return ttscastd.TTSCast.geminiTTSStream(iter([]), b'\x00\x00', 24000, 1, '/tmp/tube-absent', queueTicket=ticket)
+
+    def test_errorWhenNotificationActive(self):
+        ticket = waitqueue.DeviceQueue('enceinte-test', myConfig).register('auto', 'TTS')
+        with self.assertLogs(level='ERROR'):
+            self.assertIsNone(self.runWithoutReader(ticket))
+
+    def test_debugWhenNotificationAbandoned(self):
+        ticket = waitqueue.DeviceQueue('enceinte-test', myConfig).register('auto', 'TTS')
+        ticket.state = waitqueue.ORPHANED
+        with self.assertNoLogs(level='ERROR'):
+            self.assertIsNone(self.runWithoutReader(ticket))
 
 
 class DashCastForceDisplayTest(unittest.TestCase):
@@ -542,6 +564,16 @@ class PlaybackWithQueueTest(unittest.TestCase):
             self.assertEqual(sc.run(), 'stalled')
         self.assertAlmostEqual(sc.elapsed(), 0.5 + 40 + TIMEOUT, delta=0.3)
         self.assertIn('après la fin de l\'audio (40s)', logs.output[0])
+
+    def test_liveStreamLateStreamEnd(self):
+        """ Génération plus lente que la lecture (enceinte en lecture pendant les creux) : pas d'arrêt avant le délai après la fin de l'envoi """
+        sc = Scenario([
+            (0.5, state(media_session_id=7, player_state='PLAYING', stream_type='LIVE')),
+            (60, self.streamEnd(10)),
+        ], lambda sc: sc.mc.apply(current_time=0.0))
+        with self.assertLogs(level='WARNING'):
+            self.assertEqual(sc.run(), 'stalled')
+        self.assertAlmostEqual(sc.elapsed(), 60 + TIMEOUT, delta=0.3)
 
     def test_liveStreamPauseNotCounted(self):
         """ Pause pendant un flux : le temps en pause ne compte pas dans le temps de lecture """

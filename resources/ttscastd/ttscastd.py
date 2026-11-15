@@ -742,7 +742,7 @@ class TTSCast:
                 if _aiReformulatedText is None:
                     TTSCast._sendTTSResult(ttsText, True)
                 urlFileToPlay = f'{ttsSrvWeb}{filename}'
-                _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mpeg"
 
                 res = TTSCast.castToGoogleHome(urlFileToPlay, ttsGoogleName, mimeType=_mimeType)
                 logging.debug('[DAEMON][TestTTS] Diffusion :: url=%s | résultat=%s', urlFileToPlay, str(res))
@@ -1233,9 +1233,6 @@ class TTSCast:
         # _queueRegistered / _ticket proviennent de la boucle des commandes (enregistrement dans la file avant le démarrage du thread) ;
         # _ticket (waitqueue.Ticket) porte toute la gestion de la file
         try:
-            if _queueRegistered and _ticket.kind == 'force':
-                Functions.forceCut(ttsGoogleUUID)
-
             logging.debug('[DAEMON][TTS] Check des répertoires')
             cachePath = myConfig.ttsCacheFolderWeb
             symLinkPath = myConfig.ttsCacheFolderTmp
@@ -1382,7 +1379,7 @@ class TTSCast:
             # ATTENTE DU TOUR (bloque jusqu'à ce que ce soit notre tour, voir waitqueue.py)
             # ══════════════════════════════════════════════════════════════════════
             if _queueRegistered:
-                if not Functions.waitQueueHold(_ticket):
+                if not Functions.waitQueueHold(_ticket, ttsGoogleUUID):
                     return False
                 waitqueue.phase('génération', Functions.engineTimeout(ttsEngine))
 
@@ -1454,7 +1451,7 @@ class TTSCast:
                     urlFileToPlay = f'{ttsSrvWeb}{filename}'
                     logging.debug('[DAEMON][TTS] URL du fichier TTS à diffuser :: %s', urlFileToPlay)
                     
-                    _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mp3"
+                    _mimeType = "audio/wav" if myConfig.gCloudAudioEncoding == "LINEAR16" else "audio/mpeg"
 
                     res = TTSCast.castToGoogleHome(urltoplay=urlFileToPlay, googleUUID=ttsGoogleUUID, volumeForPlay=_ttsVolume, appDing=_appDing, mimeType=_mimeType)
                     logging.info('[DAEMON][TTS] Résultat de la lecture du TTS sur le Google Home :: %s', str(res))
@@ -1656,7 +1653,7 @@ class TTSCast:
                 Functions.waitQueueExit(_ticket)
 
     @staticmethod
-    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, mimeType='audio/mp3', streamType='BUFFERED', postQueuePipe=None):
+    def castToGoogleHome(urltoplay, googleName='', googleUUID='', volumeForPlay=None, appDing=True, mimeType='audio/mpeg', streamType='BUFFERED', postQueuePipe=None):
         if googleName != '':
             logging.debug('[DAEMON][Cast] Diffusion (Test) sur le Google Home :: %s', googleName)
             
@@ -2324,7 +2321,10 @@ class TTSCast:
                         continue
                     raise
             if fd is None:
-                logging.error('[DAEMON][GeminiTTSStream] Timeout (10s) : aucun lecteur sur le pipe :: %s', pipePath)
+                if queueTicket is not None and queueTicket.state == waitqueue.ORPHANED:
+                    logging.debug('[DAEMON][GeminiTTSStream] Notification abandonnée par la file : flux non diffusé :: %s', pipePath)
+                else:
+                    logging.error('[DAEMON][GeminiTTSStream] Timeout (10s) : aucun lecteur sur le pipe :: %s', pipePath)
                 return None
 
             # Retirer O_NONBLOCK après l'ouverture : les écritures doivent bloquer si le buffer est plein
@@ -2579,7 +2579,8 @@ class Functions:
         - 'error' : échec de chargement ou erreur de lecture ;
         - 'notStarted' : lecture pas démarrée dans le délai cmdWaitTimeout ;
         - 'stalled' : lecture sans progression (pause, mise en mémoire tampon, position figée) pendant cmdWaitTimeout, ou flux LIVE
-          entièrement envoyé encore en lecture alors que le temps passé en lecture dépasse la durée de son audio de cmdWaitTimeout ;
+          entièrement envoyé encore en lecture alors que le temps passé en lecture dépasse la durée de son audio de cmdWaitTimeout, et au
+          moins cmdWaitTimeout après la fin de l'envoi ;
         - 'orphaned' : notification déclarée bloquée par la file d'attente, la suivante occupe l'enceinte (ne plus rien y faire).
         L'échéance de la notification dans la file d'attente suit la progression (waitqueue.progress).
         Notre session est la première dont l'identifiant diffère de sessionBefore (relevé avant quick_play), ou celle qui affiche mediaUrl :
@@ -2665,7 +2666,8 @@ class Functions:
                     reason = 'notStarted'
                 elif hasPlayed and now - lastProgress >= timeout:
                     reason = 'stalled'
-                elif streamEnded and playedSeconds >= (queueTicket.streamAudioSeconds or 0) + timeout:
+                elif (streamEnded and playedSeconds >= (queueTicket.streamAudioSeconds or 0) + timeout
+                      and now - queueTicket.streamEndedAt >= timeout):
                     reason = 'stalled'  # flux live entièrement lu, mais l'enceinte reste en lecture
                     liveOverrun = True
 
@@ -2727,8 +2729,8 @@ class Functions:
         if queue is None:
             queue = myConfig.deviceQueues[targetUUID] = waitqueue.DeviceQueue(targetUUID, myConfig)
 
-        # force : passe devant tout le monde ; la file est gelée jusqu'à sa sortie. La diffusion en cours est coupée par le
-        # thread de la notification (forceCut) : la boucle des commandes n'attend pas l'enceinte
+        # force : passe devant tout le monde ; la file est gelée jusqu'à sa sortie. La diffusion en cours est coupée au tour de
+        # la notification (waitQueueHold) : la boucle des commandes n'attend pas l'enceinte
         if cmdForce:
             ticket = queue.register('force', callerName)
             logging.debug(f'[DAEMON][WaitQueue][{callerName}] Register Force {targetUUID}')
@@ -2787,10 +2789,11 @@ class Functions:
         return False, None
 
     @staticmethod
-    def waitQueueHold(ticket):
+    def waitQueueHold(ticket, googleUUID):
         """Attend le tour de la notification (à appeler après la reformulation IA, juste avant la génération et le cast).
+        Au tour d'un « force », la diffusion en cours sur googleUUID est coupée (forceCut).
         False : notification non diffusée (attente au-delà de l'âge maximal, ou déclarée bloquée pendant sa préparation)."""
-        return ticket.queue.hold(ticket)
+        return ticket.queue.hold(ticket, cut=lambda: Functions.forceCut(googleUUID))
 
     @staticmethod
     def waitQueueExit(ticket):
@@ -3020,8 +3023,8 @@ class Functions:
 
     @staticmethod
     def forceCut(googleUUID):
-        """ Notification « force » : coupe la diffusion en cours sur l'enceinte, depuis le thread de la notification. En cas d'échec,
-        la notification est diffusée quand même : la file reste gelée jusqu'à sa sortie """
+        """ Notification « force » : coupe la diffusion en cours sur l'enceinte, au tour de la notification (waitQueueHold). En cas
+        d'échec, la notification est diffusée quand même : la file reste gelée jusqu'à sa sortie """
         try:
             Functions.forceQuitApp(myConfig.NETCAST_DEVICES.get(UUID(googleUUID)))
         except Exception as e:
@@ -3334,7 +3337,7 @@ class Functions:
                         app_name = "default_media_receiver"
                         app_data = {
                             "media_id": radioUrl,
-                            "media_type": "audio/mp3",
+                            "media_type": "audio/mpeg",
                             "title": radioTitle,
                             "thumb": radioThumb,
                             "metadata": {
@@ -3440,11 +3443,11 @@ class Functions:
                 soundArtist = _value
 
                 _soundMimeTypes = {
-                    'mp3': 'audio/mp3', 'wav': 'audio/wav',
+                    'mp3': 'audio/mpeg', 'wav': 'audio/wav',
                     'ogg': 'audio/ogg', 'opus': 'audio/ogg; codecs=opus', 'flac': 'audio/flac'
                 }
                 _ext = os.path.splitext(_value)[1].lstrip('.').lower()
-                soundMimeType = _soundMimeTypes.get(_ext, 'audio/mp3')
+                soundMimeType = _soundMimeTypes.get(_ext, 'audio/mpeg')
 
                 app_name = "default_media_receiver"
                 # app_name = "bubbleupnp"
@@ -3566,7 +3569,7 @@ class Functions:
                     if mediaType == "video/mp4":
                         metadataType = 1  # type METADATA_TYPE_MOVIE (Title + SubTitle only)
                         mediaStreamType = "BUFFERED"
-                    elif mediaType == "audio/mp3":
+                    elif mediaType in ("audio/mpeg", "audio/mp3"):
                         metadataType = 3  # type METADATA_TYPE_MUSICTRACK ()
                         mediaStreamType = "BUFFERED"
                     else:
@@ -3646,14 +3649,11 @@ class Functions:
                     logging.debug(f'[DAEMON][controllerActions] Aucun Chromecast avec cet UUID :: {_googleUUID}')
                     return False
 
-                if _queueRegistered and _ticket.kind == 'force':
-                    Functions.forceCut(_googleUUID)
-
                 # ══════════════════════════════════════════════════════════════════════
                 # ATTENTE DU TOUR (bloque jusqu'à ce que ce soit notre tour, voir waitqueue.py)
                 # ══════════════════════════════════════════════════════════════════════
                 if _queueRegistered:
-                    if not Functions.waitQueueHold(_ticket):
+                    if not Functions.waitQueueHold(_ticket, _googleUUID):
                         return False
                     waitqueue.phase('lancement', myConfig.queueLaunchTimeout)
 
