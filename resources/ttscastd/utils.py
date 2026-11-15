@@ -166,8 +166,13 @@ class Config:
     ttsDisableCache = False
     appDisableDing = False
     appConvertSingleQuote = False  # Convertit les apostrophes simples en guillemets doubles pour contourner un bug de prononciation Google TTS
-    cmdWaitTimeout = 60
+    cmdWaitTimeout = 60  # secondes — délai maximal sans progression d'une notification (lecture qui ne démarre pas, pause, lecture figée)
+    cmdWaitTimeoutMin = 10  # secondes — minimum appliqué à cmdWaitTimeout au démarrage du démon
     mediaActivationTimeout = 15  # secondes — borne l'attente d'activation de la session média (block_until_active)
+    playbackStatusRefresh = 5  # secondes — intervalle des demandes d'état à l'enceinte pendant l'attente de fin de lecture
+    ttsRequestTimeout = 30  # secondes — délai des requêtes aux moteurs TTS en ligne (gTTS, Google Cloud TTS)
+    # Dernier échec de chargement d'un média (LOAD_FAILED) par équipement : { uuid (str) : time.monotonic() }
+    loadFailures = {}
     dashCastAppId = '84912283'  # app_id du récepteur Chromecast DashCast
     # File d'attente automatique des notifications — par équipement (targetUUID résolu via resolveWaitQueueUUID) :
     # { targetUUID: { 'tail': int, 'serving': int, 'blocksByPid': {pid: ticket}, 'blocksByTicket': {ticket: {'bitmask': int, 'pendingCount': int, 'pid': pid}}, 'forceActive': int, 'lock': threading.Lock() } }

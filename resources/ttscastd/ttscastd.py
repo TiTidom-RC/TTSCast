@@ -721,7 +721,7 @@ class TTSCast:
                     )
 
                     client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
-                    response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+                    response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config, timeout=myConfig.ttsRequestTimeout)
 
                     with open(filepath, "wb") as out:
                         if _useLinear16:
@@ -765,7 +765,7 @@ class TTSCast:
                             ttsText = Functions.markdownToPlainText(ttsAIText)
                         else:
                             logging.warning('[DAEMON][TestTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
-                    client = gTTS(ttsText, lang=langToTTS)
+                    client = gTTS(ttsText, lang=langToTTS, timeout=myConfig.ttsRequestTimeout)
                     client.save(filepath)
                 except Exception as e:
                     if os.path.isfile(filepath):
@@ -1098,7 +1098,7 @@ class TTSCast:
                         )
 
                         client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
-                        response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+                        response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config, timeout=myConfig.ttsRequestTimeout)
 
                         with open(filepath, "wb") as out:
                             if _useLinear16:
@@ -1130,7 +1130,7 @@ class TTSCast:
                                 ttsText = Functions.markdownToPlainText(ttsAIText)
                             else:
                                 logging.warning('[DAEMON][GenerateTTS] Erreur lors de la génération du TTS avec IA. Génération du TTS sans IA (Backup)')
-                        client = gTTS(ttsText, lang=langToTTS)
+                        client = gTTS(ttsText, lang=langToTTS, timeout=myConfig.ttsRequestTimeout)
                         client.save(filepath)
                         logging.debug('[DAEMON][GenerateTTS] Fichier TTS généré :: %s', filepath)
                     except Exception as e:
@@ -1432,7 +1432,7 @@ class TTSCast:
                         )
 
                         client = googleCloudTTS.TextToSpeechClient(credentials=credentials)
-                        response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config)
+                        response = client.synthesize_speech(input=text_input, voice=voice_params, audio_config=audio_config, timeout=myConfig.ttsRequestTimeout)
 
                         with open(filepath, "wb") as out:
                             if _useLinear16:
@@ -1468,7 +1468,7 @@ class TTSCast:
                     langToTTS = ttsLang.split('-')[0]
                     try:
                         _ttsForEngine = _aiPrecomputed or ttsText
-                        client = gTTS(_ttsForEngine, lang=langToTTS)
+                        client = gTTS(_ttsForEngine, lang=langToTTS, timeout=myConfig.ttsRequestTimeout)
                         client.save(filepath)
                     except Exception as e:
                         if os.path.isfile(filepath):
@@ -1712,8 +1712,10 @@ class TTSCast:
                         "images": [{"url": urlThumb}]
                     }
                 }
+                sessionBefore = cast.media_controller.status.media_session_id
+                playRequestedAt = time.monotonic()
                 quick_play.quick_play(cast, app_name, app_data)
-                
+
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     if isGroup and bool(groupSnapshot):
@@ -1723,41 +1725,31 @@ class TTSCast:
                 elif (not appDing):
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
-                    
+
                     if volumeBeforePlay is not None:
                         cast.set_volume(volume=volumeBeforePlay)
-                
+
                 cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
-                
+
                 logging.info('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
-                
+
                 Functions.trackPluginSession(str(cast.uuid), 'tts', cast)
-                
-                media_player_state = None
-                media_has_played = False
-                
-                while True:
-                    if media_player_state != cast.media_controller.status.player_state:
-                        media_player_state = cast.media_controller.status.player_state
-                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
-                            break
-                        if media_player_state in ['PLAYING']:
-                            media_has_played = True
-                            logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
-                    time.sleep(0.1)
-                
+
+                endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, '[DAEMON][Cast]', mediaUrl=urltoplay)
+
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing — restaurer AVANT quit_app
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
 
-                cast.quit_app()
-                
+                if endReason != 'replaced':  # un média lancé par ailleurs n'est pas arrêté
+                    cast.quit_app()
+
                 # Libération de la mémoire
                 cast = None
                 chromecasts = None
-                return True
+                return endReason in ('finished', 'interrupted', 'replaced')
             except Exception as e:
                 logging.warning('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
                 logging.debug(traceback.format_exc())
@@ -1838,9 +1830,11 @@ class TTSCast:
                         "images": [{"url": urlThumb}]
                     }
                 }
-                
+
+                sessionBefore = cast.media_controller.status.media_session_id
+                playRequestedAt = time.monotonic()
                 quick_play.quick_play(cast, app_name, app_data)
-                
+
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
                     if isGroup and bool(groupSnapshot):
@@ -1850,40 +1844,30 @@ class TTSCast:
                 elif (not appDing):
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
-                    
+
                     if volumeBeforePlay is not None:
                         cast.set_volume(volume=volumeBeforePlay)
-                
+
                 cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
 
                 logging.info('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
-            
+
                 Functions.trackPluginSession(googleUUID, 'tts', cast)
-            
-                media_player_state = None
-                media_has_played = False
-            
-                while True:
-                    if media_player_state != cast.media_controller.status.player_state:
-                        media_player_state = cast.media_controller.status.player_state
-                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
-                            break
-                        if media_player_state in ['PLAYING']:
-                            media_has_played = True
-                            logging.debug('[DAEMON][Cast] Diffusion en cours :: %s', str(cast.media_controller.status))
-                    time.sleep(0.1)
-            
+
+                endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, '[DAEMON][Cast]', mediaUrl=urltoplay)
+
                 if (volumeForPlay is not None):  # que ce soit appDing ou not appDing — restaurer AVANT quit_app
                     if isGroup and bool(groupSnapshot):
                         Functions.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
 
-                cast.quit_app()
-                
+                if endReason != 'replaced':  # un média lancé par ailleurs n'est pas arrêté
+                    cast.quit_app()
+
                 # Libération de la mémoire
                 cast = None
-                return True
+                return endReason in ('finished', 'interrupted', 'replaced')
             except Exception as e:
                 logging.warning('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
                 logging.debug(traceback.format_exc())
@@ -2557,6 +2541,103 @@ class Functions:
         return bool(mediaStatus and (mediaStatus.player_is_playing or mediaStatus.player_is_paused))
 
     @staticmethod
+    def waitPlaybackEnd(cast, sessionBefore, requestedAt, logTag, mediaUrl=None, clock=time.monotonic, sleep=time.sleep):
+        """Attend la fin de la lecture lancée sur cast (TTS, son) et retourne la raison de la fin :
+        - 'finished' : fin normale ;
+        - 'interrupted' : session arrêtée (force, arrêt de l'application, coupure de la connexion Cast) ;
+        - 'replaced' : un autre média a pris la place sur l'enceinte (ne pas l'arrêter) ;
+        - 'error' : échec de chargement ou erreur de lecture ;
+        - 'notStarted' : lecture pas démarrée dans le délai cmdWaitTimeout ;
+        - 'stalled' : lecture sans progression (pause, mise en mémoire tampon, position figée) pendant cmdWaitTimeout.
+        Notre session est la première dont l'identifiant diffère de sessionBefore (relevé avant quick_play), ou celle qui lit mediaUrl.
+        Une lecture qui progresse n'a aucune limite de durée : l'état est redemandé à l'enceinte toutes les playbackStatusRefresh
+        secondes, et seule une nouvelle position plus avancée (ou un flux LIVE qui répond en lecture) compte comme progression.
+        requestedAt : time.monotonic() relevé avant quick_play, pour ne retenir que les échecs de chargement postérieurs."""
+        timeout = myConfig.cmdWaitTimeout
+        uuidStr = str(cast.uuid)
+        startedAt = clock()
+        lastRefresh = startedAt
+        lastProgress = startedAt
+        ourSession = None
+        hasPlayed = False
+        maxPosition = None
+        previousState = None
+        lastUpdated = cast.media_controller.status.last_updated
+        reason = None
+        while reason is None:
+            now = clock()
+            status = cast.media_controller.status
+            sessionId = status.media_session_id
+            state = status.player_state
+            if ourSession is None and sessionId is not None and (
+                sessionId != sessionBefore
+                or (mediaUrl and status.content_id == mediaUrl and state in ('PLAYING', 'BUFFERING'))
+            ):
+                ourSession = sessionId
+
+            if myConfig.loadFailures.get(uuidStr, float('-inf')) >= requestedAt:
+                reason = 'error'
+            elif ourSession is not None and sessionId is None:
+                reason = 'interrupted'
+            elif ourSession is not None and sessionId != ourSession:
+                reason = 'replaced'
+            elif ourSession is not None:
+                if state == 'IDLE' and status.idle_reason == 'ERROR':
+                    reason = 'error'
+                elif state == 'IDLE' and status.idle_reason == 'INTERRUPTED':
+                    reason = 'replaced'
+                elif state == 'IDLE' and status.idle_reason in ('FINISHED', 'CANCELLED'):
+                    reason = 'finished'
+                elif hasPlayed and state not in ('PLAYING', 'PAUSED', 'BUFFERING'):
+                    reason = 'finished'
+                elif state == 'PLAYING':
+                    position = status.current_time
+                    if not hasPlayed:
+                        hasPlayed = True
+                        logging.debug('%s Diffusion en cours :: %s', logTag, str(status))
+                    fresh = status.last_updated != lastUpdated
+                    if previousState != 'PLAYING' or (fresh and (
+                        status.stream_type == 'LIVE' or maxPosition is None or (position is not None and position > maxPosition)
+                    )):
+                        lastProgress = now
+                    if position is not None:
+                        maxPosition = position if maxPosition is None else max(maxPosition, position)
+                elif previousState == 'PLAYING':
+                    lastProgress = now  # la lecture avançait jusqu'à ce changement d'état (pause, mise en mémoire tampon)
+                previousState = state
+            lastUpdated = status.last_updated
+
+            if reason is None:
+                if not hasPlayed and now - startedAt >= timeout:
+                    reason = 'notStarted'
+                elif hasPlayed and now - lastProgress >= timeout:
+                    reason = 'stalled'
+
+            if reason is None:
+                if now - lastRefresh >= myConfig.playbackStatusRefresh:
+                    lastRefresh = now
+                    try:
+                        cast.media_controller.update_status()
+                    except Exception as e:
+                        logging.debug('%s Demande d\'état à l\'enceinte impossible :: %s', logTag, e)
+                sleep(0.1)
+
+        castName = getattr(cast, 'name', uuidStr)
+        if reason == 'error':
+            logging.warning('%s Lecture en échec sur %s (chargement refusé par l\'enceinte ou erreur de lecture) :: %s', logTag, castName, str(status))
+        elif reason == 'notStarted':
+            logging.warning('%s Lecture non démarrée sur %s après %ds : arrêt de la diffusion (état : %s)', logTag, castName, timeout, state)
+        elif reason == 'stalled':
+            logging.warning('%s Lecture sans progression sur %s depuis %ds (état : %s) : arrêt de la diffusion', logTag, castName, timeout, state)
+        elif reason == 'interrupted':
+            logging.info('%s Lecture interrompue sur %s (arrêt de l\'application ou coupure de la connexion)', logTag, castName)
+        elif reason == 'replaced':
+            logging.info('%s Lecture remplacée sur %s par un autre média, qui n\'est pas arrêté', logTag, castName)
+        else:
+            logging.debug('%s Fin de lecture sur %s', logTag, castName)
+        return reason
+
+    @staticmethod
     def computePlaybackOwner(targetUUID, currentMediaSessionId, isBusy, appId=None):
         """Retourne 'IDLE' / 'NOTIFICATION' / 'PLUGIN' / 'EXTERNAL' / 'DASHCAST' selon qui possède la session média active.
         'NOTIFICATION' = TTS/son ; 'PLUGIN' = média persistant (radio/media/youtube) ; 'DASHCAST' = app DashCast active (sans session média).
@@ -2630,6 +2711,24 @@ class Functions:
         return True, targetUUID, ticket
 
     @staticmethod
+    def parseWaitOption(value):
+        """Option wait : nombre entier positif ou nul (un nombre décimal est tronqué). Retourne None si absente ou invalide."""
+        if value is None:
+            return None
+        try:
+            wait = int(value)
+        except (TypeError, ValueError, OverflowError):
+            return None
+        return wait if wait >= 0 else None
+
+    @staticmethod
+    def parseForceOption(value):
+        """Option force : un texte vaut faux s'il s'agit de "false", "0", "no", "non", "off" ou d'un texte vide ; toute autre valeur suit sa vérité Python."""
+        if isinstance(value, str):
+            return value.strip().lower() not in ('', 'false', '0', 'no', 'non', 'off')
+        return bool(value)
+
+    @staticmethod
     def socketRegisterQueue(uuid_str, options_str, callerPid, callerName='Socket'):
         """Parse les options wait/force et enregistre SYSTÉMATIQUEMENT un ticket en queue AVANT de démarrer le thread
         (même sans wait/force — mise en file automatique). Garantit que l'ordre d'arrivée des commandes est
@@ -2640,8 +2739,11 @@ class Functions:
         try:
             if options_str:
                 options_json = json.loads("{" + options_str + "}")
-                cmdWait = options_json.get('wait', None)
-                cmdForce = options_json.get('force', False)
+                rawWait = options_json.get('wait', None)
+                cmdWait = Functions.parseWaitOption(rawWait)
+                if rawWait is not None and cmdWait is None:
+                    logging.warning('[DAEMON][SOCKET] Option "wait" ignorée : valeur %s invalide (nombre entier positif ou nul attendu). Notification mise en file sans ordre "wait".', json.dumps(rawWait, ensure_ascii=False))
+                cmdForce = Functions.parseForceOption(options_json.get('force', False))
 
             _uuid_obj = UUID(uuid_str)
             if _uuid_obj in myConfig.NETCAST_DEVICES:
@@ -2688,7 +2790,7 @@ class Functions:
                 break
 
             if (queue_start_time + timeout) <= int(time.time()):
-                logging.debug(f'[DAEMON][WaitQueue][{callerName}] Timeout for {targetUUID}')
+                logging.warning(f"[DAEMON][WaitQueue][{callerName}] Notification abandonnée : ticket {ticket} toujours en attente après {timeout}s pour {targetUUID} (ticket en cours : {entry['serving']}). Elle n'est pas diffusée.")
                 return False
             time.sleep(0.1)
 
@@ -3321,8 +3423,10 @@ class Functions:
                         "images": [{"url": soundThumb}]
                     }
                 }
+                sessionBefore = cast.media_controller.status.media_session_id
+                playRequestedAt = time.monotonic()
                 quick_play.quick_play(cast, app_name, app_data)
-                
+
                 if (not _appDing and _volume is not None):
                     logging.debug(f'[DAEMON][controllerActions] {soundType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
                     if isGroup:
@@ -3340,52 +3444,19 @@ class Functions:
                 logging.info(f'[DAEMON][controllerActions] Diffusion {soundType} lancée :: {cast.name} | {_value}')
                 
                 Functions.trackPluginSession(_googleUUID, _controller, cast)
-                
-                media_player_state = None
-                media_has_played = False
-                
-                # Timeout de sécurité pour éviter une boucle infinie (60 secondes sans changement d'état ou blocage)
-                # On reset le timeout tant que ça joue pour permettre les sons longs.
-                timeout_loops = 600  # 600 * 0.1s = 60s
-                current_loop = 0
 
-                while True:
-                    # Gestion du Timeout
-                    current_loop += 1
-                    if current_loop > timeout_loops:
-                        logging.warning(f'[DAEMON][controllerActions] {soundType} :: Timeout waiting for media end (Blocked or Too Long Buffering)')
-                        break
+                endReason = Functions.waitPlaybackEnd(cast, sessionBefore, playRequestedAt, f'[DAEMON][controllerActions] {soundType} ::', mediaUrl=soundURL)
 
-                    if media_player_state != cast.media_controller.status.player_state:
-                        media_player_state = cast.media_controller.status.player_state
-                        
-                        # Si le statut change, on peut reset le timeout (signe de vie)
-                        # Sauf si on passe en IDLE (fin) qui sera géré plus bas
-                        current_loop = 0 
-                        
-                        if media_has_played and media_player_state not in ['PLAYING', 'PAUSED', 'BUFFERING']:
-                            # Fin normale de lecture
-                            break
-                        
-                        if media_player_state in ['PLAYING']:
-                            media_has_played = True
-                            logging.debug(f'[DAEMON][controllerActions] Diffusion {soundType} en cours :: {str(cast.media_controller.status)}')
-                    
-                    # Si on est en train de jouer, on reset le timeout en permanence pour ne pas couper les sons longs
-                    if media_player_state == 'PLAYING':
-                        current_loop = 0
-                    
-                    time.sleep(0.1)
-    
                 if (_volume is not None):  # restaurer AVANT quit_app
                     if isGroup:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
 
-                cast.quit_app()
-            
-                return True
+                if endReason != 'replaced':  # un média lancé par ailleurs n'est pas arrêté
+                    cast.quit_app()
+
+                return endReason in ('finished', 'interrupted', 'replaced')
 
             except Exception as e:
                 logging.error(f'[DAEMON][controllerSounds] Exception ({_googleUUID}) :: {e}')
@@ -4525,6 +4596,7 @@ class myCast:
         def load_media_failed(self, queue_item_id, error_code):
             if myCast.isStaleCast(self.cast):
                 return
+            myConfig.loadFailures[str(self.cast.uuid)] = time.monotonic()  # lu par waitPlaybackEnd : fin immédiate de l'attente
             logging.error('[DAEMON][NETCAST][Load_Media_Failed] ' + self.name + ' :: LOAD Media FAILED for item :: ' + str(queue_item_id) + ' with code :: ' + str(error_code))
 
     class MyConnectionStatusListener(ConnectionStatusListener):
@@ -5036,6 +5108,9 @@ def main():
     logging.info('[DAEMON][MAIN] Gemini TTS Default: %s', str(myConfig.geminiTTSDefault))
     logging.info('[DAEMON][MAIN] Gemini TTS Style: %s', myConfig.geminiTTSStyle if myConfig.geminiTTSStyle else 'N/A')
     logging.info('[DAEMON][MAIN] Gemini TTS Streaming Default: %s', str(myConfig.streamingDefault))
+    if myConfig.cmdWaitTimeout < myConfig.cmdWaitTimeoutMin:
+        logging.warning('[DAEMON][MAIN] Timeout sans progression trop court (%ss) : %ss appliqués', myConfig.cmdWaitTimeout, myConfig.cmdWaitTimeoutMin)
+        myConfig.cmdWaitTimeout = myConfig.cmdWaitTimeoutMin
     logging.info('[DAEMON][MAIN] Cmd Wait Timeout: %s', str(myConfig.cmdWaitTimeout))
     logging.info('[DAEMON][MAIN] AI Timeout: %s s (max: %s s)', str(myConfig.aiBaseTimeout), str(myConfig.aiMaxTimeout))
     logging.info('[DAEMON][MAIN] Piper TTS Voice: %s', myConfig.piperVoiceName if myConfig.piperVoiceName else 'N/A')

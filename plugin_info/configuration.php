@@ -1174,16 +1174,16 @@ if (file_exists($_piperCatalogPath)) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Durée maximale de l'option 'Wait' (secondes)}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>        
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Temps (entre 0 et 3600 sec) au bout duquel la commande est dans tous les cas exécutée, même si l'équipement Google est encore en cours de lecture (par défaut : 60sec)}}"></i></sup>
+                <label class="col-lg-3 control-label">{{Timeout sans progression (sec)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Une notification dont la lecture n'avance plus pendant ce délai (pause, chargement ou mise en mémoire tampon bloqués) est arrêtée, et la suivante est diffusée. Une lecture qui progresse n'est jamais interrompue. Une notification qui attend son tour plus longtemps que ce délai, multiplié par le nombre de notifications devant elle, n'est pas diffusée. Entre 10 et 3600 sec (par défaut : 60sec).}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <input class="configKey form-control" type="number" data-l1key="cmdWaitTimeout" min="0" max="3600" placeholder="{{Timeout}}" />
+                    <input class="configKey form-control" type="number" data-l1key="cmdWaitTimeout" min="10" max="3600" placeholder="{{Timeout}}" />
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Timeout de l'API 'GenerateTTS' (secondes)}}
+                <label class="col-lg-3 control-label">{{Timeout de l'API 'GenerateTTS' (sec)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Timeout (entre 5 et 300 sec) d'attente de la génération du fichier TTS lors d'un appel via API (par défaut : 30sec)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -1191,7 +1191,7 @@ if (file_exists($_piperCatalogPath)) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Timeout IA avec réflexion (secondes)}}
+                <label class="col-lg-3 control-label">{{Timeout IA avec réflexion (sec)}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Temps maximal (entre 30 et 300 sec) accordé à l'IA lorsque l'option <b>aithinking</b> est utilisée pour une commande (par défaut : 60sec). Sans cette option, le délai reste de 30sec.}}"></i></sup>
                 </label>
