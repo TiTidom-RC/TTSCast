@@ -3,7 +3,8 @@
 - Notification sans option : un ticket, servi dans l'ordre d'arrivée.
 - Option « wait » : les notifications d'un même processus PHP (PID) forment un bloc, qui prend une seule place dans la file ; à l'intérieur,
   l'ordre suit la valeur de « wait » (puis l'ordre d'arrivée à valeur égale), quel que soit l'ordre d'arrivée réel.
-- Option « force » : passe devant tout le monde, sans prendre de place ; la file est gelée tant qu'un « force » est en cours.
+- Option « force » : passe devant tout le monde, sans prendre de place ; la file est gelée tant qu'un « force » est en cours. La
+  notification qui occupait l'équipement est abandonnée si elle n'avait pas lancé sa diffusion ; sinon le « force » attend sa sortie.
 
 Une notification en attente n'est jamais abandonnée tant que la file avance : seule une attente plus longue que l'âge maximal (queueMaxAge)
 l'écarte. Chaque notification qui occupe l'équipement déclare son étape et une échéance (setPhase / phase / progress) ; une notification
@@ -23,6 +24,8 @@ DONE = 'done'
 ABANDONED = 'abandoned'  # attente plus longue que l'âge maximal
 ORPHANED = 'orphaned'  # déclarée bloquée par la file
 FINISHED = (DONE, ABANDONED, ORPHANED)
+
+LAUNCHED_PHASES = ('lancement', 'lecture')  # étapes à partir desquelles la notification agit sur l'enceinte
 
 _local = threading.local()
 
@@ -71,11 +74,8 @@ class Ticket:
         self.phase = None
         self.lastActivity = now
         self.deadline = None
-        self.streamEndedAt = None  # fin de l'envoi d'un flux live (Gemini en streaming), renseignée par le thread du flux
-
-    @property
-    def orphaned(self):
-        return self.state == ORPHANED
+        self.streamAudioSeconds = None  # durée de l'audio d'un flux live (Gemini en streaming), renseignée par le thread du flux à la fin de l'envoi
+        self.streamEndedAt = None  # fin de l'envoi de ce flux, renseignée après streamAudioSeconds
 
     def label(self):
         if self.kind == 'force':
@@ -162,8 +162,7 @@ class DeviceQueue:
         """ Attend le tour de ticket. True : la notification occupe l'équipement ; False : abandonnée (âge) ou orpheline """
         tag = f'[DAEMON][WaitQueue][{ticket.callerName}]'
         if ticket.kind == 'force':
-            _setCurrent(ticket)
-            return True
+            return self._holdForce(ticket, tag, clock, sleep)
         with self.lock:
             if ticket.state == PREPARING:
                 ticket.state = READY
@@ -179,6 +178,34 @@ class DeviceQueue:
                 logging.debug('%s Pas de diffusion pour %s (%s)', tag, ticket.label(), outcome)
                 return False
             sleep(0.1)
+
+    def _holdForce(self, ticket, tag, clock, sleep):
+        """ Tour d'un « force », sans attendre la file. La notification qui occupe l'équipement est abandonnée si elle n'a pas lancé
+        sa diffusion ; sinon le force attend sa sortie (volume rétabli, application arrêtée), au plus queueForceCutWait secondes """
+        deadline = clock() + self.config.queueForceCutWait
+        while True:
+            now = clock()
+            with self.lock:
+                if ticket.state == ORPHANED:
+                    logging.debug('%s Pas de diffusion pour %s (orphaned)', tag, ticket.label())
+                    return False
+                holder = self._activeHolder()
+                if holder is None:
+                    break
+                if holder.phase not in LAUNCHED_PHASES:
+                    holder.state = ORPHANED
+                    logging.info('%s %s non diffusée pour %s : une notification « force » passe devant.', tag, holder.label(), self.uuid)
+                    self._advance()
+                    break
+                if now >= deadline:
+                    holder.state = ORPHANED
+                    logging.warning('%s %s toujours en cours pour %s %ds après sa coupure par une notification « force » : elle est abandonnée.',
+                                    tag, holder.label(), self.uuid, int(self.config.queueForceCutWait))
+                    self._advance()
+                    break
+            sleep(0.1)
+        _setCurrent(ticket)
+        return True
 
     def step(self, ticket, now):
         """ Une vérification de l'attente : 'turn', 'wait', 'abandoned' ou 'orphaned' """
@@ -231,6 +258,12 @@ class DeviceQueue:
             return self.serving == ticket.number
         block = ticket.block
         return self.serving == block.number and block.activeMember() is None and block.nextMember() is ticket
+
+    def _activeHolder(self):
+        """ Notification de la file (hors « force ») qui occupe l'équipement, ou None """
+        unit = self.units.get(self.serving)
+        holder = unit.activeMember() if isinstance(unit, Block) else unit
+        return holder if holder is not None and holder.state == ACTIVE else None
 
     def _blockers(self):
         """ Notifications qui occupent l'équipement ou dont la suite de la file attend la préparation """

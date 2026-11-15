@@ -2,6 +2,7 @@
 Horloge simulée et faux contrôleur média : aucune attente réelle, aucun appareil.
 Lancement depuis resources/ttscastd :  python -m unittest discover -s tests -t . """
 
+import threading
 import types as pytypes
 import unittest
 from unittest import mock
@@ -118,18 +119,37 @@ class WaitPlaybackEndTest(unittest.TestCase):
         self.assertLess(sc.elapsed(), 2)
 
     def test_loadFailed(self):
+        """ Échec de chargement (code 102) : fin immédiate, warning avec le code expliqué et le fichier du cache, signalement à Jeedom """
         def fail(sc):
-            myConfig.loadFailures[str(sc.cast.uuid)] = sc.now
+            myConfig.loadFailures[str(sc.cast.uuid)] = (sc.now, 102)
         sc = Scenario([(1, fail)])
-        self.assertEqual(sc.run(), 'error')
+        cacheUrl = 'http://jeedom/plugins/ttscast/core/php/ttscast.audio.proxy.php?type=tts&file=6f47f866.mp3'
+        with self.assertLogs(level='WARNING') as logs:
+            self.assertEqual(sc.run(mediaUrl=cacheUrl), 'error')
         self.assertLess(sc.elapsed(), 2)
+        self.assertIn('MEDIA_DECODE (fichier audio illisible ou corrompu), code 102 (fichier : 6f47f866.mp3)', logs.output[0])
+        sent = [value for key, value in ttscastd.Comm.sendToJeedom.sent if key == 'immediate']
+        self.assertEqual(sent, [{'playbackError': {'uuid': str(sc.cast.uuid), 'device': 'Enceinte de test', 'code': 102,
+                                                   'codeName': 'MEDIA_DECODE', 'source': 'tts', 'file': '6f47f866.mp3'}}])
+
+    def test_loadFailedUnknownCodeAndStream(self):
+        """ Code absent de la table : « code N » ; flux Gemini : pas de fichier désigné (tube temporaire) """
+        def fail(sc):
+            myConfig.loadFailures[str(sc.cast.uuid)] = (sc.now, 123)
+        sc = Scenario([(1, fail)])
+        with self.assertLogs(level='WARNING') as logs:
+            self.assertEqual(sc.run(mediaUrl='http://jeedom/proxy.php?type=stream&file=pipe123&rate=24000'), 'error')
+        self.assertIn('code 123 ::', logs.output[0])
+        self.assertNotIn('fichier', logs.output[0])
+        error = ttscastd.Comm.sendToJeedom.sent[-1][1]['playbackError']
+        self.assertEqual((error['codeName'], error['source'], error['file']), ('', 'stream', ''))
 
     def test_loadFailedBeforeRequestIgnored(self):
         sc = Scenario([
             (0.5, state(media_session_id=7, player_state='PLAYING')),
             (3, state(player_state='IDLE', idle_reason='FINISHED')),
         ], playingResponder)
-        myConfig.loadFailures[str(sc.cast.uuid)] = sc.start - 50
+        myConfig.loadFailures[str(sc.cast.uuid)] = (sc.start - 50, 102)
         self.assertEqual(sc.run(), 'finished')
 
     def test_idleError(self):
@@ -294,11 +314,11 @@ class QueueOptionsTest(unittest.TestCase):
             with self.subTest(value=value):
                 self.assertEqual(Functions.parseWaitOption(value), expected)
 
-    def test_parseForceOption(self):
+    def test_parseBoolOption(self):
         for value, expected in ((True, True), (False, False), (1, True), (0, False), ('true', True), (' TRUE ', True),
-                                ('false', False), ('0', False), ('non', False), ('', False), (None, False)):
+                                ('false', False), ('0', False), ('non', False), ('no', False), (' Off ', False), ('', False), (None, False)):
             with self.subTest(value=value):
-                self.assertEqual(Functions.parseForceOption(value), expected)
+                self.assertEqual(Functions.parseBoolOption(value), expected)
 
     def _register(self, options):
         uuid = uuid4()
@@ -306,25 +326,51 @@ class QueueOptionsTest(unittest.TestCase):
         return uuid, Functions.socketRegisterQueue(str(uuid), options, 1234, 'TEST')
 
     def test_invalidWaitQueuedAsAuto(self):
-        uuid, (registered, targetUUID, ticket, cmdWait, cmdForce) = self._register('"wait": -1')
+        uuid, (registered, ticket) = self._register('"wait": -1')
         self.assertTrue(registered)
-        self.assertEqual((ticket.kind, ticket.number, cmdWait, cmdForce), ('auto', 0, None, False))
+        self.assertEqual((ticket.kind, ticket.number), ('auto', 0))
         queue = myConfig.deviceQueues[str(uuid)]
         self.assertEqual(queue.blocksByPid, {})
         Functions.waitQueueExit(ticket)
         self.assertEqual(queue.serving, 1)
 
     def test_forceFalseText(self):
-        _, (registered, _, ticket, _, cmdForce) = self._register('"force": "false"')
+        _, (registered, ticket) = self._register('"force": "false"')
         self.assertTrue(registered)
-        self.assertFalse(cmdForce)
         self.assertEqual((ticket.kind, ticket.number), ('auto', 0))
 
     def test_validWaitOpensBlock(self):
-        uuid, (registered, _, ticket, cmdWait, _) = self._register('"wait": 2')
+        uuid, (registered, ticket) = self._register('"wait": 2')
         self.assertTrue(registered)
-        self.assertEqual((ticket.kind, ticket.waitValue, ticket.number, cmdWait), ('wait', 2, 0, 2))
+        self.assertEqual((ticket.kind, ticket.waitValue, ticket.number), ('wait', 2, 0))
         self.assertEqual(myConfig.deviceQueues[str(uuid)].blocksByPid, {1234: 0})
+
+    def test_unknownDeviceNotRegistered(self):
+        with self.assertLogs(level='WARNING'):
+            self.assertEqual(Functions.socketRegisterQueue(str(uuid4()), '', 1234, 'TEST'), (False, None))
+
+
+class CommandLoopTest(unittest.TestCase):
+    """ Boucle des commandes (eventsFromJeedom) : un message invalide est écarté, la boucle continue """
+    def setUp(self):
+        helpers.resetDaemonState()
+        self.addCleanup(setattr, myConfig, 'IS_ENDING', False)
+
+    def test_invalidMessagesDoNotStopLoop(self):
+        handled = []
+        socketQueue = ttscastd.JEEDOM_SOCKET_MESSAGE
+        with mock.patch.object(Functions, 'purgeCache', side_effect=lambda *a: handled.append(True)), \
+                mock.patch.object(myConfig, 'apiKey', 'cle-de-test'), self.assertLogs(level='ERROR') as logs:
+            for raw in (b'{"cmd": "action"}', b'[1, 2]', b'{"apikey": "cle-de-test"}', b'pas du json',
+                        b'{"cmd": "purgettscache", "apikey": "cle-de-test"}'):
+                socketQueue.put(raw)
+            loop = threading.Thread(target=ttscastd.Loops.eventsFromJeedom, args=(0.05,), daemon=True)
+            loop.start()
+            self.assertTrue(helpers.waitUntil(lambda: handled))
+            myConfig.IS_ENDING = True
+            loop.join(2)
+        self.assertFalse(loop.is_alive())
+        self.assertEqual(len(logs.output), 4)
 
 
 class ForceCutTest(unittest.TestCase):
@@ -342,8 +388,8 @@ class ForceCutTest(unittest.TestCase):
 
     def test_registrationDoesNotWaitForDevice(self):
         uuid, cast = self.addPlayingCast()
-        registered, _, ticket, _, cmdForce = Functions.socketRegisterQueue(str(uuid), '"force": true', 1234, 'TEST')
-        self.assertTrue(registered and cmdForce)
+        registered, ticket = Functions.socketRegisterQueue(str(uuid), '"force": true', 1234, 'TEST')
+        self.assertTrue(registered)
         self.assertEqual(ticket.kind, 'force')
         cast.quit_app.assert_not_called()
         self.assertTrue(myConfig.deviceQueues[str(uuid)].isActive(), 'file gelée dès l\'enregistrement')
@@ -394,7 +440,7 @@ class DashCastForceDisplayTest(unittest.TestCase):
     def ticketKind(self, options):
         uuid = uuid4()
         myConfig.NETCAST_DEVICES[uuid] = pytypes.SimpleNamespace(uuid=uuid, name='Nest Hub de test')
-        return Functions.socketRegisterQueue(str(uuid), options, 1234, 'dashcast')[2].kind
+        return Functions.socketRegisterQueue(str(uuid), options, 1234, 'dashcast')[1].kind
 
     def test_forceDisplayOnly(self):
         self.assertTrue(self.display('"force_display": true'))
@@ -411,6 +457,28 @@ class DashCastForceDisplayTest(unittest.TestCase):
     def test_noOption(self):
         self.assertFalse(self.display(None))
         self.assertFalse(self.display('"force_display": "false"'))
+
+    def test_quitAppTextOption(self):
+        """ Option booléenne écrite en texte : "false" vaut faux """
+        for options, expected in (('"quit_app": "false"', False), ('"quit_app": true', True)):
+            cast = mock.Mock(status=pytypes.SimpleNamespace(app_id=None))
+            with self.subTest(options=options), mock.patch.object(ttscastd.dashcast, 'DashCastController', return_value=mock.Mock()), \
+                    mock.patch.object(Functions, 'trackPluginSession'), mock.patch.object(ttscastd.time, 'sleep'):
+                Functions.controllerDashCast(cast, str(uuid4()), 'https://exemple.fr', options)
+                self.assertEqual(cast.quit_app.called, expected)
+
+    def test_orphanedCommandNotLaunched(self):
+        """ Commande déclarée bloquée par la file pendant son lancement : la page n'est pas chargée """
+        queue = waitqueue.DeviceQueue('enceinte-test', myConfig)
+        ticket = queue.register('auto', 'dashcast')
+        self.assertTrue(queue.hold(ticket))
+        self.addCleanup(waitqueue._setCurrent, None)
+        ticket.state = waitqueue.ORPHANED
+        player = mock.Mock()
+        with mock.patch.object(ttscastd.dashcast, 'DashCastController', return_value=player), mock.patch.object(ttscastd.time, 'sleep'):
+            self.assertFalse(Functions.controllerDashCast(mock.Mock(status=pytypes.SimpleNamespace(app_id=None)), str(uuid4()),
+                                                         'https://exemple.fr', '"force_display": true'))
+        player.load_url.assert_not_called()
 
 
 class PlaybackWithQueueTest(unittest.TestCase):
@@ -447,16 +515,45 @@ class PlaybackWithQueueTest(unittest.TestCase):
         self.assertEqual(self.ticket.phase, 'lecture')
         self.assertGreater(self.ticket.deadline, sc.start + 290)
 
-    def test_liveStreamCapAfterStreamEnd(self):
-        """ Flux live entièrement envoyé, mais l'enceinte reste en lecture : arrêt au bout du délai """
-        def streamEnd(sc):
+    def streamEnd(self, audioSeconds):
+        """ Fin de l'envoi d'un flux live de audioSeconds secondes d'audio (comme geminiTTSStream) """
+        def action(sc):
+            self.ticket.streamAudioSeconds = audioSeconds
             self.ticket.streamEndedAt = sc.now
+        return action
+
+    def test_liveStreamLongerThanTimeoutNotCut(self):
+        """ Flux de 90 s envoyé en 30 s (génération plus rapide que la lecture) : lu jusqu'au bout """
         sc = Scenario([
             (0.5, state(media_session_id=7, player_state='PLAYING', stream_type='LIVE')),
-            (30, streamEnd),
+            (30, self.streamEnd(90)),
+            (90.5, state(player_state='IDLE', idle_reason='FINISHED')),
         ], lambda sc: sc.mc.apply(current_time=0.0))
-        self.assertEqual(sc.run(), 'stalled')
-        self.assertAlmostEqual(sc.elapsed(), 30 + TIMEOUT, delta=0.2)
+        self.assertEqual(sc.run(), 'finished')
+        self.assertAlmostEqual(sc.elapsed(), 90.5, delta=0.2)
+
+    def test_liveStreamStuckAfterAudio(self):
+        """ Flux de 40 s entièrement lu, mais l'enceinte reste en lecture : arrêt au bout du délai après la fin de l'audio """
+        sc = Scenario([
+            (0.5, state(media_session_id=7, player_state='PLAYING', stream_type='LIVE')),
+            (20, self.streamEnd(40)),
+        ], lambda sc: sc.mc.apply(current_time=0.0))
+        with self.assertLogs(level='WARNING') as logs:
+            self.assertEqual(sc.run(), 'stalled')
+        self.assertAlmostEqual(sc.elapsed(), 0.5 + 40 + TIMEOUT, delta=0.3)
+        self.assertIn('après la fin de l\'audio (40s)', logs.output[0])
+
+    def test_liveStreamPauseNotCounted(self):
+        """ Pause pendant un flux : le temps en pause ne compte pas dans le temps de lecture """
+        sc = Scenario([
+            (0.5, state(media_session_id=7, player_state='PLAYING', stream_type='LIVE')),
+            (10, state(player_state='PAUSED')),
+            (10 + TIMEOUT - 2, state(player_state='PLAYING')),
+            (20, self.streamEnd(40)),
+        ], lambda sc: sc.mc.apply(current_time=0.0))
+        with self.assertLogs(level='WARNING'):
+            self.assertEqual(sc.run(), 'stalled')
+        self.assertAlmostEqual(sc.elapsed(), 0.5 + 40 + TIMEOUT + (TIMEOUT - 2), delta=0.3)
 
 
 if __name__ == '__main__':
