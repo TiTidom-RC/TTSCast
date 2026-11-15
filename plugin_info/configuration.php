@@ -918,8 +918,10 @@ if (file_exists($_piperCatalogPath)) {
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsAIModel">
-                        <option value="gemini-3.5-flash-lite" selected>Gemini 3.5 Flash-Lite</option>
+                        <option disabled>--- {{Gemini 4}} ---</option>
                         <option value="gemini-4-hydrogen">Gemini 4 Hydrogen</option>
+                        <option disabled>--- {{Gemini 3.5}} ---</option>
+                        <option value="gemini-3.5-flash-lite" selected>Gemini 3.5 Flash-Lite</option>
                     </select>
                 </div>
             </div>
@@ -978,8 +980,9 @@ if (file_exists($_piperCatalogPath)) {
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="geminiTTSModel">
-                        <option value="gemini-3.8-flash-lite-tts" selected>Gemini 3.8 Flash-Lite TTS</option>
+                        <option disabled>--- {{Gemini 3.8}} ---</option>
                         <option value="gemini-3.8-flash-tts">Gemini 3.8 Flash TTS</option>
+                        <option value="gemini-3.8-flash-lite-tts" selected>Gemini 3.8 Flash-Lite TTS</option>
                     </select>
                 </div>
             </div>
