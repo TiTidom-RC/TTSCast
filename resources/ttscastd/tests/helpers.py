@@ -68,6 +68,7 @@ def resetDaemonState():
     config.ipDiscoveryEnabled = True
     config.IS_ENDING = False
     config.pluginSessions = {}
+    config.loadFailures = {}
     ttscastd.myCast.ipHostsApplied = set()
     comm = FakeComm()
     ttscastd.Comm.sendToJeedom = comm

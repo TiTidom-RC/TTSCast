@@ -558,9 +558,9 @@ class ttscast extends eqLogic
 
             # Options
             $optionKeys = [
-                'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
-                'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp', 'aimodel', 'aithinking', 'ttsmodel',
-                'engine', 'streaming'
+                'force', 'force_display', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
+                'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aimodel', 'aithinking', 'ttsmodel',
+                'engine', 'streaming', 'speaker'
             ];
             foreach ($optionKeys as $key) {
                 if (array_key_exists($key, $data)) {

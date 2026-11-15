@@ -13,7 +13,6 @@
         "aimodel",
         "aiprojectid",
         "aisysprompt",
-        "aitemp",
         "aithinking",
         "aitone",
         "aiusecustomsysprompt",
@@ -163,5 +162,6 @@
             "envManager": "ms-python.python:venv",
             "packageManager": "ms-python.python:pip"
         }
-    ]
+    ],
+    "files.eol": "\n"
 }
