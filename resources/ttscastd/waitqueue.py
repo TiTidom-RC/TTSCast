@@ -4,8 +4,8 @@
 - Option « wait » : les notifications d'un même processus PHP (PID) forment un bloc, qui prend une seule place dans la file ; à l'intérieur,
   l'ordre suit la valeur de « wait » (puis l'ordre d'arrivée à valeur égale), quel que soit l'ordre d'arrivée réel.
 - Option « force » : passe devant tout le monde, sans prendre de place ; la file est gelée tant qu'un « force » est en cours. À son
-  tour, la notification qui occupait l'équipement est abandonnée si elle n'avait pas lancé sa diffusion ; la diffusion en cours est
-  coupée et le « force » attend la sortie de la notification coupée.
+  tour, la notification qui occupait l'équipement est abandonnée si elle n'avait pas lancé sa diffusion ; sinon le « force » attend
+  la fin de son lancement, coupe la diffusion en cours et attend la sortie de la notification coupée.
 
 Une notification en attente n'est jamais abandonnée tant que la file avance : seule une attente plus longue que l'âge maximal (queueMaxAge)
 l'écarte. Chaque notification qui occupe l'équipement déclare son étape et une échéance (setPhase / phase / progress) ; une notification
@@ -182,8 +182,9 @@ class DeviceQueue:
 
     def _holdForce(self, ticket, tag, clock, sleep, cut):
         """ Tour d'un « force », sans attendre la file : abandon de la notification de la file qui n'a pas lancé sa diffusion, puis
-        coupure de la diffusion en cours (cut), puis attente de la sortie des notifications qui l'avaient lancée (volume rétabli,
-        application arrêtée), au plus queueForceCutWait secondes. Un autre « force » qui n'a pas lancé sa diffusion n'est pas attendu """
+        attente de la fin du lancement des notifications en cours (pour que la coupure atteigne leur diffusion), puis coupure de la
+        diffusion en cours (cut), puis attente de la sortie des notifications qui l'avaient lancée (volume rétabli, application
+        arrêtée). Chaque attente dure au plus queueForceCutWait secondes. Un autre « force » qui n'a pas lancé sa diffusion n'est pas attendu """
         with self.lock:
             if ticket.state == ORPHANED:
                 logging.debug('%s Pas de diffusion pour %s (orphaned)', tag, ticket.label())
@@ -193,6 +194,17 @@ class DeviceQueue:
                 holder.state = ORPHANED
                 logging.info('%s Notification non diffusée : %s pour %s, une notification « force » passe devant.', tag, holder.label(), self.uuid)
                 self._advance()
+        deadline = clock() + self.config.queueForceCutWait
+        while True:
+            with self.lock:
+                if ticket.state == ORPHANED:
+                    logging.debug('%s Pas de diffusion pour %s (orphaned)', tag, ticket.label())
+                    return False
+                if not any(t.phase == 'lancement' for t in self._launchedOccupants() if t is not ticket):
+                    break
+            if clock() >= deadline:
+                break
+            sleep(0.1)
         if cut is not None:
             cut()
         deadline = clock() + self.config.queueForceCutWait

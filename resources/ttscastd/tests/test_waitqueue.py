@@ -327,20 +327,43 @@ class HoldAndHelpersTest(QueueTestCase):
         self.assertEqual(a.state, DONE)
 
     def test_forceWaitForCutNotificationIsBounded(self):
-        """ Notification coupée qui ne sort pas : abandonnée au bout de queueForceCutWait, le force passe """
+        """ Notification bloquée dans son lancement : coupure au bout de queueForceCutWait, puis abandon queueForceCutWait plus tard,
+        le force passe """
         a = self.auto()
         self.ready(a)
         self.step(a)
         a.setPhase('lancement', 60, self.now)
         force = self.q.register('force', 'TTS', self.now)
+        cutAt = []
 
         def sleep(_seconds):
             self.now += 0.1
         with self.assertLogs(level='WARNING') as logs:
-            self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep))
-        self.assertAlmostEqual(self.now, CONFIG.queueForceCutWait, delta=0.11)
+            self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep, cut=lambda: cutAt.append(self.now)))
+        self.assertAlmostEqual(cutAt[0], CONFIG.queueForceCutWait, delta=0.11)
+        self.assertAlmostEqual(self.now, 2 * CONFIG.queueForceCutWait, delta=0.21)
         self.assertEqual(a.state, ORPHANED)
         self.assertIn('toujours en cours', logs.output[0])
+
+    def test_forceCutsAfterLaunch(self):
+        """ Notification en cours de lancement (volume réglé, diffusion pas encore lancée) : la coupure attend le début de sa
+        lecture, sinon elle ne couperait rien ; la notification coupée sort ensuite normalement """
+        a = self.auto()
+        self.ready(a)
+        self.step(a)
+        a.setPhase('lancement', 60, self.now)
+        force = self.q.register('force', 'TTS', self.now)
+        cutAt = []
+
+        def sleep(_seconds):
+            self.now += 0.1
+            if a.phase == 'lancement' and self.now >= 3:
+                a.setPhase('lecture', 20, self.now)
+            if cutAt and self.now >= cutAt[0] + 0.5:
+                self.q.release(a)
+        self.assertTrue(self.q.hold(force, clock=lambda: self.now, sleep=sleep, cut=lambda: cutAt.append(self.now)))
+        self.assertAlmostEqual(cutAt[0], 3, delta=0.11)
+        self.assertEqual(a.state, DONE)
 
     def test_orphanedForceDoesNotPlay(self):
         """ Force abandonné : ni diffusion ni coupure de ce qui joue """
