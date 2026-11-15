@@ -74,7 +74,7 @@ class Config:
     # AI Configuration
     # Clés d'options consommées par le démon (jamais renvoyées comme options de notification)
     DAEMON_OPTION_KEYS = frozenset({
-        'genai', 'aitone', 'aisysprompt', 'aitemp', 'aimodel', 'aithinking',  # IA
+        'genai', 'aitone', 'aisysprompt', 'aimodel', 'aithinking',  # IA
         'ssml', 'markup', 'style', 'before', 'voice', 'speaker', 'ttsmodel',  # TTS voix / format
         'engine',                                     # TTS moteur (override par commande)
         'volume', 'ding', 'wait', 'force',            # TTS comportement
@@ -85,7 +85,7 @@ class Config:
     aiAuthMode = 'noMode'  # 'noMode', 'apikey', 'oauth2'
     aiProjectID = 'noProjectID'  # Google Cloud Project ID for AI
     aiApiKey = ''
-    aiModel = 'noModel'  # 'noModel', 'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.1-pro-preview'
+    aiModel = 'noModel'  # modèle de reformulation de la configuration, parmi aiModels
     aiDefaultTone = 'enthousiaste et humoristique'  # Default tone for AI TTS
     aiBaseTimeout = 30  # secondes — délai de l'appel IA sans réflexion
     aiMaxTimeout = 60  # secondes — délai maximal de l'appel IA (avec réflexion), réglage de la page de configuration (ttsAIMaxTimeout), transmis au démarrage
@@ -94,18 +94,13 @@ class Config:
     geminiRetryDelays = (1, 2)  # secondes — attente avant la 2e puis la 3e tentative (sauf retryDelay indiqué par Gemini)
     geminiRetryMinRemaining = 5  # secondes — pas de nouvelle tentative s'il reste moins que cela dans le délai de l'appel
     geminiRetryHttpCodes = (429, 500, 502, 503, 504)  # trop de requêtes, erreurs serveur et surcharge : erreurs rapides et transitoires
-    # Modèles de reformulation autorisés via l'option aimodel (à garder alignés sur la liste de plugin_info/configuration.php)
-    aiAllowedModels = (
-        'gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-3.1-flash-lite',
-        'gemini-flash-lite-latest', 'gemini-flash-latest', 'gemini-3.1-pro-preview',
-    )
-    # Niveaux de réflexion (thinking_level) acceptés par modèle, d'après la documentation officielle Google.
-    # Un modèle absent de cette table n'accepte pas l'option aithinking (niveaux non documentés).
-    aiThinkingLevels = {
-        'gemini-3.8-flash': ('low', 'medium', 'high'),
-        'gemini-3.5-flash': ('minimal', 'low', 'medium', 'high'),
+    # Modèles de reformulation et niveaux de réflexion (thinking_level) acceptés, d'après la documentation Google, du plus bas
+    # au plus haut. Le premier niveau est envoyé quand aucun niveau n'est demandé (option aithinking) : Gemini 3 et 4 ne
+    # permettent pas de désactiver la réflexion, et thinking_budget est refusé à partir de Gemini 3.5.
+    # Aucune température n'est envoyée : ces modèles l'ignorent.
+    aiModels = {
         'gemini-3.5-flash-lite': ('minimal', 'low', 'medium', 'high'),
-        'gemini-3.1-pro-preview': ('low', 'medium', 'high'),
+        'gemini-4-hydrogen': ('low', 'medium', 'high', 'xhigh'),
     }
     
     def aiSysPrompt(self, aiCustomTone=None):
@@ -130,22 +125,16 @@ class Config:
     # Gemini TTS Configuration
     geminiTTSEnabled = False
     geminiTTSModel   = 'noModel'
-    # Modèles Gemini TTS autorisés via l'option ttsmodel (à garder alignés sur la liste de plugin_info/configuration.php)
-    geminiTTSAllowedModels = ('gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts', 'gemini-3.1-flash-tts-preview')
-    # Modèles Gemini TTS dont le texte est une transcription verbatim : le style passe par speech_metadata
-    # (à compléter pour les futurs modèles, ex. 3.9). Les autres modèles utilisent le prompt "style + ### TRANSCRIPT".
-    geminiTTSSpeechMetadataModels = ('gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts')
+    # Modèles Gemini TTS
+    geminiTTSAllowedModels = ('gemini-3.8-flash-tts', 'gemini-3.8-flash-lite-tts')
     geminiTTSDefault = False
     geminiTTSTimeout = 30  # secondes — délai total d'un appel Gemini TTS (relances comprises)
-    # Version de l'API Gemini Developer (clé API) : google-genai utilise 'v1' par défaut depuis la 3.0, où la sortie audio (speech_config,
+    # Version de l'API Gemini Developer (clé API) : google-genai utilise 'v1' par défaut, version sans sortie audio (speech_config,
     # Gemini TTS) n'existe pas. Le mode Enterprise (oauth2) n'est pas concerné (v1beta1 par défaut).
     geminiApiVersion = 'v1beta'
     geminiTTSStyle   = ''  # Style par défaut, peut être surchargé par style: dans les options de scénario
     streamingDefault = False  # Gemini TTS uniquement — ignoré pour les autres moteurs
 
-    def geminiTTSUsesSpeechMetadata(self, modelId):
-        return modelId in self.geminiTTSSpeechMetadataModels
-    
     # Paths for various resources
     mediaFolder = 'data/media'
     mediaFullPath = os.path.abspath(os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), mediaFolder))

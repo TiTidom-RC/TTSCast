@@ -115,6 +115,40 @@ class GeminiRetryTest(unittest.TestCase):
         self.assertEqual(config.http_options.timeout, 12345)
         self.assertEqual(config.temperature, 0.3)
 
+    FAILED_PRECONDITION = genaiErrors.APIError(400, {'error': {'code': 400, 'message': 'x', 'status': 'FAILED_PRECONDITION'}})
+
+    def adviceFor(self, authMode, error):
+        with mock.patch.object(ttscastd.myConfig, 'aiAuthMode', authMode):
+            return TTSCast.geminiErrorAdvice(error)
+
+    def testErrorAdviceApiKey(self):
+        for code, expected in ((401, 'identifiants Gemini refusés'), (402, 'crédit Gemini épuisé'),
+                               (403, 'accès Gemini refusé : vérifiez la clé et la facturation')):
+            with self.subTest(code=code):
+                self.assertTrue(self.adviceFor('apikey', apiError(code)).startswith(' — ' + expected))
+        self.assertIn('facturation Gemini à activer', self.adviceFor('apikey', self.FAILED_PRECONDITION))
+        self.assertEqual(self.adviceFor('apikey', apiError(404)), '')  # modèle introuvable : rien à corriger par l'utilisateur
+
+    def testErrorAdviceOauth2(self):
+        for code, expected in ((401, 'identifiants Gemini refusés'), (403, 'accès Gemini refusé : vérifiez dans la console Google Cloud'),
+                               (404, 'projet Gemini introuvable : vérifiez l\'ID du projet')):
+            with self.subTest(code=code):
+                self.assertTrue(self.adviceFor('oauth2', apiError(code)).startswith(' — ' + expected))
+        self.assertEqual(self.adviceFor('oauth2', apiError(402)), '')
+        self.assertEqual(self.adviceFor('oauth2', self.FAILED_PRECONDITION), '')
+
+    def testNoAdviceForPassingOrPluginErrors(self):
+        for authMode in ('apikey', 'oauth2'):
+            for code in (400, 429, 500, 503, 504):
+                with self.subTest(authMode=authMode, code=code):
+                    self.assertEqual(self.adviceFor(authMode, apiError(code)), '')
+            self.assertEqual(self.adviceFor(authMode, ValueError('x')), '')
+
+    def testCreditDepletedNotRetried(self):
+        result, timeouts = self.run_([apiError(402), 'ok'])
+        self.assertIsInstance(result, genaiErrors.APIError)
+        self.assertEqual(len(timeouts), 1)
+
     def testRetryDelayAbsent(self):
         self.assertIsNone(TTSCast.geminiRetryDelay(apiError(503)))
         self.assertIsNone(TTSCast.geminiRetryDelay(ValueError()))
@@ -123,7 +157,8 @@ class GeminiRetryTest(unittest.TestCase):
 class GeminiApiVersionTest(unittest.TestCase):
     """ Mode clé API : clients créés en v1beta (google-genai utilise v1 par défaut, sans sortie audio pour Gemini TTS) """
     def setUp(self):
-        settings = {'aiAuthMode': 'apikey', 'aiApiKey': 'cle-de-test', 'gCloudApiKey': 'noKey', 'aiProjectID': 'noProjectID'}
+        settings = {'aiAuthMode': 'apikey', 'aiApiKey': 'cle-de-test', 'gCloudApiKey': 'noKey', 'aiProjectID': 'noProjectID',
+                    'aiModel': 'gemini-3.5-flash-lite', 'geminiTTSModel': 'gemini-3.8-flash-lite-tts'}
         for name, value in settings.items():
             patcher = mock.patch.object(ttscastd.myConfig, name, value)
             patcher.start()
