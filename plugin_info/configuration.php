@@ -912,29 +912,16 @@ if (file_exists($_piperCatalogPath)) {
             <br>
             <div class="form-group">
                 <label class="col-lg-3 control-label">{{Modèle IA (Reformulation)}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/><b>Gemini 3.8 :</b><br/>• Gemini 3.8 Flash : In $0.75 | Out $3.75 (jusqu'au 31/12/2026)<br/><br/><b>Gemini 3.5 :</b><br/>• Gemini 3.5 Flash : In $1.50 | Out $9.00<br/>• Gemini 3.5 Flash-Lite : In $0.30 | Out $2.50<br/><br/><b>Gemini 3.1 :</b><br/>• Gemini 3.1 Flash-Lite : In $0.25 | Out $1.50 (arrêt prévu le 07/05/2027)<br/><br/><b>Versions Latest (Mise à jour auto) :</b><br/>⚠️ Prix variable selon le modèle résolu.<br/><br/><b>Versions Preview (Beta) :</b><br/>• Gemini 3.1 Pro Preview : In $2.00 | Out $12.00"></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens :</b><br/><br/>• Gemini 3.5 Flash-Lite : In $0.30 | Out $2.50<br/>• Gemini 4 Hydrogen : In $1.50 | Out $7.50<br/><br/>Les tokens de réflexion (option aithinking) sont facturés comme des tokens de sortie."></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.}}"></i></sup>            
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Modèle d'IA utilisé pour la reformulation. Gemini 3.5 Flash-Lite est le plus rapide et le plus économique. Gemini 4 Hydrogen est plus fiable, notamment pour les réponses qui demandent une recherche en ligne, avec un temps de réponse et un coût plus élevés.}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="ttsAIModel">
-                        <!-- Gemini 3.8 -->
-                        <option disabled>--- {{Gemini 3.8}} ---</option>
-                        <option value="gemini-3.8-flash">Gemini 3.8 Flash</option>
-                        <!-- Gemini 3.5 -->
+                        <option disabled>--- {{Gemini 4}} ---</option>
+                        <option value="gemini-4-hydrogen">Gemini 4 Hydrogen</option>
                         <option disabled>--- {{Gemini 3.5}} ---</option>
-                        <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
                         <option value="gemini-3.5-flash-lite" selected>Gemini 3.5 Flash-Lite</option>
-                        <!-- Gemini 3.1 -->
-                        <option disabled>--- {{Gemini 3.1}} ---</option>
-                        <option value="gemini-3.1-flash-lite">Gemini 3.1 Flash-Lite</option>
-                        <!-- Versions Latest (Mise à jour automatique) -->
-                        <option disabled>--- {{Versions Latest (Mise à jour auto)}} ---</option>
-                        <option value="gemini-flash-lite-latest">⚠️ Gemini Flash Lite Latest</option>
-                        <option value="gemini-flash-latest">⚠️ Gemini Flash Latest</option>
-                        <!-- Modèles Preview (Nouvelles fonctionnalités) -->
-                        <option disabled>--- {{Versions Preview (Beta)}} ---</option>
-                        <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro Preview</option>
                     </select>
                 </div>
             </div>
@@ -987,19 +974,15 @@ if (file_exists($_piperCatalogPath)) {
             </div>
             <div class="form-group customform-geminiTTS">
                 <label class="col-lg-3 control-label">{{Modèle Gemini TTS}}
-                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens (palier Standard) :</b><br/><br/><b>Gemini 3.8 :</b><br/>• Gemini 3.8 Flash-Lite TTS : In $0.50 | Out $6.00 (audio) jusqu'au 31/12/2026, puis In $1.00 | Out $12.00<br/>• Gemini 3.8 Flash TTS : In $0.50 | Out $9.00 (audio) jusqu'au 31/12/2026, puis In $1.00 | Out $18.00<br/><br/><b>Gemini 3.1 :</b><br/>• Gemini 3.1 Flash TTS : In $1.00 | Out $20.00 (audio)<br/><br/>⚠️ 25 tokens audio = 1 seconde. Un message de 5s ≈ 125 tokens audio.<br/>En usage domotique typique, le coût reste raisonnable (&lt;$0.002 / 1 000 notifs)."></i></sup>
+                    <sup><i class="fas fa-dollar-sign tooltips" style="color:var(--al-danger-color)!important;" title="<b>Tarifs par Million de tokens (palier Standard) :</b><br/><br/><b>Gemini 3.8 :</b><br/>• Gemini 3.8 Flash-Lite TTS : In $0.50 | Out $6.00 (audio) jusqu'au 31/12/2026, puis In $1.00 | Out $12.00<br/>• Gemini 3.8 Flash TTS : In $0.50 | Out $9.00 (audio) jusqu'au 31/12/2026, puis In $1.00 | Out $18.00<br/><br/>⚠️ 25 tokens audio = 1 seconde. Un message de 5s ≈ 125 tokens audio.<br/>En usage domotique typique, le coût reste raisonnable (&lt;$0.002 / 1 000 notifs)."></i></sup>
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Modèle Gemini TTS à utiliser. Flash-Lite est rapide et économique, adapté aux notifications. Flash est plus expressif, pour un rendu plus soigné.}}"></i></sup>
                 </label>
                 <div class="col-lg-2">
                     <select class="configKey form-control" data-l1key="geminiTTSModel">
-                        <!-- Gemini 3.8 (Recommandé) -->
-                        <option disabled>--- {{Gemini 3.8 (Recommandé)}} ---</option>
+                        <option disabled>--- {{Gemini 3.8}} ---</option>
                         <option value="gemini-3.8-flash-tts">Gemini 3.8 Flash TTS</option>
                         <option value="gemini-3.8-flash-lite-tts" selected>Gemini 3.8 Flash-Lite TTS</option>
-                        <!-- Gemini 3.1 -->
-                        <option disabled>--- {{Gemini 3.1}} ---</option>
-                        <option value="gemini-3.1-flash-tts-preview">Gemini 3.1 Flash TTS Preview</option>
                     </select>
                 </div>
             </div>
@@ -1174,16 +1157,16 @@ if (file_exists($_piperCatalogPath)) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Durée maximale de l'option 'Wait' (secondes)}}
-                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>        
-                    <sup><i class="fas fa-question-circle tooltips" title="{{Temps (entre 0 et 3600 sec) au bout duquel la commande est dans tous les cas exécutée, même si l'équipement Google est encore en cours de lecture (par défaut : 60sec)}}"></i></sup>
+                <label class="col-lg-3 control-label">{{Timeout sans progression (sec)}}
+                    <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
+                    <sup><i class="fas fa-question-circle tooltips" title="{{Une notification dont la lecture n'avance plus pendant ce délai (pause, chargement ou mise en mémoire tampon bloqués) est arrêtée, et la suivante est diffusée. Une lecture qui progresse n'est jamais interrompue. Entre 10 et 3600 sec (par défaut : 60sec).}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
-                    <input class="configKey form-control" type="number" data-l1key="cmdWaitTimeout" min="0" max="3600" placeholder="{{Timeout}}" />
+                    <input class="configKey form-control" type="number" data-l1key="cmdWaitTimeout" min="10" max="3600" placeholder="{{Timeout}}" />
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Timeout de l'API 'GenerateTTS' (secondes)}}
+                <label class="col-lg-3 control-label">{{Timeout de l'API 'GenerateTTS' (sec)}}
                     <sup><i class="fas fa-question-circle tooltips" title="{{Timeout (entre 5 et 300 sec) d'attente de la génération du fichier TTS lors d'un appel via API (par défaut : 30sec)}}"></i></sup>
                 </label>
                 <div class="col-lg-1">
@@ -1191,7 +1174,7 @@ if (file_exists($_piperCatalogPath)) {
                 </div>
             </div>
             <div class="form-group">
-                <label class="col-lg-3 control-label">{{Timeout IA avec réflexion (secondes)}}
+                <label class="col-lg-3 control-label">{{Timeout IA avec réflexion (sec)}}
                     <sup><i class="fas fa-exclamation-triangle tooltips" style="color:var(--al-warning-color)!important;" title="{{Le démon devra être redémarré après la modification de ce paramètre}}"></i></sup>
                     <sup><i class="fas fa-question-circle tooltips" title="{{Temps maximal (entre 30 et 300 sec) accordé à l'IA lorsque l'option <b>aithinking</b> est utilisée pour une commande (par défaut : 60sec). Sans cette option, le délai reste de 30sec.}}"></i></sup>
                 </label>

@@ -97,7 +97,12 @@
         "port": "port"
     },
     "plugins\/ttscast\/core\/php\/jeettscast.php": {
-        "Vous n\\'etes pas autorisé à effectuer cette action": "You are not authorized to perform this action"
+        "Fichier du cache TTS illisible : supprimez-le ou videz le cache (page de configuration du plugin).": "Unreadable TTS cache file: delete it or clear the cache (plugin configuration page).",
+        "Son personnalisé illisible ou format non supporté : remplacez-le.": "Unreadable custom sound or unsupported format: replace it.",
+        "Vous n\\'etes pas autorisé à effectuer cette action": "You are not authorized to perform this action",
+        "code %s": "code %s",
+        "fichier : %s": "file: %s",
+        "Échec de lecture sur %s": "Failed to read from %s"
     },
     "plugins\/ttscast\/core\/php\/ttscast.img.proxy.php": {
         "401 - Accès non autorisé": "401 - Unauthorized Access"
@@ -116,7 +121,7 @@
     },
     "plugins\/ttscast\/core\/template\/scenario\/cmd.aiReformat.html": {
         "Enregistrer dans": "Save to",
-        "Ex : &quot;aitone&quot;: &quot;professionnel&quot;, &quot;aitemp&quot;: 0.7, &quot;aisysprompt&quot;: &quot;Tu es un assistant&quot;": "Ex: \"aitone\": \"professional\", \"aitemp\": 0.7, \"aisysprompt\": \"You are an assistant\"",
+        "Ex : &quot;aitone&quot;: &quot;professionnel&quot;, &quot;aithinking&quot;: &quot;low&quot;, &quot;aisysprompt&quot;: &quot;Tu es un assistant&quot;": "Ex: \"aitone\": \"professional\", \"aithinking\": \"low\", \"aisysprompt\": \"You are an assistant\"",
         "Ex : maVariable ou #[Objet][Eq][Cmd]#": "E.g.: myVariable or #[Object][Eq][Cmd]#",
         "Options IA": "AI Options",
         "Sélectionner la commande": "Select the command",
@@ -298,7 +303,6 @@
         "Demande de mise à jour des listes :: Sounds :: envoyée (voir les logs ttscast)": "Request to update lists :: Sounds :: Sent (See ttscast logs for result)",
         "Demande de purge du cache envoyée (voir les logs du démon pour le résultat)": "Request to purge cache :: Sent (See daemon logs for result)",
         "Durée de conservation du cache (jours)": "Cache retention time (days)",
-        "Durée maximale de l'option 'Wait' (secondes)": "Maximum duration of 'Wait' option (seconds)",
         "Démarrage...": "Getting started...",
         "Démon": "Daemon",
         "Dépendances": "Dependencies",
@@ -326,10 +330,9 @@
         "Format d'encodage audio pour le moteur Google Cloud TTS (MP3 ou LINEAR16). LINEAR16 offre une meilleure qualité (WAV) mais les fichiers sont plus volumineux.": "Audio encoding format for the Google Cloud TTS engine (MP3 or LINEAR16). LINEAR16 offers better quality (WAV) but the files are larger.",
         "Français (fr-FR)": "French (fr-FR)",
         "Fréquence des cycles": "Cycles Frequency",
-        "Gemini 3.1": "Gemini 3.1",
         "Gemini 3.5": "Gemini 3.5",
         "Gemini 3.8": "Gemini 3.8",
-        "Gemini 3.8 (Recommandé)": "Gemini 3.8 (Recommended)",
+        "Gemini 4": "Gemini 4",
         "Gemini TTS - Voix multilingues": "Gemini TTS - Multilingual voices",
         "Google Cloud TTS (Clé API)": "Google Cloud TTS (API key)",
         "Google Translate": "Google Translate",
@@ -392,6 +395,7 @@
         "Modèle Gemini TTS à utiliser. Flash-Lite est rapide et économique, adapté aux notifications. Flash est plus expressif, pour un rendu plus soigné.": "Use the Gemini TTS model. Flash-Lite is fast and economical, suitable for notifications. Flash is more expressive, for a more polished rendering.",
         "Modèle IA (Reformulation)": "AI Model (Rewrite)",
         "Modèle Piper téléchargé avec succès": "Piper model successfully downloaded",
+        "Modèle d'IA utilisé pour la reformulation. Gemini 3.5 Flash-Lite est le plus rapide et le plus économique. Gemini 4 Hydrogen est plus fiable, notamment pour les réponses qui demandent une recherche en ligne, avec un temps de réponse et un coût plus élevés.": "AI model used for rephrasing. Gemini 3.5 Flash-Lite is the fastest and most cost-effective. Gemini 4 Hydrogen is more reliable, especially for responses that require online research, but has a longer response time and higher cost.",
         "Moteur TTS": "TTS Engine",
         "Moteur TTS à utiliser pour la synthèse vocale": "TTS engine to use for speech synthesis",
         "MàJ Custom Radios": "Update Custom Radios",
@@ -462,9 +466,7 @@
         "Supprimer la voix téléchargée": "Delete the downloaded voice",
         "Supprimer la voix téléchargée ? (libère de l\\'espace sur le disque)": "Delete the downloaded voice? (frees up disk space)",
         "Sélectionnez le mode d'authentification à utiliser pour se connecter au moteur d'IA.": "Select the authentication mode to use to connect to the AI engine.",
-        "Sélectionnez le modèle d'IA à utiliser pour la reformulation des réponses.": "Select the AI model to use for response rephrasing.",
         "TTS (Text To Speech)": "TTS (Text To Speech)",
-        "Temps (entre 0 et 3600 sec) au bout duquel la commande est dans tous les cas exécutée, même si l'équipement Google est encore en cours de lecture (par défaut : 60sec)": "Time (between 0 and 3600 sec) after which the command is executed in all cases, even if the Google device is still playing (default: 60sec)",
         "Temps maximal (entre 30 et 300 sec) accordé à l'IA lorsque l'option <b>aithinking<\/b> est utilisée pour une commande (par défaut : 60sec). Sans cette option, le délai reste de 30sec.": "Maximum time (between 30 and 300 seconds) allowed for the AI when the <B>aithinking<\/B> option is used for a command (default: 60 seconds). Without this option, the timeout remains at 30 seconds.",
         "Tester avec Gemini TTS": "Test with Gemini TTS",
         "Tester avec la reformulation IA": "Test with AI rephrasing",
@@ -474,11 +476,13 @@
         "Tests": "Tests",
         "Timeout": "Timeout",
         "Timeout (entre 5 et 300 sec) d'attente de la génération du fichier TTS lors d'un appel via API (par défaut : 30sec)": "Timeout (between 5 and 300 sec) to wait for TTS file generation when calling via PLC (default: 30sec)",
-        "Timeout IA avec réflexion (secondes)": "AI timeout with reflection (seconds)",
-        "Timeout de l'API 'GenerateTTS' (secondes)": "GenerateTTS API timeout (seconds)",
+        "Timeout IA avec réflexion (sec)": "AI timeout with reflection (sec)",
+        "Timeout de l'API 'GenerateTTS' (sec)": "'GenerateTTS' API timeout (sec)",
+        "Timeout sans progression (sec)": "Timeout without progress (sec)",
         "Ton de Reformulation": "Rewording",
         "Télécharger la voix": "Download the voice",
         "URL Jeedom Externe": "Jeedom External URL",
+        "Une notification dont la lecture n'avance plus pendant ce délai (pause, chargement ou mise en mémoire tampon bloqués) est arrêtée, et la suivante est diffusée. Une lecture qui progresse n'est jamais interrompue. Entre 10 et 3600 sec (par défaut : 60sec).": "A notification that is not progressing during this time period (paused, loading, or buffering) is stopped, and the next one is played. A notification that is progressing is never interrupted. Between 10 and 3,600 seconds (default: 60 seconds).",
         "Upload Clé API (OK) :: ": "Upload API Key (OK) :: ",
         "Upload Clé API :: Sauvegarde OK": "Upload API Key :: Save OK",
         "Upload Custom Radios (OK) :: ": "Upload Custom Radios (OK) :: ",
@@ -497,8 +501,6 @@
         "Version de PyEnv utilisée par le Plugin (A indiquer sur Community)": "PyEnv Version used by the Plugin (To give on Community)",
         "Version de Python utilisée par le Plugin (A indiquer sur Community)": "Python Version used by the Plugin (To give on Community)",
         "Version du Plugin (A indiquer sur Community)": "Plugin version (To give on Community)",
-        "Versions Latest (Mise à jour auto)": "Latest versions (Auto update)",
-        "Versions Preview (Beta)": "Preview versions (Beta)",
         "Vider le Cache": "Clear cache",
         "Vitesse de Dictée (Voice RSS TTS)": "Dictation Speed (Voice RSS TTS)",
         "Vitesse de Dictée (gCloud TTS)": "Dictation Speed (gCloud TTS)",
@@ -513,6 +515,9 @@
         "— Sélectionnez une voix —": "— Select a voice —"
     },
     "plugins\/ttscast\/plugin_info\/install.php": {
+        "%s : le modèle %s n\\'est plus proposé, il a été remplacé par %s.": "%s: The %s model is no longer available; it has been replaced by %s.",
+        "Modèle Gemini TTS": "Gemini TTS Model",
+        "Modèle IA (Reformulation)": "AI Model (Rewrite)",
         "Une erreur est survenue à la mise à jour automatique des dépendances. Vérifiez les logs et relancez les dépendances manuellement": "An error occurred during automatic update of dependencies. Check logs and restart dependencies manually",
         "Veuillez vérifier les dépendances": "Please check dependencies"
     }

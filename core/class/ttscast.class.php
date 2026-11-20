@@ -36,7 +36,7 @@ class ttscast extends eqLogic
      * Permet de crypter/décrypter automatiquement des champs de configuration du plugin
      * Exemple : "param1" & "param2" seront cryptés mais pas "param3"
      */
-    public static $_encryptConfigKey = array('voiceRSSAPIKey');    
+    public static $_encryptConfigKey = array('voiceRSSAPIKey', 'ttsAIAPIKey');
 
     /* ************************ Méthodes statiques : Démon & Dépendances *************************** */
 
@@ -558,9 +558,9 @@ class ttscast extends eqLogic
 
             # Options
             $optionKeys = [
-                'force', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
-                'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aitemp', 'aimodel', 'aithinking', 'ttsmodel',
-                'engine', 'streaming'
+                'force', 'force_display', 'reload_seconds', 'quit_app', 'playlist', 'enqueue', 'volume',
+                'ding', 'wait', 'type', 'ssml', 'markup', 'style', 'genai', 'before', 'voice', 'aitone', 'aisysprompt', 'aimodel', 'aithinking', 'ttsmodel',
+                'engine', 'streaming', 'speaker'
             ];
             foreach ($optionKeys as $key) {
                 if (array_key_exists($key, $data)) {
