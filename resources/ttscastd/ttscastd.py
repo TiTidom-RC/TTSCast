@@ -5006,27 +5006,43 @@ class PatternRemapFilter(logging.Filter):
 
 
 class SecretMaskFilter(logging.Filter):
-    """Masque les valeurs des secrets du démon (clés API) dans tous les logs, ceux du démon comme ceux des bibliothèques
-    tierces (ex : urllib3 loguant l'URL complète d'une requête). Filet de sécurité : le démon ne loggue jamais un secret volontairement.
-    Masquage par valeur (et non par nom de champ) : le secret est masqué quel que soit le libellé ou le format qui l'entoure."""
+    """Masque les secrets dans tous les logs, ceux du démon comme ceux des bibliothèques tierces (ex : urllib3 loguant l'URL
+    complète d'une requête). Filet de sécurité : le démon ne loggue jamais un secret volontairement.
+    - Par valeur, les secrets du démon (clés API) : masqués quel que soit le libellé ou le format qui les entoure.
+    - Par motif, les secrets que le démon ne connaît pas d'avance, saisis par l'utilisateur dans l'URL d'un média ou une option (NAS,
+      flux) : identifiants d'une URL, jeton « Bearer », valeur d'un paramètre ou d'un champ sensible (mêmes règles que
+      ttscast::maskSecrets côté PHP)."""
 
     # Écarte les valeurs vides ou par défaut (ex : 'noKey'), qui masqueraient des mots ordinaires — une vraie clé est bien plus longue
     _MIN_SECRET_LENGTH = 8
+    # Noms de paramètres et de champs dont la valeur est masquée (mot exact : « passe » ou « tokens » ne sont pas concernés)
+    _SECRET_KEYS = ('apikey|api_key|token|access_token|refresh_token|accessToken|refreshToken|client_secret|clientSecret|'
+                    'password|passwd|pass|pwd')
+    # Identifiants dans une URL, y compris échappée en JSON (« http:\/\/ ») : l'URL reste lisible ; avant la règle des noms de champs,
+    # « token:… » pouvant être un identifiant. « => » n'est pas un « = » et « [clé:…] » n'est pas « clé: » (code, affichage de tableau)
+    _PATTERNS = (
+        (re.compile(r'''(\b[a-z][a-z0-9+.-]*:(?:\\?/){2})[^\s/?#"'@:\\]+:[^\s/?#"']*@''', re.IGNORECASE | re.ASCII), 'uSeR:{mask}@'),
+        (re.compile(r'''(\b[a-z][a-z0-9+.-]*:(?:\\?/){2})[^\s/?#"':\\]+@''', re.IGNORECASE | re.ASCII), 'uSeR@'),
+        (re.compile(r'''(\bbearer\s+)[^\s"']+''', re.IGNORECASE | re.ASCII), '{mask}'),
+        (re.compile(r'''(?<!\[)(["']?\b(?:''' + _SECRET_KEYS + r''')\b["']?\s*(?::|=(?!>))\s*["']?)[^"'&\s,}]+''', re.IGNORECASE | re.ASCII),
+         '{mask}'),
+    )
 
     def __init__(self, secrets: list, mask: str) -> None:
         super().__init__()
         # Les plus longs d'abord : un secret qui en contient un autre est masqué en entier
         self._secrets = sorted({s for s in secrets if s and len(s) >= self._MIN_SECRET_LENGTH}, key=len, reverse=True)
         self._mask = mask
+        self._replacements = [(pattern, replacement.format(mask=mask)) for pattern, replacement in self._PATTERNS]
 
     def _redact(self, text: str) -> str:
         for secret in self._secrets:
             text = text.replace(secret, self._mask)
+        for pattern, replacement in self._replacements:
+            text = pattern.sub(lambda match, value=replacement: match.group(1) + value, text)
         return text
 
     def filter(self, record: logging.LogRecord) -> bool:
-        if not self._secrets:
-            return True
         try:
             message = record.getMessage()
         except Exception:

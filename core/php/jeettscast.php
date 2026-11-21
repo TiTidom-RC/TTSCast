@@ -270,7 +270,7 @@ try {
             if (is_object($cmdNotification)) {
                 $execOptions = array_merge($cmdOptions, array('message' => $reformulatedText));
                 $cmdNotification->execCmd($execOptions);
-                log::add('ttscast', 'debug', '[CALLBACK] TTS Notify Result :: execCmd :: cmdId=' . $cmdNotificationId . ' | options=' . json_encode($execOptions));
+                log::add('ttscast', 'debug', ttscast::maskSecrets('[CALLBACK] TTS Notify Result :: execCmd :: cmdId=' . $cmdNotificationId . ' | options=' . json_encode($execOptions)));
             } else {
                 log::add('ttscast', 'warning', '[CALLBACK] TTS Notify Result :: Commande notification introuvable :: cmdId=' . $cmdNotificationId);
             }

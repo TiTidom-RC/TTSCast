@@ -511,31 +511,52 @@ class ttscast extends eqLogic
             }
         }
         $logEngine = $engineOverride !== null ? $ttsEngine . ' → ' . $engineOverride . ' (override options)' : $ttsEngine;
-        log::add('ttscast', 'info', '[PlayTTS] Moteur: ' . $logEngine . ' | UUID: ' . $ttsGoogleUUID . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8'));
+        log::add('ttscast', 'info', self::maskSecrets('[PlayTTS] Moteur: ' . $logEngine . ' | UUID: ' . $ttsGoogleUUID . ' | Texte: ' . mb_strimwidth($ttsText, 0, 50, '...', 'UTF-8')));
         $ttsPiperVoiceName = config::byKey('piperVoiceName', 'ttscast', '');
         $value = array('cmd' => 'action', 'cmd_action' => 'tts', 'ttsLang' => $ttsLang, 'ttsEngine' => $ttsEngine, 'ttsSpeed' => $ttsSpeed, 'ttsOptions' => $ttsOptions, 'ttsText' => $ttsText, 'ttsGoogleUUID' => $ttsGoogleUUID, 'ttsVoiceName' => $ttsVoiceName, 'ttsRSSVoiceName' => $ttsRSSVoiceName, 'ttsRSSSpeed' => $ttsRSSSpeed, 'ttsGeminiVoiceName' => $ttsGeminiVoiceName, 'cmdNotificationId' => $cmdNotificationId, 'ttsPiperVoiceName' => $ttsPiperVoiceName, 'callerPid' => getmypid());
         self::sendToDaemon($value);
     }
 
+    /**
+     * Masque les secrets d'un texte écrit dans les logs du plugin, saisis par l'utilisateur dans l'URL d'un média ou une option (NAS,
+     * flux) : identifiants d'une URL (y compris échappée en JSON), jeton « Bearer », valeur d'un paramètre ou d'un champ sensible.
+     * Mêmes règles que SecretMaskFilter côté démon. À appliquer à tout log qui reprend un contenu saisi (options, URL,
+     * commande personnalisée). « => » n'est pas un « = » et « [clé:…] » n'est pas « clé: » (code, affichage de tableau)
+     */
+    public static function maskSecrets($text) {
+        $keys = 'apikey|api_key|token|access_token|refresh_token|accessToken|refreshToken|client_secret|clientSecret|password|passwd|pass|pwd';
+        $masked = preg_replace(
+            array(
+                '~(\b[a-z][a-z0-9+.-]*:(?:\\\\?/){2})[^\s/?#"\'@:\\\\]+:[^\s/?#"\']*@~i',
+                '~(\b[a-z][a-z0-9+.-]*:(?:\\\\?/){2})[^\s/?#"\':\\\\]+@~i',
+                '/(\bbearer\s+)[^\s"\']+/i',
+                '/(?<!\[)(["\']?\b(?:' . $keys . ')\b["\']?\s*(?::|=(?!>))\s*["\']?)[^"\'&\s,}]+/i',
+            ),
+            array('$1uSeR:sEcReT@', '$1uSeR@', '$1sEcReT', '$1sEcReT'),
+            strval($text)
+        );
+        return $masked === null ? strval($text) : $masked;
+    }
+
     public static function actionGCast($gHomeUUID=null, $action=null, $message=null) {
-        log::add('ttscast', 'info', '[ActionGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message);
+        log::add('ttscast', 'info', self::maskSecrets('[ActionGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message));
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID);
-        log::add('ttscast', 'debug', '[ActionGCast] ArrayToSend :: ' . json_encode($value));
+        log::add('ttscast', 'debug', self::maskSecrets('[ActionGCast] ArrayToSend :: ' . json_encode($value)));
         self::sendToDaemon($value);
     }
 
     public static function mediaGCast($gHomeUUID=null, $action=null, $message=null, $options=null) {
-        log::add('ttscast', 'info', '[MediaGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options);
+        log::add('ttscast', 'info', self::maskSecrets('[MediaGCast] Infos :: ' . $gHomeUUID . ' / ' . $action . " / " . $message . " / " . $options));
         $value = array('cmd' => 'action', 'cmd_action' => $action, 'value' => $message, 'googleUUID' => $gHomeUUID, 'options' => $options, 'callerPid' => getmypid());
-        log::add('ttscast', 'debug', '[MediaGCast] ArrayToSend :: ' . json_encode($value));
+        log::add('ttscast', 'debug', self::maskSecrets('[MediaGCast] ArrayToSend :: ' . json_encode($value)));
         self::sendToDaemon($value);
     }
 
     public static function customCmdDecoder($customCmd=null) {
-        log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd :: ' . $customCmd);
+        log::add('ttscast', 'debug', self::maskSecrets('[customCmdDecoder] CustomCmd :: ' . $customCmd));
         try {
             $data = json_decode("{" . $customCmd . "}", true);
-            log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd Data :: ' . json_encode($data));
+            log::add('ttscast', 'debug', self::maskSecrets('[customCmdDecoder] CustomCmd Data :: ' . json_encode($data)));
             $resAction = '';
             $resCmd = array();
             $resOptions = array();
@@ -569,7 +590,7 @@ class ttscast extends eqLogic
             }
 
             $resCmd['title'] = substr(json_encode($resOptions), 1, -1);
-            log::add('ttscast', 'debug', '[customCmdDecoder] CustomCmd Title :: ' . $resCmd['title']);
+            log::add('ttscast', 'debug', self::maskSecrets('[customCmdDecoder] CustomCmd Title :: ' . $resCmd['title']));
             return [$resAction, $resCmd];
         }
         catch (Exception $e) {
@@ -2728,17 +2749,17 @@ class ttscastCmd extends cmd
         if ( $this->getType() == "action" ) {
             if (in_array($logicalId, ["customcmd"])) {
                 if (isset($_options['message'])) {
-                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+                    log::add('ttscast', 'debug', ttscast::maskSecrets('[CMD] ' . $logicalId . ' :: ' . json_encode($_options)));
                     [$logicalId, $_options] = ttscast::customCmdDecoder($_options['message']);
-                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Custom Decoded Message) :: ' . json_encode($_options));
+                    log::add('ttscast', 'debug', ttscast::maskSecrets('[CMD] ' . $logicalId . ' (Custom Decoded Message) :: ' . json_encode($_options)));
                 }
                 else {
-                    log::add('ttscast', 'warning', '[CMD] customcmd annulé — paramètre \'message\' manquant (commande personnalisée non renseignée). Options reçues : ' . json_encode($_options));
+                    log::add('ttscast', 'warning', ttscast::maskSecrets('[CMD] customcmd annulé — paramètre \'message\' manquant (commande personnalisée non renseignée). Options reçues : ' . json_encode($_options)));
                 }                
             }
             
             if ($logicalId == "tts") {
-                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+                log::add('ttscast', 'debug', ttscast::maskSecrets('[CMD] ' . $logicalId . ' :: ' . json_encode($_options)));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
                     $cmdNotificationId = 0;
@@ -2750,15 +2771,15 @@ class ttscastCmd extends cmd
                             $cmdNotificationId = $cmdNotification->getId();
                         }
                     }
-                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID / CmdNotification) :: ' . $_options['message'] . " / " . $googleUUID . " / " . $cmdNotificationId);
+                    log::add('ttscast', 'debug', ttscast::maskSecrets('[CMD] ' . $logicalId . ' (Message / GoogleUUID / CmdNotification) :: ' . $_options['message'] . " / " . $googleUUID . " / " . $cmdNotificationId));
                     ttscast::playTTS($googleUUID, $_options['message'], isset($_options['title']) ? $_options['title'] : null, $cmdNotificationId);
                 }
                 else {
                     $missingParam = (!isset($googleUUID)) ? 'UUID de l\'équipement' : 'texte du message';
-                    log::add('ttscast', 'warning', '[CMD] TTS annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options));
+                    log::add('ttscast', 'warning', ttscast::maskSecrets('[CMD] TTS annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options)));
                 }
             } elseif ($logicalId == 'ai_reformat' && $eqLogic->getLogicalId() == 'TTSCast_AI') {
-                log::add('ttscast', 'debug', '[CMD] ai_reformat :: ' . json_encode($_options));
+                log::add('ttscast', 'debug', ttscast::maskSecrets('[CMD] ai_reformat :: ' . json_encode($_options)));
                 $text = isset($_options['message']) ? trim($_options['message']) : '';
                 if ($text === '') {
                     log::add('ttscast', 'warning', '[CMD] ai_reformat :: texte vide, rien à reformuler');
@@ -2807,7 +2828,7 @@ class ttscastCmd extends cmd
                         $dataStore->save();
                     }
                 }
-                log::add('ttscast', 'debug', '[CMD] ai_reformat :: Résultat :: ' . $reformulated);
+                log::add('ttscast', 'debug', ttscast::maskSecrets('[CMD] ai_reformat :: Résultat :: ' . $reformulated));
             } elseif ($logicalId == "volumeset") {
                 log::add('ttscast', 'debug', '[CMD] VolumeSet Keys :: ' . json_encode($_options));
                 $googleUUID = $eqLogic->getLogicalId();
@@ -2824,18 +2845,18 @@ class ttscastCmd extends cmd
                     ttscast::actionGCast($googleUUID, $logicalId);
                 }
             } elseif (in_array($logicalId, ["youtube", "dashcast", "media", "start_app"])) {
-                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+                log::add('ttscast', 'debug', ttscast::maskSecrets('[CMD] ' . $logicalId . ' :: ' . json_encode($_options)));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['message'])) {
-                    log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Message / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID);
+                    log::add('ttscast', 'debug', ttscast::maskSecrets('[CMD] ' . $logicalId . ' (Message / GoogleUUID) :: ' . $_options['message'] . " / " . $googleUUID));
                     ttscast::mediaGCast($googleUUID, $logicalId, $_options['message'], isset($_options['title']) ? $_options['title'] : null);
                 }
                 else {
                     $missingParam = (!isset($googleUUID)) ? 'UUID de l\'équipement' : 'URL / chemin du média';
-                    log::add('ttscast', 'warning', '[CMD] ' . $logicalId . ' annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options));
+                    log::add('ttscast', 'warning', ttscast::maskSecrets('[CMD] ' . $logicalId . ' annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options)));
                 }                
             } elseif (in_array($logicalId, ["radios", "customradios", "sounds", "customsounds"])) {
-                log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
+                log::add('ttscast', 'debug', ttscast::maskSecrets('[CMD] ' . $logicalId . ' :: ' . json_encode($_options)));
                 $googleUUID = $eqLogic->getLogicalId();
                 if (isset($googleUUID) && isset($_options['select'])) {
                     log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' (Select / GoogleUUID) :: ' . $_options['select'] . " / " . $googleUUID);
@@ -2843,7 +2864,7 @@ class ttscastCmd extends cmd
                 }
                 else {
                     $missingParam = (!isset($googleUUID)) ? 'UUID de l\'équipement' : 'sélection (radio / son)';
-                    log::add('ttscast', 'warning', '[CMD] ' . $logicalId . ' annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options));
+                    log::add('ttscast', 'warning', ttscast::maskSecrets('[CMD] ' . $logicalId . ' annulé — paramètre manquant (' . $missingParam . '). Options reçues : ' . json_encode($_options)));
                 }                
             } elseif (in_array($logicalId, ["refresh", "refreshcast"])) {
                 log::add('ttscast', 'debug', '[CMD] ' . $logicalId . ' :: ' . json_encode($_options));
