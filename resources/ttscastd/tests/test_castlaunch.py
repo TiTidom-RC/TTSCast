@@ -18,7 +18,7 @@ URL = 'http://jeedom/media/morceau.mp3'
 
 
 def fakeCast(castType='audio', contentId=None, playerState='UNKNOWN'):
-    status = pytypes.SimpleNamespace(content_id=contentId, player_state=playerState)
+    status = pytypes.SimpleNamespace(content_id=contentId, player_state=playerState, media_session_id=None)
     cast = mock.Mock(status=pytypes.SimpleNamespace(volume_level=0.4), cast_info=pytypes.SimpleNamespace(cast_type=castType))
     cast.name = 'Enceinte de test'
     cast.media_controller.status = status
@@ -121,9 +121,10 @@ class MediaReceiverTest(unittest.TestCase):
     def setUp(self):
         helpers.resetDaemonState()
 
-    def play(self, options, url=URL, launch=None):
+    def play(self, options, url=URL, launch=None, start='started'):
         cast = fakeCast()
         with mock.patch.object(Functions, 'castQuickPlay', side_effect=launch) as castQuickPlay, \
+                mock.patch.object(Functions, 'confirmPlaybackStart', **({'side_effect': start} if isinstance(start, Exception) else {'return_value': start})), \
                 mock.patch.object(Functions, 'checkIfDashCast'), mock.patch.object(Functions, 'getGroupSnapshot', return_value={}), \
                 mock.patch.object(Functions, 'trackPluginSession'), mock.patch.object(myConfig, 'appDisableDing', False):
             result = Functions.controllerMedia(cast, 'uuid-test', url, options)
@@ -187,6 +188,92 @@ class MediaReceiverTest(unittest.TestCase):
             result, _, cast = self.play('"volume": 30', launch=ttscastd.CastLaunchFailed('pas de réponse'))
         self.assertFalse(result)
         self.assertEqual(cast.set_volume.call_args_list, [mock.call(volume=0.3), mock.call(volume=0.4)])
+
+
+    def test_playbackFailedAfterLaunch(self):
+        """ Échec juste après le lancement (signalé par confirmPlaybackStart) : volume rétabli, commande en échec, pas d'erreur en plus """
+        with self.assertNoLogs(level='ERROR'):
+            result, _, cast = self.play('"volume": 30', start=ttscastd.CastLaunchFailed('lecture en échec'))
+        self.assertFalse(result)
+        self.assertEqual(cast.set_volume.call_args_list, [mock.call(volume=0.3), mock.call(volume=0.4)])
+
+    def test_unconfirmedStartIsNotAnError(self):
+        with self.assertLogs(level='INFO') as logs:
+            result = self.play(None, start='unconfirmed')[0]
+        self.assertTrue(result)
+        self.assertTrue(any('démarrage non confirmé' in line for line in logs.output))
+        self.assertFalse(any('Diffusion Media lancée' in line for line in logs.output))
+
+
+class ConfirmPlaybackStartTest(unittest.TestCase):
+    """ Démarrage d'une lecture longue : arrêt au premier état qui tranche, au plus mediaStartCheckTimeout secondes """
+    def setUp(self):
+        self.comm = helpers.resetDaemonState()
+        self.now = 0.0
+        self.status = pytypes.SimpleNamespace(content_id='http://avant/autre.mp3', media_session_id=1, player_state='IDLE', idle_reason='FINISHED')
+        self.cast = pytypes.SimpleNamespace(uuid='uuid-test', name='Enceinte de test', media_controller=pytypes.SimpleNamespace(status=self.status))
+        self.events = {}
+
+    def sleep(self, seconds):
+        self.now += seconds
+        for at in sorted(list(self.events)):
+            if self.now >= at:
+                self.events.pop(at)(self.status)
+
+    def confirm(self, sessionBefore=1, contentBefore='http://avant/autre.mp3', source='media', name='morceau.mp3'):
+        return Functions.confirmPlaybackStart(self.cast, URL, 0.0, sessionBefore, contentBefore, '[TEST]', source, name,
+                                              clock=lambda: self.now, sleep=self.sleep)
+
+    @staticmethod
+    def state(**changes):
+        return lambda status: status.__dict__.update(changes)
+
+    def test_stopsAtFirstPlayingState(self):
+        self.events[0.3] = self.state(content_id=URL, media_session_id=2, player_state='BUFFERING', idle_reason=None)
+        self.assertEqual(self.confirm(), 'started')
+        self.assertLess(self.now, 0.5)
+
+    def test_veryShortFileAlreadyFinished(self):
+        """ Fichier très court, déjà terminé quand la vérification commence : démarré, sans attendre le délai """
+        self.status.__dict__.update(content_id=URL, media_session_id=2, player_state='IDLE', idle_reason='FINISHED')
+        self.assertEqual(self.confirm(), 'started')
+        self.assertEqual(self.now, 0.0)
+
+    def test_previousPlaybackOfSameMediaIgnored(self):
+        """ Même média rejoué : l'état final de la lecture précédente n'est pas pris pour la nouvelle """
+        self.status.__dict__.update(content_id=URL, media_session_id=1, player_state='IDLE', idle_reason='FINISHED')
+        self.events[0.5] = self.state(player_state='PLAYING', idle_reason=None)
+        self.assertEqual(self.confirm(sessionBefore=1, contentBefore=URL), 'started')
+        self.assertAlmostEqual(self.now, 0.5, delta=0.11)
+
+    def test_errorWithoutCodeReported(self):
+        self.events[0.2] = self.state(content_id=URL, media_session_id=2, player_state='IDLE', idle_reason='ERROR')
+        with self.assertLogs(level='WARNING') as logs, self.assertRaises(ttscastd.CastLaunchFailed):
+            self.confirm()
+        self.assertIn('(fichier : morceau.mp3)', logs.output[0])
+        self.assertEqual(self.comm.sent[-1][1]['playbackError']['source'], 'media')
+        self.assertEqual(self.comm.sent[-1][1]['playbackError']['file'], 'morceau.mp3')
+
+    def test_loadFailedWithCodeReported(self):
+        myConfig.loadFailures['uuid-test'] = (0.1, 104)
+        with self.assertLogs(level='WARNING') as logs, self.assertRaises(ttscastd.CastLaunchFailed):
+            self.confirm(source='radios', name='FIP')
+        self.assertIn('MEDIA_SRC_NOT_SUPPORTED', logs.output[0])
+        self.assertIn('(radio : FIP)', logs.output[0])
+        error = self.comm.sent[-1][1]['playbackError']
+        self.assertEqual((error['code'], error['source'], error['file']), (104, 'radios', 'FIP'))
+
+    def test_oldLoadFailureIgnored(self):
+        myConfig.loadFailures['uuid-test'] = (-5.0, 102)
+        self.events[0.2] = self.state(content_id=URL, media_session_id=2, player_state='PLAYING', idle_reason=None)
+        self.assertEqual(self.confirm(), 'started')
+
+    def test_noDecisiveStateIsUnconfirmed(self):
+        """ Rien de décisif dans le délai : pas d'alerte (l'état réel est remonté par le suivi temps réel) """
+        with self.assertNoLogs(level='WARNING'):
+            self.assertEqual(self.confirm(), 'unconfirmed')
+        self.assertAlmostEqual(self.now, myConfig.mediaStartCheckTimeout, delta=0.11)
+        self.assertEqual(self.comm.sent, [])
 
 
 if __name__ == '__main__':

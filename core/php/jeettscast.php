@@ -276,7 +276,7 @@ try {
             }
         }
     } elseif (isset($result['playbackError'])) {
-        // Échec de lecture d'une notification (TTS, son) : message dans le centre de messages
+        // Échec de lecture (TTS, son, média, radio, YouTube) : message dans le centre de messages
         $error = $result['playbackError'];
         $deviceEq = ttscast::byLogicalId(isset($error['uuid']) ? $error['uuid'] : '', 'ttscast');
         $device = is_object($deviceEq) ? $deviceEq->getHumanName() : (isset($error['device']) ? strval($error['device']) : '');
@@ -289,13 +289,21 @@ try {
             $text .= ' : ' . ($codeName !== '' ? $codeName . ' (' . sprintf(__('code %s', __FILE__), $code) . ')' : sprintf(__('code %s', __FILE__), $code));
         }
         if ($file !== '') {
-            $text .= ' — ' . sprintf(__('fichier : %s', __FILE__), $file);
+            if ($source === 'radios' || $source === 'customradios') {
+                $text .= ' — ' . sprintf(__('radio : %s', __FILE__), $file);
+            } elseif ($source === 'youtube') {
+                $text .= ' — ' . sprintf(__('vidéo YouTube : %s', __FILE__), $file);
+            } else {
+                $text .= ' — ' . sprintf(__('fichier : %s', __FILE__), $file);
+            }
         }
         if (in_array($code, array(102, 104), true)) {
             if ($source === 'tts') {
                 $text .= '. ' . __('Fichier du cache TTS illisible : supprimez-le ou videz le cache (page de configuration du plugin).', __FILE__);
             } elseif ($source === 'customsounds') {
                 $text .= '. ' . __('Son personnalisé illisible ou format non supporté : remplacez-le.', __FILE__);
+            } elseif ($source === 'media') {
+                $text .= '. ' . __('Format non lu par l\'équipement : vérifiez que le format du fichier est pris en charge par Google Cast.', __FILE__);
             }
         }
         log::add('ttscast', 'debug', '[CALLBACK] Playback Error :: ' . $text);

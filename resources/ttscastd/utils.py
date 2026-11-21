@@ -163,6 +163,7 @@ class Config:
     mediaActivationTimeout = 15  # secondes — borne l'attente d'activation de la session média (block_until_active)
     castLaunchTimeout = 15  # secondes — attente maximale de la réponse de l'enceinte au lancement d'une lecture (quick_play)
     mediaProbeTimeout = 3  # secondes — délai de la requête au serveur d'un média pour connaître son type (commande Media)
+    mediaStartCheckTimeout = 5  # secondes — attente maximale du démarrage d'une lecture longue (Media, radios, YouTube) après son lancement
     # Type de média selon l'extension du fichier (sons, commande Media) : { extension : type MIME }
     mediaMimeTypes = {
         'mp3': 'audio/mpeg', 'm4a': 'audio/mp4', 'aac': 'audio/aac', 'wav': 'audio/wav', 'ogg': 'audio/ogg',

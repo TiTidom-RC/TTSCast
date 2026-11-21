@@ -3015,15 +3015,20 @@ class Functions:
         return query.get('type', [None])[0], query.get('file', [None])[0]
 
     @staticmethod
-    def reportPlaybackError(logTag, uuidStr, castName, errorCode, mediaUrl, status):
+    def reportPlaybackError(logTag, uuidStr, castName, errorCode, mediaUrl, status, source=None, name=None):
         """ Échec de lecture (chargement refusé ou erreur de lecture) : avertissement dans le log, avec le fichier en cause, et
-        signalement à Jeedom pour le centre de messages """
-        sourceType, fileName = Functions.mediaSource(mediaUrl)
-        if sourceType == 'stream':
-            fileName = None  # tube de diffusion temporaire, sans fichier à désigner
+        signalement à Jeedom pour le centre de messages. source / name : type de lecture (media, radios, customradios, youtube) et
+        nom à afficher ; sans source, déduits de l'URL du proxy audio (TTS, sons) """
+        if source is not None:
+            sourceType, fileName = source, name
+        else:
+            sourceType, fileName = Functions.mediaSource(mediaUrl)
+            if sourceType == 'stream':
+                fileName = None  # tube de diffusion temporaire, sans fichier à désigner
+        label = {'radios': 'radio', 'customradios': 'radio', 'youtube': 'vidéo YouTube'}.get(sourceType, 'fichier')
         cause = Functions.describeLoadError(errorCode) if errorCode is not None else 'erreur de lecture'
         logging.warning('%s Lecture en échec sur %s : %s%s :: %s', logTag, castName, cause,
-                        f' (fichier : {fileName})' if fileName else '', str(status))
+                        f' ({label} : {fileName})' if fileName else '', str(status))
         known = myConfig.castLoadErrors.get(errorCode)
         try:
             Comm.sendToJeedom.send_change_immediate({'playbackError': {  # type: ignore
@@ -3058,6 +3063,40 @@ class Functions:
             logging.warning('%s Lecture non démarrée sur %s', logTag, cast.name)
             raise CastLaunchFailed(str(e)) from e
         logging.debug('%s Lancement de la lecture sur %s en %.1fs', logTag, cast.name, time.monotonic() - startedAt)
+
+    @staticmethod
+    def confirmPlaybackStart(cast, mediaId, requestedAt, sessionBefore, contentBefore, logTag, source, name, clock=time.monotonic, sleep=time.sleep):
+        """ Démarrage d'une lecture longue (Media, radios, YouTube), dont la fin n'est pas suivie : arrêt au premier état qui tranche,
+        au plus mediaStartCheckTimeout secondes. Retourne 'started' (lecture en cours, ou déjà terminée ou arrêtée), 'unconfirmed'
+        (aucun état décisif dans le délai) ou 'orphaned' (notification abandonnée par la file). Échec (chargement refusé, erreur de
+        lecture) : signalé dans le log et au centre de messages (reportPlaybackError), puis CastLaunchFailed.
+        Notre lecture : celle qui affiche mediaId, dans une nouvelle session ou à la place d'un autre média, ou en cours de lecture
+        (l'enceinte garde l'état final de la lecture précédente du même média). requestedAt : time.monotonic() relevé avant le
+        lancement, pour ne retenir que les échecs de chargement postérieurs """
+        uuidStr = str(cast.uuid)
+        deadline = clock() + myConfig.mediaStartCheckTimeout
+        while True:
+            if waitqueue.isOrphaned():
+                return 'orphaned'
+            status = cast.media_controller.status
+            state = status.player_state
+            loadFailure = myConfig.loadFailures.get(uuidStr)
+            ours = status.content_id == mediaId and (status.media_session_id != sessionBefore or contentBefore != mediaId
+                                                     or state in ('BUFFERING', 'PLAYING'))
+            failed, errorCode = False, None
+            if loadFailure is not None and loadFailure[0] >= requestedAt:
+                failed, errorCode = True, loadFailure[1]
+            elif ours and state == 'IDLE' and status.idle_reason == 'ERROR':
+                failed = True
+            elif ours and (state in ('BUFFERING', 'PLAYING', 'PAUSED')
+                           or (state == 'IDLE' and status.idle_reason in ('FINISHED', 'CANCELLED', 'INTERRUPTED'))):
+                return 'started'
+            if failed:
+                Functions.reportPlaybackError(logTag, uuidStr, getattr(cast, 'name', uuidStr), errorCode, mediaId, status, source=source, name=name)
+                raise CastLaunchFailed('lecture en échec')
+            if clock() >= deadline:
+                return 'unconfirmed'
+            sleep(0.1)
 
     @staticmethod
     def mediaStarted(cast, mediaId):
@@ -3269,6 +3308,9 @@ class Functions:
             }
             if Functions.orphanedBeforeLaunch('[DAEMON][controllerActions] YouTube ::'):
                 return False
+            sessionBefore = cast.media_controller.status.media_session_id
+            contentBefore = cast.media_controller.status.content_id
+            playRequestedAt = time.monotonic()
             Functions.castQuickPlay(cast, app_name, app_data, '[DAEMON][controllerActions] YouTube ::')
             
             if (not _appDing and _volume is not None):
@@ -3284,8 +3326,14 @@ class Functions:
                     cast.set_volume(volume=volumeBeforePlay)
             
             cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
-            
-            logging.info(f'[DAEMON][controllerActions] YouTube :: Diffusion lancée :: {cast.name} | ID: {_value}')
+
+            # Vidéo ajoutée à la suite d'une lecture en cours (enqueue) : aucun démarrage à attendre
+            started = 'started' if _enqueue else Functions.confirmPlaybackStart(
+                cast, _value, playRequestedAt, sessionBefore, contentBefore, '[DAEMON][controllerActions] YouTube ::', 'youtube', _value)
+            if started == 'started':
+                logging.info(f'[DAEMON][controllerActions] YouTube :: Diffusion lancée :: {cast.name} | ID: {_value}')
+            elif started == 'unconfirmed':
+                logging.info(f'[DAEMON][controllerActions] YouTube :: Lecture demandée, démarrage non confirmé en {myConfig.mediaStartCheckTimeout}s :: {cast.name} | ID: {_value}')
             
             Functions.trackPluginSession(_googleUUID, 'youtube', cast)
             
@@ -3445,6 +3493,9 @@ class Functions:
                         }
                         if Functions.orphanedBeforeLaunch(f'[DAEMON][controllerActions] {radioType} ::'):
                             return False
+                        sessionBefore = cast.media_controller.status.media_session_id
+                        contentBefore = cast.media_controller.status.content_id
+                        playRequestedAt = time.monotonic()
                         Functions.castQuickPlay(cast, app_name, app_data, f'[DAEMON][controllerActions] {radioType} ::')
                         
                         if (not _appDing and _volume is not None):
@@ -3460,9 +3511,14 @@ class Functions:
                                 cast.set_volume(volume=volumeBeforePlay)
                         
                         cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
-                        
-                        logging.info(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: {cast.name} | {radioTitle}')
-                        
+
+                        started = Functions.confirmPlaybackStart(cast, radioUrl, playRequestedAt, sessionBefore, contentBefore,
+                                                                 f'[DAEMON][controllerActions] {radioType} ::', _controller, radioTitle)
+                        if started == 'started':
+                            logging.info(f'[DAEMON][controllerActions] Diffusion {radioType} lancée :: {cast.name} | {radioTitle}')
+                        elif started == 'unconfirmed':
+                            logging.info(f'[DAEMON][controllerActions] Lecture {radioType} demandée, démarrage non confirmé en {myConfig.mediaStartCheckTimeout}s :: {cast.name} | {radioTitle}')
+
                         Functions.trackPluginSession(_googleUUID, _controller, cast)
                     
                     return True
@@ -3704,6 +3760,9 @@ class Functions:
 
                 if Functions.orphanedBeforeLaunch('[DAEMON][controllerActions] Media ::'):
                     return False
+                sessionBefore = cast.media_controller.status.media_session_id
+                contentBefore = cast.media_controller.status.content_id
+                playRequestedAt = time.monotonic()
                 Functions.castQuickPlay(cast, app_name, app_data, '[DAEMON][controllerActions] Media ::')
                     
                 if (not _appDing and _volume is not None):
@@ -3719,9 +3778,14 @@ class Functions:
                         cast.set_volume(volume=volumeBeforePlay)
                 
                 cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
-                
-                logging.info(f'[DAEMON][controllerActions] Diffusion Media lancée :: {cast.name} | {_value}')
-                
+
+                started = Functions.confirmPlaybackStart(cast, media, playRequestedAt, sessionBefore, contentBefore,
+                                                         '[DAEMON][controllerActions] Media ::', 'media', mediaFileName)
+                if started == 'started':
+                    logging.info(f'[DAEMON][controllerActions] Diffusion Media lancée :: {cast.name} | {_value}')
+                elif started == 'unconfirmed':
+                    logging.info(f'[DAEMON][controllerActions] Lecture Media demandée, démarrage non confirmé en {myConfig.mediaStartCheckTimeout}s :: {cast.name} | {_value}')
+
                 Functions.trackPluginSession(_googleUUID, 'media', cast)
                 
                 return True
