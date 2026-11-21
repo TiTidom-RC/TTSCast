@@ -161,6 +161,15 @@ class Config:
     cmdWaitTimeout = 60  # secondes — délai maximal sans progression d'une notification (lecture qui ne démarre pas, pause, lecture figée)
     cmdWaitTimeoutMin = 10  # secondes — minimum appliqué à cmdWaitTimeout au démarrage du démon
     mediaActivationTimeout = 15  # secondes — borne l'attente d'activation de la session média (block_until_active)
+    castLaunchTimeout = 15  # secondes — attente maximale de la réponse de l'enceinte au lancement d'une lecture (quick_play)
+    mediaProbeTimeout = 3  # secondes — délai de la requête au serveur d'un média pour connaître son type (commande Media)
+    # Type de média selon l'extension du fichier (sons, commande Media) : { extension : type MIME }
+    mediaMimeTypes = {
+        'mp3': 'audio/mpeg', 'm4a': 'audio/mp4', 'aac': 'audio/aac', 'wav': 'audio/wav', 'ogg': 'audio/ogg',
+        'opus': 'audio/ogg; codecs=opus', 'flac': 'audio/flac',
+        'mp4': 'video/mp4', 'm4v': 'video/mp4', 'webm': 'video/webm',
+        'm3u8': 'application/x-mpegURL', 'mpd': 'application/dash+xml',
+    }
     playbackStatusRefresh = 5  # secondes — intervalle des demandes d'état à l'enceinte pendant l'attente de fin de lecture
     ttsRequestTimeout = 30  # secondes — délai des requêtes aux moteurs TTS en ligne (gTTS, Google Cloud TTS)
     # Dernier échec de chargement d'un média (LOAD_FAILED) par équipement : { uuid (str) : (time.monotonic(), code) }

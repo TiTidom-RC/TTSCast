@@ -39,7 +39,7 @@ import itertools
 import socket
 
 from concurrent.futures import ThreadPoolExecutor
-from urllib.parse import urlencode, urlparse, parse_qs, quote
+from urllib.parse import urlencode, urlparse, parse_qs, quote, unquote
 from uuid import UUID, uuid4
 
 # Import pour Jeedom
@@ -68,7 +68,7 @@ try:
     from pychromecast.socket_client import ConnectionStatusListener
     from pychromecast.controllers import dashcast
     from pychromecast.controllers.multizone import MultizoneController, MultiZoneControllerListener
-    from pychromecast.error import NotConnected
+    from pychromecast.error import NotConnected, RequestFailed, RequestTimeout
     from pychromecast.dial import get_device_info, get_multizone_status, get_ssl_context
     from pychromecast.models import CastInfo, HostServiceInfo, MDNSServiceInfo
 except ImportError as e:
@@ -1716,7 +1716,7 @@ class TTSCast:
                 sessionBefore = cast.media_controller.status.media_session_id
                 contentBefore = cast.media_controller.status.content_id
                 playRequestedAt = time.monotonic()
-                quick_play.quick_play(cast, app_name, app_data)
+                Functions.castQuickPlay(cast, app_name, app_data, '[DAEMON][Cast]')
 
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
@@ -1753,9 +1753,10 @@ class TTSCast:
                 chromecasts = None
                 return endReason in ('finished', 'interrupted', 'replaced')
             except Exception as e:
-                logging.warning('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
-                logging.debug(traceback.format_exc())
-                
+                if not isinstance(e, CastLaunchFailed):
+                    logging.warning('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
+                    logging.debug(traceback.format_exc())
+
                 if volumeBeforePlay is not None:
                     if isGroup and groupSnapshot:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
@@ -1841,7 +1842,7 @@ class TTSCast:
                 sessionBefore = cast.media_controller.status.media_session_id
                 contentBefore = cast.media_controller.status.content_id
                 playRequestedAt = time.monotonic()
-                quick_play.quick_play(cast, app_name, app_data)
+                Functions.castQuickPlay(cast, app_name, app_data, '[DAEMON][Cast]')
 
                 if (not appDing and volumeForPlay is not None):
                     logging.debug('[DAEMON][Cast] Volume [avant / pendant] lecture :: [%s / %s]', str(volumeBeforePlay), str(volumeForPlay))
@@ -1881,8 +1882,9 @@ class TTSCast:
                 cast = None
                 return endReason in ('finished', 'interrupted', 'replaced')
             except Exception as e:
-                logging.warning('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
-                logging.debug(traceback.format_exc())
+                if not isinstance(e, CastLaunchFailed):
+                    logging.warning('[DAEMON][Cast] Exception (Chromecasts) :: %s', e)
+                    logging.debug(traceback.format_exc())
 
                 if volumeBeforePlay is not None and not waitqueue.isOrphaned():
                     try:
@@ -2494,6 +2496,10 @@ class TTSCast:
             logging.debug(traceback.format_exc())
             return None
 
+class CastLaunchFailed(Exception):
+    """ Lecture non démarrée : l'enceinte n'a pas répondu au lancement, ou l'a refusé (déjà signalé dans le log) """
+
+
 class Functions:
     """ Class Functions """
 
@@ -3035,6 +3041,73 @@ class Functions:
         return False
 
     @staticmethod
+    def castQuickPlay(cast, appName, appData, logTag):
+        """ Lance la lecture (quick_play) en attendant la réponse de l'enceinte au plus castLaunchTimeout secondes. Sans réponse ou
+        en cas de refus, la lecture est suivie si elle a démarré quand même ; sinon CastLaunchFailed, déjà signalée dans le log """
+        startedAt = time.monotonic()
+        try:
+            quick_play.quick_play(cast, appName, appData, timeout=myConfig.castLaunchTimeout)
+        except (RequestTimeout, RequestFailed) as e:
+            if isinstance(e, RequestTimeout):
+                logging.warning('%s Pas de réponse de %s au lancement de la lecture (%s) en %ss', logTag, cast.name, appName, myConfig.castLaunchTimeout)
+            else:
+                logging.warning('%s Lancement de la lecture refusé par %s ou connexion perdue (%s) :: %s', logTag, cast.name, appName, e)
+            if Functions.mediaStarted(cast, appData.get('media_id')):
+                logging.info('%s Lecture démarrée sur %s malgré l\'absence de réponse', logTag, cast.name)
+                return
+            logging.warning('%s Lecture non démarrée sur %s', logTag, cast.name)
+            raise CastLaunchFailed(str(e)) from e
+        logging.debug('%s Lancement de la lecture sur %s en %.1fs', logTag, cast.name, time.monotonic() - startedAt)
+
+    @staticmethod
+    def mediaStarted(cast, mediaId):
+        """ True si l'enceinte charge ou lit le média mediaId """
+        status = cast.media_controller.status
+        return bool(mediaId) and status.content_id == mediaId and status.player_state in ('BUFFERING', 'PLAYING', 'PAUSED')
+
+    @staticmethod
+    def mediaMimeType(url, cast, logTag):
+        """ Type d'un média de la commande Media : extension connue, sinon type annoncé par le serveur (audio, vidéo, HLS, DASH),
+        sinon type selon l'appareil (audio pour une enceinte ou un groupe, vidéo pour un écran), avec un avertissement """
+        extension = os.path.splitext(urlparse(url).path)[1].lstrip('.').lower()
+        if extension in myConfig.mediaMimeTypes:
+            return myConfig.mediaMimeTypes[extension]
+        served = Functions.servedMimeType(url)
+        if served is not None:
+            logging.debug('%s Type annoncé par le serveur :: %s', logTag, served)
+            return served
+        fallback = 'audio/mpeg' if getattr(cast.cast_info, 'cast_type', None) in ('audio', 'group') else 'video/mp4'
+        logging.warning('%s Type du média non déterminé (%s) : %s utilisé, précisez l\'option type', logTag, url, fallback)
+        return fallback
+
+    @staticmethod
+    def mediaTitle(url):
+        """ Titre affiché d'un média de la commande Media : nom du fichier (décodé, sans extension), sinon « TTSCast Media ».
+        L'URL n'est jamais affichée : elle peut contenir un jeton ou des identifiants """
+        name = os.path.splitext(os.path.basename(unquote(urlparse(url).path)))[0].strip()
+        return name or 'TTSCast Media'
+
+    @staticmethod
+    def servedMimeType(url):
+        """ Type annoncé par le serveur du média (Content-Type) s'il désigne un média ; None sinon (serveur injoignable, réponse en
+        erreur, type non média). GET fermé dès les en-têtes reçus si le serveur refuse HEAD """
+        headers = {'User-Agent': 'TTSCast-Jeedom/1.0'}
+        try:
+            response = requests.head(url, headers=headers, allow_redirects=True, timeout=myConfig.mediaProbeTimeout)
+            if response.status_code in (405, 501):
+                with requests.get(url, headers=headers, stream=True, timeout=myConfig.mediaProbeTimeout) as response:
+                    pass
+        except requests.RequestException as e:
+            logging.debug('[DAEMON][controllerActions] Media :: Serveur du média injoignable (%s) :: %s', url, e)
+            return None
+        if not response.ok:
+            return None
+        mimeType = response.headers.get('Content-Type', '').split(';')[0].strip().lower()
+        if mimeType.startswith(('audio/', 'video/')) or mimeType in ('application/x-mpegurl', 'application/vnd.apple.mpegurl', 'application/dash+xml'):
+            return mimeType
+        return None
+
+    @staticmethod
     def forceCut(googleUUID):
         """ Notification « force » : coupe la diffusion en cours sur l'enceinte, au tour de la notification (waitQueueHold). En cas
         d'échec, la notification est diffusée quand même : la file reste gelée jusqu'à sa sortie """
@@ -3189,7 +3262,7 @@ class Functions:
             }
             if Functions.orphanedBeforeLaunch('[DAEMON][controllerActions] YouTube ::'):
                 return False
-            quick_play.quick_play(cast, app_name, app_data)
+            Functions.castQuickPlay(cast, app_name, app_data, '[DAEMON][controllerActions] YouTube ::')
             
             if (not _appDing and _volume is not None):
                 logging.debug(f'[DAEMON][controllerActions] YouTube :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
@@ -3211,7 +3284,8 @@ class Functions:
             
             return True
         except Exception as e:
-            logging.error(f'[DAEMON][controllerYoutube] Exception ({_googleUUID}) :: {e}')
+            if not isinstance(e, CastLaunchFailed):
+                logging.error(f'[DAEMON][controllerYoutube] Exception ({_googleUUID}) :: {e}')
             if volumeBeforePlay is not None:
                 if isGroup and groupSnapshot:
                     Functions.restoreGroupMembersVolume(groupSnapshot)
@@ -3364,7 +3438,7 @@ class Functions:
                         }
                         if Functions.orphanedBeforeLaunch(f'[DAEMON][controllerActions] {radioType} ::'):
                             return False
-                        quick_play.quick_play(cast, app_name, app_data)
+                        Functions.castQuickPlay(cast, app_name, app_data, f'[DAEMON][controllerActions] {radioType} ::')
                         
                         if (not _appDing and _volume is not None):
                             logging.debug(f'[DAEMON][controllerActions] {radioType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
@@ -3386,7 +3460,8 @@ class Functions:
                     
                     return True
                 except Exception as e:
-                    logging.error(f'[DAEMON][controllerRadios] Exception ({_googleUUID}) :: {e}')
+                    if not isinstance(e, CastLaunchFailed):
+                        logging.error(f'[DAEMON][controllerRadios] Exception ({_googleUUID}) :: {e}')
                     if volumeBeforePlay is not None:
                         if isGroup and groupSnapshot:
                             Functions.restoreGroupMembersVolume(groupSnapshot)
@@ -3455,12 +3530,8 @@ class Functions:
                 soundTitle = f"TTSCast {soundType}"
                 soundArtist = _value
 
-                _soundMimeTypes = {
-                    'mp3': 'audio/mpeg', 'wav': 'audio/wav',
-                    'ogg': 'audio/ogg', 'opus': 'audio/ogg; codecs=opus', 'flac': 'audio/flac'
-                }
                 _ext = os.path.splitext(_value)[1].lstrip('.').lower()
-                soundMimeType = _soundMimeTypes.get(_ext, 'audio/mpeg')
+                soundMimeType = myConfig.mediaMimeTypes.get(_ext, 'audio/mpeg')
 
                 app_name = "default_media_receiver"
                 # app_name = "bubbleupnp"
@@ -3483,7 +3554,7 @@ class Functions:
                 sessionBefore = cast.media_controller.status.media_session_id
                 contentBefore = cast.media_controller.status.content_id
                 playRequestedAt = time.monotonic()
-                quick_play.quick_play(cast, app_name, app_data)
+                Functions.castQuickPlay(cast, app_name, app_data, f'[DAEMON][controllerActions] {soundType} ::')
 
                 if (not _appDing and _volume is not None):
                     logging.debug(f'[DAEMON][controllerActions] {soundType} :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
@@ -3521,7 +3592,8 @@ class Functions:
                 return endReason in ('finished', 'interrupted', 'replaced')
 
             except Exception as e:
-                logging.error(f'[DAEMON][controllerSounds] Exception ({_googleUUID}) :: {e}')
+                if not isinstance(e, CastLaunchFailed):
+                    logging.error(f'[DAEMON][controllerSounds] Exception ({_googleUUID}) :: {e}')
                 if volumeBeforePlay is not None and not waitqueue.isOrphaned():
                     if isGroup and groupSnapshot:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
@@ -3540,24 +3612,47 @@ class Functions:
             _volume = None
             _appDing = True
             _mediaType = None
+            _app = None
             try:
                 if (_options is not None):
                     options_json = json.loads("{" + _options + "}")
                     _volume = options_json.get('volume', None)
                     _appDing = Functions.parseBoolOption(options_json.get('ding', True))
                     _mediaType = options_json.get('type', None)
+                    _app = options_json.get('app', None)
 
                     logging.debug(f'[DAEMON][controllerActions] Media :: Options :: {str(options_json)}')
             except ValueError as e:
                 logging.warning(f'[DAEMON][controllerActions] Media :: Options mal formatées (Json KO) :: {e}')
 
             _appDing = False if myConfig.appDisableDing else _appDing
-            
+
+            # Récepteur Google Cast, ou BubbleUPnP avec l'option "app": "bubbleupnp"
+            app_name = "default_media_receiver"
+            if _app is not None:
+                if str(_app).strip().lower() == 'bubbleupnp':
+                    app_name = "bubbleupnp"
+                else:
+                    logging.warning(f'[DAEMON][controllerActions] Media :: Option app inconnue ({_app}) : récepteur Google Cast utilisé')
+
             volumeBeforePlay = None
             groupSnapshot = None
             isGroup = False
 
             try:
+                if _mediaType not in (None, ''):
+                    mediaType = str(_mediaType).strip()
+                else:
+                    mediaType = Functions.mediaMimeType(_value, cast, '[DAEMON][controllerActions] Media ::')
+                if mediaType.startswith('audio/'):
+                    metadataType = 3  # METADATA_TYPE_MUSICTRACK
+                elif mediaType.startswith('video/'):
+                    metadataType = 1  # METADATA_TYPE_MOVIE
+                else:
+                    metadataType = 0  # METADATA_TYPE_GENERIC
+                mediaStreamType = "BUFFERED"
+                logging.debug(f'[DAEMON][controllerActions] Media :: Récepteur / type :: {app_name} / {mediaType}')
+
                 # Si DashCast alors sortir de l'appli avant sinon cela plante
                 Functions.checkIfDashCast(cast)
                 
@@ -3577,30 +3672,13 @@ class Functions:
                     else:
                         cast.set_volume(volume=_volume / 100)
                 
-                if _mediaType is not None:
-                    mediaType = _mediaType
-                    if mediaType == "video/mp4":
-                        metadataType = 1  # type METADATA_TYPE_MOVIE (Title + SubTitle only)
-                        mediaStreamType = "BUFFERED"
-                    elif mediaType in ("audio/mpeg", "audio/mp3"):
-                        metadataType = 3  # type METADATA_TYPE_MUSICTRACK ()
-                        mediaStreamType = "BUFFERED"
-                    else:
-                        metadataType = 0  # type METADATA_TYPE_GENERIC
-                        mediaStreamType = "BUFFERED"
-                else:
-                    mediaType = "video/mp4"
-                    metadataType = 1  # type METADATA_TYPE_MOVIE
-                    mediaStreamType = "BUFFERED"
-                
-                media = _value    
+                media = _value
                 mediaImage = f'{myConfig.ttsWebSrvImages}tts.png'
-                mediaTitle = "TTSCast Media"
-                mediaSubTitle = _value
+                mediaTitle = Functions.mediaTitle(_value)
+                mediaSubTitle = "TTSCast Media"
                 mediaAlbumName = "Jeedom"
-                mediaArtist = _value
+                mediaArtist = "TTSCast Media"
                 
-                app_name = "bubbleupnp"
                 app_data = {
                     "media_id": media,
                     "media_type": mediaType,
@@ -3617,7 +3695,7 @@ class Functions:
 
                 if Functions.orphanedBeforeLaunch('[DAEMON][controllerActions] Media ::'):
                     return False
-                quick_play.quick_play(cast, app_name, app_data)
+                Functions.castQuickPlay(cast, app_name, app_data, '[DAEMON][controllerActions] Media ::')
                     
                 if (not _appDing and _volume is not None):
                     logging.debug(f'[DAEMON][controllerActions] Media :: Volume [avant / pendant] lecture :: [{str(volumeBeforePlay)} / {str(_volume)}]')
@@ -3640,7 +3718,8 @@ class Functions:
                 return True
                 
             except Exception as e:
-                logging.error(f'[DAEMON][controllerMedia] Exception ({_googleUUID}) :: {e}')
+                if not isinstance(e, CastLaunchFailed):
+                    logging.error(f'[DAEMON][controllerMedia] Exception ({_googleUUID}) :: {e}')
                 if volumeBeforePlay is not None:
                     if isGroup and groupSnapshot:
                         Functions.restoreGroupMembersVolume(groupSnapshot)
