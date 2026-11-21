@@ -98,10 +98,13 @@
     },
     "plugins\/ttscast\/core\/php\/jeettscast.php": {
         "Fichier du cache TTS illisible : supprimez-le ou videz le cache (page de configuration du plugin).": "Archivo de caché TTS ilegible: elimínalo o vacía la caché (página de configuración del complemento).",
+        "Format non lu par l\\'équipement : vérifiez que le format du fichier est pris en charge par Google Cast.": "Formato no compatible con el dispositivo: comprueba que el formato del archivo sea compatible con Google Cast.",
         "Son personnalisé illisible ou format non supporté : remplacez-le.": "Sonido personalizado ilegible o formato no compatible: cámbialo.",
         "Vous n\\'etes pas autorisé à effectuer cette action": "No está autorizado a realizar esta acción",
         "code %s": "código %s",
         "fichier : %s": "archivo: %s",
+        "radio : %s": "radio: %s",
+        "vidéo YouTube : %s": "vídeo de YouTube: %s",
         "Échec de lecture sur %s": "Error al leer en %s"
     },
     "plugins\/ttscast\/core\/php\/ttscast.img.proxy.php": {
