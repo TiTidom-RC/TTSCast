@@ -3082,10 +3082,16 @@ class Functions:
 
     @staticmethod
     def mediaTitle(url):
-        """ Titre affiché d'un média de la commande Media : nom du fichier (décodé, sans extension), sinon « TTSCast Media ».
+        """ Titre affiché d'un média de la commande Media : nom (décodé, sans extension) du fichier de média trouvé dans le chemin de
+        l'URL, sinon dans ses paramètres (proxy, script) ; seul un nom à l'extension de média connue est retenu, sinon « TTSCast Media ».
         L'URL n'est jamais affichée : elle peut contenir un jeton ou des identifiants """
-        name = os.path.splitext(os.path.basename(unquote(urlparse(url).path)))[0].strip()
-        return name or 'TTSCast Media'
+        parsed = urlparse(url)
+        candidates = [unquote(parsed.path)] + [value for values in parse_qs(parsed.query).values() for value in values]
+        for candidate in candidates:
+            name, extension = os.path.splitext(os.path.basename(candidate))
+            if extension.lstrip('.').lower() in myConfig.mediaMimeTypes and name.strip():
+                return name.strip()
+        return 'TTSCast Media'
 
     @staticmethod
     def servedMimeType(url):

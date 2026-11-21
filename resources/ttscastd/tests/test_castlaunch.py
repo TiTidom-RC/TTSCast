@@ -159,10 +159,19 @@ class MediaReceiverTest(unittest.TestCase):
         self.assertNotIn('secret', str(metadata))
         self.assertNotIn('token', str(metadata))
 
-    def test_titleWithoutFileName(self):
-        self.assertEqual(Functions.mediaTitle('http://serveur/'), 'TTSCast Media')
-        self.assertEqual(Functions.mediaTitle('http://serveur'), 'TTSCast Media')
-        self.assertEqual(Functions.mediaTitle('http://serveur/flux/direct'), 'direct')
+    def test_titleFromMediaFileNameOnly(self):
+        """ Titre tiré d'un vrai nom de fichier de média (chemin, sinon paramètre de l'URL) ; jamais un morceau d'URL """
+        cases = (
+            ('http://jeedom/plugins/ttscast/core/php/ttscast.audio.proxy.php?type=sounds&file=bigben1.mp3', 'bigben1'),
+            ('http://nas/stream.php?id=12&path=%2FMusique%2FMon%20morceau.flac', 'Mon morceau'),
+            ('http://jeedom/plugins/ttscast/core/php/ttscast.audio.proxy.php?type=sounds', 'TTSCast Media'),
+            ('http://serveur/flux/direct', 'TTSCast Media'),
+            ('http://serveur/', 'TTSCast Media'),
+            ('http://serveur', 'TTSCast Media'),
+        )
+        for url, expected in cases:
+            with self.subTest(url=url):
+                self.assertEqual(Functions.mediaTitle(url), expected)
 
     def test_launchFailedRestoresVolume(self):
         """ Lecture non démarrée : déjà signalée par castQuickPlay, pas d'erreur en plus ; volume rétabli, commande en échec """
