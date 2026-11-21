@@ -151,27 +151,35 @@ class MediaReceiverTest(unittest.TestCase):
         castQuickPlay = self.play('"type": "video/mp4"')[1]
         self.assertEqual(self.launched(castQuickPlay)[1:], ('video/mp4', 1))
 
-    def test_displayedMetadataWithoutUrl(self):
-        """ Écran de l'équipement : titre tiré du nom du fichier, jamais l'URL (jeton ou identifiants possibles) """
+    def test_displayedMetadataLikeSounds(self):
+        """ Écran de l'équipement, comme pour les sons : titre « TTSCast Media », nom du fichier en artiste et en sous-titre ; jamais
+        l'URL (jeton ou identifiants possibles) """
         url = 'http://user:secret@nas/Musique/Mon%20morceau.mp3?token=abc'
         metadata = self.play(None, url=url)[1].call_args.args[2]['metadata']
-        self.assertEqual((metadata['title'], metadata['subtitle'], metadata['artist']), ('Mon morceau', 'TTSCast Media', 'TTSCast Media'))
+        self.assertEqual((metadata['title'], metadata['subtitle'], metadata['artist'], metadata['albumName']),
+                         ('TTSCast Media', 'Mon morceau.mp3', 'Mon morceau.mp3', 'Jeedom'))
         self.assertNotIn('secret', str(metadata))
         self.assertNotIn('token', str(metadata))
 
-    def test_titleFromMediaFileNameOnly(self):
-        """ Titre tiré d'un vrai nom de fichier de média (chemin, sinon paramètre de l'URL) ; jamais un morceau d'URL """
+    def test_noFileNameNoArtist(self):
+        metadata = self.play(None, url='http://serveur/flux/direct', launch=None)[1].call_args.args[2]['metadata']
+        self.assertEqual(metadata['title'], 'TTSCast Media')
+        self.assertNotIn('artist', metadata)
+        self.assertNotIn('subtitle', metadata)
+
+    def test_fileNameFromMediaFileOnly(self):
+        """ Nom tiré d'un vrai fichier de média (chemin, sinon paramètre de l'URL) ; jamais un morceau d'URL """
         cases = (
-            ('http://jeedom/plugins/ttscast/core/php/ttscast.audio.proxy.php?type=sounds&file=bigben1.mp3', 'bigben1'),
-            ('http://nas/stream.php?id=12&path=%2FMusique%2FMon%20morceau.flac', 'Mon morceau'),
-            ('http://jeedom/plugins/ttscast/core/php/ttscast.audio.proxy.php?type=sounds', 'TTSCast Media'),
-            ('http://serveur/flux/direct', 'TTSCast Media'),
-            ('http://serveur/', 'TTSCast Media'),
-            ('http://serveur', 'TTSCast Media'),
+            ('http://jeedom/plugins/ttscast/core/php/ttscast.audio.proxy.php?type=sounds&file=bigben1.mp3', 'bigben1.mp3'),
+            ('http://nas/stream.php?id=12&path=%2FMusique%2FMon%20morceau.flac', 'Mon morceau.flac'),
+            ('http://jeedom/plugins/ttscast/core/php/ttscast.audio.proxy.php?type=sounds', None),
+            ('http://serveur/flux/direct', None),
+            ('http://serveur/', None),
+            ('http://serveur', None),
         )
         for url, expected in cases:
             with self.subTest(url=url):
-                self.assertEqual(Functions.mediaTitle(url), expected)
+                self.assertEqual(Functions.mediaFileName(url), expected)
 
     def test_launchFailedRestoresVolume(self):
         """ Lecture non démarrée : déjà signalée par castQuickPlay, pas d'erreur en plus ; volume rétabli, commande en échec """

@@ -3081,17 +3081,18 @@ class Functions:
         return fallback
 
     @staticmethod
-    def mediaTitle(url):
-        """ Titre affiché d'un média de la commande Media : nom (décodé, sans extension) du fichier de média trouvé dans le chemin de
-        l'URL, sinon dans ses paramètres (proxy, script) ; seul un nom à l'extension de média connue est retenu, sinon « TTSCast Media ».
+    def mediaFileName(url):
+        """ Nom (décodé, avec extension) du fichier de média de la commande Media, trouvé dans le chemin de l'URL, sinon dans ses
+        paramètres (proxy, script) ; seul un nom à l'extension de média connue est retenu, sinon None.
         L'URL n'est jamais affichée : elle peut contenir un jeton ou des identifiants """
         parsed = urlparse(url)
         candidates = [unquote(parsed.path)] + [value for values in parse_qs(parsed.query).values() for value in values]
         for candidate in candidates:
-            name, extension = os.path.splitext(os.path.basename(candidate))
+            fileName = os.path.basename(candidate).strip()
+            name, extension = os.path.splitext(fileName)
             if extension.lstrip('.').lower() in myConfig.mediaMimeTypes and name.strip():
-                return name.strip()
-        return 'TTSCast Media'
+                return fileName
+        return None
 
     @staticmethod
     def servedMimeType(url):
@@ -3680,23 +3681,25 @@ class Functions:
                 
                 media = _value
                 mediaImage = f'{myConfig.ttsWebSrvImages}tts.png'
-                mediaTitle = Functions.mediaTitle(_value)
-                mediaSubTitle = "TTSCast Media"
-                mediaAlbumName = "Jeedom"
-                mediaArtist = "TTSCast Media"
-                
+
+                # Affichage aligné sur les sons : titre « TTSCast Media », nom du fichier en artiste (et en sous-titre, affiché pour
+                # une vidéo) ; sans nom de fichier de média dans l'URL, ni artiste ni sous-titre
+                metadata = {
+                    "metadataType": metadataType,
+                    "title": "TTSCast Media",
+                    "albumName": "Jeedom",
+                    "images": [{"url": mediaImage}]
+                }
+                mediaFileName = Functions.mediaFileName(_value)
+                if mediaFileName is not None:
+                    metadata["subtitle"] = mediaFileName
+                    metadata["artist"] = mediaFileName
+
                 app_data = {
                     "media_id": media,
                     "media_type": mediaType,
                     "stream_type": mediaStreamType,
-                    "metadata": {
-                        "metadataType": metadataType,
-                        "title": mediaTitle,
-                        "subtitle": mediaSubTitle,
-                        "artist": mediaArtist,
-                        "albumName": mediaAlbumName,
-                        "images": [{"url": mediaImage}]
-                    }
+                    "metadata": metadata
                 }
 
                 if Functions.orphanedBeforeLaunch('[DAEMON][controllerActions] Media ::'):
