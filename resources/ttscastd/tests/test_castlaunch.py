@@ -2,6 +2,8 @@
 et récepteur de la commande Media. Faux appareils et faux serveur : aucun appareil ni réseau réel.
 Lancement depuis resources/ttscastd :  python -m unittest discover -s tests -t . """
 
+import threading
+import time
 import types as pytypes
 import unittest
 from unittest import mock
@@ -203,6 +205,71 @@ class MediaReceiverTest(unittest.TestCase):
         self.assertTrue(result)
         self.assertTrue(any('démarrage non confirmé' in line for line in logs.output))
         self.assertFalse(any('Diffusion Media lancée' in line for line in logs.output))
+
+
+class FakeSessionEvent:
+    """ Événement « session active » sur une horloge simulée : wait(secondes) fait avancer l'horloge et applique les actions datées,
+    sans dépasser l'instant où la session devient active (réveil immédiat, comme threading.Event) """
+    def __init__(self, test):
+        self.test = test
+        self.active = False
+
+    def set(self):
+        self.active = True
+
+    def wait(self, seconds):
+        end = self.test.now + seconds
+        while not self.active and self.test.now < end - 1e-9:
+            self.test.now = min(end, self.test.now + 0.01)
+            for at in sorted(list(self.test.actions)):
+                if self.test.now >= at - 1e-9:
+                    self.test.actions.pop(at)()
+        return self.active
+
+
+class WaitMediaActiveTest(unittest.TestCase):
+    """ Attente de la session média après le lancement : réveil immédiat dès la session active (comme block_until_active), ou arrêt
+    dès un échec de chargement (LOAD_FAILED, sans session) postérieur à la demande ; au plus mediaActivationTimeout secondes """
+    def setUp(self):
+        helpers.resetDaemonState()
+        self.now = 10.0
+        self.actions = {}
+        self.event = FakeSessionEvent(self)
+        self.cast = pytypes.SimpleNamespace(uuid='uuid-test', media_controller=pytypes.SimpleNamespace(session_active_event=self.event))
+
+    def wait(self):
+        Functions.waitMediaActive(self.cast, 10.0, clock=lambda: self.now)
+        return self.now - 10.0
+
+    def test_realEventWakesUpAtOnce(self):
+        """ Avec un vrai threading.Event : retour dès qu'un autre thread signale la session active """
+        event = threading.Event()
+        cast = pytypes.SimpleNamespace(uuid='uuid-test', media_controller=pytypes.SimpleNamespace(session_active_event=event))
+        threading.Timer(0.05, event.set).start()
+        startedAt = time.monotonic()
+        Functions.waitMediaActive(cast, startedAt)
+        self.assertLess(time.monotonic() - startedAt, 0.5)
+
+    def test_sessionAlreadyActive(self):
+        self.event.set()
+        self.assertEqual(self.wait(), 0)
+
+    def test_stopsWhenSessionBecomesActive(self):
+        self.actions[11.03] = self.event.set
+        self.assertAlmostEqual(self.wait(), 1.03, delta=0.011)
+
+    def test_stopsOnLoadFailedWithoutSession(self):
+        """ LOAD_FAILED : aucune session ne viendra, pas d'attente du délai complet """
+        self.actions[10.3] = lambda: myConfig.loadFailures.__setitem__('uuid-test', (10.3, 102))
+        self.assertAlmostEqual(self.wait(), 0.3, delta=0.11)
+
+    def test_oldLoadFailedIgnored(self):
+        myConfig.loadFailures['uuid-test'] = (5.0, 102)
+        self.actions[12.0] = self.event.set
+        self.assertAlmostEqual(self.wait(), 2.0, delta=0.11)
+
+    def test_boundedByActivationTimeout(self):
+        self.assertAlmostEqual(self.wait(), myConfig.mediaActivationTimeout, delta=0.11)
 
 
 class ConfirmPlaybackStartTest(unittest.TestCase):

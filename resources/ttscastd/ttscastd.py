@@ -1731,7 +1731,7 @@ class TTSCast:
                     if volumeBeforePlay is not None:
                         cast.set_volume(volume=volumeBeforePlay)
 
-                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
+                Functions.waitMediaActive(cast, playRequestedAt)
 
                 logging.info('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
 
@@ -1857,7 +1857,7 @@ class TTSCast:
                     if volumeBeforePlay is not None:
                         cast.set_volume(volume=volumeBeforePlay)
 
-                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
+                Functions.waitMediaActive(cast, playRequestedAt)
 
                 logging.info('[DAEMON][Cast] Diffusion lancée :: %s', str(cast.media_controller.status))
 
@@ -3065,6 +3065,19 @@ class Functions:
         logging.debug('%s Lancement de la lecture sur %s en %.1fs', logTag, cast.name, time.monotonic() - startedAt)
 
     @staticmethod
+    def waitMediaActive(cast, requestedAt, clock=time.monotonic):
+        """ Attend une session média active sur cast, au plus mediaActivationTimeout secondes : réveil immédiat dès la session
+        active, comme block_until_active. S'arrête aussi sur un échec de chargement (LOAD_FAILED) postérieur à requestedAt, relevé
+        toutes les 0,1 s : il ne crée aucune session, et la suite (suivi de la lecture, vérification du démarrage) le signale """
+        event = cast.media_controller.session_active_event
+        uuidStr = str(cast.uuid)
+        deadline = clock() + myConfig.mediaActivationTimeout
+        while not event.wait(max(0.0, min(0.1, deadline - clock()))):
+            loadFailure = myConfig.loadFailures.get(uuidStr)
+            if (loadFailure is not None and loadFailure[0] >= requestedAt) or clock() >= deadline:
+                return
+
+    @staticmethod
     def confirmPlaybackStart(cast, mediaId, requestedAt, sessionBefore, contentBefore, logTag, source, name, clock=time.monotonic, sleep=time.sleep):
         """ Démarrage d'une lecture longue (Media, radios, YouTube), dont la fin n'est pas suivie : arrêt au premier état qui tranche,
         au plus mediaStartCheckTimeout secondes. Retourne 'started' (lecture en cours, ou déjà terminée ou arrêtée), 'unconfirmed'
@@ -3325,7 +3338,7 @@ class Functions:
                 else:
                     cast.set_volume(volume=volumeBeforePlay)
             
-            cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
+            Functions.waitMediaActive(cast, playRequestedAt)
 
             # Vidéo ajoutée à la suite d'une lecture en cours (enqueue) : aucun démarrage à attendre
             started = 'started' if _enqueue else Functions.confirmPlaybackStart(
@@ -3510,7 +3523,7 @@ class Functions:
                             else:
                                 cast.set_volume(volume=volumeBeforePlay)
                         
-                        cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
+                        Functions.waitMediaActive(cast, playRequestedAt)
 
                         started = Functions.confirmPlaybackStart(cast, radioUrl, playRequestedAt, sessionBefore, contentBefore,
                                                                  f'[DAEMON][controllerActions] {radioType} ::', _controller, radioTitle)
@@ -3631,7 +3644,7 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
+                Functions.waitMediaActive(cast, playRequestedAt)
                 
                 logging.info(f'[DAEMON][controllerActions] Diffusion {soundType} lancée :: {cast.name} | {_value}')
                 
@@ -3777,7 +3790,7 @@ class Functions:
                     else:
                         cast.set_volume(volume=volumeBeforePlay)
                 
-                cast.media_controller.block_until_active(timeout=myConfig.mediaActivationTimeout)
+                Functions.waitMediaActive(cast, playRequestedAt)
 
                 started = Functions.confirmPlaybackStart(cast, media, playRequestedAt, sessionBefore, contentBefore,
                                                          '[DAEMON][controllerActions] Media ::', 'media', mediaFileName)
