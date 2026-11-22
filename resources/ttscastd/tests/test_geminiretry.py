@@ -6,6 +6,7 @@ import unittest
 from unittest import mock
 
 import httpx2
+from google.auth import exceptions as googleAuthErrors
 from google.genai import errors as genaiErrors
 from google.genai import types
 
@@ -99,6 +100,26 @@ class GeminiRetryTest(unittest.TestCase):
         result, _ = self.run_([httpx2.ConnectError('dns'), 'ok'])
         self.assertEqual(result, 'ok')
         self.assertEqual(self.clock.sleeps, [1])
+
+    def testTokenRefreshNetworkErrorIsRetried(self):
+        result, _ = self.run_([googleAuthErrors.TransportError('réseau'), 'ok'])
+        self.assertEqual(result, 'ok')
+        self.assertEqual(self.clock.sleeps, [1])
+
+    def testTokenRefreshNetworkErrorRaisedAfterTheLastAttempt(self):
+        with self.assertLogs(level='WARNING') as logs:
+            result, timeouts = self.run_([googleAuthErrors.TransportError('réseau')] * 3)
+        self.assertIsInstance(result, googleAuthErrors.TransportError)
+        self.assertEqual((len(timeouts), self.clock.sleeps), (3, [1, 2]))
+        self.assertTrue(any('Erreur transitoire (TransportError)' in line for line in logs.output))
+
+    def testRefusedCredentialsAreNotRetried(self):
+        for error in (googleAuthErrors.RefreshError('invalid_grant'), googleAuthErrors.ReauthFailError('x')):
+            with self.subTest(error=type(error).__name__):
+                result, timeouts = self.run_([error, 'ok'])
+                self.assertIs(result, error)
+                self.assertEqual(len(timeouts), 1)
+        self.assertEqual(self.clock.sleeps, [])
 
     def testTimeoutIsNotRetried(self):
         result, _ = self.run_([httpx2.ReadTimeout('lent')])

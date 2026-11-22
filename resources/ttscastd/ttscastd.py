@@ -53,6 +53,7 @@ except ImportError as e:
 # Import pour Google Cloud TTS
 try:
     from google.oauth2 import service_account
+    from google.auth import exceptions as googleAuthErrors  # erreur réseau au renouvellement du jeton oauth2 : relancée par callGeminiWithRetry
     import google.cloud.texttospeech as googleCloudTTS
 except ImportError as e:
     print("[DAEMON][IMPORT] Error: importing module Google Cloud TTS ::", e)
@@ -1989,7 +1990,8 @@ class TTSCast:
         """
         Exécute call(timeoutMs) — un appel Gemini — en relançant les erreurs transitoires rapides, sans jamais dépasser
         budgetSeconds au total : le délai de l'appel reste celui attendu par les appelants (PHP, file d'attente).
-        - Relancées : erreurs Gemini de code myConfig.geminiRetryHttpCodes et erreurs de connexion. Jamais un timeout (budget épuisé).
+        - Relancées : erreurs Gemini de code myConfig.geminiRetryHttpCodes, erreurs de connexion et erreurs réseau au renouvellement
+          du jeton oauth2 (TransportError ; jamais RefreshError : identifiants refusés). Jamais un timeout (budget épuisé).
         - call reçoit le temps restant (en ms), à utiliser comme délai HTTP de la tentative. Attente : retryDelay indiqué par Gemini, sinon myConfig.geminiRetryDelays.
         - Toute autre erreur, ou la dernière, est relevée telle quelle.
         """
@@ -1999,7 +2001,7 @@ class TTSCast:
             timeoutMs = max(1000, int((deadline - time.monotonic()) * 1000))
             try:
                 return call(timeoutMs)
-            except (genaiErrors.APIError, httpx2.ConnectError) as e:
+            except (genaiErrors.APIError, httpx2.ConnectError, googleAuthErrors.TransportError) as e:
                 code = getattr(e, 'code', None)
                 if isinstance(e, genaiErrors.APIError) and code not in myConfig.geminiRetryHttpCodes:
                     raise
