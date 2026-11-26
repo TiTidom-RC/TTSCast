@@ -128,6 +128,10 @@ class GeminiRequestTest(ConfigPatch):
         patcher = mock.patch.object(ttscastd.genai, 'Client', return_value=client)
         patcher.start()
         self.addCleanup(patcher.stop)
+        # Horloge figée : le délai d'une tentative est le temps restant, la première reçoit donc tout le délai
+        clock = mock.patch.object(ttscastd.time, 'monotonic', return_value=1000.0)
+        clock.start()
+        self.addCleanup(clock.stop)
 
     def reformulate(self, model=None, thinking=None):
         with self.assertLogs(level='WARNING'):  # usage_metadata absent du faux client

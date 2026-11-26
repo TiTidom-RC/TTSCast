@@ -19,12 +19,12 @@ Autres fichiers : `core/php/ttscast.audio.proxy.php` et `ttscast.img.proxy.php` 
 
 - Dev : Windows 11, PowerShell 7. Utiliser l'outil **PowerShell** (pas Bash) pour les commandes ; les outils Grep/Glob pour chercher dans le code. Toute commande proposée à l'utilisateur est en PowerShell. Les scripts `.sh` du repo s'exécutent sur la cible et restent en bash.
 - Cible : Jeedom sur Debian 11/12/13. Le code doit respecter chemins et permissions Linux, même écrit sous Windows. Aucun Jeedom local : le code est déployé sur une box distante pour être testé ; signaler ce qui reste à y vérifier.
-- Python : 3.12 via pyenv, environnement virtuel `resources/venv` sur la cible (voir `install_apt.sh`). En local, utiliser le `.venv` à la racine du repo, jamais le Python système.
+- Python : 3.12 via pyenv, environnement virtuel `resources/venv` sur la cible (voir `install_apt.sh`). En local, le `.venv` à la racine du repo sert à VS Code (Pylance) ; les tests tournent dans WSL (voir « Tests et lint »), jamais avec le Python système.
 - Toute modification d'un fichier de `resources/ttscastd/` ne prend effet qu'après redémarrage du démon depuis la page de configuration du plugin : le rappeler à l'utilisateur.
 
 ## Tests et lint
 
-- Tests du démon : `python -m unittest discover -s tests -t .` depuis `resources/ttscastd`, avec le Python du `.venv`. Ajouter ou adapter les tests de `resources/ttscastd/tests/` avec chaque correctif ou fonctionnalité du démon.
+- Tests du démon : dans WSL (Debian 13, Python 3.12.13 par pyenv), comme sur une box ; mise en place : `../Documentation/_docs/dev-environment-wsl.md`. Depuis PowerShell, dans `resources/ttscastd` (WSL reprend le dossier courant) : `wsl -d Debian -- '$HOME/venvs/ttscast/bin/python' -m unittest discover -s tests -t .` (guillemets simples : `$HOME` est remplacé par bash, pas par PowerShell). Ajouter ou adapter les tests de `resources/ttscastd/tests/` avec chaque correctif ou fonctionnalité du démon.
 - Lint Python : Ruff (`ruff.toml`), comme la CI (`ruff check resources/ttscastd/`).
 
 ## Workflow Git
@@ -38,12 +38,10 @@ Autres fichiers : `core/php/ttscast.audio.proxy.php` et `ttscast.img.proxy.php` 
 - Le code doit fonctionner en PHP 7.4 (Debian 11), 8.2 (Debian 12) et 8.4 (Debian 13). Debian 11 est en fin de vie : la compatibilité 7.4 est maintenue par choix, le temps que les utilisateurs migrent leur Jeedom vers Debian 12 minimum.
 - Aucune syntaxe ni fonction propre à PHP 8.x : `str_starts_with`/`str_ends_with`/`str_contains` (→ `strpos`/`substr`), `match` (→ `switch`), named arguments, `enum`, `readonly`, `fibers`, union types (→ docblock `@param`). Les arrow functions `fn()` sont autorisées (PHP 7.4).
 - La CI (`checkPHPCompat.yml`, PR vers `beta`) analyse `core/`, `desktop/` et `plugin_info/` avec PHPStan niveau 0 en PHP 7.4, 8.2 et 8.4.
-- Le poste de dev a PHP 8.4 dans le PATH, pour faire apparaître les régressions et les `Deprecated` (installation : `../Documentation/_docs/php-windows-dev.md`). Contrôle après modification, depuis la racine du repo :
+- Le poste de dev a PHP 8.4 dans WSL (Debian 13), pour faire apparaître les régressions et les `Deprecated` (installation : `../Documentation/_docs/dev-environment-wsl.md`). Contrôle après modification, depuis PowerShell à la racine du repo (WSL reprend le dossier courant) :
 
   ```powershell
-  Get-ChildItem core, desktop, plugin_info -Recurse -Filter *.php |
-      ForEach-Object { php -l $_.FullName 2>&1 } |
-      Where-Object { $_ -notmatch '^No syntax errors' }
+  wsl -d Debian -- bash -c 'find core desktop plugin_info -name "*.php" -exec php -l {} \; 2>&1 | grep -v "^No syntax errors" || echo "Aucune erreur de syntaxe"'
   ```
 
 ## Conventions et patterns
